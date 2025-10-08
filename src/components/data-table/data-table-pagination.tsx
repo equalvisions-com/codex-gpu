@@ -16,15 +16,13 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { useDataTable } from "@/components/data-table/data-table-provider";
-import { useMemo } from "react";
 
 export function DataTablePagination() {
-  const { table, pagination, columnFilters } = useDataTable();
+  const { table, pagination } = useDataTable();
+
   if (!pagination) return null;
-  const pageCount = useMemo(
-    () => table.getPageCount(),
-    [columnFilters, pagination.pageSize],
-  );
+
+  const pageCount = table.getPageCount();
 
   return (
     <div className="flex items-center justify-end space-x-4 md:space-x-6 lg:space-x-8">
