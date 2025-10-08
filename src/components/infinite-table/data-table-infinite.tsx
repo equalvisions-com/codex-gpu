@@ -17,19 +17,17 @@ import type {
   DataTableFilterField,
   SheetField,
 } from "@/components/data-table/types";
-import { arrSome } from "@/lib/table/filterfns";
 import { cn } from "@/lib/utils";
 import { type FetchNextPageOptions } from "@tanstack/react-query";
 import type {
   ColumnDef,
   ColumnFiltersState,
-  ColumnSizingInfoState,
-  ColumnSizingState,
   Row,
   RowSelectionState,
   SortingState,
   TableOptions,
   Table as TTable,
+  OnChangeFn,
 } from "@tanstack/react-table";
 import { flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { useQueryStates, type ParserBuilder } from "nuqs";
@@ -54,9 +52,12 @@ export interface DataTableInfiniteProps<TData, TValue, TMeta> {
   skeletonRowCount?: number;
   // Number of skeleton rows to render while loading the next page
   skeletonNextPageRowCount?: number;
-  defaultColumnFilters?: ColumnFiltersState;
-  defaultColumnSorting?: SortingState;
-  defaultRowSelection?: RowSelectionState;
+  columnFilters: ColumnFiltersState;
+  onColumnFiltersChange: OnChangeFn<ColumnFiltersState>;
+  sorting: SortingState;
+  onSortingChange: OnChangeFn<SortingState>;
+  rowSelection: RowSelectionState;
+  onRowSelectionChange: OnChangeFn<RowSelectionState>;
   filterFields?: DataTableFilterField<TData>[];
   sheetFields?: SheetField<TData, TMeta>[];
   // REMINDER: close to the same signature as the `getFacetedUniqueValues` of the `useReactTable`
@@ -92,9 +93,12 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   data,
   skeletonRowCount = 50,
   skeletonNextPageRowCount,
-  defaultColumnFilters = [],
-  defaultColumnSorting = [],
-  defaultRowSelection = {},
+  columnFilters,
+  onColumnFiltersChange,
+  sorting,
+  onSortingChange,
+  rowSelection,
+  onRowSelectionChange,
   filterFields = [],
   sheetFields = [],
   isFetching,
@@ -112,13 +116,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   searchParamsParser,
   focusTargetRef,
 }: DataTableInfiniteProps<TData, TValue, TMeta>) {
-  const [columnFilters, setColumnFilters] =
-    React.useState<ColumnFiltersState>(defaultColumnFilters);
-  const [sorting, setSorting] =
-    React.useState<SortingState>(defaultColumnSorting);
-  const [rowSelection, setRowSelection] =
-    React.useState<RowSelectionState>(defaultRowSelection);
-  const [columnSizingInfo, setColumnSizingInfoState] = React.useState<ColumnSizingInfoState | null>(null);
   // Independent checkbox-only state (does not control the details pane)
   const [checkedRows, setCheckedRows] = React.useState<Record<string, boolean>>({});
   const toggleCheckedRow = React.useCallback((rowId: string, next?: boolean) => {
@@ -130,14 +127,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     });
   }, []);
 
-  const setColumnSizingInfo = React.useCallback((updaterOrValue: ColumnSizingInfoState | ((old: ColumnSizingInfoState) => ColumnSizingInfoState)) => {
-    setColumnSizingInfoState((prev) => {
-      const newValue = typeof updaterOrValue === 'function'
-        ? updaterOrValue(prev || {} as ColumnSizingInfoState)
-        : updaterOrValue;
-      return newValue;
-    });
-  }, []);
   const topBarRef = React.useRef<HTMLDivElement>(null);
   const tableRef = React.useRef<HTMLTableElement>(null);
   const [topBarHeight, setTopBarHeight] = React.useState(0);
@@ -210,27 +199,23 @@ export function DataTableInfinite<TData, TValue, TMeta>({
       columnFilters,
       sorting,
       rowSelection,
-      ...(columnSizingInfo && { columnSizingInfo }),
     },
     enableMultiRowSelection: false,
     enableColumnResizing: false,
     enableMultiSort: false,
     columnResizeMode: "onChange",
     getRowId,
-    onColumnFiltersChange: setColumnFilters,
-    onRowSelectionChange: setRowSelection,
-    onSortingChange: setSorting,
-    onColumnSizingInfoChange: setColumnSizingInfo,
+    onColumnFiltersChange,
+    onRowSelectionChange,
+    onSortingChange,
     enableHiding: false,
     // Disable client-side sorting/pagination/filtering - all happen on server
     manualSorting: true,
     manualFiltering: true,
-    manualPagination: true,
     getCoreRowModel: getCoreRowModel(),
     // Facets are provided by the server; expose them via provider callbacks
     // to power filter UIs without re-filtering rows client-side
     // Note: we intentionally do not call getFilteredRowModel/getFacetedRowModel
-    filterFns: { arrSome },
     debugAll: process.env.NEXT_PUBLIC_TABLE_DEBUG === "true",
     meta: {
       getRowClassName,
@@ -289,12 +274,12 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     if (isLoading || isFetching) return;
     if (Object.keys(rowSelection)?.length && !selectedRow) {
       setSearch({ uuid: null });
-      setRowSelection({});
+      onRowSelectionChange({});
     } else {
       setSearch({ uuid: Object.keys(rowSelection)?.[0] || null });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rowSelection, selectedRow, isLoading, isFetching]);
+  }, [rowSelection, selectedRow, isLoading, isFetching, onRowSelectionChange]);
 
 
   

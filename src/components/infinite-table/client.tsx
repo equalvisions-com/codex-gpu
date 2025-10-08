@@ -2,7 +2,12 @@
 
 import { useHotKey } from "@/hooks/use-hot-key";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { Table as TTable } from "@tanstack/react-table";
+import type {
+  ColumnFiltersState,
+  RowSelectionState,
+  SortingState,
+  Table as TTable,
+} from "@tanstack/react-table";
 import { useQueryStates } from "nuqs";
 import * as React from "react";
 import { columns } from "./columns";
@@ -149,6 +154,66 @@ export function Client({ initialFavoritesData, initialFavoriteKeys }: ClientProp
   const { sort, start, size, uuid, cursor, direction, observed_at, ...filter } =
     search;
 
+  const derivedColumnFilters = React.useMemo<ColumnFiltersState>(() => {
+    return Object.entries(filter)
+      .map(([key, value]) => ({
+        id: key,
+        value,
+      }))
+      .filter(({ value }) => value ?? undefined);
+  }, [filter]);
+
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    derivedColumnFilters,
+  );
+  const derivedColumnFiltersRef =
+    React.useRef<ColumnFiltersState>(derivedColumnFilters);
+
+  React.useEffect(() => {
+    if (
+      !areColumnFiltersEqual(
+        derivedColumnFiltersRef.current,
+        derivedColumnFilters,
+      )
+    ) {
+      setColumnFilters(derivedColumnFilters);
+    }
+    derivedColumnFiltersRef.current = derivedColumnFilters;
+  }, [derivedColumnFilters]);
+
+  const derivedSorting = React.useMemo<SortingState>(() => {
+    return sort ? [sort] : [];
+  }, [sort]);
+
+  const [sorting, setSorting] = React.useState<SortingState>(derivedSorting);
+  const derivedSortingRef = React.useRef<SortingState>(derivedSorting);
+
+  React.useEffect(() => {
+    if (!isSortingStateEqual(derivedSortingRef.current, derivedSorting)) {
+      setSorting(derivedSorting);
+    }
+    derivedSortingRef.current = derivedSorting;
+  }, [derivedSorting]);
+
+  const derivedRowSelection = React.useMemo<RowSelectionState>(() => {
+    return search.uuid ? { [search.uuid]: true } : {};
+  }, [search.uuid]);
+
+  const [rowSelection, setRowSelection] = React.useState<RowSelectionState>(
+    derivedRowSelection,
+  );
+  const derivedRowSelectionRef =
+    React.useRef<RowSelectionState>(derivedRowSelection);
+
+  React.useEffect(() => {
+    if (
+      !isRowSelectionEqual(derivedRowSelectionRef.current, derivedRowSelection)
+    ) {
+      setRowSelection(derivedRowSelection);
+    }
+    derivedRowSelectionRef.current = derivedRowSelection;
+  }, [derivedRowSelection]);
+
   // REMINDER: this is currently needed for the cmdk search
   // TODO: auto search via API when the user changes the filter instead of hardcoded
   const filterFields = React.useMemo(() => {
@@ -192,14 +257,12 @@ export function Client({ initialFavoritesData, initialFavoriteKeys }: ClientProp
       totalRows={totalDBRowCount}
       filterRows={filterDBRowCount}
       totalRowsFetched={totalFetched}
-      defaultColumnFilters={Object.entries(filter)
-        .map(([key, value]) => ({
-          id: key,
-          value,
-        }))
-        .filter(({ value }) => value ?? undefined)}
-      defaultColumnSorting={sort ? [sort] : undefined}
-      defaultRowSelection={search.uuid ? { [search.uuid]: true } : undefined}
+      columnFilters={columnFilters}
+      onColumnFiltersChange={setColumnFilters}
+      sorting={sorting}
+      onSortingChange={setSorting}
+      rowSelection={rowSelection}
+      onRowSelectionChange={setRowSelection}
       meta={metadata}
       filterFields={filterFields}
       sheetFields={sheetFields}
@@ -219,6 +282,52 @@ export function Client({ initialFavoritesData, initialFavoriteKeys }: ClientProp
   );
 }
 
+
+function areColumnFiltersEqual(
+  a: ColumnFiltersState,
+  b: ColumnFiltersState,
+) {
+  if (a.length !== b.length) return false;
+  return a.every((filter, index) => {
+    const other = b[index];
+    if (!other) return false;
+    if (filter.id !== other.id) return false;
+    return isLooseEqual(filter.value, other.value);
+  });
+}
+
+function isSortingStateEqual(a: SortingState, b: SortingState) {
+  if (a.length !== b.length) return false;
+  return a.every((entry, index) => {
+    const other = b[index];
+    if (!other) return false;
+    return entry.id === other.id && entry.desc === other.desc;
+  });
+}
+
+function isRowSelectionEqual(a: RowSelectionState, b: RowSelectionState) {
+  const aKeys = Object.keys(a);
+  const bKeys = Object.keys(b);
+  if (aKeys.length !== bKeys.length) return false;
+  return aKeys.every((key) => Boolean(a[key]) === Boolean(b[key]));
+}
+
+function isLooseEqual(a: unknown, b: unknown) {
+  if (Object.is(a, b)) return true;
+  if (
+    typeof a === "object" &&
+    a !== null &&
+    typeof b === "object" &&
+    b !== null
+  ) {
+    try {
+      return JSON.stringify(a) === JSON.stringify(b);
+    } catch {
+      return false;
+    }
+  }
+  return false;
+}
 
 export function getFacetedUniqueValues<TData>(
   facets?: Record<string, FacetMetadataSchema>,

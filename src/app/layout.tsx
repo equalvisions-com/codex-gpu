@@ -7,6 +7,7 @@ import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { Toaster } from "@/components/ui/sonner";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
+import { AuthProvider } from "@/providers/auth-provider";
 
 const TITLE = "Powerful Data-Table for React | OpenStatus";
 const DESCRIPTION =
@@ -57,18 +58,20 @@ export default function RootLayout({
     >
       <body className="min-h-[100dvh] bg-background antialiased overscroll-x-none">
         <PlausibleProvider domain="data-table.openstatus.dev">
-          <ReactQueryProvider>
-            <NuqsAdapter>
-              <ThemeProvider
-                attribute="class"
-                defaultTheme="system"
-                enableSystem
-              >
-                {children}
-                <Toaster richColors />
-              </ThemeProvider>
-            </NuqsAdapter>
-          </ReactQueryProvider>
+          <AuthProvider>
+            <ReactQueryProvider>
+              <NuqsAdapter>
+                <ThemeProvider
+                  attribute="class"
+                  defaultTheme="system"
+                  enableSystem
+                >
+                  {children}
+                  <Toaster richColors />
+                </ThemeProvider>
+              </NuqsAdapter>
+            </ReactQueryProvider>
+          </AuthProvider>
         </PlausibleProvider>
       </body>
     </html>

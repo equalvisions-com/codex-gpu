@@ -11,6 +11,8 @@ import { unstable_cache } from "next/cache";
 import type { ColumnSchema } from "@/components/infinite-table/schema";
 import { stableGpuKey } from "@/components/infinite-table/stable-key";
 import { getUserFavoritesFromCache } from "@/lib/favorites/cache";
+import { getCookieCache } from "better-auth/cookies";
+import type { Session } from "@/lib/auth-client";
 
 export default async function Home({
   searchParams,
@@ -32,9 +34,13 @@ export default async function Home({
     const snapshotsPromise = getSnapshotsCached();
 
     const hdrsForFav = await headers();
-    const sessionPromise = auth.api.getSession({ headers: hdrsForFav });
+    const sessionFromCookie = await getCookieCache(new Headers(hdrsForFav), {
+      secret: process.env.BETTER_AUTH_SECRET,
+    }) as Session | null;
     const [session, pricingSnapshots] = await Promise.all([
-      sessionPromise,
+      sessionFromCookie
+        ? Promise.resolve(sessionFromCookie)
+        : auth.api.getSession({ headers: hdrsForFav }),
       snapshotsPromise,
     ]);
 
@@ -77,8 +83,16 @@ export default async function Home({
 
   // Prehydrate favorites keys for authed users to avoid flicker on first selection
   const hdrs = await headers();
-  const sessionPromise = auth.api.getSession({ headers: hdrs });
-  const [, session] = await Promise.all([prefetchPromise, sessionPromise]);
+  const sessionFromCookie = await getCookieCache(new Headers(hdrs), {
+    secret: process.env.BETTER_AUTH_SECRET,
+  }) as Session | null;
+  const sessionPromise = sessionFromCookie
+    ? Promise.resolve(sessionFromCookie)
+    : auth.api.getSession({ headers: hdrs });
+  const [, session] = await Promise.all([
+    prefetchPromise,
+    sessionFromCookie ? Promise.resolve(sessionFromCookie) : auth.api.getSession({ headers: hdrs }),
+  ]);
   
   let initialFavoriteKeys: string[] | undefined;
   if (session) {
@@ -87,4 +101,3 @@ export default async function Home({
 
   return <Client initialFavoriteKeys={initialFavoriteKeys} />;
 }
-

@@ -17,7 +17,7 @@ interface DataTableStateContextType {
   sorting: SortingState;
   rowSelection: RowSelectionState;
   columnOrder: string[];
-  pagination: PaginationState;
+  pagination: PaginationState | null;
   enableColumnOrdering: boolean;
   // Independent checkbox state for rows (separate from selection)
   checkedRows: Record<string, boolean>;
@@ -62,7 +62,7 @@ export function DataTableProvider<TData, TValue>({
       sorting: props.sorting ?? [],
       rowSelection: props.rowSelection ?? {},
       columnOrder: props.columnOrder ?? [],
-      pagination: props.pagination ?? { pageIndex: 0, pageSize: 10 },
+      pagination: props.pagination ?? null,
       enableColumnOrdering: props.enableColumnOrdering ?? false,
       checkedRows: props.checkedRows ?? {},
       toggleCheckedRow: props.toggleCheckedRow ?? (() => {}),
