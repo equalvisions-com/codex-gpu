@@ -25,6 +25,15 @@ export default function SignInPage() {
     if (!error) router.push("/");
   };
 
+  const onGithubSignIn = async () => {
+    await authClient.signIn.social({
+      provider: "github",
+      callbackURL: "/",
+      errorCallbackURL: "/signin",
+      newUserCallbackURL: "/",
+    });
+  };
+
   return (
     <main className="mx-auto max-w-sm p-6">
       <h1 className="mb-4 text-xl font-semibold">Sign in</h1>
@@ -53,8 +62,17 @@ export default function SignInPage() {
           {pending ? "Signing in..." : "Sign in"}
         </button>
       </form>
+      <div className="mt-6 space-y-3">
+        <h2 className="text-sm font-medium">Sign in with social providers</h2>
+        <button
+          type="button"
+          onClick={onGithubSignIn}
+          className="flex w-full items-center justify-center gap-2 rounded border px-3 py-2"
+        >
+          Continue with GitHub
+        </button>
+      </div>
     </main>
   );
 }
-
 
