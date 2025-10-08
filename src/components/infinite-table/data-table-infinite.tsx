@@ -133,6 +133,8 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   const containerRef = React.useRef<HTMLDivElement>(null);
   // searchParamsParser is provided as a prop
   const [_, setSearch] = useQueryStates(searchParamsParser);
+  const [tableContainerWidth, setTableContainerWidth] = React.useState<number>(0);
+  const [nonModelColumnsWidth, setNonModelColumnsWidth] = React.useState<number>(0);
 
   const onScroll = React.useCallback(
     (e: React.UIEvent<HTMLElement>) => {
@@ -234,6 +236,70 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     overscan: 40,
   });
   const rowVirtualizer = containerVirtualizer;
+
+  React.useEffect(() => {
+    if (!containerRef.current) return;
+    const container = containerRef.current;
+    const updateWidth = () => {
+      setTableContainerWidth(container.clientWidth);
+    };
+    updateWidth();
+    const observer = new ResizeObserver(() => updateWidth());
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
+
+  const columnSizingState = table.getState().columnSizing;
+  const minimumModelColumnWidth =
+    table.getColumn("gpu_model")?.columnDef.minSize ?? 250;
+  const fixedColumnsWidth = React.useMemo(() => {
+    return table
+      .getVisibleLeafColumns()
+      .filter((column) => column.id !== "gpu_model")
+      .reduce((acc, column) => acc + column.getSize(), 0);
+  }, [table, columnSizingState]);
+
+  const measureNonModelColumnsWidth = React.useCallback(() => {
+    const tableElement = tableRef.current;
+    if (!tableElement) return;
+    const headerCells =
+      tableElement.querySelectorAll<HTMLTableCellElement>("thead th[data-column-id]");
+    let total = 0;
+    headerCells.forEach((cell) => {
+      if (cell.dataset.columnId !== "gpu_model") {
+        total += cell.getBoundingClientRect().width;
+      }
+    });
+    if (total > 0) {
+      setNonModelColumnsWidth((prev) =>
+        Math.abs(prev - total) > 0.5 ? total : prev,
+      );
+    }
+  }, []);
+
+  React.useLayoutEffect(() => {
+    const tableElement = tableRef.current;
+    if (!tableElement) return;
+    const observer = new ResizeObserver(() => {
+      measureNonModelColumnsWidth();
+    });
+    observer.observe(tableElement);
+    measureNonModelColumnsWidth();
+    return () => observer.disconnect();
+  }, [measureNonModelColumnsWidth, columnSizingState, rows.length]);
+
+  React.useLayoutEffect(() => {
+    measureNonModelColumnsWidth();
+  }, [measureNonModelColumnsWidth, tableContainerWidth]);
+
+  const effectiveFixedColumnsWidth =
+    nonModelColumnsWidth > 0 ? nonModelColumnsWidth : fixedColumnsWidth;
+
+  const modelColumnWidth = React.useMemo(() => {
+    if (!tableContainerWidth) return minimumModelColumnWidth;
+    const availableWidth = tableContainerWidth - effectiveFixedColumnsWidth;
+    return Math.max(availableWidth, minimumModelColumnWidth);
+  }, [tableContainerWidth, effectiveFixedColumnsWidth, minimumModelColumnWidth]);
 
   React.useEffect(() => {
     const columnFiltersWithNullable = filterFields.map((field) => {
@@ -346,7 +412,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
               containerRef={containerRef}
               containerOverflowVisible={false}
               // REMINDER: https://stackoverflow.com/questions/50361698/border-style-do-not-work-with-sticky-position-element
-              className="border-separate border-spacing-0 w-auto min-w-full"
+              className="border-separate border-spacing-0 w-auto min-w-full table-fixed"
               containerClassName={cn(
                 "h-full max-h-[calc(100vh_-_var(--top-bar-height))] overscroll-x-none scrollbar-hide"
               )}
@@ -368,8 +434,17 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                             "relative select-none truncate border-b border-border [&>.cursor-col-resize]:last:opacity-0",
                             header.column.columnDef.meta?.headerClassName,
                           )}
+                          data-column-id={header.column.id}
                           style={{
-                            width: header.id === "gpu_model" ? "auto" : `${header.getSize()}px`,
+                            width:
+                              header.id === "gpu_model"
+                                ? modelColumnWidth
+                                : header.getSize(),
+                            minWidth: header.column.columnDef.minSize,
+                            maxWidth:
+                              header.id === "gpu_model"
+                                ? modelColumnWidth
+                                : undefined,
                           }}
                           aria-sort={
                             header.column.getIsSorted() === "asc"
@@ -440,6 +515,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                                   table={table}
                                   selected={row.getIsSelected()}
                                 checked={checkedRows[row.id] ?? false}
+                                  modelColumnWidth={modelColumnWidth}
                                   rowRef={rowVirtualizer.measureElement}
                                 />
                               </React.Fragment>
@@ -521,6 +597,7 @@ function Row<TData>({
   checked,
   rowRef,
   dataIndex,
+  modelColumnWidth,
 }: {
   row: Row<TData>;
   table: TTable<TData>;
@@ -532,6 +609,7 @@ function Row<TData>({
   rowRef?: (el: HTMLTableRowElement | null) => void;
   // Virtual index for measurement mapping
   dataIndex?: number;
+  modelColumnWidth: number;
 }) {
   return (
     <TableRow
@@ -574,7 +652,13 @@ function Row<TData>({
               cell.column.columnDef.meta?.cellClassName,
             )}
             style={{
-              width: cell.column.id === "gpu_model" ? "auto" : `${cell.column.getSize()}px`,
+              width:
+                cell.column.id === "gpu_model" ? modelColumnWidth : cell.column.getSize(),
+              minWidth: cell.column.columnDef.minSize,
+              maxWidth:
+                cell.column.id === "gpu_model"
+                  ? modelColumnWidth
+                  : undefined,
             }}
           >
             {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -588,5 +672,8 @@ function Row<TData>({
 const MemoizedRow = React.memo(
   Row,
   (prev, next) =>
-    prev.row.id === next.row.id && prev.selected === next.selected && prev.checked === next.checked,
+    prev.row.id === next.row.id &&
+    prev.selected === next.selected &&
+    prev.checked === next.checked &&
+    prev.modelColumnWidth === next.modelColumnWidth,
 ) as typeof Row;

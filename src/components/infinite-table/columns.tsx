@@ -98,14 +98,14 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       if (!displayName) return <span className="text-muted-foreground">N/A</span>;
 
       return (
-        <div className="w-full overflow-hidden" style={{ maxWidth: '250px' }}><span className="block truncate font-medium">{displayName}</span></div>
+        <span className="block truncate font-medium">{displayName}</span>
       );
     },
-    size: 1, // Use flex sizing instead of fixed pixels
+    size: 250,
     minSize: 250,
     meta: {
-      cellClassName: "overflow-hidden min-w-[250px] w-[250px] max-w-[250px] md:flex-1 md:max-w-none",
-      headerClassName: "text-center overflow-hidden min-w-[250px] w-[250px] max-w-[250px] md:flex-1 md:max-w-none",
+      cellClassName: "overflow-hidden min-w-[250px]",
+      headerClassName: "text-center overflow-hidden min-w-[250px]",
     },
   },
   {
