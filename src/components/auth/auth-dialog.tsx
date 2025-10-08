@@ -182,12 +182,7 @@ export function AuthDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className={cn(
-          "w-full max-w-md gap-0 p-0 sm:rounded-2xl",
-          "border-border/60 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
-        )}
-      >
+      <DialogContent className={cn("max-w-md gap-0 p-0 sm:rounded-2xl", "border-border bg-background")}>
         <div className="grid gap-6 p-6">
           <DialogHeader className="text-left">
             <DialogTitle>{copy.title}</DialogTitle>
