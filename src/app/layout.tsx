@@ -8,6 +8,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { AuthProvider } from "@/providers/auth-provider";
+import { AuthDialogProvider } from "@/providers/auth-dialog-provider";
 
 const TITLE = "Powerful Data-Table for React | OpenStatus";
 const DESCRIPTION =
@@ -66,8 +67,10 @@ export default function RootLayout({
                   defaultTheme="system"
                   enableSystem
                 >
-                  {children}
-                  <Toaster richColors />
+                  <AuthDialogProvider>
+                    {children}
+                    <Toaster richColors />
+                  </AuthDialogProvider>
                 </ThemeProvider>
               </NuqsAdapter>
             </ReactQueryProvider>

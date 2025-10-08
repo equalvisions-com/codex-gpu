@@ -1,29 +1,29 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 
 export default function SignOutPage() {
   const router = useRouter();
+  const [, startTransition] = useTransition();
 
   useEffect(() => {
     let cancelled = false;
-    authClient
-      .signOut({
-        fetchOptions: {
-          onSuccess: () => {
-            if (!cancelled) router.replace("/signin");
-          },
-        },
-      })
-      .catch(() => {
-        if (!cancelled) router.replace("/signin");
+    const navigateToSignIn = () => {
+      if (cancelled) return;
+      startTransition(() => {
+        router.replace("/", { scroll: false });
+        router.refresh();
       });
+    };
+
+    authClient.signOut().then(navigateToSignIn).catch(navigateToSignIn);
+
     return () => {
       cancelled = true;
     };
-  }, [router]);
+  }, [router, startTransition]);
 
   return (
     <main className="mx-auto max-w-sm p-6">
@@ -32,5 +32,3 @@ export default function SignOutPage() {
     </main>
   );
 }
-
-

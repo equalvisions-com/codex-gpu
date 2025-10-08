@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useAuth } from "@/providers/auth-client-provider";
+import { useAuthDialog } from "@/providers/auth-dialog-provider";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface SidebarLinkProps {
   href?: string;
@@ -69,6 +71,15 @@ export function SidebarNav() {
   const searchParams = useSearchParams();
   const { session, signOut } = useAuth();
   const [isSigningOut, startSignOutTransition] = React.useTransition();
+  const { showSignIn } = useAuthDialog();
+  const queryClient = useQueryClient();
+  const handleSignIn = React.useCallback(() => {
+    const callbackUrl =
+      typeof window !== "undefined"
+        ? `${window.location.pathname}${window.location.search}`
+        : "/";
+    showSignIn({ callbackUrl });
+  }, [showSignIn]);
 
   const handleFavoritesClick = () => {
     const params = new URLSearchParams(searchParams.toString());
@@ -87,10 +98,12 @@ export function SidebarNav() {
       try {
         await signOut();
       } finally {
+        queryClient.clear();
+        router.replace("/", { scroll: false });
         router.refresh();
       }
     });
-  }, [router, signOut]);
+  }, [queryClient, router, signOut]);
 
   return (
     <nav className="space-y-3">
@@ -121,7 +134,7 @@ export function SidebarNav() {
               disabled={isSigningOut}
             />
           ) : (
-            <SidebarLink href="/signin" label="Sign in" icon={LogIn} />
+            <SidebarLink label="Sign in" icon={LogIn} onClick={handleSignIn} />
           )}
         </div>
       </div>

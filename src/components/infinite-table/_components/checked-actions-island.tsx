@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
 import { useDataTable } from "@/components/data-table/data-table-provider";
 import { Button } from "@/components/ui/button";
@@ -26,15 +25,25 @@ import {
   removeFavorites,
   FavoritesAPIError
 } from "@/lib/favorites/api-client";
+import { useAuthDialog } from "@/providers/auth-dialog-provider";
+import { useAuth } from "@/providers/auth-client-provider";
 
 export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteKeys?: FavoriteKey[] }) {
   const { checkedRows, table, toggleCheckedRow } = useDataTable<ColumnSchema, unknown>();
   const queryClient = useQueryClient();
-  const router = useRouter();
   const bcRef = React.useRef<BroadcastChannel | null>(null);
   const isMountedRef = React.useRef(true);
   const { message: favoritesNotice, isOpen: isFavoritesOpen, show: showFavoritesNotice } = useEphemeralNotice(1600);
   const [noticeVariant, setNoticeVariant] = React.useState<"success" | "error">("success");
+  const { showSignIn } = useAuthDialog();
+  const { session, isPending: authPending } = useAuth();
+  const promptForAuth = React.useCallback(() => {
+    const callbackUrl =
+      typeof window !== "undefined"
+        ? `${window.location.pathname}${window.location.search}`
+        : "/";
+    showSignIn({ callbackUrl });
+  }, [showSignIn]);
 
   // Cleanup flag (other timers are handled in the hook)
   React.useEffect(() => {
@@ -88,6 +97,15 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
       }
     }
   }, [favorites]);
+
+  React.useEffect(() => {
+    if (authPending) return;
+    if (!session) {
+      prevFavoritesRef.current = "";
+      setLocalFavorites(undefined);
+      void queryClient.removeQueries({ queryKey: FAVORITES_QUERY_KEY });
+    }
+  }, [authPending, queryClient, session]);
 
   /**
    * Initialize BroadcastChannel for cross-tab synchronization
@@ -239,7 +257,7 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
         // Handle specific error types with lightweight inline-styled toasts (no global favorites styling)
         if (error instanceof FavoritesAPIError) {
           if (error.status === 401) {
-            router.push("/signin");
+            promptForAuth();
             return;
           }
           
@@ -347,6 +365,4 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
   if (typeof document === "undefined") return content;
   return createPortal(content, document.body);
 }
-
-
 
