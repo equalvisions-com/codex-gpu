@@ -301,6 +301,10 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     return Math.max(availableWidth, minimumModelColumnWidth);
   }, [tableContainerWidth, effectiveFixedColumnsWidth, minimumModelColumnWidth]);
 
+  const totalTableWidth = React.useMemo(() => {
+    return modelColumnWidth + effectiveFixedColumnsWidth;
+  }, [modelColumnWidth, effectiveFixedColumnsWidth]);
+
   React.useEffect(() => {
     const columnFiltersWithNullable = filterFields.map((field) => {
       const filterValue = columnFilters.find(
@@ -394,7 +398,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
         </div>
         <div
           className={cn(
-            "flex max-w-full flex-1 flex-col border-border sm:border-l"
+            "flex max-w-full flex-1 flex-col border-border sm:border-l min-w-0"
           )}
         >
           <div
@@ -413,6 +417,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
               containerOverflowVisible={false}
               // REMINDER: https://stackoverflow.com/questions/50361698/border-style-do-not-work-with-sticky-position-element
               className="border-separate border-spacing-0 w-auto min-w-full table-fixed"
+              style={{ width: totalTableWidth, minWidth: totalTableWidth }}
               containerClassName={cn(
                 "h-full max-h-[calc(100vh_-_var(--top-bar-height))] overscroll-x-none scrollbar-hide"
               )}
