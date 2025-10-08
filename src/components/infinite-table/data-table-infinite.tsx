@@ -133,8 +133,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   const containerRef = React.useRef<HTMLDivElement>(null);
   // searchParamsParser is provided as a prop
   const [_, setSearch] = useQueryStates(searchParamsParser);
-  const [tableContainerWidth, setTableContainerWidth] = React.useState<number>(0);
-  const [nonModelColumnsWidth, setNonModelColumnsWidth] = React.useState<number>(0);
 
   const onScroll = React.useCallback(
     (e: React.UIEvent<HTMLElement>) => {
@@ -237,18 +235,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   });
   const rowVirtualizer = containerVirtualizer;
 
-  React.useEffect(() => {
-    if (!containerRef.current) return;
-    const container = containerRef.current;
-    const updateWidth = () => {
-      setTableContainerWidth(container.clientWidth);
-    };
-    updateWidth();
-    const observer = new ResizeObserver(() => updateWidth());
-    observer.observe(container);
-    return () => observer.disconnect();
-  }, []);
-
   const columnSizingState = table.getState().columnSizing;
   const minimumModelColumnWidth =
     table.getColumn("gpu_model")?.columnDef.minSize ?? 250;
@@ -259,51 +245,21 @@ export function DataTableInfinite<TData, TValue, TMeta>({
       .reduce((acc, column) => acc + column.getSize(), 0);
   }, [table, columnSizingState]);
 
-  const measureNonModelColumnsWidth = React.useCallback(() => {
-    const tableElement = tableRef.current;
-    if (!tableElement) return;
-    const headerCells =
-      tableElement.querySelectorAll<HTMLTableCellElement>("thead th[data-column-id]");
-    let total = 0;
-    headerCells.forEach((cell) => {
-      if (cell.dataset.columnId !== "gpu_model") {
-        total += cell.getBoundingClientRect().width;
-      }
-    });
-    if (total > 0) {
-      setNonModelColumnsWidth((prev) =>
-        Math.abs(prev - total) > 0.5 ? total : prev,
-      );
-    }
-  }, []);
+  const effectiveFixedColumnsWidth = fixedColumnsWidth;
 
-  React.useLayoutEffect(() => {
-    const tableElement = tableRef.current;
-    if (!tableElement) return;
-    const observer = new ResizeObserver(() => {
-      measureNonModelColumnsWidth();
-    });
-    observer.observe(tableElement);
-    measureNonModelColumnsWidth();
-    return () => observer.disconnect();
-  }, [measureNonModelColumnsWidth, columnSizingState, rows.length]);
+  const modelColumnWidthValue = React.useMemo(() => {
+    return `max(${minimumModelColumnWidth}px, calc(100% - ${effectiveFixedColumnsWidth}px))`;
+  }, [minimumModelColumnWidth, effectiveFixedColumnsWidth]);
 
-  React.useLayoutEffect(() => {
-    measureNonModelColumnsWidth();
-  }, [measureNonModelColumnsWidth, tableContainerWidth]);
-
-  const effectiveFixedColumnsWidth =
-    nonModelColumnsWidth > 0 ? nonModelColumnsWidth : fixedColumnsWidth;
-
-  const modelColumnWidth = React.useMemo(() => {
-    if (!tableContainerWidth) return minimumModelColumnWidth;
-    const availableWidth = tableContainerWidth - effectiveFixedColumnsWidth;
-    return Math.max(availableWidth, minimumModelColumnWidth);
-  }, [tableContainerWidth, effectiveFixedColumnsWidth, minimumModelColumnWidth]);
-
-  const totalTableWidth = React.useMemo(() => {
-    return modelColumnWidth + effectiveFixedColumnsWidth;
-  }, [modelColumnWidth, effectiveFixedColumnsWidth]);
+  const tableWidthStyle = React.useMemo(
+    () =>
+      ({
+        "--model-column-width": modelColumnWidthValue,
+        width: "100%",
+        minWidth: `${effectiveFixedColumnsWidth + minimumModelColumnWidth}px`,
+      }) as React.CSSProperties,
+    [modelColumnWidthValue, effectiveFixedColumnsWidth, minimumModelColumnWidth],
+  );
 
   React.useEffect(() => {
     const columnFiltersWithNullable = filterFields.map((field) => {
@@ -417,7 +373,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
               containerOverflowVisible={false}
               // REMINDER: https://stackoverflow.com/questions/50361698/border-style-do-not-work-with-sticky-position-element
               className="border-separate border-spacing-0 w-auto min-w-full table-fixed"
-              style={{ width: totalTableWidth, minWidth: totalTableWidth }}
+              style={tableWidthStyle}
               containerClassName={cn(
                 "h-full max-h-[calc(100vh_-_var(--top-bar-height))] overscroll-x-none scrollbar-hide"
               )}
@@ -443,12 +399,15 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                           style={{
                             width:
                               header.id === "gpu_model"
-                                ? modelColumnWidth
+                                ? "var(--model-column-width)"
                                 : header.getSize(),
-                            minWidth: header.column.columnDef.minSize,
+                            minWidth:
+                              header.id === "gpu_model"
+                                ? "var(--model-column-width)"
+                                : header.column.columnDef.minSize,
                             maxWidth:
                               header.id === "gpu_model"
-                                ? modelColumnWidth
+                                ? "var(--model-column-width)"
                                 : undefined,
                           }}
                           aria-sort={
@@ -495,7 +454,11 @@ export function DataTableInfinite<TData, TValue, TMeta>({
             aria-live="polite"
               >
                 {isLoading || (isFetching && !data.length) ? (
-                  <RowSkeletons table={table} rows={skeletonRowCount} />
+                  <RowSkeletons
+                    table={table}
+                    rows={skeletonRowCount}
+                    modelColumnWidth="var(--model-column-width)"
+                  />
                 ) : table.getRowModel().rows?.length ? (
                   <React.Fragment>
                     {(() => {
@@ -520,7 +483,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                                   table={table}
                                   selected={row.getIsSelected()}
                                 checked={checkedRows[row.id] ?? false}
-                                  modelColumnWidth={modelColumnWidth}
+                                  modelColumnWidth="var(--model-column-width)"
                                   rowRef={rowVirtualizer.measureElement}
                                 />
                               </React.Fragment>
@@ -544,6 +507,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                             ? skeletonNextPageRowCount
                             : skeletonRowCount
                         }
+                        modelColumnWidth="var(--model-column-width)"
                       />
                     )}
                   </React.Fragment>
@@ -614,7 +578,7 @@ function Row<TData>({
   rowRef?: (el: HTMLTableRowElement | null) => void;
   // Virtual index for measurement mapping
   dataIndex?: number;
-  modelColumnWidth: number;
+  modelColumnWidth: string;
 }) {
   return (
     <TableRow
@@ -658,8 +622,13 @@ function Row<TData>({
             )}
             style={{
               width:
-                cell.column.id === "gpu_model" ? modelColumnWidth : cell.column.getSize(),
-              minWidth: cell.column.columnDef.minSize,
+                cell.column.id === "gpu_model"
+                  ? modelColumnWidth
+                  : cell.column.getSize(),
+              minWidth:
+                cell.column.id === "gpu_model"
+                  ? modelColumnWidth
+                  : cell.column.columnDef.minSize,
               maxWidth:
                 cell.column.id === "gpu_model"
                   ? modelColumnWidth

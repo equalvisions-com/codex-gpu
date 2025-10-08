@@ -74,14 +74,14 @@ export const columns: ColumnDef<ColumnSchema>[] = [
           {provider === "crusoe" && (
             <Image src="/logos/crusoe.png" alt="Crusoe" width={20} height={20} className="rounded" />
           )}
-          <span className="font-medium capitalize">{provider}</span>
+          <span className="capitalize">{provider}</span>
         </div>
       );
     },
     size: 155,
     minSize: 155,
     meta: {
-      cellClassName: "font-medium min-w-[155px]",
+      cellClassName: "min-w-[155px]",
       headerClassName: "text-center min-w-[155px]",
     },
   },
@@ -98,14 +98,14 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       if (!displayName) return <span className="text-muted-foreground">N/A</span>;
 
       return (
-        <span className="block truncate font-medium">{displayName}</span>
+        <span className="block truncate">{displayName}</span>
       );
     },
-    size: 250,
-    minSize: 250,
+    size: 261,
+    minSize: 261,
     meta: {
-      cellClassName: "overflow-hidden min-w-[250px]",
-      headerClassName: "text-center overflow-hidden min-w-[250px]",
+      cellClassName: "overflow-hidden min-w-[261px]",
+      headerClassName: "text-center overflow-hidden min-w-[261px]",
     },
   },
   {
@@ -148,7 +148,7 @@ export const columns: ColumnDef<ColumnSchema>[] = [
 
       return (
         <>
-          <span className="font-mono font-medium">${price.toFixed(2)}</span>{" "}
+          <span className="font-mono">${price.toFixed(2)}</span>{" "}
           <span className="font-mono text-muted-foreground">/hr</span>
         </>
       );
@@ -172,7 +172,7 @@ export const columns: ColumnDef<ColumnSchema>[] = [
 
       return (
         <>
-          <span className="font-mono font-medium">{gpuCount}</span>{" "}
+          <span className="font-mono">{gpuCount}</span>{" "}
           <span className="text-muted-foreground">{gpuCount === 1 ? 'GPU' : 'GPUs'}</span>
         </>
       );
@@ -218,7 +218,7 @@ export const columns: ColumnDef<ColumnSchema>[] = [
 
       return (
         <>
-          <span className="font-mono font-medium">{vcpus}</span>{" "}
+          <span className="font-mono">{vcpus}</span>{" "}
           <span className="text-muted-foreground">vCPUs</span>
         </>
       );
@@ -261,7 +261,7 @@ export const columns: ColumnDef<ColumnSchema>[] = [
     ),
     cell: ({ row }) => {
       const type = row.getValue<ColumnSchema["type"]>("type");
-      return type ? <span className="font-medium">{type}</span> : <span className="text-muted-foreground">N/A</span>;
+      return type ? <span>{type}</span> : <span className="text-muted-foreground">N/A</span>;
     },
     size: 155,
     minSize: 155,

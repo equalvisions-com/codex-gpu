@@ -29,7 +29,7 @@ export function DataTablePagination() {
   return (
     <div className="flex items-center justify-end space-x-4 md:space-x-6 lg:space-x-8">
       <div className="flex items-center space-x-2">
-        <p className="text-sm font-medium">Rows per page</p>
+        <p className="text-sm">Rows per page</p>
         <Select
           value={`${pagination.pageSize}`}
           onValueChange={(value) => {
@@ -48,7 +48,7 @@ export function DataTablePagination() {
           </SelectContent>
         </Select>
       </div>
-      <div className="flex items-center justify-center text-sm font-medium">
+      <div className="flex items-center justify-center text-sm">
         Page {pagination.pageIndex + 1} of {pageCount}
       </div>
       <div className="flex items-center space-x-2">

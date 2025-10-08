@@ -29,7 +29,7 @@ interface SidebarLinkProps {
 
 function SidebarLink({ href, label, icon: Icon, onClick, disabled }: SidebarLinkProps) {
   const baseClasses =
-    "group flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm font-medium transition-colors text-foreground hover:bg-muted/50 hover:text-accent-foreground";
+    "group flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm transition-colors text-foreground hover:bg-muted/50 hover:text-accent-foreground";
 
   if (onClick) {
     return (
@@ -95,7 +95,7 @@ export function SidebarNav() {
   return (
     <nav className="space-y-3">
       <div className="space-y-1">
-        <div className="mb-1 px-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        <div className="mb-1 px-2 text-xs uppercase tracking-wide text-muted-foreground">
           Deploy
         </div>
         <div className="space-y-1">
@@ -106,7 +106,7 @@ export function SidebarNav() {
       </div>
 
       <div className="space-y-1">
-        <div className="mb-1 px-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        <div className="mb-1 px-2 text-xs uppercase tracking-wide text-muted-foreground">
           Account
         </div>
         <div className="space-y-1">
@@ -127,7 +127,7 @@ export function SidebarNav() {
       </div>
 
       <div className="space-y-1">
-        <div className="mb-1 px-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        <div className="mb-1 px-2 text-xs uppercase tracking-wide text-muted-foreground">
           Resources
         </div>
         <div className="space-y-1">

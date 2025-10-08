@@ -29,7 +29,7 @@ export const Calendar = ({
         [UI.Months]: "flex relative",
         [UI.Month]: "space-y-4 ml-0",
         [UI.MonthCaption]: "flex justify-center items-center h-7",
-        [UI.CaptionLabel]: "text-sm font-medium",
+        [UI.CaptionLabel]: "text-sm",
         [UI.PreviousMonthButton]: cn(
           buttonVariants({ variant: "outline" }),
           "absolute left-1 top-0 h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"

@@ -60,7 +60,7 @@ export function PopoverPercentile({
       >
         <p>
           Calculated from filtered result of{" "}
-          <span className="font-medium font-mono">
+          <span className="font-mono">
             {formatCompactNumber(filterRows)}
           </span>{" "}
           rows.

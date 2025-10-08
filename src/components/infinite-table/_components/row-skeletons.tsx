@@ -9,25 +9,39 @@ import * as React from "react";
 interface RowSkeletonsProps<TData> {
   table: TTable<TData>;
   rows?: number;
+  modelColumnWidth: string;
 }
 
-export function RowSkeletons<TData>({ table, rows = 10 }: RowSkeletonsProps<TData>) {
+export function RowSkeletons<TData>({
+  table,
+  rows = 10,
+  modelColumnWidth,
+}: RowSkeletonsProps<TData>) {
   const visibleColumns = table.getVisibleLeafColumns();
 
   return (
     <React.Fragment>
       {Array.from({ length: rows }).map((_, rowIndex) => (
-        <TableRow key={`skeleton-${rowIndex}`} className={cn("[&>:not(:last-child)]:border-r", "hover:bg-transparent")}
+        <TableRow
+          key={`skeleton-${rowIndex}`}
+          className={cn("[&>:not(:last-child)]:border-r", "hover:bg-transparent")}
         >
           {visibleColumns.map((column) => {
             const id = column.id;
+            const width =
+              id === "gpu_model" ? modelColumnWidth : column.getSize();
 
             return (
               <TableCell
                 key={`${id}-${rowIndex}`}
-                className={cn("truncate border-b border-border p-[12px]", column.columnDef.meta?.cellClassName)}
+                className={cn(
+                  "truncate border-b border-border p-[12px]",
+                  column.columnDef.meta?.cellClassName,
+                )}
                 style={{
-                  width: id === "gpu_model" ? "auto" : `${column.getSize()}px`,
+                  width,
+                  minWidth: id === "gpu_model" ? modelColumnWidth : column.columnDef.minSize,
+                  maxWidth: id === "gpu_model" ? modelColumnWidth : undefined,
                 }}
               >
                 {id === "blank" ? (
@@ -40,7 +54,7 @@ export function RowSkeletons<TData>({ table, rows = 10 }: RowSkeletonsProps<TDat
                     <Skeleton className="h-4 w-[6rem]" />
                   </div>
                 ) : id === "gpu_model" ? (
-                  <Skeleton className="h-4 w-[200px]" />
+                  <Skeleton className="h-4 w-full" />
                 ) : id === "price_hour_usd" ? (
                   <div className="flex items-center justify-center">
                     <Skeleton className="h-4 w-10" />
@@ -72,5 +86,3 @@ export function RowSkeletons<TData>({ table, rows = 10 }: RowSkeletonsProps<TDat
     </React.Fragment>
   );
 }
-
-

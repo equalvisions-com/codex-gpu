@@ -64,7 +64,7 @@ export const sheetFields = [
     label: "Provider",
     type: "readonly",
     component: (props) => (
-      <div className="font-medium text-lg capitalize">{props.provider}</div>
+      <div className="text-lg capitalize">{props.provider}</div>
     ),
     skeletonClassName: "w-24",
   },
@@ -73,7 +73,7 @@ export const sheetFields = [
     label: "GPU Model",
     type: "readonly",
     component: (props) => props.gpu_model ? (
-      <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-sm font-medium text-blue-800">
+      <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-sm text-blue-800">
         {props.gpu_model}
       </span>
     ) : <span className="text-muted-foreground">N/A</span>,
@@ -85,7 +85,7 @@ export const sheetFields = [
     type: "readonly",
     component: (props) => props.gpu_count ? (
       <div className="flex items-center gap-1">
-        <span className="font-mono font-medium text-lg">{props.gpu_count}x</span>
+        <span className="font-mono text-lg">{props.gpu_count}x</span>
         <span className="text-muted-foreground">GPUs</span>
       </div>
     ) : <span className="text-muted-foreground">N/A</span>,
@@ -96,7 +96,7 @@ export const sheetFields = [
     label: "VRAM",
     type: "readonly",
     component: (props) => (
-      <span className="font-mono font-medium">
+      <span className="font-mono">
         {props.vram_gb ? `${props.vram_gb}GB` : 'N/A'}
       </span>
     ),
@@ -107,7 +107,7 @@ export const sheetFields = [
     label: "vCPUs",
     type: "readonly",
     component: (props) => (
-      <span className="font-mono font-medium">
+      <span className="font-mono">
         {props.vcpus || 'N/A'}
       </span>
     ),
@@ -118,7 +118,7 @@ export const sheetFields = [
     label: "System RAM",
     type: "readonly",
     component: (props) => (
-      <span className="font-mono font-medium">
+      <span className="font-mono">
         {props.system_ram_gb ? `${props.system_ram_gb}GB` : 'N/A'}
       </span>
     ),
@@ -130,7 +130,7 @@ export const sheetFields = [
     type: "readonly",
     component: (props) => props.price_hour_usd ? (
       <div className="flex items-center gap-1">
-        <span className="font-mono font-medium text-lg">${props.price_hour_usd.toFixed(3)}</span>
+        <span className="font-mono text-lg">${props.price_hour_usd.toFixed(3)}</span>
         <span className="text-muted-foreground">per hour</span>
       </div>
     ) : <span className="text-muted-foreground">N/A</span>,

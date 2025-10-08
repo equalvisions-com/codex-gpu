@@ -43,7 +43,7 @@ function RowAction({
         copy(value.toString());
       }}
     >
-      <TableCell className="bg-muted/50 py-1 font-mono font-medium">
+      <TableCell className="bg-muted/50 py-1 font-mono">
         {label}
       </TableCell>
       <TableCell className="relative py-1 font-mono">
