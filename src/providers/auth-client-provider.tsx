@@ -19,35 +19,28 @@ interface AuthClientProviderProps {
 }
 
 export function AuthClientProvider({ initialSession, children }: AuthClientProviderProps) {
-  const seededRef = React.useRef(false);
-  if (!seededRef.current && initialSession) {
-    const sessionAtom = authClient.$store.atoms.session;
-    const currentValue = sessionAtom.get();
-    sessionAtom.set({
-      ...currentValue,
-      data: initialSession,
-      error: null,
-    });
-    seededRef.current = true;
-  }
-
   const { data, isPending, refetch } = authClient.useSession();
+  const [session, setSession] = React.useState<Session | null>(initialSession);
 
-  const session = React.useMemo<Session | null>(() => {
+  React.useEffect(() => {
+    setSession(initialSession);
+  }, [initialSession]);
+
+  React.useEffect(() => {
     if (!isPending) {
-      return (data ?? null) as Session | null;
+      setSession((data ?? null) as Session | null);
     }
-    return initialSession;
-  }, [data, initialSession, isPending]);
+  }, [data, isPending]);
 
-  const value = React.useMemo<AuthContextValue>(() => {
-    return {
+  const value = React.useMemo<AuthContextValue>(
+    () => ({
       session,
       isPending,
       refetch,
       signOut: authClient.signOut,
-    };
-  }, [isPending, refetch, session]);
+    }),
+    [isPending, refetch, session]
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

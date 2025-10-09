@@ -18,6 +18,7 @@ import { HuggingFace } from "@/components/icons/huggingface";
 import { authClient } from "@/lib/auth-client";
 import { useAuth } from "@/providers/auth-client-provider";
 import { cn } from "@/lib/utils";
+import { Loader2 } from "lucide-react";
 
 export type AuthView = "signIn" | "signUp";
 
@@ -48,7 +49,7 @@ export function AuthDialog({
   const [password, setPassword] = React.useState("");
   const [name, setName] = React.useState("");
   const [pending, setPending] = React.useState(false);
-  const [socialPending, setSocialPending] = React.useState<"github" | "huggingface" | null>(null);
+  const [socialPending, setSocialPending] = React.useState<"github" | "google" | "huggingface" | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const { refetch } = useAuth();
 
@@ -80,16 +81,16 @@ export function AuthDialog({
   const copy = React.useMemo(() => {
     if (view === "signIn") {
       return {
-        title: "Sign in",
-        description: "Use your credentials to access your OpenStatus workspace.",
+        title: "Sign in to OpenStatus",
+        description: "Welcome back! Please sign in to continue.",
         cta: pending ? "Signing in…" : "Continue",
-        alternateLabel: "Need an account?",
-        alternateAction: "Create one",
+        alternateLabel: "Don’t have an account?",
+        alternateAction: "Sign up",
       };
     }
 
     return {
-      title: "Create an account",
+      title: "Create your OpenStatus account",
       description: "Start building with OpenStatus in just a couple of steps.",
       cta: pending ? "Creating…" : "Create account",
       alternateLabel: "Already have an account?",
@@ -165,6 +166,22 @@ export function AuthDialog({
     }
   };
 
+  const handleGoogle = async () => {
+    setSocialPending("google");
+    setError(null);
+    try {
+      await authClient.signIn.social({
+        provider: "google",
+        callbackURL: callbackUrl,
+        errorCallbackURL: errorCallbackUrl ?? callbackUrl ?? "/",
+        newUserCallbackURL: callbackUrl,
+      });
+    } catch (err) {
+      setError("Google sign in failed. Please try again.");
+      setSocialPending(null);
+    }
+  };
+
   const handleGithub = async () => {
     setSocialPending("github");
     setError(null);
@@ -200,11 +217,45 @@ export function AuthDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className={cn("max-w-md gap-0 p-0 sm:rounded-2xl", "border-border bg-background")}>
-        <div className="grid gap-6 p-6">
+        <div className="grid gap-4 p-4">
           <DialogHeader className="text-left">
             <DialogTitle>{copy.title}</DialogTitle>
             <DialogDescription>{copy.description}</DialogDescription>
           </DialogHeader>
+
+          <div className="grid gap-4">
+            <div className="flex items-center justify-center gap-3">
+              <SocialButton
+                provider="google"
+                icon={Google}
+                pending={socialPending === "google"}
+                disabled={socialPending !== null}
+                onClick={handleGoogle}
+                label="Continue with Google"
+              />
+              <SocialButton
+                provider="github"
+                icon={Github}
+                pending={socialPending === "github"}
+                disabled={socialPending !== null}
+                onClick={handleGithub}
+                label="Continue with GitHub"
+              />
+              <SocialButton
+                provider="huggingface"
+                icon={HuggingFace}
+                pending={socialPending === "huggingface"}
+                disabled={socialPending !== null}
+                onClick={handleHuggingFace}
+                label="Continue with Hugging Face"
+              />
+            </div>
+            <div className="flex items-center gap-3 text-xs uppercase tracking-wide text-muted-foreground">
+              <Separator className="flex-1" />
+              <span>or</span>
+              <Separator className="flex-1" />
+            </div>
+          </div>
 
           {error ? (
             <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
@@ -215,7 +266,7 @@ export function AuthDialog({
           {view === "signIn" ? (
             <form className="grid gap-4" onSubmit={handleEmailSignIn}>
               <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">Email address</Label>
                 <Input
                   id="email"
                   type="email"
@@ -291,12 +342,12 @@ export function AuthDialog({
           )}
 
           <div className="grid gap-3">
-            <div className="flex items-center gap-3 text-sm text-muted-foreground">
-              {copy.alternateLabel}
+            <div className="text-center text-sm text-muted-foreground">
+              {copy.alternateLabel}{" "}
               <Button
                 type="button"
                 variant="link"
-                className="px-0"
+                className="px-0 text-sm"
                 onClick={() =>
                   switchView(view === "signIn" ? "signUp" : "signIn")
                 }
@@ -304,41 +355,44 @@ export function AuthDialog({
                 {copy.alternateAction}
               </Button>
             </div>
-            <Separator />
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleGithub}
-              disabled={socialPending !== null}
-              className="flex items-center justify-center gap-2"
-            >
-              <Github className="h-4 w-4" />
-              {socialPending === "github" ? "Redirecting…" : "Continue with GitHub"}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleHuggingFace}
-              disabled={socialPending !== null}
-              className="flex items-center justify-center gap-2"
-            >
-              <HuggingFace className="h-4 w-4" />
-              {socialPending === "huggingface" ? "Redirecting…" : "Continue with Hugging Face"}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              disabled
-              title="Google SSO coming soon"
-              className="flex items-center justify-center gap-2"
-            >
-              <Google className="h-4 w-4" />
-              <span>Continue with Google</span>
-              <span className="text-xs text-muted-foreground">(soon)</span>
-            </Button>
           </div>
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+interface SocialButtonProps {
+  provider: "github" | "google" | "huggingface";
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  onClick?: () => void;
+  disabled?: boolean;
+  pending?: boolean;
+  label: string;
+}
+
+function SocialButton({
+  icon: Icon,
+  onClick,
+  disabled,
+  pending,
+  label,
+}: SocialButtonProps) {
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      onClick={onClick}
+      disabled={disabled}
+      title={label}
+      className="flex py-2 w-full items-center justify-center rounded-lg border border-border bg-background transition hover:bg-accent disabled:cursor-not-allowed disabled:opacity-70"
+    >
+      {pending ? (
+        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+      ) : (
+        <Icon className="h-5 w-5" />
+      )}
+      <span className="sr-only">{label}</span>
+    </Button>
   );
 }
