@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Github } from "@/components/icons/github";
 import { Google } from "@/components/icons/google";
+import { HuggingFace } from "@/components/icons/huggingface";
 import { authClient } from "@/lib/auth-client";
 import { useAuth } from "@/providers/auth-client-provider";
 import { cn } from "@/lib/utils";
@@ -47,7 +48,7 @@ export function AuthDialog({
   const [password, setPassword] = React.useState("");
   const [name, setName] = React.useState("");
   const [pending, setPending] = React.useState(false);
-  const [socialPending, setSocialPending] = React.useState(false);
+  const [socialPending, setSocialPending] = React.useState<"github" | "huggingface" | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const { refetch } = useAuth();
 
@@ -65,7 +66,7 @@ export function AuthDialog({
   React.useEffect(() => {
     if (!open) {
       setPending(false);
-      setSocialPending(false);
+      setSocialPending(null);
       setError(null);
       setPassword("");
       setName("");
@@ -165,7 +166,7 @@ export function AuthDialog({
   };
 
   const handleGithub = async () => {
-    setSocialPending(true);
+    setSocialPending("github");
     setError(null);
     try {
       await authClient.signIn.social({
@@ -176,7 +177,23 @@ export function AuthDialog({
       });
     } catch (err) {
       setError("GitHub sign in failed. Please try again.");
-      setSocialPending(false);
+      setSocialPending(null);
+    }
+  };
+
+  const handleHuggingFace = async () => {
+    setSocialPending("huggingface");
+    setError(null);
+    try {
+      await authClient.signIn.social({
+        provider: "huggingface",
+        callbackURL: callbackUrl,
+        errorCallbackURL: errorCallbackUrl ?? callbackUrl ?? "/",
+        newUserCallbackURL: callbackUrl,
+      });
+    } catch (err) {
+      setError("Hugging Face sign in failed. Please try again.");
+      setSocialPending(null);
     }
   };
 
@@ -292,18 +309,32 @@ export function AuthDialog({
               type="button"
               variant="outline"
               onClick={handleGithub}
-              disabled={socialPending}
+              disabled={socialPending !== null}
               className="flex items-center justify-center gap-2"
             >
               <Github className="h-4 w-4" />
-              {socialPending ? "Redirecting…" : "Continue with GitHub"}
+              {socialPending === "github" ? "Redirecting…" : "Continue with GitHub"}
             </Button>
             <Button
               type="button"
               variant="outline"
-              className="flex items-center justify-center gap-2">
+              onClick={handleHuggingFace}
+              disabled={socialPending !== null}
+              className="flex items-center justify-center gap-2"
+            >
+              <HuggingFace className="h-4 w-4" />
+              {socialPending === "huggingface" ? "Redirecting…" : "Continue with Hugging Face"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled
+              title="Google SSO coming soon"
+              className="flex items-center justify-center gap-2"
+            >
               <Google className="h-4 w-4" />
               <span>Continue with Google</span>
+              <span className="text-xs text-muted-foreground">(soon)</span>
             </Button>
           </div>
         </div>
