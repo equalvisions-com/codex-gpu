@@ -7,8 +7,6 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
   Server,
-  BookOpen,
-  HelpCircle,
   Settings as SettingsIcon,
   Star,
   Cpu,
@@ -136,16 +134,6 @@ export function SidebarNav() {
           ) : (
             <SidebarLink label="Sign in" icon={LogIn} onClick={handleSignIn} />
           )}
-        </div>
-      </div>
-
-      <div className="space-y-1">
-        <div className="mb-1 px-2 text-xs uppercase tracking-wide text-muted-foreground">
-          Resources
-        </div>
-        <div className="space-y-1">
-          <SidebarLink href="/docs" label="Documentation" icon={BookOpen} />
-          <SidebarLink href="/help" label="Support" icon={HelpCircle} />
         </div>
       </div>
     </nav>

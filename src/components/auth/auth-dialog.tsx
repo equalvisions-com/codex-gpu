@@ -52,6 +52,23 @@ export function AuthDialog({
   const [socialPending, setSocialPending] = React.useState<"github" | "google" | "huggingface" | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const { refetch } = useAuth();
+  const defaultAvatarDataUrl = React.useMemo(() => {
+    const randomColor = () => Math.floor(Math.random() * 256);
+    const colorA = `rgb(${randomColor()},${randomColor()},${randomColor()})`;
+    const colorB = `rgb(${randomColor()},${randomColor()},${randomColor()})`;
+    const svgString = `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" shape-rendering="geometricPrecision">
+        <defs>
+          <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:${colorA}" />
+            <stop offset="100%" style="stop-color:${colorB}" />
+          </linearGradient>
+        </defs>
+        <circle cx="50" cy="50" r="50" fill="url(#g)" />
+      </svg>
+    `;
+    return `data:image/svg+xml;utf8,${encodeURIComponent(svgString)}`;
+  }, []);
 
   React.useEffect(() => {
     setView(initialView);
@@ -138,16 +155,22 @@ export function AuthDialog({
 
   const handleEmailSignUp = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const normalizedName = name.trim();
+    if (!normalizedName) {
+      setError("Please enter your name.");
+      return;
+    }
+
     setPending(true);
     setError(null);
 
     try {
-      const normalizedName = name.trim();
       const result = await authClient.signUp.email(
         {
           email,
           password,
           name: normalizedName,
+          image: defaultAvatarDataUrl,
           callbackURL: callbackUrl,
         },
         {
@@ -304,6 +327,7 @@ export function AuthDialog({
                   type="text"
                   autoComplete="name"
                   placeholder="Ada Lovelace"
+                  required
                   value={name}
                   onChange={(event) => setName(event.target.value)}
                 />
