@@ -345,7 +345,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
           <div className="p-[12px] border-b border-border">
             <DataTableFilterCommand searchParamsParser={searchParamsParser} />
           </div>
-          <div className="flex-1 p-[12px] sm:overflow-y-scroll scrollbar-hide">
+          <div className="flex flex-1 p-[12px] sm:overflow-y-scroll scrollbar-hide">
             <SidebarNav />
           </div>
           <div className="border-t border-border bg-background p-4 md:sticky md:bottom-0">
