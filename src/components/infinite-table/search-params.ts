@@ -42,6 +42,7 @@ export const searchParamsParser = {
   system_ram_gb: parseAsArrayOf(parseAsInteger, SLIDER_DELIMITER),
   price_hour_usd: parseAsArrayOf(parseAsFloat, SLIDER_DELIMITER),
   observed_at: parseAsArrayOf(parseAsTimestamp, RANGE_DELIMITER),
+  search: parseAsString,
   // REQUIRED FOR SORTING & PAGINATION
   sort: parseAsSort,
   size: parseAsInteger.withDefault(50),

@@ -40,6 +40,25 @@ export function filterData(
       const filter = filters[key as keyof typeof filters];
       if (filter === undefined || filter === null) continue;
 
+      if (key === "search" && typeof filter === "string") {
+        const needle = filter.trim().toLowerCase();
+        if (!needle) continue;
+        const haystacks = [
+          row.provider,
+          row.gpu_model,
+          row.item,
+          row.region,
+          row.zone,
+          row.type,
+        ]
+          .filter(Boolean)
+          .map((value) => String(value).toLowerCase());
+
+        const matches = haystacks.some((value) => value.includes(needle));
+        if (!matches) return false;
+        continue;
+      }
+
       // Handle slider filters (gpu_count, vram_gb, vcpus, system_ram_gb, price_hour_usd)
       if ((key === "gpu_count" || key === "vram_gb" || key === "vcpus" || key === "system_ram_gb" || key === "price_hour_usd") && isArrayOfNumbers(filter)) {
         let value: number | undefined;

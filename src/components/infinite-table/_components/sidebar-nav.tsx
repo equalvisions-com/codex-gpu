@@ -19,6 +19,7 @@ import type { LucideIcon } from "lucide-react";
 import { useAuth } from "@/providers/auth-client-provider";
 import { useAuthDialog } from "@/providers/auth-dialog-provider";
 import { useQueryClient } from "@tanstack/react-query";
+import { useHotKey } from "@/hooks/use-hot-key";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -30,6 +31,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
+import SpotlightSearchDialog from "./spotlight-search-dialog";
 
 interface SidebarLinkProps {
   href?: string;
@@ -172,6 +174,9 @@ export function SidebarNav() {
   const [isSigningOut, startSignOutTransition] = React.useTransition();
   const { showSignIn } = useAuthDialog();
   const queryClient = useQueryClient();
+  const [isSpotlightOpen, setIsSpotlightOpen] = React.useState(false);
+
+  useHotKey(() => setIsSpotlightOpen(true), "k");
   const handleSignIn = React.useCallback(() => {
     const callbackUrl =
       typeof window !== "undefined"
@@ -182,14 +187,14 @@ export function SidebarNav() {
 
   const handleFavoritesClick = () => {
     const params = new URLSearchParams(searchParams.toString());
-    params.set('favorites', 'true');
+    params.set("favorites", "true");
     router.push(`?${params.toString()}`, { scroll: false });
   };
 
   const handleGPUsClick = () => {
     const params = new URLSearchParams(searchParams.toString());
-    params.delete('favorites'); // Remove favorites filter when going to main view
-    router.push(params.toString() ? `?${params.toString()}` : '/', { scroll: false });
+    params.delete("favorites"); // Remove favorites filter when going to main view
+    router.push(params.toString() ? `?${params.toString()}` : "/", { scroll: false });
   };
 
   const handleSignOut = React.useCallback(() => {
@@ -214,7 +219,11 @@ export function SidebarNav() {
           <SidebarLink label="GPUs" icon={Server} onClick={handleGPUsClick} />
           <SidebarLink href="/cpus" label="CPUs" icon={Cpu} />
           <SidebarLink href="/models" label="LLMs" icon={Bot} />
-          <SidebarLink href="/search" label="Search" icon={Search} />
+          <SidebarLink
+            label="Search"
+            icon={Search}
+            onClick={() => setIsSpotlightOpen(true)}
+          />
           <SidebarLink label="Favorites" icon={Star} onClick={handleFavoritesClick} />
           {!session ? (
             <SidebarLink label="Sign in" icon={LogIn} onClick={handleSignIn} />
@@ -234,6 +243,7 @@ export function SidebarNav() {
           />
         </div>
       ) : null}
+      <SpotlightSearchDialog open={isSpotlightOpen} onOpenChange={setIsSpotlightOpen} />
     </nav>
   );
 }

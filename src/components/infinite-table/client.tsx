@@ -151,17 +151,23 @@ export function Client({ initialFavoritesData, initialFavoriteKeys }: ClientProp
   const facets = isFavoritesMode ? {} : lastPage?.meta?.facets;
   const totalFetched = flatData?.length;
 
-  const { sort, start, size, uuid, cursor, direction, observed_at, ...filter } =
+  const { sort, start, size, uuid, cursor, direction, observed_at, search: globalSearch, ...filter } =
     search;
 
   const derivedColumnFilters = React.useMemo<ColumnFiltersState>(() => {
-    return Object.entries(filter)
+    const baseFilters = Object.entries(filter)
       .map(([key, value]) => ({
         id: key,
         value,
       }))
       .filter(({ value }) => value ?? undefined);
-  }, [filter]);
+
+    if (globalSearch) {
+      baseFilters.push({ id: "search", value: globalSearch });
+    }
+
+    return baseFilters;
+  }, [filter, globalSearch]);
 
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     derivedColumnFilters,

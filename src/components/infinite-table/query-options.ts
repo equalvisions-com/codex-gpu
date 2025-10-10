@@ -31,14 +31,16 @@ export const dataOptions = (search: SearchParamsType) => {
       searchParamsSerializer({ ...search, uuid: null }),
     ],
     queryFn: async ({ pageParam }) => {
-      const serialize = searchParamsSerializer({
+      const query = searchParamsSerializer({
         ...search,
         cursor: pageParam?.cursor ?? null,
-        start: pageParam?.cursor ? undefined as unknown as number : 0,
+        start: pageParam?.cursor ? (undefined as unknown as number) : 0,
         size: pageParam?.size,
         uuid: null,
       });
-      const response = await fetch(`/api${serialize}` , { next: { revalidate: 900, tags: ['pricing'] } });
+      const response = await fetch(`/api${query}`, {
+        next: { revalidate: 900, tags: ["pricing"] },
+      });
       const json = await response.json();
       return json as InfiniteQueryResponse<ColumnSchema[], LogsMeta>;
     },

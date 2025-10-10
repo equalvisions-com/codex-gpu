@@ -8,7 +8,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/custom/table";
-import { DataTableFilterCommand } from "@/components/data-table/data-table-filter-command";
 import { DataTableProvider } from "@/components/data-table/data-table-provider";
 import { MemoizedDataTableSheetContent } from "@/components/data-table/data-table-sheet/data-table-sheet-content";
 import { DataTableSheetDetails } from "@/components/data-table/data-table-sheet/data-table-sheet-details";
@@ -270,7 +269,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
       return { id: field.value, value: filterValue.value };
     });
 
-    const search = columnFiltersWithNullable.reduce(
+    const searchEntries = columnFiltersWithNullable.reduce(
       (prev, curr) => {
         prev[curr.id as string] = curr.value;
         return prev;
@@ -278,7 +277,13 @@ export function DataTableInfinite<TData, TValue, TMeta>({
       {} as Record<string, unknown>,
     );
 
-    setSearch(search);
+    const globalSearchFilter = columnFilters.find((filter) => filter.id === "search");
+    searchEntries.search =
+      typeof globalSearchFilter?.value === "string" && globalSearchFilter.value.trim().length
+        ? globalSearchFilter.value
+        : null;
+
+    setSearch(searchEntries);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [columnFilters]);
 
@@ -321,6 +326,8 @@ export function DataTableInfinite<TData, TValue, TMeta>({
       rowSelection={rowSelection}
       checkedRows={checkedRows}
       toggleCheckedRow={toggleCheckedRow}
+      setColumnFilters={onColumnFiltersChange as (filters: ColumnFiltersState) => void}
+      setRowSelection={onRowSelectionChange as (selection: RowSelectionState) => void}
       enableColumnOrdering={false}
       isLoading={isFetching || isLoading}
       getFacetedUniqueValues={getFacetedUniqueValues}
@@ -341,9 +348,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
         >
           <div className="border-b border-border bg-background p-2 md:sticky md:top-0">
             <DataTableToolbar />
-          </div>
-          <div className="p-[12px] border-b border-border">
-            <DataTableFilterCommand searchParamsParser={searchParamsParser} />
           </div>
           <div className="flex flex-1 p-[12px] sm:overflow-y-scroll scrollbar-hide">
             <SidebarNav />
@@ -556,7 +560,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
 /**
  * REMINDER: this is the heaviest component in the table if lots of rows
  * Some other components are rendered more often necessary, but are fixed size (not like rows that can grow in height)
- * e.g. DataTableFilterControls, DataTableFilterCommand, DataTableToolbar, DataTableHeader
+ * e.g. DataTableFilterControls, DataTableToolbar, DataTableHeader
  */
 
 function Row<TData>({

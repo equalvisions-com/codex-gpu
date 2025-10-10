@@ -22,6 +22,8 @@ interface DataTableStateContextType {
   // Independent checkbox state for rows (separate from selection)
   checkedRows: Record<string, boolean>;
   toggleCheckedRow: (rowId: string, next?: boolean) => void;
+  setColumnFilters: (filters: ColumnFiltersState) => void;
+  setRowSelection: (selection: RowSelectionState) => void;
 }
 
 interface DataTableBaseContextType<TData = unknown, TValue = unknown> {
@@ -66,6 +68,8 @@ export function DataTableProvider<TData, TValue>({
       enableColumnOrdering: props.enableColumnOrdering ?? false,
       checkedRows: props.checkedRows ?? {},
       toggleCheckedRow: props.toggleCheckedRow ?? (() => {}),
+      setColumnFilters: props.setColumnFilters ?? (() => {}),
+      setRowSelection: props.setRowSelection ?? (() => {}),
     }),
     [
       props.columnFilters,
@@ -82,6 +86,8 @@ export function DataTableProvider<TData, TValue>({
       props.getFacetedMinMaxValues,
       props.checkedRows,
       props.toggleCheckedRow,
+      props.setColumnFilters,
+      props.setRowSelection,
     ],
   );
 
