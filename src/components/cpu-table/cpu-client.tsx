@@ -152,8 +152,11 @@ export function CpuClient({ initialFavoritesData, initialFavoriteKeys }: CpuClie
   const facets = isFavoritesMode ? {} : lastPage?.meta?.facets;
   const totalFetched = flatData?.length;
 
-  const { sort, start, size, uuid, cursor, direction, observed_at, search: globalSearch, ...filter } =
+  const { sort, start, size, uuid, cursor, direction, observed_at, search: globalSearchRaw, ...filter } =
     search;
+
+  // Convert null to undefined for component compatibility
+  const globalSearch = globalSearchRaw || undefined;
 
   const derivedColumnFilters = React.useMemo<ColumnFiltersState>(() => {
     const baseFilters = Object.entries(filter)
