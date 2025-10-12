@@ -48,7 +48,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
       const provider = row.getValue<ModelsColumnSchema["provider"]>("provider");
       return (
         <div className="flex items-center gap-2">
-          <DataTableColumnCompanyLogo provider={provider} />
+          <DataTableColumnCompanyLogo companyName={provider} />
           <span className="capitalize">{provider}</span>
         </div>
       );

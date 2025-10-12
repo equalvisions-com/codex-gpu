@@ -1,6 +1,7 @@
 "use client";
 
 import { useInfiniteQuery } from "@tanstack/react-query";
+import type { ColumnFiltersState } from "@tanstack/react-table";
 import { useMemo, useState } from "react";
 import { useQueryStates } from "nuqs";
 import { modelsColumns } from "./models-columns";
@@ -16,7 +17,7 @@ interface ModelsClientProps {
 export function ModelsClient({ initialFavoriteKeys }: ModelsClientProps) {
   const [search, setSearch] = useQueryStates(modelsSearchParamsParser);
 
-  const [columnFilters, setColumnFilters] = useState(() => {
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(() => {
     const filters = [];
     if (search.provider) filters.push({ id: "provider", value: search.provider });
     if (search.group) filters.push({ id: "group", value: search.group });
@@ -78,7 +79,7 @@ export function ModelsClient({ initialFavoriteKeys }: ModelsClientProps) {
       fetchNextPage={query.fetchNextPage}
       renderSheetTitle={renderSheetTitle}
       searchParamsParser={modelsSearchParamsParser}
-      search={search.search}
+      search={search.search || undefined}
       getRowId={(row) => row.id}
     />
   );
