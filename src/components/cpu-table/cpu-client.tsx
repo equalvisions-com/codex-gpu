@@ -10,31 +10,32 @@ import type {
 } from "@tanstack/react-table";
 import { useQueryStates } from "nuqs";
 import * as React from "react";
-import { columns } from "./columns";
-import { filterFields as defaultFilterFields, sheetFields } from "./constants";
-import { DataTableInfinite } from "./data-table-infinite";
-import { dataOptions } from "./query-options";
-import type { FacetMetadataSchema } from "./schema";
-import { searchParamsParser } from "./search-params";
-import type { RowWithId } from "@/types/api";
-import type { ColumnSchema } from "./schema";
-import { stableGpuKey } from "./stable-key";
+import { cpuColumns } from "./cpu-columns";
+import { cpuFilterFields, cpuSheetFields } from "./cpu-constants";
+import { CpuDataTableInfinite } from "./cpu-data-table-infinite";
+import { cpuDataOptions } from "./cpu-query-options";
+import type { CpuFacetMetadataSchema } from "./cpu-schema";
+import { cpuSearchParamsParser } from "./cpu-search-params";
+import type { CpuColumnSchema } from "./cpu-schema";
+import { stableCpuKey } from "@/lib/favorites/cpu-stable-key";
 // Inline notices handle favorites feedback; no toasts here.
 import type { FavoriteKey } from "@/types/favorites";
-import { 
-  FAVORITES_QUERY_KEY, 
+import {
+  FAVORITES_QUERY_KEY,
   FAVORITES_BROADCAST_CHANNEL,
 } from "@/lib/favorites/constants";
-import { getFavorites } from "@/lib/favorites/api-client";
+import { getCpuFavorites } from "@/lib/favorites/cpu-api-client";
+import { useAuthDialog } from "@/providers/auth-dialog-provider";
+import { useAuth } from "@/providers/auth-client-provider";
 
-interface ClientProps {
-  initialFavoritesData?: ColumnSchema[];
+interface CpuClientProps {
+  initialFavoritesData?: CpuColumnSchema[];
   initialFavoriteKeys?: string[];
 }
 
-export function Client({ initialFavoritesData, initialFavoriteKeys }: ClientProps = {}) {
+export function CpuClient({ initialFavoritesData, initialFavoriteKeys }: CpuClientProps = {}) {
   const contentRef = React.useRef<HTMLTableSectionElement>(null);
-  const [search] = useQueryStates(searchParamsParser);
+  const [search] = useQueryStates(cpuSearchParamsParser);
   const queryClient = useQueryClient();
 
   // Use favorites data if provided, otherwise use infinite query
@@ -59,7 +60,7 @@ export function Client({ initialFavoritesData, initialFavoriteKeys }: ClientProp
    */
   const { data: favorites = [], isError: isFavoritesError, error: favoritesError } = useQuery({
     queryKey: FAVORITES_QUERY_KEY,
-    queryFn: getFavorites,
+    queryFn: getCpuFavorites,
     staleTime: Infinity,
     enabled: false, // Never auto-fetch in this component (CheckedActionsIsland handles fetching)
     refetchOnMount: false,
@@ -67,8 +68,8 @@ export function Client({ initialFavoritesData, initialFavoriteKeys }: ClientProp
   });
 
   /**
-   * Cross-tab synchronization for favorites view
-   * Receives favorites data directly from other tabs (no API call)
+   * Cross-tab synchronization for CPU favorites view
+   * Receives CPU favorites data directly from other tabs (no API call)
    * This optimizes multi-tab scenarios by avoiding redundant server requests
    */
   React.useEffect(() => {
@@ -109,7 +110,7 @@ export function Client({ initialFavoritesData, initialFavoriteKeys }: ClientProp
   React.useEffect(() => {
     if (isFavoritesMode && initialFavoritesData && !isFavoritesError) {
       const updatedFavoritesData = initialFavoritesData.filter(row =>
-        favoriteKeys.has(stableGpuKey(row))
+        favoriteKeys.has(stableCpuKey(row))
       );
       setFavoritesData(updatedFavoritesData);
     }
@@ -123,7 +124,7 @@ export function Client({ initialFavoritesData, initialFavoriteKeys }: ClientProp
     fetchNextPage,
     hasNextPage,
   } = useInfiniteQuery({
-    ...dataOptions(search),
+    ...cpuDataOptions(search),
     enabled: !isFavoritesMode, // Disable infinite query when showing favorites
   });
 
@@ -131,13 +132,13 @@ export function Client({ initialFavoritesData, initialFavoriteKeys }: ClientProp
     contentRef.current?.focus();
   }, ".");
 
-  const flatData: RowWithId[] = React.useMemo(() => {
+  const flatData: CpuColumnSchema[] = React.useMemo(() => {
     if (isFavoritesMode) {
       // Use favorites data with optimistic updates
-      return (favoritesData || initialFavoritesData || []) as RowWithId[];
+      return (favoritesData || initialFavoritesData || []) as CpuColumnSchema[];
     }
     // Server guarantees stable, non-overlapping windows via deterministic sort + cursor
-    return (data?.pages?.flatMap((page) => page.data ?? []) as RowWithId[]) ?? [] as RowWithId[];
+    return (data?.pages?.flatMap((page: any) => page.data ?? []) as CpuColumnSchema[]) ?? [] as CpuColumnSchema[];
   }, [data?.pages, isFavoritesMode, favoritesData, initialFavoritesData]);
 
   // REMINDER: meta data is always the same for all pages as filters do not change(!)
@@ -219,13 +220,13 @@ export function Client({ initialFavoritesData, initialFavoriteKeys }: ClientProp
   // REMINDER: this is currently needed for the cmdk search
   // TODO: auto search via API when the user changes the filter instead of hardcoded
   const filterFields = React.useMemo(() => {
-    return defaultFilterFields.map((field) => {
+    return cpuFilterFields.map((field: any) => {
       const facetsField = facets?.[field.value];
       if (!facetsField) return field;
       if (field.options && field.options.length > 0) return field;
 
       // REMINDER: if no options are set, we need to set them via the API
-    const options = facetsField.rows.map(({ value }) => {
+    const options = facetsField.rows.map(({ value }: any) => {
       return {
         label: `${value}`,
         value,
@@ -251,9 +252,9 @@ export function Client({ initialFavoritesData, initialFavoriteKeys }: ClientProp
   }, [facets]);
 
   return (
-      <DataTableInfinite
-      key={`table-${isFavoritesMode ? `favorites-${favorites?.length || 0}` : 'all'}`}
-      columns={columns}
+      <CpuDataTableInfinite
+      key={`cpu-table-${isFavoritesMode ? `favorites-${favorites?.length || 0}` : 'all'}`}
+      columns={cpuColumns}
       data={flatData}
         skeletonRowCount={search.size ?? 50}
       totalRows={totalDBRowCount}
@@ -267,7 +268,7 @@ export function Client({ initialFavoritesData, initialFavoriteKeys }: ClientProp
       onRowSelectionChange={setRowSelection}
       meta={metadata}
       filterFields={filterFields}
-      sheetFields={sheetFields}
+      sheetFields={cpuSheetFields}
       isFetching={isFavoritesMode ? false : isFetching}
       isLoading={isFavoritesMode ? false : isLoading}
       isFetchingNextPage={isFavoritesMode ? false : isFetchingNextPage}
@@ -278,14 +279,15 @@ export function Client({ initialFavoritesData, initialFavoriteKeys }: ClientProp
       getFacetedUniqueValues={getFacetedUniqueValues(facets)}
       getFacetedMinMaxValues={getFacetedMinMaxValues(facets)}
       renderSheetTitle={(props) => props.row?.original.uuid}
-      searchParamsParser={searchParamsParser}
-      search={globalSearch || undefined}
+      searchParamsParser={cpuSearchParamsParser}
+      search={globalSearch}
       focusTargetRef={contentRef}
     />
   );
 }
 
 
+// Helper functions (same as GPU client)
 function areColumnFiltersEqual(
   a: ColumnFiltersState,
   b: ColumnFiltersState,
@@ -333,7 +335,7 @@ function isLooseEqual(a: unknown, b: unknown) {
 }
 
 export function getFacetedUniqueValues<TData>(
-  facets?: Record<string, FacetMetadataSchema>,
+  facets?: Record<string, CpuFacetMetadataSchema>,
 ) {
   return (_: TTable<TData>, columnId: string): Map<string, number> => {
     return new Map(
@@ -343,7 +345,7 @@ export function getFacetedUniqueValues<TData>(
 }
 
 export function getFacetedMinMaxValues<TData>(
-  facets?: Record<string, FacetMetadataSchema>,
+  facets?: Record<string, CpuFacetMetadataSchema>,
 ) {
   return (_: TTable<TData>, columnId: string): [number, number] | undefined => {
     const min = facets?.[columnId]?.min;

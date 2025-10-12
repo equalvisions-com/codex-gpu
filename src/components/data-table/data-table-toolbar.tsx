@@ -11,7 +11,7 @@ interface DataTableToolbarProps {
 }
 
 export function DataTableToolbar({ renderActions }: DataTableToolbarProps) {
-  const { table, isLoading, columnFilters } = useDataTable();
+  const { table, isLoading, columnFilters, search } = useDataTable();
   const filters = table.getState().columnFilters;
 
   // Server-mode: render counts based on meta passed into sheet/details.
@@ -51,7 +51,7 @@ export function DataTableToolbar({ renderActions }: DataTableToolbarProps) {
         </div>
       </div>
       <div className="ml-auto flex items-center gap-2">
-        {filters.length ? <DataTableResetButton /> : null}
+        {(filters.length || search) ? <DataTableResetButton /> : null}
         {renderActions?.()}
       </div>
     </div>

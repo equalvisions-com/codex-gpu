@@ -116,8 +116,7 @@ export function DataTableFilterCommand({
     }
   }, [columnFilters, filterFields, open]);
 
-  // Removed Command + K hotkey to avoid conflict with spotlight search
-  // useHotKey(() => setOpen((open) => !open), "k");
+  useHotKey(() => setOpen((open) => !open), "k");
 
   useEffect(() => {
     if (open) {
@@ -147,7 +146,10 @@ export function DataTableFilterCommand({
             <span>Search</span>
           )}
         </span>
-        {/* Removed keyboard shortcut display since Command + K is now used by spotlight search */}
+        <Kbd className="ml-auto text-muted-foreground group-hover:text-accent-foreground">
+          <span className="mr-1">⌘</span>
+          <span>K</span>
+        </Kbd>
       </button>
       <Command
         className={cn(

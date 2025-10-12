@@ -18,6 +18,7 @@ interface AuthDialogContextValue {
   openDialog: (options?: OpenDialogOptions) => void;
   showSignIn: (options?: Omit<OpenDialogOptions, "view">) => void;
   showSignUp: (options?: Omit<OpenDialogOptions, "view">) => void;
+  showForgotPassword: (options?: Omit<OpenDialogOptions, "view">) => void;
   closeDialog: () => void;
   setView: (view: AuthView) => void;
 }
@@ -202,6 +203,7 @@ export function AuthDialogProvider({ children }: AuthDialogProviderProps) {
       setView,
       showSignIn: (options) => openDialog({ ...options, view: "signIn" }),
       showSignUp: (options) => openDialog({ ...options, view: "signUp" }),
+      showForgotPassword: (options) => openDialog({ ...options, view: "forgotPassword" }),
     }),
     [closeDialog, openDialog, setView, state.open, state.view]
   );

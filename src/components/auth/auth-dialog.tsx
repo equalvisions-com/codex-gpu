@@ -20,7 +20,7 @@ import { useAuth } from "@/providers/auth-client-provider";
 import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 
-export type AuthView = "signIn" | "signUp";
+export type AuthView = "signIn" | "signUp" | "forgotPassword";
 
 interface AuthDialogProps {
   open: boolean;
@@ -51,6 +51,8 @@ export function AuthDialog({
   const [pending, setPending] = React.useState(false);
   const [socialPending, setSocialPending] = React.useState<"github" | "google" | "huggingface" | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = React.useState<string | null>(null);
+  const [resetEmailSent, setResetEmailSent] = React.useState(false);
   const { refetch } = useAuth();
   const defaultAvatarDataUrl = React.useMemo(() => {
     const randomColor = () => Math.floor(Math.random() * 256);
@@ -86,6 +88,8 @@ export function AuthDialog({
       setPending(false);
       setSocialPending(null);
       setError(null);
+      setSuccessMessage(null);
+      setResetEmailSent(false);
       setPassword("");
       setName("");
       if (!defaultEmail) {
@@ -101,8 +105,18 @@ export function AuthDialog({
         title: "Sign in to OpenStatus",
         description: "Welcome back! Please sign in to continue.",
         cta: pending ? "Signing in…" : "Continue",
-        alternateLabel: "Don’t have an account?",
+        alternateLabel: "Don't have an account?",
         alternateAction: "Sign up",
+      };
+    }
+
+    if (view === "forgotPassword") {
+      return {
+        title: "Reset your password",
+        description: "Enter your email address and we'll send you a link to reset your password.",
+        cta: pending ? "Sending…" : "Send reset link",
+        alternateLabel: "Remember your password?",
+        alternateAction: "Sign in",
       };
     }
 
@@ -138,7 +152,14 @@ export function AuthDialog({
           callbackURL: callbackUrl,
         },
         {
-          onError: (ctx) => setError(ctx.error.message),
+          onError: (ctx) => {
+            // Handle email verification required error
+            if (ctx.error.status === 403) {
+              setError("Please verify your email address before signing in. Check your inbox for a verification link.");
+            } else {
+              setError(ctx.error.message);
+            }
+          },
         }
       );
 
@@ -179,11 +200,42 @@ export function AuthDialog({
       );
 
       if (!result.error) {
-        await refetch();
-        onComplete?.(callbackUrl);
+        // Email verification is required, so show success message instead of signing in
+        setError(null); // Clear any errors
+        setSuccessMessage("Account created! Please check your email and click the verification link to sign in.");
+        // Switch to sign-in view
+        setView("signIn");
       }
     } catch (err) {
       setError("We could not create your account. Please try again.");
+    } finally {
+      setPending(false);
+    }
+  };
+
+  const handleForgotPassword = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!email) {
+      setError("Please enter your email address.");
+      return;
+    }
+
+    setPending(true);
+    setError(null);
+
+    try {
+      const result = await authClient.forgetPassword({
+        email,
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (!result.error) {
+        setResetEmailSent(true);
+        setError(null);
+        setSuccessMessage("Password reset link sent! Check your email for instructions.");
+      }
+    } catch (err) {
+      setError("We could not send the reset email. Please try again.");
     } finally {
       setPending(false);
     }
@@ -275,7 +327,7 @@ export function AuthDialog({
             </div>
             <div className="flex items-center gap-3 text-xs uppercase tracking-wide text-muted-foreground">
               <Separator className="flex-1" />
-              <span>or</span>
+              <span>or continue with</span>
               <Separator className="flex-1" />
             </div>
           </div>
@@ -286,23 +338,41 @@ export function AuthDialog({
             </div>
           ) : null}
 
+          {successMessage ? (
+            <div className="rounded-md border border-green-500/40 bg-green-500/10 px-3 py-2 text-sm text-green-700 dark:text-green-400">
+              {successMessage}
+            </div>
+          ) : null}
+
           {view === "signIn" ? (
             <form className="grid gap-4" onSubmit={handleEmailSignIn}>
               <div className="grid gap-2">
-                <Label htmlFor="email">Email address</Label>
+                <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
                   type="email"
                   autoComplete="email"
-                  placeholder="name@company.com"
+                  placeholder="email@example.com"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
                   required
                 />
               </div>
 
-              <div className="grid gap-2">
-                <Label htmlFor="password">Password</Label>
+              <div className="space-y-2">
+                <div className="relative">
+                  <Label htmlFor="password" className="block">Password</Label>
+                  {view === "signIn" && (
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="absolute right-0 -top-[11px] px-0 text-sm text-muted-foreground hover:text-foreground h-auto"
+                      onClick={() => switchView("forgotPassword")}
+                    >
+                      Forgot password?
+                    </Button>
+                  )}
+                </div>
                 <Input
                   id="password"
                   type="password"
@@ -310,6 +380,25 @@ export function AuthDialog({
                   placeholder="••••••••"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
+                  required
+                />
+              </div>
+
+              <Button type="submit" disabled={pending}>
+                {copy.cta}
+              </Button>
+            </form>
+          ) : view === "forgotPassword" ? (
+            <form className="grid gap-4" onSubmit={handleForgotPassword}>
+              <div className="grid gap-2">
+                <Label htmlFor="reset-email">Email</Label>
+                <Input
+                  id="reset-email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="email@example.com"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
                   required
                 />
               </div>
@@ -326,7 +415,7 @@ export function AuthDialog({
                   id="name"
                   type="text"
                   autoComplete="name"
-                  placeholder="Ada Lovelace"
+                  placeholder="Name or organization"
                   required
                   value={name}
                   onChange={(event) => setName(event.target.value)}
@@ -339,7 +428,7 @@ export function AuthDialog({
                   id="signup-email"
                   type="email"
                   autoComplete="email"
-                  placeholder="name@company.com"
+                  placeholder="email@example.com"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
                   required
@@ -372,9 +461,15 @@ export function AuthDialog({
                 type="button"
                 variant="link"
                 className="px-0 text-sm"
-                onClick={() =>
-                  switchView(view === "signIn" ? "signUp" : "signIn")
-                }
+                onClick={() => {
+                  if (view === "signIn") {
+                    switchView("signUp");
+                  } else if (view === "signUp") {
+                    switchView("signIn");
+                  } else if (view === "forgotPassword") {
+                    switchView("signIn");
+                  }
+                }}
               >
                 {copy.alternateAction}
               </Button>

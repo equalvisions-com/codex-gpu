@@ -8,7 +8,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/custom/table";
-import { DataTableFilterCommand } from "@/components/data-table/data-table-filter-command";
 import { DataTableProvider } from "@/components/data-table/data-table-provider";
 import { MemoizedDataTableSheetContent } from "@/components/data-table/data-table-sheet/data-table-sheet-content";
 import { DataTableSheetDetails } from "@/components/data-table/data-table-sheet/data-table-sheet-details";
@@ -32,17 +31,18 @@ import type {
 import { flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { useQueryStates, type ParserBuilder } from "nuqs";
 import * as React from "react";
-import { SocialsFooter } from "./_components/socials-footer";
-import { searchParamsParser } from "./search-params";
-import { RowSkeletons } from "./_components/row-skeletons";
+import { SocialsFooter } from "../infinite-table/_components/socials-footer";
+import { cpuSearchParamsParser } from "./cpu-search-params";
+import { RowSkeletons } from "../infinite-table/_components/row-skeletons";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { CheckedActionsIsland } from "./_components/checked-actions-island";
-import SidebarNav from "./_components/sidebar-nav";
+import { CpuCheckedActionsIsland } from "./cpu-checked-actions-island";
+import { SidebarNav } from "../infinite-table/_components/sidebar-nav";
+import type { CpuColumnSchema } from "./cpu-schema";
 
 // FloatingControlsButton removed
 
 // Note: chart groupings could be added later if needed
-export interface DataTableInfiniteProps<TData, TValue, TMeta> {
+export interface CpuDataTableInfiniteProps<TData, TValue, TMeta> {
   columns: ColumnDef<TData, TValue>[];
   getRowClassName?: (row: Row<TData>) => string;
   // REMINDER: make sure to pass the correct id to access the rows
@@ -88,7 +88,7 @@ export interface DataTableInfiniteProps<TData, TValue, TMeta> {
   focusTargetRef?: React.Ref<HTMLTableSectionElement>;
 }
 
-export function DataTableInfinite<TData, TValue, TMeta>({
+export function CpuDataTableInfinite<TData, TValue, TMeta>({
   columns,
   getRowClassName,
   getRowId,
@@ -118,7 +118,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   searchParamsParser,
   search,
   focusTargetRef,
-}: DataTableInfiniteProps<TData, TValue, TMeta>) {
+}: CpuDataTableInfiniteProps<TData, TValue, TMeta>) {
   // Independent checkbox-only state (does not control the details pane)
   const [checkedRows, setCheckedRows] = React.useState<Record<string, boolean>>({});
   const toggleCheckedRow = React.useCallback((rowId: string, next?: boolean) => {
@@ -189,10 +189,8 @@ export function DataTableInfinite<TData, TValue, TMeta>({
       columnOrder: [
         "blank",
         "provider",
-        "gpu_model",
+        "cpu_model",
         "price_hour_usd",
-        "gpu_count",
-        "vram_gb",
         "vcpus",
         "system_ram_gb",
         "type",
@@ -240,11 +238,11 @@ export function DataTableInfinite<TData, TValue, TMeta>({
 
   const columnSizingState = table.getState().columnSizing;
   const minimumModelColumnWidth =
-    table.getColumn("gpu_model")?.columnDef.minSize ?? 250;
+    table.getColumn("cpu_model")?.columnDef.minSize ?? 250;
   const fixedColumnsWidth = React.useMemo(() => {
     return table
       .getVisibleLeafColumns()
-      .filter((column) => column.id !== "gpu_model")
+      .filter((column) => column.id !== "cpu_model")
       .reduce((acc, column) => acc + column.getSize(), 0);
   }, [table, columnSizingState]);
 
@@ -273,7 +271,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
       return { id: field.value, value: filterValue.value };
     });
 
-    const search = columnFiltersWithNullable.reduce(
+    const searchEntries = columnFiltersWithNullable.reduce(
       (prev, curr) => {
         prev[curr.id as string] = curr.value;
         return prev;
@@ -281,9 +279,14 @@ export function DataTableInfinite<TData, TValue, TMeta>({
       {} as Record<string, unknown>,
     );
 
-    setSearch(search);
+    searchEntries.search =
+      typeof search === "string" && search.trim().length
+        ? search
+        : null;
+
+    setSearch(searchEntries);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [columnFilters]);
+  }, [columnFilters, search]);
 
   React.useEffect(() => {
     setSearch({ sort: sorting?.[0] || null });
@@ -313,9 +316,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   const resetSearch = React.useCallback(() => {
     setSearch({ search: null });
   }, [setSearch]);
-
-  
-
 
   return (
     <DataTableProvider
@@ -349,12 +349,11 @@ export function DataTableInfinite<TData, TValue, TMeta>({
             "hidden sm:flex h-full w-full flex-col sm:sticky sm:top-0 sm:max-h-screen sm:min-h-screen sm:min-w-52 sm:max-w-52 sm:self-start md:min-w-72 md:max-w-72"
           )}
         >
-          <div className="bg-background p-2 md:sticky md:top-0">
+          <div className="border-b border-border bg-background p-2 md:sticky md:top-0">
             <DataTableToolbar />
           </div>
-       
           <div className="flex flex-1 p-[12px] sm:overflow-y-scroll scrollbar-hide">
-            <SidebarNav />
+            <SidebarNav currentView="cpus" />
           </div>
           <div className="border-t border-border bg-background p-4 md:sticky md:bottom-0">
             <SocialsFooter />
@@ -406,15 +405,15 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                           data-column-id={header.column.id}
                           style={{
                             width:
-                              header.id === "gpu_model"
+                              header.id === "cpu_model"
                                 ? "var(--model-column-width)"
                                 : header.getSize(),
                             minWidth:
-                              header.id === "gpu_model"
+                              header.id === "cpu_model"
                                 ? "var(--model-column-width)"
                                 : header.column.columnDef.minSize,
                             maxWidth:
-                              header.id === "gpu_model"
+                              header.id === "cpu_model"
                                 ? "var(--model-column-width)"
                                 : undefined,
                           }}
@@ -485,7 +484,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                             const row = rows[vRow.index];
                             return (
                               <React.Fragment key={row.id}>
-                                <MemoizedRow
+                                <MemoizedCpuRow
                                   dataIndex={vRow.index}
                                   row={row}
                                   table={table}
@@ -556,7 +555,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
           }}
         />
       </DataTableSheetDetails>
-      <CheckedActionsIsland initialFavoriteKeys={(meta as any)?.initialFavoriteKeys} />
+      <CpuCheckedActionsIsland initialFavoriteKeys={(meta as any)?.initialFavoriteKeys} />
     </DataTableProvider>
   );
 }
@@ -564,10 +563,10 @@ export function DataTableInfinite<TData, TValue, TMeta>({
 /**
  * REMINDER: this is the heaviest component in the table if lots of rows
  * Some other components are rendered more often necessary, but are fixed size (not like rows that can grow in height)
- * e.g. DataTableFilterControls, DataTableFilterCommand, DataTableToolbar, DataTableHeader
+ * e.g. DataTableFilterControls, DataTableToolbar, DataTableHeader
  */
 
-function Row<TData>({
+function CpuRow<TData>({
   row,
   table,
   selected,
@@ -630,15 +629,15 @@ function Row<TData>({
             )}
             style={{
               width:
-                cell.column.id === "gpu_model"
+                cell.column.id === "cpu_model"
                   ? modelColumnWidth
                   : cell.column.getSize(),
               minWidth:
-                cell.column.id === "gpu_model"
+                cell.column.id === "cpu_model"
                   ? modelColumnWidth
                   : cell.column.columnDef.minSize,
               maxWidth:
-                cell.column.id === "gpu_model"
+                cell.column.id === "cpu_model"
                   ? modelColumnWidth
                   : undefined,
             }}
@@ -651,11 +650,11 @@ function Row<TData>({
   );
 }
 
-const MemoizedRow = React.memo(
-  Row,
+const MemoizedCpuRow = React.memo(
+  CpuRow,
   (prev, next) =>
     prev.row.id === next.row.id &&
     prev.selected === next.selected &&
     prev.checked === next.checked &&
     prev.modelColumnWidth === next.modelColumnWidth,
-) as typeof Row;
+) as typeof CpuRow;

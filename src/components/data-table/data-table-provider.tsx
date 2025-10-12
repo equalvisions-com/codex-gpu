@@ -24,6 +24,10 @@ interface DataTableStateContextType {
   toggleCheckedRow: (rowId: string, next?: boolean) => void;
   setColumnFilters: (filters: ColumnFiltersState) => void;
   setRowSelection: (selection: RowSelectionState) => void;
+  // Search parameter for global search filtering
+  search?: string;
+  // Callback to reset search parameter
+  resetSearch?: () => void;
 }
 
 interface DataTableBaseContextType<TData = unknown, TValue = unknown> {
@@ -70,6 +74,8 @@ export function DataTableProvider<TData, TValue>({
       toggleCheckedRow: props.toggleCheckedRow ?? (() => {}),
       setColumnFilters: props.setColumnFilters ?? (() => {}),
       setRowSelection: props.setRowSelection ?? (() => {}),
+      search: props.search,
+      resetSearch: props.resetSearch,
     }),
     [
       props.columnFilters,
@@ -88,6 +94,8 @@ export function DataTableProvider<TData, TValue>({
       props.toggleCheckedRow,
       props.setColumnFilters,
       props.setRowSelection,
+      props.search,
+      props.resetSearch,
     ],
   );
 

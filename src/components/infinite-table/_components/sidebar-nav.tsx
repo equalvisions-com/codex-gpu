@@ -14,6 +14,7 @@ import {
   LogIn,
   ChevronsUpDown,
   Settings as SettingsIcon,
+  Home,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useAuth } from "@/providers/auth-client-provider";
@@ -167,7 +168,11 @@ function UserMenu({ user, onSignOut, isSigningOut }: UserMenuProps) {
   );
 }
 
-export function SidebarNav() {
+interface SidebarNavProps {
+  currentView?: 'gpus' | 'cpus';
+}
+
+export function SidebarNav({ currentView = 'gpus' }: SidebarNavProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { session, signOut } = useAuth();
@@ -176,7 +181,9 @@ export function SidebarNav() {
   const queryClient = useQueryClient();
   const [isSpotlightOpen, setIsSpotlightOpen] = React.useState(false);
 
+  // Add global keyboard shortcut for search (Cmd+K / Ctrl+K)
   useHotKey(() => setIsSpotlightOpen(true), "k");
+
   const handleSignIn = React.useCallback(() => {
     const callbackUrl =
       typeof window !== "undefined"
@@ -188,13 +195,15 @@ export function SidebarNav() {
   const handleFavoritesClick = () => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("favorites", "true");
-    router.push(`?${params.toString()}`, { scroll: false });
+    const baseUrl = currentView === 'cpus' ? '/cpus' : '';
+    router.push(`${baseUrl}?${params.toString()}`, { scroll: false });
   };
 
-  const handleGPUsClick = () => {
+  const handleCurrentViewClick = () => {
     const params = new URLSearchParams(searchParams.toString());
     params.delete("favorites"); // Remove favorites filter when going to main view
-    router.push(params.toString() ? `?${params.toString()}` : "/", { scroll: false });
+    const baseUrl = currentView === 'cpus' ? '/cpus' : '';
+    router.push(params.toString() ? `${baseUrl}?${params.toString()}` : baseUrl || "/", { scroll: false });
   };
 
   const handleSignOut = React.useCallback(() => {
@@ -216,15 +225,26 @@ export function SidebarNav() {
           Menu
         </div>
         <div className="space-y-1">
-          <SidebarLink label="GPUs" icon={Server} onClick={handleGPUsClick} />
-          <SidebarLink href="/cpus" label="CPUs" icon={Cpu} />
+          <SidebarLink href="/" label="Home" icon={Home} />
+          {currentView === 'gpus' ? (
+            <SidebarLink label="GPUs" icon={Server} onClick={handleCurrentViewClick} />
+          ) : (
+            <SidebarLink href="/" label="GPUs" icon={Server} />
+          )}
+          {currentView === 'cpus' ? (
+            <SidebarLink label="CPUs" icon={Cpu} onClick={handleCurrentViewClick} />
+          ) : (
+            <SidebarLink href="/cpus" label="CPUs" icon={Cpu} />
+          )}
           <SidebarLink href="/models" label="LLMs" icon={Bot} />
           <SidebarLink
             label="Search"
             icon={Search}
             onClick={() => setIsSpotlightOpen(true)}
           />
-          <SidebarLink label="Favorites" icon={Star} onClick={handleFavoritesClick} />
+          {session ? (
+            <SidebarLink label="Favorites" icon={Star} onClick={handleFavoritesClick} />
+          ) : null}
           {!session ? (
             <SidebarLink label="Sign in" icon={LogIn} onClick={handleSignIn} />
           ) : null}
@@ -243,7 +263,9 @@ export function SidebarNav() {
           />
         </div>
       ) : null}
-      <SpotlightSearchDialog open={isSpotlightOpen} onOpenChange={setIsSpotlightOpen} />
+      {isSpotlightOpen && (
+        <SpotlightSearchDialog open={isSpotlightOpen} onOpenChange={setIsSpotlightOpen} />
+      )}
     </nav>
   );
 }

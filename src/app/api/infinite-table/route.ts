@@ -33,10 +33,10 @@ export async function GET(req: NextRequest): Promise<Response> {
     );
     const pricingSnapshots = await getSnapshotsCached();
 
-    // Flatten all pricing data from all providers, only including GPU class rows
+    // Flatten GPU pricing data from all providers (GPU-only API)
     const totalData: ColumnSchema[] = pricingSnapshots.flatMap((snapshot: any) =>
       snapshot.rows
-        .filter((row: any) => row.class === 'GPU')
+        .filter((row: any) => row.class === 'GPU') // Only GPU rows
         .map((row: any) => {
           const observedAt = snapshot.last_updated;
           const hashInput = JSON.stringify({ provider: snapshot.provider, observed_at: observedAt, row });

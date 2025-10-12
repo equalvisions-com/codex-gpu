@@ -63,6 +63,7 @@
     "react-day-picker": "^9.8.1",
     "react-dom": "^19",
     "rehype-pretty-code": "^0.14.0",
+    "resend": "^6.1.2",
     "shiki": "^1.29.0",
     "sonner": "^1.7.2",
     "superjson": "^2.2.2",
