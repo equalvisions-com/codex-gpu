@@ -128,7 +128,7 @@ export function filterData(
 
       if (key === "search" && typeof filter === 'string') {
         // Search on the appropriate model field based on data type with exact matching
-        const value = row.gpu_model ?? row.cpu_model ?? row.item;
+        const value = row.gpu_model ?? row.item;
         if (typeof value === 'string') {
           // Exact case-insensitive match (like TanStack Table's equalsString filter)
           const normalizedValue = value.toString().toLowerCase().trim();
