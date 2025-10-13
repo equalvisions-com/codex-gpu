@@ -84,13 +84,22 @@ function sortModelsData(data: ModelsRowWithId[], sortParam?: { id: string; desc:
         aValue = a.name || '';
         bValue = b.name || '';
         break;
-      case 'group':
-        aValue = a.group || '';
-        bValue = b.group || '';
-        break;
       case 'contextLength':
         aValue = a.contextLength || 0;
         bValue = b.contextLength || 0;
+        break;
+      case 'inputPrice':
+        aValue = a.pricing?.prompt || 0;
+        bValue = b.pricing?.prompt || 0;
+        break;
+      case 'outputPrice':
+        aValue = a.pricing?.completion || 0;
+        bValue = b.pricing?.completion || 0;
+        break;
+      case 'outputModalities':
+        // Sort by joined modalities string (e.g., "Text/Image")
+        aValue = (a.outputModalities || []).sort().join('/');
+        bValue = (b.outputModalities || []).sort().join('/');
         break;
       default:
         aValue = a[id as keyof AIModel] || '';

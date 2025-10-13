@@ -350,7 +350,8 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
     },
   },
   {
-    accessorKey: "inputPrice",
+    id: "inputPrice",
+    accessorFn: (row) => row.pricing?.prompt || 0,
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Input" centerTitle />
     ),
@@ -382,7 +383,8 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
     },
   },
   {
-    accessorKey: "outputPrice",
+    id: "outputPrice",
+    accessorFn: (row) => row.pricing?.completion || 0,
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Output" centerTitle />
     ),
