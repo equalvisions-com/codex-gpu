@@ -4,6 +4,7 @@ import { DataTableColumnHeader } from "@/components/data-table/data-table-column
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useDataTable } from "@/components/data-table/data-table-provider";
+import { DataTableFilterControlsDrawer } from "@/components/data-table/data-table-filter-controls-drawer";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { ModelsColumnSchema } from "./models-schema";
 import Image from "next/image";
@@ -35,6 +36,38 @@ function formatPricePerMillion(price: string | number | undefined): string {
 
 export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
   {
+    id: "blank",
+    header: () => (
+      <div className="flex items-center justify-center">
+        <DataTableFilterControlsDrawer />
+      </div>
+    ),
+    enableSorting: false,
+    enableHiding: false,
+    enableResizing: false,
+    cell: ({ row }) => {
+      const stop = (e: any) => e.stopPropagation();
+      return (
+        <div
+          className="flex h-full items-center justify-center"
+          onClick={stop}
+          onMouseDown={stop}
+          onPointerDown={stop}
+          onKeyDown={stop}
+        >
+          <RowCheckboxCell rowId={row.id} />
+        </div>
+      );
+    },
+    size: 45,
+    minSize: 45,
+    maxSize: 45,
+    meta: {
+      cellClassName: "min-w-[45px] p-0 text-center",
+      headerClassName: "min-w-[45px]",
+    },
+  },
+  {
     accessorKey: "provider",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Provider" />
@@ -53,7 +86,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
             <Image src="/logos/Bedrock.svg" alt="Amazon Bedrock" width={20} height={20} className="rounded" />
           )}
           {provider === "AI21" && (
-            <Image src="/logos/AI21.jpeg" alt="AI21" width={20} height={20} className="rounded" />
+            <Image src="/logos/ai21.png" alt="AI21" width={20} height={20} className="rounded" />
           )}
           {provider === "AionLabs" && (
             <Image src="/logos/aionlabs.png" alt="AionLabs" width={20} height={20} className="rounded" />
@@ -89,10 +122,10 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
             <Image src="/logos/deepinfra.png" alt="DeepInfra" width={20} height={20} className="rounded" />
           )}
           {provider === "Featherless" && (
-            <Image src="/logos/featherless.png" alt="Featherless" width={20} height={20} className="rounded" />
+            <Image src="/logos/featherless.svg" alt="Featherless" width={20} height={20} className="rounded" />
           )}
           {provider === "Fireworks" && (
-            <Image src="/logos/fireworks.png" alt="Fireworks" width={20} height={20} className="rounded" />
+            <Image src="/logos/Fireworks.png" alt="Fireworks" width={20} height={20} className="rounded" />
           )}
           {provider === "Friendli" && (
             <Image src="/logos/friendli.png" alt="Friendli" width={20} height={20} className="rounded" />
@@ -137,20 +170,96 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
             <Image src="/logos/inception.png" alt="Inception" width={20} height={20} className="rounded" />
           )}
           {provider === "OpenAI" && (
-            <Image src="/logos/openai.svg" alt="OpenAI" width={20} height={20} className="rounded" />
+            <Image src="/logos/openai.png" alt="OpenAI" width={20} height={20} className="rounded" />
           )}
           {provider === "Nebius" && (
             <Image src="/logos/nebius.png" alt="Nebius" width={20} height={20} className="rounded" />
+          )}
+          {provider === "Novita" && (
+            <Image src="/logos/novita.jpeg" alt="Novita" width={20} height={20} className="rounded" />
+          )}
+          {provider === "InferenceNet" && (
+            <Image src="/logos/inferencenet.png" alt="InferenceNet" width={20} height={20} className="rounded" />
+          )}
+          {provider === "Nvidia" && (
+            <Image src="/logos/nvidia.png" alt="NVIDIA" width={20} height={20} className="rounded" />
+          )}
+          {provider === "Infermatic" && (
+            <Image src="/logos/infermatic.png" alt="Infermatic" width={20} height={20} className="rounded" />
+          )}
+          {provider === "Inflection" && (
+            <Image src="/logos/inflection.png" alt="Inflection" width={20} height={20} className="rounded" />
+          )}
+          {provider === "Liquid" && (
+            <Image src="/logos/liquid.png" alt="Liquid" width={20} height={20} className="rounded" />
+          )}
+          {provider === "Mancer 2" && (
+            <Image src="/logos/mancer.svg" alt="Mancer" width={20} height={20} className="rounded" />
+          )}
+          {provider === "Minimax" && (
+            <Image src="/logos/minimax.png" alt="Minimax" width={20} height={20} className="rounded" />
+          )}
+          {
+            provider === "OpenInference" && (
+            <Image src="/logos/openinference.png" alt="OpenInference" width={20} height={20} className="rounded" />
+          )}
+          {
+            provider === "Parasail" && (
+            <Image src="/logos/parasail.png" alt="Parasail" width={20} height={20} className="rounded" />
+          )}
+          {
+            provider === "Phala" && (
+            <Image src="/logos/phala.png" alt="Phala" width={20} height={20} className="rounded" />
+          )}
+          {
+            provider === "Moonshot AI" && (
+            <Image src="/logos/moonshot.png" alt="Moonshot AI" width={20} height={20} className="rounded" />
+          )}
+          {
+            provider === "NCompass" && (
+            <Image src="/logos/ncompass.png" alt="nCompass" width={20} height={20} className="rounded" />
+          )}
+          {
+            provider === "Morph" && (
+            <Image src="/logos/morph.png" alt="Morph" width={20} height={20} className="rounded" />
+          )}
+          {
+            provider === "NextBit" && (
+            <Image src="/logos/nextbit.png" alt="Nextbit" width={20} height={20} className="rounded" />
+          )}
+          {
+            provider === "Relace" && (
+            <Image src="/logos/relace.png" alt="Relace" width={20} height={20} className="rounded" />
+          )}
+          {
+            provider === "SambaNova" && (
+            <Image src="/logos/sambanova.png" alt="SambaNova" width={20} height={20} className="rounded" />
+          )}
+          {
+            provider === "SiliconFlow" && (
+            <Image src="/logos/siliconflow.png" alt="SiliconFlow" width={20} height={20} className="rounded" />
+          )}
+          {
+            provider === "Switchpoint" && (
+            <Image src="/logos/switchpoint.png" alt="Switchpoint" width={20} height={20} className="rounded" />
+          )}
+          {
+            provider === "Targon" && (
+            <Image src="/logos/targon.svg" alt="Targon" width={20} height={20} className="rounded" />
+          )}
+          {
+            provider === "Venice" && (
+            <Image src="/logos/venice.png" alt="Venice" width={20} height={20} className="rounded" />
           )}
           <span>{provider}</span>
         </div>
       );
     },
-    size: 170,
-    minSize: 170,
+    size: 180,
+    minSize: 180,
     meta: {
-      cellClassName: "text-left min-w-[170px]",
-      headerClassName: "text-left min-w-[170px]",
+      cellClassName: "text-left min-w-[180px]",
+      headerClassName: "text-left min-w-[180px]",
     },
   },
   {

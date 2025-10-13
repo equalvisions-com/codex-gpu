@@ -187,6 +187,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
     columns,
     initialState: {
       columnOrder: [
+        "blank",
         "provider",
         "name",
         "inputPrice",
@@ -212,6 +213,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
     // Disable client-side sorting/pagination/filtering - all happen on server
     manualSorting: true,
     manualFiltering: true,
+    enableSorting: true, // Enable sorting UI for manual server-side sorting
     getCoreRowModel: getCoreRowModel(),
     // Facets are provided by the server; expose them via provider callbacks
     // to power filter UIs without re-filtering rows client-side
@@ -237,7 +239,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
 
   const columnSizingState = table.getState().columnSizing;
   const minimumModelColumnWidth =
-    table.getColumn("name")?.columnDef.minSize ?? 200;
+    table.getColumn("name")?.columnDef.minSize ?? 250;
   const fixedColumnsWidth = React.useMemo(() => {
     return table
       .getVisibleLeafColumns()
@@ -485,7 +487,8 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
                                   row={row}
                                   table={table}
                                   selected={row.getIsSelected()}
-                                checked={checkedRows[row.id] ?? false}
+                                  checked={checkedRows[row.id] ?? false}
+                                  modelColumnWidth="var(--model-column-width)"
                                   rowRef={rowVirtualizer.measureElement}
                                 />
                               </React.Fragment>
@@ -568,6 +571,7 @@ function Row<TData>({
   checked,
   rowRef,
   dataIndex,
+  modelColumnWidth,
 }: {
   row: Row<TData>;
   table: TTable<TData>;
@@ -579,6 +583,7 @@ function Row<TData>({
   rowRef?: (el: HTMLTableRowElement | null) => void;
   // Virtual index for measurement mapping
   dataIndex?: number;
+  modelColumnWidth: string;
 }) {
   return (
     <TableRow
@@ -623,15 +628,15 @@ function Row<TData>({
             style={{
               width:
                 cell.column.id === "name"
-                  ? "var(--model-column-width)"
+                  ? modelColumnWidth
                   : cell.column.getSize(),
               minWidth:
                 cell.column.id === "name"
-                  ? "var(--model-column-width)"
+                  ? modelColumnWidth
                   : cell.column.columnDef.minSize,
               maxWidth:
                 cell.column.id === "name"
-                  ? "var(--model-column-width)"
+                  ? modelColumnWidth
                   : undefined,
             }}
           >
@@ -648,5 +653,6 @@ const MemoizedRow = React.memo(
   (prev, next) =>
     prev.row.id === next.row.id &&
     prev.selected === next.selected &&
-    prev.checked === next.checked,
+    prev.checked === next.checked &&
+    prev.modelColumnWidth === next.modelColumnWidth,
 ) as typeof Row;
