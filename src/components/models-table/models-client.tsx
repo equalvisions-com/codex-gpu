@@ -1,8 +1,8 @@
 "use client";
 
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColumnFiltersState } from "@tanstack/react-table";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useQueryStates } from "nuqs";
 import { modelsColumns } from "./models-columns";
 import { modelsDataOptions } from "./models-query-options";
@@ -16,6 +16,7 @@ interface ModelsClientProps {
 
 export function ModelsClient({ initialFavoriteKeys }: ModelsClientProps) {
   const [search, setSearch] = useQueryStates(modelsSearchParamsParser);
+  const queryClient = useQueryClient();
 
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(() => {
     const filters = [];
@@ -43,6 +44,14 @@ export function ModelsClient({ initialFavoriteKeys }: ModelsClientProps) {
   });
 
   const query = useInfiniteQuery(modelsDataOptions(search));
+
+  // Scroll to top when sorting changes to prevent stale data flashing
+  useEffect(() => {
+    if (sorting.length > 0) {
+      // Scroll to top when sorting changes to show fresh sorted data
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    }
+  }, [sorting]);
 
   const data = useMemo(() => {
     return query.data?.pages.flatMap((page) => page.data) ?? [];
