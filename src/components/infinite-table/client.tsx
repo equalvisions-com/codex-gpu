@@ -190,6 +190,14 @@ export function Client({ initialFavoritesData, initialFavoriteKeys }: ClientProp
   const [sorting, setSorting] = React.useState<SortingState>(derivedSorting);
   const derivedSortingRef = React.useRef<SortingState>(derivedSorting);
 
+  // Scroll to top when sorting changes to prevent stale data flashing
+  React.useEffect(() => {
+    if (sorting.length > 0) {
+      // Scroll to top when sorting changes to show fresh sorted data
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    }
+  }, [sorting]);
+
   React.useEffect(() => {
     if (!isSortingStateEqual(derivedSortingRef.current, derivedSorting)) {
       setSorting(derivedSorting);

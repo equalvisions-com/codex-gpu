@@ -215,6 +215,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     // Disable client-side sorting/pagination/filtering - all happen on server
     manualSorting: true,
     manualFiltering: true,
+    enableSorting: true, // Enable sorting UI for manual server-side sorting
     getCoreRowModel: getCoreRowModel(),
     // Facets are provided by the server; expose them via provider callbacks
     // to power filter UIs without re-filtering rows client-side
@@ -289,6 +290,13 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     setSearch({ sort: sorting?.[0] || null });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sorting]);
+
+  // Reset virtualizer when sorting changes to prevent flickering
+  React.useEffect(() => {
+    // Reset measurements and scroll to top for fresh sorted data
+    containerVirtualizer.measure();
+    containerVirtualizer.scrollToIndex(0, { align: 'start' });
+  }, [sorting, containerVirtualizer]);
 
   const selectedRow = React.useMemo(() => {
     if ((isLoading || isFetching) && !data.length) return;
