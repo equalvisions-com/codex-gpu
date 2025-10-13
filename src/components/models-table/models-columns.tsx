@@ -1,13 +1,12 @@
 "use client";
 
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
-import { DataTableColumnCompanyLogo } from "@/components/data-table/data-table-column/data-table-column-company-logo";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useDataTable } from "@/components/data-table/data-table-provider";
 import type { ColumnDef } from "@tanstack/react-table";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import type { ModelsColumnSchema } from "./models-schema";
+import Image from "next/image";
 
 function RowCheckboxCell({ rowId }: { rowId: string }) {
   const { checkedRows, toggleCheckedRow } = useDataTable<ModelsColumnSchema, unknown>();
@@ -21,21 +20,17 @@ function RowCheckboxCell({ rowId }: { rowId: string }) {
   );
 }
 
-function formatPricing(pricing: Record<string, any>): string {
-  if (!pricing || typeof pricing !== 'object') return 'N/A';
+function formatPricePerMillion(price: string | number | undefined): string {
+  if (price === undefined || price === null) return 'Free';
 
-  const parts = [];
-  if (pricing.prompt && typeof pricing.prompt === 'number') {
-    parts.push(`Prompt: $${pricing.prompt}/1K`);
-  }
-  if (pricing.completion && typeof pricing.completion === 'number') {
-    parts.push(`Completion: $${pricing.completion}/1K`);
-  }
-  if (pricing.request && typeof pricing.request === 'number') {
-    parts.push(`Request: $${pricing.request}`);
-  }
+  const numericPrice = typeof price === 'string' ? parseFloat(price) : price;
+  if (isNaN(numericPrice) || numericPrice === 0) return 'Free';
 
-  return parts.length > 0 ? parts.join(', ') : 'Free';
+  // Convert from per-token to per-million-tokens
+  const perMillion = numericPrice * 1_000_000;
+
+  // Format with 2 decimal places
+  return `$${perMillion.toFixed(2)}`;
 }
 
 export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
@@ -48,30 +43,105 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
       const provider = row.getValue<ModelsColumnSchema["provider"]>("provider");
       return (
         <div className="flex items-center gap-2">
-          <DataTableColumnCompanyLogo companyName={provider} />
-          <span className="capitalize">{provider}</span>
+          {provider === "Anthropic" && (
+            <Image src="/logos/Anthropic.svg" alt="Anthropic" width={20} height={20} className="rounded" />
+          )}
+          {provider === "Alibaba" && (
+            <Image src="/logos/alibaba.png" alt="Alibaba" width={20} height={20} className="rounded" />
+          )}
+          {provider === "Amazon Bedrock" && (
+            <Image src="/logos/Bedrock.svg" alt="Amazon Bedrock" width={20} height={20} className="rounded" />
+          )}
+          {provider === "AI21" && (
+            <Image src="/logos/AI21.jpeg" alt="AI21" width={20} height={20} className="rounded" />
+          )}
+          {provider === "AionLabs" && (
+            <Image src="/logos/aionlabs.png" alt="AionLabs" width={20} height={20} className="rounded" />
+          )}
+          {provider === "AtlasCloud" && (
+            <Image src="/logos/atlascloud.png" alt="AtlasCloud" width={20} height={20} className="rounded" />
+          )}
+          {provider === "Azure" && (
+            <Image src="/logos/Azure.svg" alt="Azure" width={20} height={20} className="rounded" />
+          )}
+          {provider === "BaseTen" && (
+            <Image src="/logos/baseten.svg" alt="BaseTen" width={20} height={20} className="rounded" />
+          )}
+          {provider === "Cerebras" && (
+            <Image src="/logos/cerebras.png" alt="Cerebras" width={20} height={20} className="rounded" />
+          )}
+          {provider === "Chutes" && (
+            <Image src="/logos/chutes.png" alt="Chutes" width={20} height={20} className="rounded" />
+          )}
+          {provider === "Cohere" && (
+            <Image src="/logos/Cohere.png" alt="Cohere" width={20} height={20} className="rounded" />
+          )}
+          {provider === "Cloudflare" && (
+            <Image src="/logos/cloudflare.png" alt="Cloudflare" width={20} height={20} className="rounded" />
+          )}
+          {provider === "Crusoe" && (
+            <Image src="/logos/crusoe.png" alt="Crusoe" width={20} height={20} className="rounded" />
+          )}
+          {provider === "DeepSeek" && (
+            <Image src="/logos/deepseek.png" alt="Deepseek" width={20} height={20} className="rounded" />
+          )}
+          {provider === "DeepInfra" && (
+            <Image src="/logos/DeepInfra.webp" alt="DeepInfra" width={20} height={20} className="rounded" />
+          )}
+          {provider === "Featherless" && (
+            <Image src="/logos/featherless.png" alt="Featherless" width={20} height={20} className="rounded" />
+          )}
+          {provider === "Fireworks" && (
+            <Image src="/logos/fireworks.png" alt="Fireworks" width={20} height={20} className="rounded" />
+          )}
+          {provider === "Friendli" && (
+            <Image src="/logos/friendli.png" alt="Friendli" width={20} height={20} className="rounded" />
+          )}
+          {provider === "GMICloud" && (
+            <Image src="/logos/gmicloud.png" alt="GMICloud" width={20} height={20} className="rounded" />
+          )}
+          {provider === "Google AI Studio" && (
+            <Image src="/logos/GoogleAIStudio.svg" alt="Google AI Studio" width={20} height={20} className="rounded" />
+          )}
+          {provider === "Groq" && (
+            <Image src="/logos/groq.png" alt="Groq" width={20} height={20} className="rounded" />
+          )}
+          {provider === "Z.AI" && (
+            <Image src="/logos/zai.png" alt="Z.AI" width={20} height={20} className="rounded" />
+          )}
+          {provider === "xAI" && (
+            <Image src="/logos/xai.png" alt="xAI" width={20} height={20} className="rounded" />
+          )}
+          {provider === "Together" && (
+            <Image src="/logos/together.svg" alt="Together" width={20} height={20} className="rounded" />
+          )}
+          {provider === "Perplexity" && (
+            <Image src="/logos/Perplexity.svg" alt="Perplexity" width={20} height={20} className="rounded" />
+          )}
+          <span>{provider}</span>
         </div>
       );
     },
-    size: 150,
-    minSize: 120,
-    maxSize: 200,
+    size: 170,
+    minSize: 170,
+    meta: {
+      cellClassName: "text-left min-w-[170px]",
+      headerClassName: "text-left min-w-[170px]",
+    },
   },
   {
-    accessorKey: "shortName",
+    accessorKey: "name",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Model Name" />
+      <DataTableColumnHeader column={column} title="Model" />
     ),
     cell: ({ row }) => {
-      const shortName = row.getValue<ModelsColumnSchema["shortName"]>("shortName");
-      const name = row.original.name;
-      const displayName = shortName || name;
+      const name = row.getValue<ModelsColumnSchema["name"]>("name");
 
-      if (!displayName) return <span className="text-muted-foreground">Unknown</span>;
+      if (!name) return <span className="text-muted-foreground">Unknown</span>;
 
       return (
         <div className="max-w-[300px] truncate font-medium">
-          {displayName}
+          {name}
         </div>
       );
     },
@@ -80,51 +150,134 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
     maxSize: 400,
   },
   {
-    accessorKey: "description",
+    accessorKey: "contextLength",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Description" />
+      <DataTableColumnHeader column={column} title="Context" centerTitle />
     ),
     cell: ({ row }) => {
-      const description = row.getValue<ModelsColumnSchema["description"]>("description");
+      const contextLength = row.original.contextLength;
 
-      if (!description) return <span className="text-muted-foreground">No description</span>;
+      if (!contextLength) return <span className="text-muted-foreground">-</span>;
+
+      // Format large numbers (e.g., 256000 -> 256K, 1000000 -> 1M)
+      const formatContextLength = (length: number): string => {
+        if (length >= 1_000_000) {
+          return `${(length / 1_000_000).toFixed(1)}M`;
+        } else if (length >= 1000) {
+          return `${(length / 1000).toFixed(0)}K`;
+        }
+        return length.toString();
+      };
 
       return (
-        <div className="max-w-[400px]">
-          <HoverCard>
-            <HoverCardTrigger asChild>
-              <div className="truncate cursor-help">
-                {description}
-              </div>
-            </HoverCardTrigger>
-            <HoverCardContent className="max-w-[500px] p-4">
-              <p className="text-sm">{description}</p>
-            </HoverCardContent>
-          </HoverCard>
+        <div className="font-mono text-sm text-center">
+          {formatContextLength(contextLength)}
         </div>
       );
     },
-    size: 300,
-    minSize: 250,
-    maxSize: 500,
+    filterFn: "inNumberRange",
+    size: 155,
+    minSize: 155,
+    meta: {
+      cellClassName: "text-center min-w-[155px]",
+      headerClassName: "text-center min-w-[155px]",
+    },
   },
   {
-    accessorKey: "pricing",
+    accessorKey: "outputModalities",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Pricing" />
+      <DataTableColumnHeader column={column} title="Modalities" centerTitle />
     ),
     cell: ({ row }) => {
-      const pricing = row.getValue<ModelsColumnSchema["pricing"]>("pricing");
-      const formatted = formatPricing(pricing);
+      const modalities = row.original.outputModalities;
+
+      if (!modalities || modalities.length === 0) {
+        return <span className="text-muted-foreground">-</span>;
+      }
+
+      // Sort modalities so text comes first, then image, then others
+      const sortedModalities = [...modalities].sort((a, b) => {
+        const order = { text: 0, image: 1 };
+        const aOrder = order[a as keyof typeof order] ?? 2;
+        const bOrder = order[b as keyof typeof order] ?? 2;
+        return aOrder - bOrder;
+      });
 
       return (
-        <div className="font-mono text-sm">
-          {formatted}
+        <div className="text-sm text-center">
+          {sortedModalities.map(mod => mod.charAt(0).toUpperCase() + mod.slice(1)).join("/")}
         </div>
       );
     },
-    size: 250,
-    minSize: 200,
-    maxSize: 350,
+    size: 155,
+    minSize: 155,
+    meta: {
+      cellClassName: "text-center min-w-[155px]",
+      headerClassName: "text-center min-w-[155px]",
+    },
+  },
+  {
+    accessorKey: "inputPrice",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Input" centerTitle />
+    ),
+    cell: ({ row }) => {
+      const pricing = row.original.pricing;
+      const inputPrice = pricing?.prompt;
+
+      const formattedPrice = formatPricePerMillion(inputPrice);
+
+      return (
+        <div className="text-center">
+          {formattedPrice === 'Free' ? (
+            <span className="font-mono text-muted-foreground">Free</span>
+          ) : (
+            <>
+              <span className="font-mono">{formattedPrice}</span>{" "}
+              <span className="font-mono text-muted-foreground">/M</span>
+            </>
+          )}
+        </div>
+      );
+    },
+    filterFn: "inNumberRange",
+    size: 155,
+    minSize: 155,
+    meta: {
+      cellClassName: "text-center min-w-[155px]",
+      headerClassName: "text-center min-w-[155px]",
+    },
+  },
+  {
+    accessorKey: "outputPrice",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Output" centerTitle />
+    ),
+    cell: ({ row }) => {
+      const pricing = row.original.pricing;
+      const outputPrice = pricing?.completion;
+
+      const formattedPrice = formatPricePerMillion(outputPrice);
+
+      return (
+        <div className="text-center">
+          {formattedPrice === 'Free' ? (
+            <span className="font-mono text-muted-foreground">Free</span>
+          ) : (
+            <>
+              <span className="font-mono">{formattedPrice}</span>{" "}
+              <span className="font-mono text-muted-foreground">/M</span>
+            </>
+          )}
+        </div>
+      );
+    },
+    filterFn: "inNumberRange",
+    size: 155,
+    minSize: 155,
+    meta: {
+      cellClassName: "text-center min-w-[155px]",
+      headerClassName: "text-center min-w-[155px]",
+    },
   },
 ];

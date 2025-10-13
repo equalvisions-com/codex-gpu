@@ -188,9 +188,11 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
     initialState: {
       columnOrder: [
         "provider",
-        "shortName",
-        "description",
-        "pricing",
+        "name",
+        "inputPrice",
+        "outputPrice",
+        "contextLength",
+        "outputModalities",
       ],
     },
     state: {
@@ -235,11 +237,11 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
 
   const columnSizingState = table.getState().columnSizing;
   const minimumModelColumnWidth =
-    table.getColumn("shortName")?.columnDef.minSize ?? 200;
+    table.getColumn("name")?.columnDef.minSize ?? 200;
   const fixedColumnsWidth = React.useMemo(() => {
     return table
       .getVisibleLeafColumns()
-      .filter((column) => column.id !== "shortName")
+      .filter((column) => column.id !== "name")
       .reduce((acc, column) => acc + column.getSize(), 0);
   }, [table, columnSizingState]);
 
@@ -399,15 +401,15 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
                           data-column-id={header.column.id}
                           style={{
                             width:
-                              header.id === "shortName"
+                              header.id === "name"
                                 ? "var(--model-column-width)"
                                 : header.getSize(),
                             minWidth:
-                              header.id === "shortName"
+                              header.id === "name"
                                 ? "var(--model-column-width)"
                                 : header.column.columnDef.minSize,
                             maxWidth:
-                              header.id === "shortName"
+                              header.id === "name"
                                 ? "var(--model-column-width)"
                                 : undefined,
                           }}
@@ -484,7 +486,6 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
                                   table={table}
                                   selected={row.getIsSelected()}
                                 checked={checkedRows[row.id] ?? false}
-                                  modelColumnWidth="var(--model-column-width)"
                                   rowRef={rowVirtualizer.measureElement}
                                 />
                               </React.Fragment>
@@ -567,7 +568,6 @@ function Row<TData>({
   checked,
   rowRef,
   dataIndex,
-  modelColumnWidth,
 }: {
   row: Row<TData>;
   table: TTable<TData>;
@@ -579,7 +579,6 @@ function Row<TData>({
   rowRef?: (el: HTMLTableRowElement | null) => void;
   // Virtual index for measurement mapping
   dataIndex?: number;
-  modelColumnWidth: string;
 }) {
   return (
     <TableRow
@@ -623,16 +622,16 @@ function Row<TData>({
             )}
             style={{
               width:
-                cell.column.id === "shortName"
-                  ? modelColumnWidth
+                cell.column.id === "name"
+                  ? "var(--model-column-width)"
                   : cell.column.getSize(),
               minWidth:
-                cell.column.id === "shortName"
-                  ? modelColumnWidth
+                cell.column.id === "name"
+                  ? "var(--model-column-width)"
                   : cell.column.columnDef.minSize,
               maxWidth:
-                cell.column.id === "shortName"
-                  ? modelColumnWidth
+                cell.column.id === "name"
+                  ? "var(--model-column-width)"
                   : undefined,
             }}
           >
@@ -649,6 +648,5 @@ const MemoizedRow = React.memo(
   (prev, next) =>
     prev.row.id === next.row.id &&
     prev.selected === next.selected &&
-    prev.checked === next.checked &&
-    prev.modelColumnWidth === next.modelColumnWidth,
+    prev.checked === next.checked,
 ) as typeof Row;
