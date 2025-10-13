@@ -258,12 +258,14 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   const tableWidthStyle = React.useMemo(
     () =>
       ({
-        "--model-column-width": modelColumnWidthValue,
         width: "100%",
         minWidth: `${effectiveFixedColumnsWidth + minimumModelColumnWidth}px`,
       }) as React.CSSProperties,
-    [modelColumnWidthValue, effectiveFixedColumnsWidth, minimumModelColumnWidth],
+    [effectiveFixedColumnsWidth, minimumModelColumnWidth],
   );
+
+  // Calculated width value for model column styling
+  const modelColumnWidth = modelColumnWidthValue;
 
   React.useEffect(() => {
     const columnFiltersWithNullable = filterFields.map((field) => {
