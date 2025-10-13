@@ -289,6 +289,11 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sorting]);
 
+  // Reset virtualizer measurements when sorting changes to prevent flickering
+  React.useEffect(() => {
+    containerVirtualizer.measure();
+  }, [sorting, containerVirtualizer]);
+
   const selectedRow = React.useMemo(() => {
     if ((isLoading || isFetching) && !data.length) return;
     const selectedRowKey = Object.keys(rowSelection)?.[0];
