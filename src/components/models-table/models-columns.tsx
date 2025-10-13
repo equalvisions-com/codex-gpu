@@ -86,7 +86,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
             <Image src="/logos/deepseek.png" alt="Deepseek" width={20} height={20} className="rounded" />
           )}
           {provider === "DeepInfra" && (
-            <Image src="/logos/DeepInfra.webp" alt="DeepInfra" width={20} height={20} className="rounded" />
+            <Image src="/logos/deepinfra.png" alt="DeepInfra" width={20} height={20} className="rounded" />
           )}
           {provider === "Featherless" && (
             <Image src="/logos/featherless.png" alt="Featherless" width={20} height={20} className="rounded" />
@@ -101,7 +101,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
             <Image src="/logos/gmicloud.png" alt="GMICloud" width={20} height={20} className="rounded" />
           )}
           {provider === "Google AI Studio" && (
-            <Image src="/logos/GoogleAIStudio.svg" alt="Google AI Studio" width={20} height={20} className="rounded" />
+            <Image src="/logos/GoogleAIStudio.png" alt="Google AI Studio" width={20} height={20} className="rounded" />
           )}
           {provider === "Groq" && (
             <Image src="/logos/groq.png" alt="Groq" width={20} height={20} className="rounded" />
@@ -117,6 +117,30 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
           )}
           {provider === "Perplexity" && (
             <Image src="/logos/Perplexity.svg" alt="Perplexity" width={20} height={20} className="rounded" />
+          )}
+          {provider === "Weights and Biases" && (
+            <Image src="/logos/wandb.png" alt="Weights and Biases" width={20} height={20} className="rounded" />
+          )}
+          {provider === "Google Vertex" && (
+            <Image src="/logos/GoogleVertex.png" alt="Google Vertex" width={20} height={20} className="rounded" />
+          )}
+          {provider === "Hyperbolic" && (
+            <Image src="/logos/hyperbolic.png" alt="Hyperbolic" width={20} height={20} className="rounded" />
+          )}
+          {provider === "Meta" && (
+            <Image src="/logos/meta.png" alt="Meta" width={20} height={20} className="rounded" />
+          )}
+          {provider === "Mistral" && (
+            <Image src="/logos/Mistral.png" alt="Mistral" width={20} height={20} className="rounded" />
+          )}
+          {provider === "Inception" && (
+            <Image src="/logos/inception.png" alt="Inception" width={20} height={20} className="rounded" />
+          )}
+          {provider === "OpenAI" && (
+            <Image src="/logos/openai.svg" alt="OpenAI" width={20} height={20} className="rounded" />
+          )}
+          {provider === "Nebius" && (
+            <Image src="/logos/nebius.png" alt="Nebius" width={20} height={20} className="rounded" />
           )}
           <span>{provider}</span>
         </div>

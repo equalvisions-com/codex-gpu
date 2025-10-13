@@ -11,6 +11,17 @@ export class ModelsScraper {
     return value.toLowerCase().replace(/[^a-z0-9]+/g, '-');
   }
 
+  private transformProviderName(provider: string): string {
+    // Transform provider names during ingestion
+    if (provider === 'WandB') {
+      return 'Weights and Biases';
+    }
+    if (provider === 'Google') {
+      return 'Google Vertex';
+    }
+    return provider;
+  }
+
   /**
    * Scrape all AI models from OpenRouter by hitting each provider's endpoint individually
    */
@@ -60,7 +71,8 @@ export class ModelsScraper {
           const processedModels: AIModel[] = modelsData.map((model: any, index: number) => {
             globalSequence++; // Increment for each model processed
 
-            const modelProvider = model.endpoint?.provider_name || 'unknown';
+            const rawProvider = model.endpoint?.provider_name || 'unknown';
+            const modelProvider = this.transformProviderName(rawProvider);
             const originalSlug = model.slug || `unknown_${Date.now()}_${index}`;
             const slugBase = `${modelProvider.toLowerCase()}/${originalSlug}`;
             const variantRaw = typeof model.endpoint?.variant === 'string' ? model.endpoint.variant : null;
