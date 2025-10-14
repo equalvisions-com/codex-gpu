@@ -12,7 +12,6 @@ import { DataTableFilterCommand } from "@/components/data-table/data-table-filte
 import { DataTableProvider } from "@/components/data-table/data-table-provider";
 import { MemoizedDataTableSheetContent } from "@/components/data-table/data-table-sheet/data-table-sheet-content";
 import { DataTableSheetDetails } from "@/components/data-table/data-table-sheet/data-table-sheet-details";
-import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
 import type {
   DataTableFilterField,
   SheetField,
@@ -32,12 +31,12 @@ import type {
 import { flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { useQueryStates, type ParserBuilder } from "nuqs";
 import * as React from "react";
-import { SocialsFooter } from "../infinite-table/_components/socials-footer";
 import { searchParamsParser } from "../infinite-table/search-params";
 import { RowSkeletons } from "../infinite-table/_components/row-skeletons";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { ModelsCheckedActionsIsland } from "./models-checked-actions-island";
-import SidebarNav from "../infinite-table/_components/sidebar-nav";
+import { DataTableFilterControls } from "../data-table/data-table-filter-controls";
+import { filterFields, sheetFields } from "./models-constants";
 
 // FloatingControlsButton removed
 
@@ -60,19 +59,10 @@ export interface ModelsDataTableInfiniteProps<TData, TValue, TMeta> {
   onRowSelectionChange: OnChangeFn<RowSelectionState>;
   filterFields?: DataTableFilterField<TData>[];
   sheetFields?: SheetField<TData, TMeta>[];
-  // REMINDER: close to the same signature as the `getFacetedUniqueValues` of the `useReactTable`
-  getFacetedUniqueValues?: (
-    table: TTable<TData>,
-    columnId: string,
-  ) => Map<string, number>;
-  getFacetedMinMaxValues?: (
-    table: TTable<TData>,
-    columnId: string,
-  ) => undefined | [number, number];
   totalRows?: number;
   filterRows?: number;
   totalRowsFetched?: number;
-  meta: TMeta;
+  meta: TMeta & { facets?: Record<string, any> };
   isFetching?: boolean;
   isLoading?: boolean;
   isFetchingNextPage?: boolean;
@@ -111,8 +101,6 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
   totalRows = 0,
   filterRows = 0,
   totalRowsFetched = 0,
-  getFacetedUniqueValues,
-  getFacetedMinMaxValues,
   meta,
   renderSheetTitle,
   searchParamsParser,
@@ -323,6 +311,53 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
   }, [setSearch]);
 
 
+  const getFacetedUniqueValues = React.useCallback(
+    (table: TTable<TData>, columnId: string) => {
+      const facets = meta.facets;
+      if (!facets) return new Map();
+
+      const facetData = facets[columnId];
+      if (!facetData || typeof facetData !== 'object' || !('rows' in facetData)) return new Map();
+
+      // Convert facet data to Map<string, number>
+      const map = new Map<string, number>();
+      facetData.rows.forEach((row: any) => {
+        if (row && typeof row === 'object' && 'value' in row && 'total' in row) {
+          map.set(String(row.value), Number(row.total));
+        }
+      });
+
+      return map;
+    },
+    [meta.facets]
+  );
+
+  const getFacetedMinMaxValues = React.useCallback(
+    (table: TTable<TData>, columnId: string) => {
+      const facets = meta.facets;
+      if (!facets) return undefined;
+
+      const facetData = facets[columnId];
+      if (!facetData || typeof facetData !== 'object' || !('rows' in facetData)) return undefined;
+
+      // For numeric columns, find min/max values
+      const numericValues: number[] = facetData.rows
+        .map((row: any) => {
+          if (row && typeof row === 'object' && 'value' in row) {
+            const num = Number(row.value);
+            return isNaN(num) ? null : num;
+          }
+          return null;
+        })
+        .filter((val: number | null): val is number => val !== null);
+
+      if (numericValues.length === 0) return undefined;
+
+      return [Math.min(...numericValues), Math.max(...numericValues)] as [number, number];
+    },
+    [meta.facets]
+  );
+
   return (
     <DataTableProvider
       table={table}
@@ -337,10 +372,10 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
       setRowSelection={onRowSelectionChange as (selection: RowSelectionState) => void}
       enableColumnOrdering={false}
       isLoading={isFetching || isLoading}
-      getFacetedUniqueValues={getFacetedUniqueValues}
-      getFacetedMinMaxValues={getFacetedMinMaxValues}
       search={search}
       resetSearch={resetSearch}
+      getFacetedUniqueValues={getFacetedUniqueValues}
+      getFacetedMinMaxValues={getFacetedMinMaxValues}
     >
       <div
         className="flex h-full w-full flex-col sm:flex-row"
@@ -350,25 +385,23 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
           } as React.CSSProperties
         }
       >
-        <div
-          className={cn(
-            "hidden sm:flex h-full w-full flex-col sm:sticky sm:top-0 sm:max-h-screen sm:min-h-screen sm:min-w-52 sm:max-w-52 sm:self-start md:min-w-72 md:max-w-72"
-          )}
-        >
-          <div className="bg-background p-2 md:sticky md:top-0">
-            <DataTableToolbar />
-          </div>
+        <div className="h-[calc(100vh-3.5rem-var(--top-bar-height)-3rem)] rounded-lg border overflow-hidden ml-6 mt-6">
+          <div
+            className={cn(
+              "hidden sm:flex h-full w-full flex-col sm:sticky sm:top-0 sm:max-h-screen sm:min-h-screen sm:min-w-52 sm:max-w-52 sm:self-start md:min-w-72 md:max-w-72"
+            )}
+          >
 
-          <div className="flex flex-1 p-[12px] sm:overflow-y-scroll scrollbar-hide">
-            <SidebarNav />
-          </div>
-          <div className="border-t border-border bg-background p-4 md:sticky md:bottom-0">
-            <SocialsFooter />
+            <div className="flex flex-1 sm:overflow-y-scroll scrollbar-hide pl-2 pr-2">
+              <div className="w-full max-w-full mx-auto mt-4">
+                <DataTableFilterControls />
+              </div>
+            </div>
           </div>
         </div>
         <div
           className={cn(
-            "flex max-w-full flex-1 flex-col border-border sm:border-l min-w-0"
+            "flex max-w-full flex-1 flex-col min-w-0"
           )}
         >
           <div
@@ -379,8 +412,9 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
             )}
           >
           </div>
-          <div className="z-0">
-            <Table
+          <div className="z-0 m-6">
+            <div className="h-[calc(100vh-3.5rem-var(--top-bar-height)-3rem)] rounded-lg border bg-background overflow-hidden">
+              <Table
               ref={tableRef}
               onScroll={onScroll}
               containerRef={containerRef}
@@ -397,8 +431,8 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
                   <TableRow
                     key={headerGroup.id}
                     className={cn(
-                      "bg-muted/50 hover:bg-muted/50",
-                      "[&>*]:border-t [&>:not(:last-child)]:border-r",
+                      "bg-background",
+                      "[&>:not(:last-child)]:border-r",
                     )}
                   >
                     {headerGroup.headers.map((header) => {
@@ -406,7 +440,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
                         <TableHead
                           key={header.id}
                           className={cn(
-                            "relative select-none truncate border-b border-border [&>.cursor-col-resize]:last:opacity-0",
+                            "relative select-none truncate border-b border-border text-foreground/70 [&>.cursor-col-resize]:last:opacity-0",
                             header.column.columnDef.meta?.headerClassName,
                           )}
                           data-column-id={header.column.id}
@@ -538,7 +572,8 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
                   </React.Fragment>
                 )}
               </TableBody>
-            </Table>
+              </Table>
+            </div>
           </div>
         </div>
       </div>
@@ -665,3 +700,4 @@ const MemoizedRow = React.memo(
     prev.checked === next.checked &&
     prev.modelColumnWidth === next.modelColumnWidth,
 ) as typeof Row;
+

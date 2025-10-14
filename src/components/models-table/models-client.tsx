@@ -8,6 +8,7 @@ import { modelsColumns } from "./models-columns";
 import { modelsDataOptions } from "./models-query-options";
 import { modelsSearchParamsParser } from "./models-search-params";
 import { ModelsDataTableInfinite } from "./models-data-table-infinite";
+import { filterFields, sheetFields } from "./models-constants";
 import type { ModelsColumnSchema } from "./models-schema";
 
 interface ModelsClientProps {
@@ -21,7 +22,7 @@ export function ModelsClient({ initialFavoriteKeys }: ModelsClientProps) {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(() => {
     const filters = [];
     if (search.provider) filters.push({ id: "provider", value: search.provider });
-    if (search.group) filters.push({ id: "group", value: search.group });
+    if (search.author) filters.push({ id: "author", value: search.author });
     if (search.inputModalities?.length) filters.push({ id: "inputModalities", value: search.inputModalities });
     if (search.search) filters.push({ id: "search", value: search.search });
     if (search.name) filters.push({ id: "name", value: search.name });
@@ -57,9 +58,12 @@ export function ModelsClient({ initialFavoriteKeys }: ModelsClientProps) {
     return query.data?.pages.flatMap((page) => page.data) ?? [];
   }, [query.data]);
 
-  const totalRows = query.data?.pages[0]?.meta.totalRowCount ?? 0;
-  const filterRows = query.data?.pages[0]?.meta.filterRowCount ?? 0;
+  // REMINDER: meta data is always the same for all pages as filters do not change(!)
+  const lastPage = query.data?.pages?.[query.data?.pages.length - 1];
+  const totalRows = lastPage?.meta?.totalRowCount ?? 0;
+  const filterRows = lastPage?.meta?.filterRowCount ?? 0;
   const totalRowsFetched = data.length;
+  const facets = lastPage?.meta?.facets;
 
   const renderSheetTitle = ({ row }: { row?: any }) => {
     if (!row) return "AI Model Details";
@@ -77,10 +81,12 @@ export function ModelsClient({ initialFavoriteKeys }: ModelsClientProps) {
       onSortingChange={setSorting}
       rowSelection={rowSelection}
       onRowSelectionChange={setRowSelection}
+      filterFields={filterFields}
+      sheetFields={sheetFields}
       totalRows={totalRows}
       filterRows={filterRows}
       totalRowsFetched={totalRowsFetched}
-      meta={{ initialFavoriteKeys }}
+      meta={{ initialFavoriteKeys, facets }}
       isFetching={query.isFetching}
       isLoading={query.isLoading}
       isFetchingNextPage={query.isFetchingNextPage}

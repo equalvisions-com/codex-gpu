@@ -1,6 +1,71 @@
 import type { AIModel, ModelScrapeResult } from '@/types/models';
 import { providerParameters } from './provider-params';
 
+const AUTHOR_MAP: Record<string, string> = {
+  'x-ai': 'xAI',
+  'agentica-org': 'Agentica',
+  'anthropic': 'Anthropic',
+  'google': 'Google',
+  'meta-llama': 'Meta',
+  'microsoft': 'Microsoft',
+  'nvidia': 'NVIDIA',
+  'openai': 'OpenAI',
+  'perplexity': 'Perplexity',
+  'ai21': 'AI21',
+  'aion-labs': 'AionLabs',
+  'alfredpros': 'AlfredPros',
+  'allenai': 'AllenAI',
+  'amazon': 'Amazon',
+  'arcee-ai': 'Arcee AI',
+  'arliai': 'ArliAI',
+  'baidu': 'Baidu',
+  'bytedance': 'ByteDance',
+  'deepcogito': 'Deep Cogito',
+  'deepseek': 'DeepSeek',
+  'cohere': 'Cohere',
+  'cognitivecomputations': 'Cognitive Computations',
+  'eleutherai': 'EleutherAI',
+  'alpindale': 'Alpindale',
+  'inception': 'Inception',
+  'inclusionai': 'inclusionAI',
+  'inflection': 'Inflection',
+  'liquid': 'Liquid',
+  'anthracite-org': 'Anthracite',
+  'mancer': 'Mancer',
+  'meituan': 'Meituan',
+  'minimax': 'MiniMax',
+  'mistralai': 'Mistral',
+  'moonshotai': 'MoonshotAI',
+  'morph': 'Morph',
+  'gryphe': 'Gryphe',
+  'neversleep': 'NeverSleep',
+  'nousresearch': 'Nous Research',
+  'opengvlab': 'OpenGVLab',
+  'qwen': 'Qwen',
+  'relace': 'Relace',
+  'undi95': 'Undi',
+  'sao10k': 'Sao10K',
+  'shisa-ai': 'Shisa AI',
+  'raifle': 'rAIfle',
+  'stepfun-ai': 'StepFun',
+  'switchpoint': 'Switchpoint',
+  'tencent': 'Tencent',
+  'thedrummer': 'TheDrummer',
+  'thudm': 'THUDM',
+  'tngtech': 'TNG',
+  'alibaba': 'Alibaba',
+  'z-ai': 'Z.AI',
+};
+
+const PROVIDER_MAP: Record<string, string> = {
+  'WandB': 'Weights and Biases',
+  'Google': 'Google Vertex',
+  'Mancer 2': 'Mancer',
+  'Minimax': 'MiniMax',
+  'Moonshot AI': 'MoonshotAI',
+  'Nvidia': 'NVIDIA',
+};
+
 /**
  * Scrapes AI models from OpenRouter API
  */
@@ -12,14 +77,13 @@ export class ModelsScraper {
   }
 
   private transformProviderName(provider: string): string {
-    // Transform provider names during ingestion
-    if (provider === 'WandB') {
-      return 'Weights and Biases';
-    }
-    if (provider === 'Google') {
-      return 'Google Vertex';
-    }
-    return provider;
+    // Transform provider names during ingestion using lookup map
+    return PROVIDER_MAP[provider] ?? provider;
+  }
+
+  private transformAuthorName(author: string): string {
+    // Transform author names during ingestion using lookup map
+    return AUTHOR_MAP[author] ?? author;
   }
 
   /**
@@ -99,7 +163,7 @@ export class ModelsScraper {
               slug: uniqueSlug, // Now includes provider prefix for uniqueness
               name: model.name || null,
               shortName: model.short_name || null,
-              author: model.author || null,
+              author: model.author ? this.transformAuthorName(model.author) : null,
               description: model.description || null,
               modelVersionGroupId: model.model_version_group_id || null,
               contextLength: model.context_length || null,

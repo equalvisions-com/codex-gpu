@@ -193,10 +193,10 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
           {provider === "Liquid" && (
             <Image src="/logos/liquid.png" alt="Liquid" width={20} height={20} className="rounded" />
           )}
-          {provider === "Mancer 2" && (
+          {provider === "Mancer" && (
             <Image src="/logos/mancer.svg" alt="Mancer" width={20} height={20} className="rounded" />
           )}
-          {provider === "Minimax" && (
+          {provider === "MiniMax" && (
             <Image src="/logos/minimax.png" alt="Minimax" width={20} height={20} className="rounded" />
           )}
           {
@@ -212,7 +212,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
             <Image src="/logos/phala.png" alt="Phala" width={20} height={20} className="rounded" />
           )}
           {
-            provider === "Moonshot AI" && (
+            provider === "MoonshotAI" && (
             <Image src="/logos/moonshot.png" alt="Moonshot AI" width={20} height={20} className="rounded" />
           )}
           {
@@ -368,7 +368,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
           ) : (
             <>
               <span className="font-mono">{formattedPrice}</span>{" "}
-              <span className="font-mono text-muted-foreground">/M</span>
+              <span className="font-mono text-foreground/70">/M</span>
             </>
           )}
         </div>
@@ -401,7 +401,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
           ) : (
             <>
               <span className="font-mono">{formattedPrice}</span>{" "}
-              <span className="font-mono text-muted-foreground">/M</span>
+              <span className="font-mono text-foreground/70">/M</span>
             </>
           )}
         </div>

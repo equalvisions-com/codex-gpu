@@ -6,6 +6,121 @@ import type { ModelsSearchParamsType } from "@/components/models-table/models-se
 import { modelsCache } from "@/lib/models-cache";
 import type { AIModel } from "@/types/models";
 
+// Custom sorting priority for author filter options
+const AUTHOR_SORT_PRIORITY: Record<string, number> = {
+  'OpenAI': 1,
+  'Anthropic': 2,
+  'xAI': 3,
+  'Google': 4,
+  'Meta': 5,
+  'Perplexity': 6,
+  'DeepSeek': 7,
+  'Z.AI': 8,
+  'Qwen': 9,
+  'Mistral': 10,
+  'Cohere': 11,
+  'MoonshotAI': 12,
+  'NVIDIA': 13,
+  'Microsoft': 14,
+  'Amazon': 15,
+  'Alibaba': 16,
+  'Baidu': 17,
+  'Tencent': 18,
+  'ByteDance': 19,
+  'AI21': 20,
+  'Inflection': 21,
+  'Meituan': 22,
+  'AionLabs': 23,
+  'Arcee AI': 24,
+  'AllenAI': 25,
+  'ArliAI': 26,
+  'Liquid': 27,
+  'Morph': 28,
+  'inclusionAI': 29,
+  'Relace': 30,
+  'Inception': 31,
+  'StepFun': 32,
+  'Switchpoint': 33,
+  'Nous Research': 34,
+  'EleutherAI': 35,
+  'NeverSleep': 36,
+  'Gryphe': 37,
+  'Cognitive Computations': 38,
+  'Deep Cogito': 39,
+  'Anthracite': 40,
+  'MiniMax': 41,
+  'AlfredPros': 42,
+  'Mancer': 43,
+  'Alpindale': 44,
+  'THUDM': 45,
+  'OpenGVLab': 46,
+  'Sao10K': 47,
+  'Undi': 48,
+  'Shisa AI': 49,
+  'rAIfle': 50,
+  'Agentica': 51,
+  'TNG': 52,
+  'TheDrummer': 53,
+};
+
+// Custom sorting priority for provider filter options
+const PROVIDER_SORT_PRIORITY: Record<string, number> = {
+  'Azure': 1,
+  'Google Vertex': 2,
+  'Groq': 3,
+  'Together': 4,
+  'Fireworks': 5,
+  'OpenAI': 6,
+  'Anthropic': 7,
+  'Google AI Studio': 8,
+  'Amazon Bedrock': 9,
+  'Mistral': 10,
+  'Cohere': 11,
+  'xAI': 12,
+  'Meta': 13,
+  'Perplexity': 14,
+  'DeepSeek': 15,
+  'Cerebras': 16,
+  'SambaNova': 17,
+  'DeepInfra': 18,
+  'Cloudflare': 19,
+  'NVIDIA': 20,
+  'Alibaba': 21,
+  'MoonshotAI': 22,
+  'BaseTen': 23,
+  'Nebius': 24,
+  'Crusoe': 25,
+  'Friendli': 26,
+  'Hyperbolic': 27,
+  'MiniMax': 28,
+  'AI21': 29,
+  'SiliconFlow': 30,
+  'Novita': 31,
+  'Inflection': 32,
+  'Venice': 33,
+  'Chutes': 34,
+  'Z.AI': 35,
+  'Weights and Biases': 36,
+  'Phala': 37,
+  'AtlasCloud': 38,
+  'Targon': 39,
+  'Parasail': 40,
+  'NCompass': 41,
+  'Inception': 42,
+  'Relace': 43,
+  'Morph': 44,
+  'Infermatic': 45,
+  'AionLabs': 46,
+  'Mancer': 47,
+  'NextBit': 48,
+  'Liquid': 49,
+  'OpenInference': 50,
+  'GMICloud': 51,
+  'Switchpoint': 52,
+  'Featherless': 53,
+  'InferenceNet': 54,
+};
+
 // AI Model row interface for filtering/sorting system
 interface ModelsRowWithId extends AIModel {
   uuid: string;
@@ -15,12 +130,12 @@ interface ModelsRowWithId extends AIModel {
 function filterModelsData(data: ModelsRowWithId[], search: ModelsSearchParamsType): ModelsRowWithId[] {
   return data.filter((row) => {
     // Provider filter
-    if (search.provider && row.provider !== search.provider) {
+    if (search.provider && search.provider.length > 0 && !search.provider.includes(row.provider)) {
       return false;
     }
 
-    // Group filter
-    if (search.group && row.group !== search.group) {
+    // Author filter
+    if (search.author && search.author.length > 0 && !search.author.includes(row.author || '')) {
       return false;
     }
 
@@ -44,14 +159,14 @@ function filterModelsData(data: ModelsRowWithId[], search: ModelsSearchParamsTyp
       }
     }
 
-    // Search filter (global search across name, description, provider)
+    // Search filter (global search across name, description, provider, author)
     if (search.search) {
       const searchTerm = search.search.toLowerCase();
       const searchableText = [
         row.name,
         row.description,
         row.provider,
-        row.group
+        row.author
       ].filter(Boolean).join(' ').toLowerCase();
 
       if (!searchableText.includes(searchTerm)) {
@@ -130,19 +245,41 @@ function generateModelsFacets(data: ModelsRowWithId[]): Record<string, { rows: {
     providerCounts[provider] = (providerCounts[provider] || 0) + 1;
   });
   facets.provider = {
-    rows: Object.entries(providerCounts).map(([value, total]) => ({ value, total })),
+    rows: Object.entries(providerCounts)
+      .map(([value, total]) => ({ value, total }))
+      .sort((a, b) => {
+        const aPriority = PROVIDER_SORT_PRIORITY[a.value] || 999;
+        const bPriority = PROVIDER_SORT_PRIORITY[b.value] || 999;
+
+        // Sort by priority first, then alphabetically
+        if (aPriority !== bPriority) {
+          return aPriority - bPriority;
+        }
+        return a.value.localeCompare(b.value);
+      }),
     total: data.length
   };
 
-  // Group facet
-  const groupCounts: Record<string, number> = {};
+  // Author facet
+  const authorCounts: Record<string, number> = {};
   data.forEach(row => {
-    if (row.group) {
-      groupCounts[row.group] = (groupCounts[row.group] || 0) + 1;
+    if (row.author) {
+      authorCounts[row.author] = (authorCounts[row.author] || 0) + 1;
     }
   });
-  facets.group = {
-    rows: Object.entries(groupCounts).map(([value, total]) => ({ value, total })),
+  facets.author = {
+    rows: Object.entries(authorCounts)
+      .map(([value, total]) => ({ value, total }))
+      .sort((a, b) => {
+        const aPriority = AUTHOR_SORT_PRIORITY[a.value] || 999;
+        const bPriority = AUTHOR_SORT_PRIORITY[b.value] || 999;
+
+        // Sort by priority first, then alphabetically
+        if (aPriority !== bPriority) {
+          return aPriority - bPriority;
+        }
+        return a.value.localeCompare(b.value);
+      }),
     total: data.length
   };
 
@@ -195,8 +332,8 @@ export async function GET(req: NextRequest): Promise<Response> {
     const size = search.size ?? 50;
     const paginatedData = sortedData.slice(start, start + size);
 
-    // Generate facets for filter UI
-    const facets = generateModelsFacets(filteredData);
+    // Generate facets for filter UI (from all data, not filtered data)
+    const facets = generateModelsFacets(totalData);
 
     // Convert back to ModelsColumnSchema format
     const data: ModelsColumnSchema[] = paginatedData.map((row) => ({
@@ -205,6 +342,7 @@ export async function GET(req: NextRequest): Promise<Response> {
       provider: row.provider,
       name: row.name || null,
       shortName: row.shortName || null,
+      author: row.author || null,
       description: row.description || null,
       modelVersionGroupId: row.modelVersionGroupId || null,
       contextLength: row.contextLength || null,

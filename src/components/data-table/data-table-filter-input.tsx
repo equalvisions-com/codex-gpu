@@ -16,8 +16,7 @@ export function DataTableFilterInput<TData>({
   value: _value,
 }: DataTableInputFilterField<TData>) {
   const value = _value as string;
-  const { table, columnFilters } = useDataTable();
-  const column = table.getColumn(value);
+  const { table, columnFilters, setColumnFilters } = useDataTable();
   const filterValue = columnFilters.find((i) => i.id === value)?.value;
   const filters = getFilter(filterValue);
   const [input, setInput] = useState<string | null>(filters);
@@ -27,8 +26,16 @@ export function DataTableFilterInput<TData>({
   useEffect(() => {
     const newValue = debouncedInput?.trim() === "" ? null : debouncedInput;
     if (debouncedInput === null) return;
-    column?.setFilterValue(newValue);
-  }, [debouncedInput]);
+    const newFilters = columnFilters.map(f =>
+      f.id === value
+        ? { ...f, value: newValue }
+        : f
+    );
+    if (!columnFilters.find(f => f.id === value)) {
+      newFilters.push({ id: value, value: newValue });
+    }
+    setColumnFilters(newFilters.filter(f => f.value !== null && f.value !== undefined));
+  }, [debouncedInput, columnFilters, setColumnFilters, value]);
 
   useEffect(() => {
     if (debouncedInput?.trim() !== filters) {

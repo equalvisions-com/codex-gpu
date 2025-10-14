@@ -32,8 +32,8 @@ export const parseAsSort = createParser({
 
 export const modelsSearchParamsParser = {
   // AI MODELS FILTERS
-  provider: parseAsString,
-  group: parseAsString,
+  provider: parseAsArrayOf(parseAsString, ARRAY_DELIMITER),
+  author: parseAsArrayOf(parseAsString, ARRAY_DELIMITER),
   inputModalities: parseAsArrayOf(parseAsString, ARRAY_DELIMITER),
   search: parseAsString,
   name: parseAsString,

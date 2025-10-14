@@ -3,6 +3,7 @@ import { modelsSearchParamsCache } from "@/components/models-table/models-search
 import { getQueryClient } from "@/providers/get-query-client";
 import { modelsDataOptions } from "@/components/models-table/models-query-options";
 import { ModelsClient } from "@/components/models-table/models-client";
+import { ModelsNavBar } from "@/components/layout/models-nav-bar";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { getCookieCache } from "better-auth/cookies";
@@ -37,5 +38,10 @@ export default async function Models({
     initialFavoriteKeys = [];
   }
 
-  return <ModelsClient initialFavoriteKeys={initialFavoriteKeys} />;
+  return (
+    <div className="min-h-screen">
+      <ModelsNavBar />
+      <ModelsClient initialFavoriteKeys={initialFavoriteKeys} />
+    </div>
+  );
 }

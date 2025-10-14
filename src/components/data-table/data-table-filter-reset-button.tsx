@@ -8,9 +8,8 @@ import { useDataTable } from "@/components/data-table/data-table-provider";
 export function DataTableFilterResetButton<TData>({
   value: _value,
 }: DataTableFilterField<TData>) {
-  const { columnFilters, table } = useDataTable();
+  const { columnFilters, table, setColumnFilters } = useDataTable();
   const value = _value as string;
-  const column = table.getColumn(value);
   const filterValue = columnFilters.find((f) => f.id === value)?.value;
 
   // TODO: check if we could useMemo
@@ -28,12 +27,14 @@ export function DataTableFilterResetButton<TData>({
       className="h-5 rounded-full px-1.5 py-1 font-mono text-[10px]"
       onClick={(e) => {
         e.stopPropagation();
-        column?.setFilterValue(undefined);
+        const newFilters = columnFilters.filter(f => f.id !== value);
+        setColumnFilters(newFilters);
       }}
       onKeyDown={(e) => {
         e.stopPropagation();
         if (e.code === "Enter") {
-          column?.setFilterValue(undefined);
+          const newFilters = columnFilters.filter(f => f.id !== value);
+          setColumnFilters(newFilters);
         }
       }}
       asChild

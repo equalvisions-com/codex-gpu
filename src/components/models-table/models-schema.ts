@@ -15,6 +15,7 @@ export const modelsColumnSchema = z.object({
   provider: z.string(),
   name: z.string().nullable(),
   shortName: z.string().nullable(),
+  author: z.string().nullable(),
   description: z.string().nullable(),
 
   // Model metadata
@@ -38,10 +39,10 @@ export type ModelsColumnSchema = z.infer<typeof modelsColumnSchema>;
 
 // AI Models filter schema
 export const modelsColumnFilterSchema = z.object({
-  provider: z.string().optional(),
+  provider: z.array(z.string()).optional(),
+  author: z.array(z.string()).optional(),
   name: z.string().optional(),
   description: z.string().optional(),
-  group: z.string().optional(),
   inputModalities: z.array(z.string()).optional(),
   search: z.string().optional(),
 });

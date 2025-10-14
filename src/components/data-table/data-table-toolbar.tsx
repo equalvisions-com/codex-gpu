@@ -29,9 +29,6 @@ export function DataTableToolbar({ renderActions }: DataTableToolbarProps) {
           <DataTableFilterControlsDrawer />
         </div>
         <div>
-          <svg className="h-4 w-4 m-2" viewBox="0 0 284 284" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M142 0L284 284H0L142 0Z" fill="white" />
-          </svg>
           <p className="hidden text-sm text-muted-foreground">
             <span className="font-mono">
               {formatCompactNumber(rows.filtered)}
