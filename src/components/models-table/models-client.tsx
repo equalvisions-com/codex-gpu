@@ -19,6 +19,9 @@ export function ModelsClient({ initialFavoriteKeys }: ModelsClientProps) {
   const [search, setSearch] = useQueryStates(modelsSearchParamsParser);
   const queryClient = useQueryClient();
 
+  // Preserve facets across query changes to prevent filter skeletons during transitions
+  const [persistentFacets, setPersistentFacets] = useState<Record<string, any> | undefined>();
+
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(() => {
     const filters = [];
     if (search.provider) filters.push({ id: "provider", value: search.provider });
@@ -63,7 +66,17 @@ export function ModelsClient({ initialFavoriteKeys }: ModelsClientProps) {
   const totalRows = lastPage?.meta?.totalRowCount ?? 0;
   const filterRows = lastPage?.meta?.filterRowCount ?? 0;
   const totalRowsFetched = data.length;
-  const facets = lastPage?.meta?.facets;
+  const currentFacets = lastPage?.meta?.facets;
+
+  // Update persistent facets when new valid facets arrive
+  useEffect(() => {
+    if (currentFacets) {
+      setPersistentFacets(currentFacets);
+    }
+  }, [currentFacets]);
+
+  // Use persistent facets during transitions, fallback to current facets
+  const facets = persistentFacets || currentFacets;
 
   const renderSheetTitle = ({ row }: { row?: any }) => {
     if (!row) return "AI Model Details";
@@ -93,7 +106,7 @@ export function ModelsClient({ initialFavoriteKeys }: ModelsClientProps) {
       hasNextPage={query.hasNextPage}
       fetchNextPage={query.fetchNextPage}
       renderSheetTitle={renderSheetTitle}
-      searchParamsParser={modelsSearchParamsParser}
+      modelsSearchParamsParser={modelsSearchParamsParser}
       search={search.search || undefined}
       getRowId={(row) => row.id}
     />

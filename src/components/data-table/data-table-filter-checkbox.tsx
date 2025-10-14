@@ -33,7 +33,7 @@ export function DataTableFilterCheckbox<TData>({
       : [filterValue]
     : [];
 
-  // REMINDER: if no options are defined, while fetching data, we should show a skeleton
+  // REMINDER: only show skeletons during initial load, not during filter operations
   if (isLoading && !filterOptions?.length)
     return (
       <div className="grid divide-y rounded-lg border border-border">
@@ -63,7 +63,8 @@ export function DataTableFilterCheckbox<TData>({
               <div
                 key={String(option.value)}
                 className={cn(
-                  "group relative flex items-center px-2 py-2.5 hover:bg-accent/50 cursor-pointer",
+                  "group relative flex items-center px-2 py-2.5 hover:bg-muted/50 cursor-pointer rounded-md",
+                  checked && "bg-muted/50",
                 )}
                 onClick={() => {
                   const newValue = checked

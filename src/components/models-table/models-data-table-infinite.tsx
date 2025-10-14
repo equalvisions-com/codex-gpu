@@ -31,7 +31,7 @@ import type {
 import { flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { useQueryStates, type ParserBuilder } from "nuqs";
 import * as React from "react";
-import { searchParamsParser } from "../infinite-table/search-params";
+import { modelsSearchParamsParser } from "./models-search-params";
 import { RowSkeletons } from "../infinite-table/_components/row-skeletons";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { ModelsCheckedActionsIsland } from "./models-checked-actions-island";
@@ -71,7 +71,7 @@ export interface ModelsDataTableInfiniteProps<TData, TValue, TMeta> {
     options?: FetchNextPageOptions | undefined,
   ) => Promise<unknown>;
   renderSheetTitle: (props: { row?: Row<TData> }) => React.ReactNode;
-  searchParamsParser: Record<string, ParserBuilder<any>>;
+  modelsSearchParamsParser: Record<string, ParserBuilder<any>>;
   // Search parameter for global search filtering
   search?: string;
   // Optional ref target to programmatically focus the table body
@@ -103,7 +103,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
   totalRowsFetched = 0,
   meta,
   renderSheetTitle,
-  searchParamsParser,
+  modelsSearchParamsParser,
   search,
   focusTargetRef,
 }: ModelsDataTableInfiniteProps<TData, TValue, TMeta>) {
@@ -122,8 +122,8 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
   const tableRef = React.useRef<HTMLTableElement>(null);
   const [topBarHeight, setTopBarHeight] = React.useState(0);
   const containerRef = React.useRef<HTMLDivElement>(null);
-  // searchParamsParser is provided as a prop
-  const [_, setSearch] = useQueryStates(searchParamsParser);
+  // modelsSearchParamsParser is provided as a prop
+  const [_, setSearch] = useQueryStates(modelsSearchParamsParser);
 
   const onScroll = React.useCallback(
     (e: React.UIEvent<HTMLElement>) => {
