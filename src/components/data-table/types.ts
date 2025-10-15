@@ -26,6 +26,7 @@ export type Slider = {
   type: "slider";
   min: number;
   max: number;
+  step?: number;
   // if options is undefined, we will provide all the steps between min and max
   options?: Option[];
 };

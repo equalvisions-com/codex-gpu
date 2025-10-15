@@ -1,8 +1,9 @@
 "use client";
 import { useDataTable } from "@/components/data-table/data-table-provider";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
- 
+
 import type { DataTableCheckboxFilterField } from "./types";
 
 export function DataTableFilterCheckbox<TData>({
@@ -51,47 +52,48 @@ export function DataTableFilterCheckbox<TData>({
 
   return (
     <div className="grid gap-2">
-      {/* FIXME: due to the added max-h and overflow-y-auto, the hover state and border is laying on top of the scroll bar */}
-      <div className="max-h-[200px] overflow-y-auto rounded-lg empty:border-none">
-        {filterOptions
-          // TODO: we shoudn't sort the options here, instead filterOptions should be sorted by default
-          // .sort((a, b) => a.label.localeCompare(b.label))
-          ?.map((option, index) => {
-            const checked = filters.includes(option.value);
+      <ScrollArea className="h-[200px] rounded-lg">
+        <div className="pr-3">
+          {filterOptions
+            // TODO: we shoudn't sort the options here, instead filterOptions should be sorted by default
+            // .sort((a, b) => a.label.localeCompare(b.label))
+            ?.map((option, index) => {
+              const checked = filters.includes(option.value);
 
-            return (
-              <div
-                key={String(option.value)}
-                className={cn(
-                  "group relative flex items-center px-2 py-2.5 hover:bg-muted/50 cursor-pointer rounded-md",
-                  checked && "bg-muted/50",
-                )}
-                onClick={() => {
-                  const newValue = checked
-                    ? filters?.filter((value) => option.value !== value)
-                    : [...(filters || []), option.value];
-                  const newFilters = columnFilters.map(f =>
-                    f.id === value
-                      ? { ...f, value: newValue?.length ? newValue : undefined }
-                      : f
-                  );
-                  if (!columnFilters.find(f => f.id === value)) {
-                    newFilters.push({ id: value, value: newValue?.length ? newValue : undefined });
-                  }
-                  setColumnFilters(newFilters.filter(f => f.value !== undefined));
-                }}
-              >
-                <div className="flex w-full items-center truncate text-foreground group-hover:text-accent-foreground">
-                  {Component ? (
-                    <Component {...option} />
-                  ) : (
-                    <span className="truncate font-normal">{option.label}</span>
+              return (
+                <div
+                  key={String(option.value)}
+                  className={cn(
+                    "group relative flex items-center px-2 py-2.5 hover:bg-muted/50 cursor-pointer rounded-md",
+                    checked && "bg-muted/50",
                   )}
+                  onClick={() => {
+                    const newValue = checked
+                      ? filters?.filter((value) => option.value !== value)
+                      : [...(filters || []), option.value];
+                    const newFilters = columnFilters.map(f =>
+                      f.id === value
+                        ? { ...f, value: newValue?.length ? newValue : undefined }
+                        : f
+                    );
+                    if (!columnFilters.find(f => f.id === value)) {
+                      newFilters.push({ id: value, value: newValue?.length ? newValue : undefined });
+                    }
+                    setColumnFilters(newFilters.filter(f => f.value !== undefined));
+                  }}
+                >
+                  <div className="flex w-full items-center truncate text-foreground group-hover:text-accent-foreground">
+                    {Component ? (
+                      <Component {...option} />
+                    ) : (
+                        <span className="truncate font-normal">{option.label}</span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-      </div>
+              );
+            })}
+        </div>
+      </ScrollArea>
     </div>
   );
 }

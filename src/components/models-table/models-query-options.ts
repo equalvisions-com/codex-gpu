@@ -1,4 +1,4 @@
-import { infiniteQueryOptions } from "@tanstack/react-query";
+import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
 import type {
   ModelsColumnSchema,
   ModelsFacetMetadataSchema,
@@ -48,5 +48,23 @@ export const modelsDataOptions = (search: ModelsSearchParamsType) => {
       ? { cursor: lastPage.nextCursor, size: search.size ?? 50 }
       : null,
     refetchOnWindowFocus: false,
+  });
+};
+
+// Separate query for facets (doesn't depend on filters - always shows all options)
+export const modelsFacetsOptions = () => {
+  return queryOptions({
+    queryKey: ["models-facets"],
+    queryFn: async () => {
+      // Request facets only (no filters applied)
+      const response = await fetch(`/api/models?size=1`, {
+        next: { revalidate: 3600, tags: ["models"] },
+      });
+      const json = await response.json();
+      return json.meta.facets as Record<string, ModelsFacetMetadataSchema>;
+    },
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000, // Consider facets fresh for 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
   });
 };

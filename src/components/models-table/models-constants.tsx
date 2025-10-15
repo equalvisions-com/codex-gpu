@@ -24,17 +24,12 @@ export const filterFields: DataTableFilterField<ModelsColumnSchema>[] = [
     defaultOpen: true,
   },
   {
-    label: "Context Length",
+    label: "Context",
     value: "contextLength",
     type: "slider",
-    min: 1024,
-    max: 200000,
-    defaultOpen: true,
-  },
-  {
-    label: "Output Modalities",
-    value: "outputModalities",
-    type: "checkbox",
+    min: 1000,
+    max: 1000000,
+    step: 1024,
     defaultOpen: true,
   },
 ];
@@ -64,11 +59,6 @@ export const sheetFields: SheetField<ModelsColumnSchema>[] = [
   {
     id: "inputModalities",
     label: "Input Modalities",
-    type: "readonly",
-  },
-  {
-    id: "outputModalities",
-    label: "Output Modalities",
     type: "readonly",
   },
 ];

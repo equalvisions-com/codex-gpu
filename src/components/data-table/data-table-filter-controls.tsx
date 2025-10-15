@@ -31,7 +31,7 @@ export function DataTableFilterControls() {
         const value = field.value as string;
         return (
           <AccordionItem key={value} value={value} className="border-none">
-            <AccordionTrigger className="w-full px-2 py-0 hover:no-underline data-[state=closed]:text-muted-foreground data-[state=open]:text-foreground focus-within:data-[state=closed]:text-foreground hover:data-[state=closed]:text-foreground [&>svg]:text-foreground/70">
+            <AccordionTrigger className="w-full py-0 hover:no-underline data-[state=closed]:text-muted-foreground data-[state=open]:text-foreground focus-within:data-[state=closed]:text-foreground hover:data-[state=closed]:text-foreground [&>svg]:text-foreground/70">
               <div className="flex w-full items-center justify-between gap-2 truncate py-2 pr-2">
                 <div className="flex items-center gap-2 truncate">
                   <p className="text-sm font-medium text-foreground/70">{field.label}</p>

@@ -139,6 +139,41 @@ function filterModelsData(data: ModelsRowWithId[], search: ModelsSearchParamsTyp
       return false;
     }
 
+    // Context length filter (range filter)
+    if (search.contextLength && Array.isArray(search.contextLength) && search.contextLength.length === 2) {
+      const [min, max] = search.contextLength;
+      const contextLength = row.contextLength;
+      if (contextLength !== null && contextLength !== undefined) {
+        // If max is at the slider maximum (1M), treat it as "1M or higher"
+        const effectiveMax = max >= 1000000 ? Infinity : max;
+        if (contextLength < min || contextLength > effectiveMax) {
+          return false;
+        }
+      }
+    }
+
+    // Input price filter (range filter)
+    if (search.inputPrice && Array.isArray(search.inputPrice) && search.inputPrice.length === 2) {
+      const [min, max] = search.inputPrice;
+      const inputPrice = row.pricing?.prompt;
+      if (inputPrice !== null && inputPrice !== undefined) {
+        if (inputPrice < min || inputPrice > max) {
+          return false;
+        }
+      }
+    }
+
+    // Output price filter (range filter)
+    if (search.outputPrice && Array.isArray(search.outputPrice) && search.outputPrice.length === 2) {
+      const [min, max] = search.outputPrice;
+      const outputPrice = row.pricing?.completion;
+      if (outputPrice !== null && outputPrice !== undefined) {
+        if (outputPrice < min || outputPrice > max) {
+          return false;
+        }
+      }
+    }
+
     // Name filter (partial match)
     if (search.name && !row.name?.toLowerCase().includes(search.name.toLowerCase())) {
       return false;
@@ -210,11 +245,6 @@ function sortModelsData(data: ModelsRowWithId[], sortParam?: { id: string; desc:
       case 'outputPrice':
         aValue = a.pricing?.completion || 0;
         bValue = b.pricing?.completion || 0;
-        break;
-      case 'outputModalities':
-        // Sort by joined modalities string (e.g., "Text/Image")
-        aValue = (a.outputModalities || []).sort().join('/');
-        bValue = (b.outputModalities || []).sort().join('/');
         break;
       default:
         aValue = a[id as keyof AIModel] || '';

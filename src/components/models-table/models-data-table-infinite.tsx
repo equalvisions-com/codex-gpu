@@ -173,6 +173,12 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
   const table = useReactTable({
     data,
     columns,
+    // Server-side operations (TanStack Table best practice)
+    manualFiltering: true,
+    manualSorting: true,
+    manualPagination: true,
+    // Total row count for pagination calculation
+    rowCount: totalRows,
     initialState: {
       columnOrder: [
         "blank",
@@ -183,6 +189,13 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
         "contextLength",
         "outputModalities",
       ],
+      // Initialize from URL state (TanStack Table best practice)
+      columnFilters,
+      sorting,
+      pagination: {
+        pageIndex: 0,
+        pageSize: 50,
+      },
     },
     state: {
       columnFilters,
@@ -198,9 +211,6 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
     onRowSelectionChange,
     onSortingChange,
     enableHiding: false,
-    // Disable client-side sorting/pagination/filtering - all happen on server
-    manualSorting: true,
-    manualFiltering: true,
     enableSorting: true, // Enable sorting UI for manual server-side sorting
     getCoreRowModel: getCoreRowModel(),
     // Facets are provided by the server; expose them via provider callbacks
