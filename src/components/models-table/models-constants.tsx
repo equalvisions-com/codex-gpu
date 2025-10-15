@@ -12,6 +12,12 @@ import type { ModelsColumnSchema } from "./models-schema";
 // Models filter fields
 export const filterFields: DataTableFilterField<ModelsColumnSchema>[] = [
   {
+    label: "Search",
+    value: "search",
+    type: "input",
+    defaultOpen: true,
+  },
+  {
     label: "Labs",
     value: "author",
     type: "checkbox",

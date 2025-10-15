@@ -304,7 +304,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
 
       return (
         <div className="font-mono text-sm text-center">
-          {formatContextLength(contextLength)}
+          {formatContextLength(contextLength)} <span className="text-foreground/70">Tokens</span>
         </div>
       );
     },
@@ -325,7 +325,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
       const modalities = row.original.outputModalities;
 
       if (!modalities || modalities.length === 0) {
-        return <span className="text-muted-foreground">-</span>;
+        return <span className="text-foreground/70">-</span>;
       }
 
       // Sort modalities so text comes first, then image, then others
@@ -364,7 +364,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
       return (
         <div className="text-center">
           {formattedPrice === 'Free' ? (
-            <span className="font-mono text-muted-foreground">Free</span>
+            <span className="font-mono text-foreground/70">Free</span>
           ) : (
             <>
               <span className="font-mono">{formattedPrice}</span>{" "}
@@ -397,7 +397,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
       return (
         <div className="text-center">
           {formattedPrice === 'Free' ? (
-            <span className="font-mono text-muted-foreground">Free</span>
+            <span className="font-mono text-foreground/70">Free</span>
           ) : (
             <>
               <span className="font-mono">{formattedPrice}</span>{" "}

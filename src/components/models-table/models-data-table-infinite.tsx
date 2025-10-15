@@ -118,9 +118,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
     });
   }, []);
 
-  const topBarRef = React.useRef<HTMLDivElement>(null);
   const tableRef = React.useRef<HTMLTableElement>(null);
-  const [topBarHeight, setTopBarHeight] = React.useState(0);
   const containerRef = React.useRef<HTMLDivElement>(null);
   // modelsSearchParamsParser is provided as a prop
   const [_, setSearch] = useQueryStates(modelsSearchParamsParser);
@@ -155,20 +153,6 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
     return () => observer.disconnect();
   }, [containerRef, fetchNextPage, hasNextPage, isFetching]);
 
-  React.useEffect(() => {
-    const observer = new ResizeObserver(() => {
-      const rect = topBarRef.current?.getBoundingClientRect();
-      if (rect) {
-        setTopBarHeight(rect.height);
-      }
-    });
-
-    const topBar = topBarRef.current;
-    if (!topBar) return;
-
-    observer.observe(topBar);
-    return () => observer.unobserve(topBar);
-  }, [topBarRef]);
 
   const table = useReactTable({
     data,
@@ -387,18 +371,10 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
       getFacetedUniqueValues={getFacetedUniqueValues}
       getFacetedMinMaxValues={getFacetedMinMaxValues}
     >
-      <div
-        className="flex h-full w-full flex-col sm:flex-row"
-        style={
-          {
-            "--top-bar-height": `${topBarHeight}px`,
-          } as React.CSSProperties
-        }
-      >
-        <div className="h-[calc(100vh-3.5rem-var(--top-bar-height)-3rem)] rounded-lg border overflow-hidden ml-6 mt-6">
+      <div className="grid h-full grid-cols-1 sm:grid-cols-[13rem_1fr] md:grid-cols-[18rem_1fr] gap-6">
           <div
             className={cn(
-              "hidden sm:flex h-full w-full flex-col sm:sticky sm:top-0 sm:max-h-screen sm:min-h-screen sm:min-w-52 sm:max-w-52 sm:self-start md:min-w-72 md:max-w-72"
+              "hidden sm:flex h-[calc(100dvh-var(--total-padding-mobile))] sm:h-[calc(100dvh-var(--total-padding-desktop))] flex-col sticky top-0 min-w-52 max-w-52 self-start md:min-w-72 md:max-w-72 rounded-lg border bg-background overflow-hidden"
             )}
           >
 
@@ -408,22 +384,13 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
               </div>
             </div>
           </div>
-        </div>
-        <div
-          className={cn(
-            "flex max-w-full flex-1 flex-col min-w-0"
-          )}
-        >
           <div
-            ref={topBarRef}
             className={cn(
-              "flex flex-col",
-              "sticky top-0 z-10",
+              "flex max-w-full flex-1 flex-col min-w-0"
             )}
           >
-          </div>
-          <div className="z-0 m-6">
-            <div className="h-[calc(100vh-3.5rem-var(--top-bar-height)-3rem)] rounded-lg border bg-background overflow-hidden">
+          <div className="z-0">
+            <div className="h-[calc(100dvh-var(--total-padding-mobile))] sm:h-[calc(100dvh-var(--total-padding-desktop))] rounded-lg border bg-background overflow-hidden">
               <Table
               ref={tableRef}
               onScroll={onScroll}
@@ -433,7 +400,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
               className="border-separate border-spacing-0 w-auto min-w-full table-fixed"
               style={tableWidthStyle}
               containerClassName={cn(
-                "h-full max-h-[calc(100vh_-_var(--top-bar-height))] overscroll-x-none scrollbar-hide"
+                "h-full overscroll-x-none scrollbar-hide"
               )}
             >
               <TableHeader className={cn("sticky top-0 z-20 bg-background")}>
@@ -506,7 +473,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
                 className="outline-1 -outline-offset-1 outline-primary transition-colors focus-visible:outline"
                 // REMINDER: avoids scroll (skipping the table header) when using skip to content
                 style={{
-                  scrollMarginTop: "calc(var(--top-bar-height) + 40px)",
+                  scrollMarginTop: "40px",
                 }}
             aria-busy={Boolean(isLoading || (isFetching && !data.length))}
             aria-live="polite"

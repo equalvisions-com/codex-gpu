@@ -3,7 +3,6 @@ import { modelsSearchParamsCache } from "@/components/models-table/models-search
 import { getQueryClient } from "@/providers/get-query-client";
 import { modelsDataOptions } from "@/components/models-table/models-query-options";
 import { ModelsClient } from "@/components/models-table/models-client";
-import { ModelsNavBar } from "@/components/layout/models-nav-bar";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { getCookieCache } from "better-auth/cookies";
@@ -39,8 +38,13 @@ export default async function Models({
   }
 
   return (
-    <div className="min-h-screen">
-      <ModelsNavBar />
+    <div
+      className="flex min-h-dvh w-full flex-col sm:flex-row p-4 sm:p-6 min-h-0"
+      style={{
+        '--total-padding-mobile': '2rem',
+        '--total-padding-desktop': '3rem',
+      } as React.CSSProperties}
+    >
       <ModelsClient initialFavoriteKeys={initialFavoriteKeys} />
     </div>
   );

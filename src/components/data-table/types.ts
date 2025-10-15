@@ -40,7 +40,7 @@ export type Timerange = {
 
 export type Base<TData> = {
   label: string;
-  value: keyof TData;
+  value: keyof TData | string;
   /**
    * Defines if the accordion in the filter bar is open by default
    */

@@ -4,7 +4,7 @@ import type { DataTableInputFilterField } from "./types";
 import { InputWithAddons } from "@/components/custom/input-with-addons";
 import { Label } from "@/components/ui/label";
 import { Search } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useDataTable } from "@/components/data-table/data-table-provider";
 
@@ -21,27 +21,39 @@ export function DataTableFilterInput<TData>({
   const filters = getFilter(filterValue);
   const [input, setInput] = useState<string | null>(filters);
 
+  // Track if the current input change came from user interaction
+  const isUserInputRef = useRef(false);
+
   const debouncedInput = useDebounce(input, 500);
 
+  // Apply filter when debounced input changes (only from user input)
   useEffect(() => {
+    // Only apply filter if this came from user input
+    if (!isUserInputRef.current) return;
+
     const newValue = debouncedInput?.trim() === "" ? null : debouncedInput;
-    if (debouncedInput === null) return;
     const newFilters = columnFilters.map(f =>
       f.id === value
         ? { ...f, value: newValue }
         : f
     );
-    if (!columnFilters.find(f => f.id === value)) {
+    if (!columnFilters.find(f => f.id === value) && newValue !== null) {
       newFilters.push({ id: value, value: newValue });
     }
-    setColumnFilters(newFilters.filter(f => f.value !== null && f.value !== undefined));
-  }, [debouncedInput, columnFilters, setColumnFilters, value]);
 
+    setColumnFilters(newFilters.filter(f => f.value !== null && f.value !== undefined));
+    isUserInputRef.current = false; // Reset after applying
+  }, [debouncedInput, setColumnFilters, value]);
+
+  // Sync external changes to local state (but not when user is typing)
   useEffect(() => {
-    if (debouncedInput?.trim() !== filters) {
+    // Don't sync if user is currently typing
+    if (isUserInputRef.current) return;
+
+    if (filters !== input) {
       setInput(filters);
     }
-  }, [filters]);
+  }, [filters, input]);
 
   return (
     <div className="grid w-full gap-1.5">
@@ -55,7 +67,10 @@ export function DataTableFilterInput<TData>({
         name={value}
         id={value}
         value={input || ""}
-        onChange={(e) => setInput(e.target.value)}
+        onChange={(e) => {
+          isUserInputRef.current = true;
+          setInput(e.target.value);
+        }}
       />
     </div>
   );
