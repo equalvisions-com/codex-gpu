@@ -64,6 +64,7 @@ export function DataTableFilterInput<TData>({
         placeholder="Search"
         leading={<Search className="mt-0.5 h-4 w-4" />}
         containerClassName="h-9 rounded-lg"
+        className="placeholder:text-foreground/70"
         name={value}
         id={value}
         value={input || ""}

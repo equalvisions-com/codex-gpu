@@ -18,8 +18,6 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-client-provider";
 import { useAuthDialog } from "@/providers/auth-dialog-provider";
 import { useQueryClient } from "@tanstack/react-query";
-import { useHotKey } from "@/hooks/use-hot-key";
-import SpotlightSearchDialog from "../infinite-table/_components/spotlight-search-dialog";
 
 // FIXME: use @container (especially for the slider element) to restructure elements
 
@@ -76,10 +74,10 @@ export function DataTableFilterControls({ currentView = 'gpus' }: DataTableFilte
   const searchParams = useSearchParams();
   const { session } = useAuth();
   const { showSignIn } = useAuthDialog();
-  const [isSpotlightOpen, setIsSpotlightOpen] = React.useState(false);
 
-  // Add global keyboard shortcut for search (Cmd+K / Ctrl+K)
-  useHotKey(() => setIsSpotlightOpen(true), "k");
+  // Separate search filter from other filters
+  const searchFilter = filterFields?.find(field => field.value === 'search');
+  const otherFilters = filterFields?.filter(field => field.value !== 'search');
 
   const handleSignIn = React.useCallback(() => {
     const callbackUrl =
@@ -105,9 +103,16 @@ export function DataTableFilterControls({ currentView = 'gpus' }: DataTableFilte
 
   return (
     <>
+      {/* Search Filter - Moved above navigation */}
+      {searchFilter && searchFilter.type === 'input' && (
+        <div className="mb-4">
+          <DataTableFilterInput {...searchFilter} />
+        </div>
+      )}
+
       <Accordion
         type="multiple"
-        defaultValue={["navigation", ...(filterFields
+        defaultValue={["navigation", ...(otherFilters
           ?.filter(({ defaultOpen }) => defaultOpen)
           ?.map(({ value }) => value as string) || [])]}
       >
@@ -116,7 +121,7 @@ export function DataTableFilterControls({ currentView = 'gpus' }: DataTableFilte
           <AccordionTrigger className="w-full py-0 hover:no-underline data-[state=closed]:text-muted-foreground data-[state=open]:text-foreground focus-within:data-[state=closed]:text-foreground hover:data-[state=closed]:text-foreground [&>svg]:text-foreground/70">
             <div className="flex w-full items-center justify-between gap-2 truncate py-2 pr-2">
               <div className="flex items-center gap-2 truncate">
-                <p className="text-sm font-medium text-foreground/70">Menu</p>
+                <p className="text-sm font-medium text-foreground/70">Navigation</p>
               </div>
             </div>
           </AccordionTrigger>
@@ -134,10 +139,6 @@ export function DataTableFilterControls({ currentView = 'gpus' }: DataTableFilte
                 ) : (
                   <SidebarLink href="/cpus" label="Tools" />
                 )}
-                <SidebarLink
-                  label="Search"
-                  onClick={() => setIsSpotlightOpen(true)}
-                />
                 {session ? (
                   <SidebarLink label="Favorites" onClick={handleFavoritesClick} />
                 ) : null}
@@ -150,7 +151,7 @@ export function DataTableFilterControls({ currentView = 'gpus' }: DataTableFilte
         </AccordionItem>
 
         {/* Filter Sections */}
-        {filterFields?.map((field) => {
+        {otherFilters?.map((field) => {
           const value = field.value as string;
           return (
             <AccordionItem key={value} value={value} className="border-none">
@@ -185,9 +186,6 @@ export function DataTableFilterControls({ currentView = 'gpus' }: DataTableFilte
           );
         })}
       </Accordion>
-      {isSpotlightOpen && (
-        <SpotlightSearchDialog open={isSpotlightOpen} onOpenChange={setIsSpotlightOpen} />
-      )}
     </>
   );
 }

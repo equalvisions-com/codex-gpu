@@ -7,8 +7,6 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-client-provider";
 import { useAuthDialog } from "@/providers/auth-dialog-provider";
 import { useQueryClient } from "@tanstack/react-query";
-import { useHotKey } from "@/hooks/use-hot-key";
-import SpotlightSearchDialog from "./spotlight-search-dialog";
 
 interface SidebarLinkProps {
   href?: string;
@@ -63,10 +61,6 @@ export function SidebarNav({ currentView = 'gpus' }: SidebarNavProps) {
   const searchParams = useSearchParams();
   const { session } = useAuth();
   const { showSignIn } = useAuthDialog();
-  const [isSpotlightOpen, setIsSpotlightOpen] = React.useState(false);
-
-  // Add global keyboard shortcut for search (Cmd+K / Ctrl+K)
-  useHotKey(() => setIsSpotlightOpen(true), "k");
 
   const handleSignIn = React.useCallback(() => {
     const callbackUrl =
@@ -109,10 +103,6 @@ export function SidebarNav({ currentView = 'gpus' }: SidebarNavProps) {
           ) : (
             <SidebarLink href="/cpus" label="Tools" />
           )}
-          <SidebarLink
-            label="Search"
-            onClick={() => setIsSpotlightOpen(true)}
-          />
           {session ? (
             <SidebarLink label="Favorites" onClick={handleFavoritesClick} />
           ) : null}
@@ -121,9 +111,6 @@ export function SidebarNav({ currentView = 'gpus' }: SidebarNavProps) {
           ) : null}
         </div>
       </div>
-      {isSpotlightOpen && (
-        <SpotlightSearchDialog open={isSpotlightOpen} onOpenChange={setIsSpotlightOpen} />
-      )}
     </nav>
   );
 }
