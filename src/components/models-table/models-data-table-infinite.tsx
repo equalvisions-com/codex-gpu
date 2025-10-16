@@ -298,7 +298,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
         "inputPrice",
         "outputPrice",
         "contextLength",
-        "outputModalities",
+        "inputModalities",
       ],
       // Initialize from URL state (TanStack Table best practice)
       columnFilters,
@@ -818,4 +818,3 @@ const MemoizedRow = React.memo(
     prev.checked === next.checked &&
     prev.modelColumnWidth === next.modelColumnWidth,
 ) as typeof Row;
-

@@ -44,6 +44,7 @@ export const modelsColumnFilterSchema = z.object({
   name: z.string().optional(),
   description: z.string().optional(),
   inputModalities: z.array(z.string()).optional(),
+  outputModalities: z.array(z.string()).optional(),
   contextLength: z.array(z.number()).optional(),
   inputPrice: z.array(z.number()).optional(),
   outputPrice: z.array(z.number()).optional(),

@@ -155,9 +155,11 @@ function filterModelsData(data: ModelsRowWithId[], search: ModelsSearchParamsTyp
     // Input price filter (range filter)
     if (search.inputPrice && Array.isArray(search.inputPrice) && search.inputPrice.length === 2) {
       const [min, max] = search.inputPrice;
+      const minPerToken = (min ?? 0) / 1_000_000;
+      const maxPerToken = (max ?? 0) / 1_000_000;
       const inputPrice = row.pricing?.prompt;
       if (inputPrice !== null && inputPrice !== undefined) {
-        if (inputPrice < min || inputPrice > max) {
+        if (inputPrice < minPerToken || inputPrice > maxPerToken) {
           return false;
         }
       }
@@ -187,9 +189,19 @@ function filterModelsData(data: ModelsRowWithId[], search: ModelsSearchParamsTyp
     // Input modalities filter (array contains)
     if (search.inputModalities && search.inputModalities.length > 0) {
       const hasAllModalities = search.inputModalities.every(modality =>
-        row.inputModalities.includes(modality)
+        (row.inputModalities || []).includes(modality)
       );
       if (!hasAllModalities) {
+        return false;
+      }
+    }
+
+    // Output modalities filter (array contains)
+    if (search.outputModalities && search.outputModalities.length > 0) {
+      const hasAllOutputModalities = search.outputModalities.every(modality =>
+        (row.outputModalities || []).includes(modality)
+      );
+      if (!hasAllOutputModalities) {
         return false;
       }
     }
@@ -311,6 +323,36 @@ function generateModelsFacets(data: ModelsRowWithId[]): Record<string, { rows: {
         return a.value.localeCompare(b.value);
       }),
     total: data.length
+  };
+
+  // Input modalities facet
+  const inputModalityCounts: Record<string, number> = {};
+  data.forEach(row => {
+    (row.inputModalities || []).forEach(modality => {
+      if (!modality) return;
+      inputModalityCounts[modality] = (inputModalityCounts[modality] || 0) + 1;
+    });
+  });
+  facets.inputModalities = {
+    rows: Object.entries(inputModalityCounts)
+      .map(([value, total]) => ({ value, total }))
+      .sort((a, b) => a.value.localeCompare(b.value)),
+    total: data.length,
+  };
+
+  // Output modalities facet
+  const outputModalityCounts: Record<string, number> = {};
+  data.forEach(row => {
+    (row.outputModalities || []).forEach(modality => {
+      if (!modality) return;
+      outputModalityCounts[modality] = (outputModalityCounts[modality] || 0) + 1;
+    });
+  });
+  facets.outputModalities = {
+    rows: Object.entries(outputModalityCounts)
+      .map(([value, total]) => ({ value, total }))
+      .sort((a, b) => a.value.localeCompare(b.value)),
+    total: data.length,
   };
 
   // Name facet (top 20 most common names)

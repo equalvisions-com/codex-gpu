@@ -35,6 +35,7 @@ export const modelsSearchParamsParser = {
   provider: parseAsArrayOf(parseAsString, ARRAY_DELIMITER),
   author: parseAsArrayOf(parseAsString, ARRAY_DELIMITER),
   inputModalities: parseAsArrayOf(parseAsString, ARRAY_DELIMITER),
+  outputModalities: parseAsArrayOf(parseAsString, ARRAY_DELIMITER),
   contextLength: parseAsArrayOf(parseAsFloat, SLIDER_DELIMITER),
   inputPrice: parseAsArrayOf(parseAsFloat, SLIDER_DELIMITER),
   outputPrice: parseAsArrayOf(parseAsFloat, SLIDER_DELIMITER),

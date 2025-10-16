@@ -38,7 +38,7 @@ export function DataTableFilterCheckbox<TData>({
   if (isLoading && !filterOptions?.length)
     return (
       <div className="grid gap-2">
-        <ScrollArea className="h-[200px] rounded-lg">
+        <ScrollArea className="max-h-[200px] rounded-lg">
           <div className="pr-3">
             {Array.from({ length: 3 }).map((_, index) => (
               <div
@@ -56,13 +56,21 @@ export function DataTableFilterCheckbox<TData>({
 
   return (
     <div className="grid gap-2">
-      <ScrollArea className="h-[200px] rounded-lg">
+      <ScrollArea className="max-h-[200px] rounded-lg">
         <div className="pr-3">
           {filterOptions
             // TODO: we shoudn't sort the options here, instead filterOptions should be sorted by default
             // .sort((a, b) => a.label.localeCompare(b.label))
             ?.map((option, index) => {
               const checked = filters.includes(option.value);
+              const shouldCapitalizeModalities =
+                value === "inputModalities" || value === "outputModalities";
+              const displayLabel = shouldCapitalizeModalities
+                ? (() => {
+                    const label = String(option.label);
+                    return label.charAt(0).toUpperCase() + label.slice(1);
+                  })()
+                : option.label;
 
               return (
                 <div
@@ -90,7 +98,7 @@ export function DataTableFilterCheckbox<TData>({
                     {Component ? (
                       <Component {...option} />
                     ) : (
-                        <span className="truncate font-normal">{option.label}</span>
+                      <span className="truncate font-normal">{displayLabel}</span>
                     )}
                   </div>
                 </div>

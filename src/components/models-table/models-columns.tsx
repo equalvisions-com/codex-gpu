@@ -1,13 +1,15 @@
 "use client";
 
-import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
-import { cn } from "@/lib/utils";
-import { Checkbox } from "@/components/ui/checkbox";
-import { useDataTable } from "@/components/data-table/data-table-provider";
 import { DataTableFilterControlsDrawer } from "@/components/data-table/data-table-filter-controls-drawer";
+import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
+import { useDataTable } from "@/components/data-table/data-table-provider";
+import { Checkbox } from "@/components/ui/checkbox";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { cn } from "@/lib/utils";
+import { HoverCardPortal } from "@radix-ui/react-hover-card";
 import type { ColumnDef } from "@tanstack/react-table";
-import type { ModelsColumnSchema } from "./models-schema";
 import Image from "next/image";
+import type { ModelsColumnSchema } from "./models-schema";
 
 function RowCheckboxCell({ rowId }: { rowId: string }) {
   const { checkedRows, toggleCheckedRow } = useDataTable<ModelsColumnSchema, unknown>();
@@ -273,19 +275,19 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
       if (!name) return <span className="text-muted-foreground">Unknown</span>;
 
       return (
-        <div className="max-w-[300px] truncate font-medium">
+        <div className="max-w-[500px] truncate font-medium">
           {name}
         </div>
       );
     },
     size: 250,
-    minSize: 200,
-    maxSize: 400,
+    minSize: 250,
+    maxSize: 500,
   },
   {
     accessorKey: "contextLength",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Context" centerTitle />
+      <DataTableColumnHeader column={column} title="Context" titleClassName="ml-auto text-right" />
     ),
     cell: ({ row }) => {
       const contextLength = row.original.contextLength;
@@ -303,8 +305,8 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
       };
 
       return (
-        <div className="font-mono text-sm text-center">
-          {formatContextLength(contextLength)} <span className="text-foreground/70">Tokens</span>
+        <div className="font-mono text-sm text-right">
+          {formatContextLength(contextLength)} <span className="text-foreground/70">TOK</span>
         </div>
       );
     },
@@ -312,48 +314,66 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
     size: 155,
     minSize: 155,
     meta: {
-      cellClassName: "text-center min-w-[155px]",
-      headerClassName: "text-center min-w-[155px]",
+      cellClassName: "text-right min-w-[155px]",
+      headerClassName: "text-right min-w-[155px]",
     },
   },
   {
-    accessorKey: "outputModalities",
+    accessorKey: "inputModalities",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Modalities" centerTitle />
+      <DataTableColumnHeader column={column} title="Modality" titleClassName="ml-auto text-right" />
     ),
     cell: ({ row }) => {
-      const modalities = row.original.outputModalities;
+      const inputModalities = row.original.inputModalities ?? [];
+      const outputModalities = row.original.outputModalities ?? [];
+      const hasModalities = inputModalities.length + outputModalities.length > 0;
 
-      if (!modalities || modalities.length === 0) {
+      if (!hasModalities) {
         return <span className="text-foreground/70">-</span>;
       }
 
-      // Sort modalities so text comes first, then image, then others
-      const sortedModalities = [...modalities].sort((a, b) => {
-        const order = { text: 0, image: 1 };
-        const aOrder = order[a as keyof typeof order] ?? 2;
-        const bOrder = order[b as keyof typeof order] ?? 2;
-        return aOrder - bOrder;
-      });
+      const uniqueModalities = new Set([...inputModalities, ...outputModalities]);
+      const label = uniqueModalities.size > 1 ? "Multimodal" : "Unimodal";
+      const formatList = (modalities: string[]) => (
+        modalities.length
+          ? modalities.map(modality => modality.charAt(0).toUpperCase() + modality.slice(1)).join(", ")
+          : "-"
+      );
 
       return (
-        <div className="text-sm text-center">
-          {sortedModalities.map(mod => mod.charAt(0).toUpperCase() + mod.slice(1)).join("/")}
-        </div>
+        <HoverCard openDelay={0} closeDelay={0}>
+          <HoverCardTrigger asChild>
+            <div className="text-sm text-right font-medium tracking-wide cursor-pointer">
+              {label}
+            </div>
+          </HoverCardTrigger>
+          <HoverCardPortal>
+            <HoverCardContent side="bottom" sideOffset={8} className="w-fit max-w-[155px] text-left text-xs space-y-1.5 p-2">
+              <div>
+                <span className="font-semibold text-foreground">Input:</span>{" "}
+                <span className="text-foreground/80">{formatList(inputModalities)}</span>
+              </div>
+              <div>
+                <span className="font-semibold text-foreground">Output:</span>{" "}
+                <span className="text-foreground/80">{formatList(outputModalities)}</span>
+              </div>
+            </HoverCardContent>
+          </HoverCardPortal>
+        </HoverCard>
       );
     },
     size: 155,
     minSize: 155,
     meta: {
-      cellClassName: "text-center min-w-[155px]",
-      headerClassName: "text-center min-w-[155px]",
+      cellClassName: "text-right min-w-[155px]",
+      headerClassName: "text-right min-w-[155px]",
     },
   },
   {
     id: "inputPrice",
     accessorFn: (row) => row.pricing?.prompt || 0,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Input" centerTitle />
+      <DataTableColumnHeader column={column} title="Prompt" titleClassName="ml-auto text-right" />
     ),
     cell: ({ row }) => {
       const pricing = row.original.pricing;
@@ -362,7 +382,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
       const formattedPrice = formatPricePerMillion(inputPrice);
 
       return (
-        <div className="text-center">
+        <div className="text-right">
           {formattedPrice === 'Free' ? (
             <span className="font-mono text-foreground/70">Free</span>
           ) : (
@@ -378,15 +398,15 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
     size: 155,
     minSize: 155,
     meta: {
-      cellClassName: "text-center min-w-[155px]",
-      headerClassName: "text-center min-w-[155px]",
+      cellClassName: "text-right min-w-[155px]",
+      headerClassName: "text-right min-w-[155px]",
     },
   },
   {
     id: "outputPrice",
     accessorFn: (row) => row.pricing?.completion || 0,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Output" centerTitle />
+      <DataTableColumnHeader column={column} title="Output" titleClassName="ml-auto text-right" />
     ),
     cell: ({ row }) => {
       const pricing = row.original.pricing;
@@ -395,7 +415,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
       const formattedPrice = formatPricePerMillion(outputPrice);
 
       return (
-        <div className="text-center">
+        <div className="text-right">
           {formattedPrice === 'Free' ? (
             <span className="font-mono text-foreground/70">Free</span>
           ) : (
@@ -411,8 +431,8 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
     size: 155,
     minSize: 155,
     meta: {
-      cellClassName: "text-center min-w-[155px]",
-      headerClassName: "text-center min-w-[155px]",
+      cellClassName: "text-right min-w-[155px]",
+      headerClassName: "text-right min-w-[155px]",
     },
   },
 ];
