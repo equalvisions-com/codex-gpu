@@ -1,7 +1,7 @@
 "use client";
 
-import { DataTableFilterControlsDrawer } from "@/components/data-table/data-table-filter-controls-drawer";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
+import { DataTableHeaderCheckbox } from "@/components/data-table/data-table-header-checkbox";
 import { useDataTable } from "@/components/data-table/data-table-provider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
@@ -41,7 +41,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
     id: "blank",
     header: () => (
       <div className="flex items-center justify-center">
-        <DataTableFilterControlsDrawer />
+        <DataTableHeaderCheckbox />
       </div>
     ),
     enableSorting: false,
@@ -66,7 +66,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
     maxSize: 45,
     meta: {
       cellClassName: "min-w-[45px] p-0 text-center",
-      headerClassName: "min-w-[45px]",
+      headerClassName: "min-w-[45px] px-0",
     },
   },
   {
@@ -77,7 +77,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
     cell: ({ row }) => {
       const provider = row.getValue<ModelsColumnSchema["provider"]>("provider");
       return (
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2">
           {provider === "Anthropic" && (
             <Image src="/logos/Anthropic.svg" alt="Anthropic" width={20} height={20} className="rounded" />
           )}
@@ -253,15 +253,17 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
             provider === "Venice" && (
             <Image src="/logos/venice.png" alt="Venice" width={20} height={20} className="rounded" />
           )}
-          <span>{provider}</span>
+          <span className="truncate font-medium" title={provider ?? undefined}>
+            {provider}
+          </span>
         </div>
       );
     },
-    size: 180,
-    minSize: 180,
+    size: 155,
+    minSize: 155,
     meta: {
-      cellClassName: "text-left min-w-[180px]",
-      headerClassName: "text-left min-w-[180px]",
+      cellClassName: "text-left min-w-[155px]",
+      headerClassName: "text-left min-w-[155px]",
     },
   },
   {

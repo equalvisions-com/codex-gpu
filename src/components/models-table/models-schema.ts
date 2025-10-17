@@ -43,8 +43,10 @@ export const modelsColumnFilterSchema = z.object({
   author: z.array(z.string()).optional(),
   name: z.string().optional(),
   description: z.string().optional(),
-  inputModalities: z.array(z.string()).optional(),
-  outputModalities: z.array(z.string()).optional(),
+  modalities: z.array(z.string()).optional(),
+  modalityDirections: z
+    .record(z.enum(["input", "output"]))
+    .optional(),
   contextLength: z.array(z.number()).optional(),
   inputPrice: z.array(z.number()).optional(),
   outputPrice: z.array(z.number()).optional(),

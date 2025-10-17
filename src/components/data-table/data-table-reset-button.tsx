@@ -7,10 +7,9 @@ import { useHotKey } from "@/hooks/use-hot-key";
 import { useDataTable } from "@/components/data-table/data-table-provider";
 
 export function DataTableResetButton() {
-  const { table, resetSearch } = useDataTable();
+  const { table } = useDataTable();
   useHotKey(() => {
     table.resetColumnFilters();
-    resetSearch?.();
   }, "Escape");
 
   return (
@@ -19,7 +18,6 @@ export function DataTableResetButton() {
       size="sm"
       onClick={() => {
         table.resetColumnFilters();
-        resetSearch?.();
       }}
       aria-label="Reset filters (Cmd+Esc)"
       title="Reset filters (Cmd+Esc)"

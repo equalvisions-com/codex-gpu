@@ -3,21 +3,14 @@ import {
   createSearchParamsCache,
   createSerializer,
   parseAsArrayOf,
-  parseAsBoolean,
   parseAsFloat,
   parseAsInteger,
   parseAsString,
   parseAsStringLiteral,
-  parseAsTimestamp,
   type inferParserType,
 } from "nuqs/server";
 // Note: import from 'nuqs/server' to avoid the "use client" directive
-import {
-  ARRAY_DELIMITER,
-  RANGE_DELIMITER,
-  SLIDER_DELIMITER,
-  SORT_DELIMITER,
-} from "@/lib/delimiters";
+import { ARRAY_DELIMITER, SLIDER_DELIMITER, SORT_DELIMITER } from "@/lib/delimiters";
 
 export const parseAsSort = createParser({
   parse(queryValue) {
@@ -34,8 +27,8 @@ export const modelsSearchParamsParser = {
   // AI MODELS FILTERS
   provider: parseAsArrayOf(parseAsString, ARRAY_DELIMITER),
   author: parseAsArrayOf(parseAsString, ARRAY_DELIMITER),
-  inputModalities: parseAsArrayOf(parseAsString, ARRAY_DELIMITER),
-  outputModalities: parseAsArrayOf(parseAsString, ARRAY_DELIMITER),
+  modalities: parseAsArrayOf(parseAsString, ARRAY_DELIMITER),
+  modalityDirections: parseAsArrayOf(parseAsString, ARRAY_DELIMITER),
   contextLength: parseAsArrayOf(parseAsFloat, SLIDER_DELIMITER),
   inputPrice: parseAsArrayOf(parseAsFloat, SLIDER_DELIMITER),
   outputPrice: parseAsArrayOf(parseAsFloat, SLIDER_DELIMITER),

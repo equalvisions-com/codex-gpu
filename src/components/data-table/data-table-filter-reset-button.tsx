@@ -15,13 +15,33 @@ export function DataTableFilterResetButton<TData>({
   // TODO: check if we could useMemo
   // For range filters (arrays with exactly 2 numbers), count as 1 filter
   // For multi-select filters (arrays with different structure), count array length
-  const filters = filterValue
-    ? Array.isArray(filterValue) && filterValue.length === 2 && typeof filterValue[0] === 'number' && typeof filterValue[1] === 'number'
-      ? [filterValue] // Range filter: count as 1
-      : Array.isArray(filterValue)
-        ? filterValue // Multi-select filter: count array elements
-        : [filterValue] // Single value: count as 1
-    : [];
+  const filters = (() => {
+    if (!filterValue) return [];
+
+    if (
+      typeof filterValue === "object" &&
+      !Array.isArray(filterValue) &&
+      "values" in (filterValue as any) &&
+      Array.isArray((filterValue as any).values)
+    ) {
+      return (filterValue as { values: unknown[] }).values ?? [];
+    }
+
+    if (
+      Array.isArray(filterValue) &&
+      filterValue.length === 2 &&
+      typeof filterValue[0] === "number" &&
+      typeof filterValue[1] === "number"
+    ) {
+      return [filterValue];
+    }
+
+    if (Array.isArray(filterValue)) {
+      return filterValue;
+    }
+
+    return [filterValue];
+  })();
 
   if (filters.length === 0) return null;
 

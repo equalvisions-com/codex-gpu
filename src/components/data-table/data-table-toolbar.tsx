@@ -3,7 +3,6 @@
 import { useDataTable } from "@/components/data-table/data-table-provider";
 import { formatCompactNumber } from "@/lib/format";
 import { useMemo } from "react";
-import { DataTableFilterControlsDrawer } from "./data-table-filter-controls-drawer";
 import { DataTableResetButton } from "./data-table-reset-button";
 
 interface DataTableToolbarProps {
@@ -11,7 +10,7 @@ interface DataTableToolbarProps {
 }
 
 export function DataTableToolbar({ renderActions }: DataTableToolbarProps) {
-  const { table, isLoading, columnFilters, search } = useDataTable();
+  const { table, isLoading, columnFilters } = useDataTable();
   const filters = table.getState().columnFilters;
 
   // Server-mode: render counts based on meta passed into sheet/details.
@@ -25,9 +24,6 @@ export function DataTableToolbar({ renderActions }: DataTableToolbarProps) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-4">
       <div className="flex flex-wrap items-center gap-2">
-        <div className="block sm:hidden">
-          <DataTableFilterControlsDrawer />
-        </div>
         <div>
           <p className="hidden text-sm text-muted-foreground">
             <span className="font-mono">
@@ -48,7 +44,7 @@ export function DataTableToolbar({ renderActions }: DataTableToolbarProps) {
         </div>
       </div>
       <div className="ml-auto flex items-center gap-2">
-        {(filters.length || search) ? <DataTableResetButton /> : null}
+        {filters.length ? <DataTableResetButton /> : null}
         {renderActions?.()}
       </div>
     </div>

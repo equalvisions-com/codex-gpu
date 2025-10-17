@@ -8,7 +8,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/custom/table";
-import { DataTableFilterCommand } from "@/components/data-table/data-table-filter-command";
 import { DataTableProvider } from "@/components/data-table/data-table-provider";
 import { MemoizedDataTableSheetContent } from "@/components/data-table/data-table-sheet/data-table-sheet-content";
 import { DataTableSheetDetails } from "@/components/data-table/data-table-sheet/data-table-sheet-details";
@@ -56,6 +55,7 @@ import { RowSkeletons } from "../infinite-table/_components/row-skeletons";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { ModelsCheckedActionsIsland } from "./models-checked-actions-island";
 import { DataTableFilterControls } from "../data-table/data-table-filter-controls";
+import type { ModalitiesDirection } from "./modalities-filter";
 import { filterFields, sheetFields } from "./models-constants";
 
 interface UserMenuProps {
@@ -181,8 +181,6 @@ export interface ModelsDataTableInfiniteProps<TData, TValue, TMeta> {
   ) => Promise<unknown>;
   renderSheetTitle: (props: { row?: Row<TData> }) => React.ReactNode;
   modelsSearchParamsParser: Record<string, ParserBuilder<any>>;
-  // Search parameter for global search filtering
-  search?: string;
   // Optional ref target to programmatically focus the table body
   focusTargetRef?: React.Ref<HTMLTableSectionElement>;
 }
@@ -213,7 +211,6 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
   meta,
   renderSheetTitle,
   modelsSearchParamsParser,
-  search,
   focusTargetRef,
 }: ModelsDataTableInfiniteProps<TData, TValue, TMeta>) {
   // Independent checkbox-only state (does not control the details pane)
@@ -314,7 +311,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
       rowSelection,
     },
     enableMultiRowSelection: false,
-    enableColumnResizing: false,
+    enableColumnResizing: true,
     enableMultiSort: false,
     columnResizeMode: "onChange",
     getRowId,
@@ -375,25 +372,49 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
   const modelColumnWidth = modelColumnWidthValue;
 
   React.useEffect(() => {
-    const columnFiltersWithNullable = filterFields.map((field) => {
-      const filterValue = columnFilters.find(
-        (filter) => filter.id === field.value,
-      );
-      if (!filterValue) return { id: field.value, value: null };
-      return { id: field.value, value: filterValue.value };
+    const hasModalities = columnFilters.some((filter) => filter.id === "modalities");
+    const hasDirectionMap = columnFilters.some((filter) => filter.id === "modalityDirections");
+
+    if (!hasModalities && hasDirectionMap) {
+      const nextFilters = columnFilters.filter((filter) => filter.id !== "modalityDirections");
+      onColumnFiltersChange(nextFilters);
+    }
+  }, [columnFilters, onColumnFiltersChange]);
+
+  const previousSearchPayloadRef = React.useRef<string>("");
+
+  React.useEffect(() => {
+    const searchPayload: Record<string, unknown> = {};
+
+    filterFields.forEach((field) => {
+      if (field.value === "modalities") {
+        const columnFilter = columnFilters.find((filter) => filter.id === "modalities");
+        const values = (columnFilter?.value as string[] | undefined) ?? [];
+        searchPayload.modalities = values.length ? values : null;
+
+        const directionsFilter = columnFilters.find((filter) => filter.id === "modalityDirections");
+        const directionsValue = directionsFilter?.value as Record<string, ModalitiesDirection> | undefined;
+        const directionEntries = directionsValue
+          ? Object.entries(directionsValue)
+              .map(([key, dir]) => `${key}:${dir}`)
+              .sort()
+          : [];
+        searchPayload.modalityDirections = values.length && directionEntries.length ? directionEntries : null;
+        return;
+      }
+
+      const columnFilter = columnFilters.find((filter) => filter.id === field.value);
+      searchPayload[field.value as string] = columnFilter ? columnFilter.value : null;
     });
 
-    const search = columnFiltersWithNullable.reduce(
-      (prev, curr) => {
-        prev[curr.id as string] = curr.value;
-        return prev;
-      },
-      {} as Record<string, unknown>,
-    );
+    const payloadString = JSON.stringify(searchPayload);
+    if (previousSearchPayloadRef.current === payloadString) {
+      return;
+    }
 
-    setSearch(search);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [columnFilters]);
+    previousSearchPayloadRef.current = payloadString;
+    setSearch(searchPayload);
+  }, [columnFilters, filterFields, setSearch]);
 
   React.useEffect(() => {
     setSearch({ sort: sorting?.[0] || null });
@@ -426,10 +447,6 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rowSelection, selectedRow, isLoading, isFetching, onRowSelectionChange]);
-
-  const resetSearch = React.useCallback(() => {
-    setSearch({ search: null });
-  }, [setSearch]);
 
 
   const getFacetedUniqueValues = React.useCallback(
@@ -489,12 +506,11 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
       rowSelection={rowSelection}
       checkedRows={checkedRows}
       toggleCheckedRow={toggleCheckedRow}
+      setCheckedRows={setCheckedRows}
       setColumnFilters={onColumnFiltersChange as (filters: ColumnFiltersState) => void}
       setRowSelection={onRowSelectionChange as (selection: RowSelectionState) => void}
       enableColumnOrdering={false}
       isLoading={isFetching || isLoading}
-      search={search}
-      resetSearch={resetSearch}
       getFacetedUniqueValues={getFacetedUniqueValues}
       getFacetedMinMaxValues={getFacetedMinMaxValues}
     >
@@ -507,7 +523,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
             <div className="relative flex flex-col h-full">
               <div className="flex-1 overflow-y-auto p-4 scrollbar-hide">
                 <div className="w-full max-w-full mx-auto">
-                  <DataTableFilterControls currentView="gpus" />
+                  <DataTableFilterControls />
                 </div>
               </div>
               {session ? (

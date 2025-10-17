@@ -82,8 +82,6 @@ export interface DataTableInfiniteProps<TData, TValue, TMeta> {
   ) => Promise<unknown>;
   renderSheetTitle: (props: { row?: Row<TData> }) => React.ReactNode;
   searchParamsParser: Record<string, ParserBuilder<any>>;
-  // Search parameter for global search filtering
-  search?: string;
   // Optional ref target to programmatically focus the table body
   focusTargetRef?: React.Ref<HTMLTableSectionElement>;
 }
@@ -116,7 +114,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   meta,
   renderSheetTitle,
   searchParamsParser,
-  search,
   focusTargetRef,
 }: DataTableInfiniteProps<TData, TValue, TMeta>) {
   // Independent checkbox-only state (does not control the details pane)
@@ -204,7 +201,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
       rowSelection,
     },
     enableMultiRowSelection: false,
-    enableColumnResizing: false,
+    enableColumnResizing: true,
     enableMultiSort: false,
     columnResizeMode: "onChange",
     getRowId,
@@ -276,7 +273,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
       return { id: field.value, value: filterValue.value };
     });
 
-    const search = columnFiltersWithNullable.reduce(
+    const params = columnFiltersWithNullable.reduce(
       (prev, curr) => {
         prev[curr.id as string] = curr.value;
         return prev;
@@ -284,7 +281,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
       {} as Record<string, unknown>,
     );
 
-    setSearch(search);
+    setSearch(params);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [columnFilters]);
 
@@ -320,13 +317,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rowSelection, selectedRow, isLoading, isFetching, onRowSelectionChange]);
 
-  const resetSearch = React.useCallback(() => {
-    setSearch({ search: null });
-  }, [setSearch]);
-
-  
-
-
   return (
     <DataTableProvider
       table={table}
@@ -337,14 +327,13 @@ export function DataTableInfinite<TData, TValue, TMeta>({
       rowSelection={rowSelection}
       checkedRows={checkedRows}
       toggleCheckedRow={toggleCheckedRow}
+      setCheckedRows={setCheckedRows}
       setColumnFilters={onColumnFiltersChange as (filters: ColumnFiltersState) => void}
       setRowSelection={onRowSelectionChange as (selection: RowSelectionState) => void}
       enableColumnOrdering={false}
       isLoading={isFetching || isLoading}
       getFacetedUniqueValues={getFacetedUniqueValues}
       getFacetedMinMaxValues={getFacetedMinMaxValues}
-      search={search}
-      resetSearch={resetSearch}
     >
       <div
         className="flex h-full w-full flex-col sm:flex-row"

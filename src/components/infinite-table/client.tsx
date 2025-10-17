@@ -162,8 +162,12 @@ export function Client({ initialFavoritesData, initialFavoriteKeys }: ClientProp
       }))
       .filter(({ value }) => value ?? undefined);
 
+    if (typeof globalSearch === "string" && globalSearch.trim().length) {
+      baseFilters.push({ id: "search", value: globalSearch });
+    }
+
     return baseFilters;
-  }, [filter]);
+  }, [filter, globalSearch]);
 
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     derivedColumnFilters,
@@ -287,7 +291,6 @@ export function Client({ initialFavoritesData, initialFavoriteKeys }: ClientProp
       getFacetedMinMaxValues={getFacetedMinMaxValues(facets)}
       renderSheetTitle={(props) => props.row?.original.uuid}
       searchParamsParser={searchParamsParser}
-      search={globalSearch || undefined}
       focusTargetRef={contentRef}
     />
   );

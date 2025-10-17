@@ -1,6 +1,7 @@
 "use client";
 
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
+import { DataTableHeaderCheckbox } from "@/components/data-table/data-table-header-checkbox";
 import { DataTableColumnLatency } from "@/components/data-table/data-table-column/data-table-column-latency";
 import { DataTableColumnCompanyLogo } from "@/components/data-table/data-table-column/data-table-column-company-logo";
 import { DataTableColumnRegion } from "@/components/data-table/data-table-column/data-table-column-region";
@@ -24,7 +25,6 @@ import type { ColumnDef } from "@tanstack/react-table";
 import Image from "next/image";
 import { HoverCardTimestamp } from "../infinite-table/_components/hover-card-timestamp";
 import type { CpuColumnSchema } from "./cpu-schema";
-import { DataTableFilterControlsDrawer } from "@/components/data-table/data-table-filter-controls-drawer";
 
 function RowCheckboxCell({ rowId }: { rowId: string }) {
   const { checkedRows, toggleCheckedRow } = useDataTable<CpuColumnSchema, unknown>();
@@ -92,7 +92,7 @@ export const cpuColumns: ColumnDef<CpuColumnSchema>[] = [
     id: "blank",
     header: () => (
       <div className="flex items-center justify-center">
-        <DataTableFilterControlsDrawer />
+        <DataTableHeaderCheckbox />
       </div>
     ),
     enableSorting: false,
@@ -111,7 +111,7 @@ export const cpuColumns: ColumnDef<CpuColumnSchema>[] = [
     maxSize: 45,
     meta: {
       cellClassName: "text-center p-0 min-w-[45px]",
-      headerClassName: "min-w-[45px]",
+      headerClassName: "min-w-[45px] px-0",
     },
   },
   {

@@ -82,8 +82,6 @@ export interface CpuDataTableInfiniteProps<TData, TValue, TMeta> {
   ) => Promise<unknown>;
   renderSheetTitle: (props: { row?: Row<TData> }) => React.ReactNode;
   searchParamsParser: Record<string, ParserBuilder<any>>;
-  // Search parameter for global search filtering
-  search?: string;
   // Optional ref target to programmatically focus the table body
   focusTargetRef?: React.Ref<HTMLTableSectionElement>;
 }
@@ -116,7 +114,6 @@ export function CpuDataTableInfinite<TData, TValue, TMeta>({
   meta,
   renderSheetTitle,
   searchParamsParser,
-  search,
   focusTargetRef,
 }: CpuDataTableInfiniteProps<TData, TValue, TMeta>) {
   // Independent checkbox-only state (does not control the details pane)
@@ -202,7 +199,7 @@ export function CpuDataTableInfinite<TData, TValue, TMeta>({
       rowSelection,
     },
     enableMultiRowSelection: false,
-    enableColumnResizing: false,
+    enableColumnResizing: true,
     enableMultiSort: false,
     columnResizeMode: "onChange",
     getRowId,
@@ -281,14 +278,9 @@ export function CpuDataTableInfinite<TData, TValue, TMeta>({
       {} as Record<string, unknown>,
     );
 
-    searchEntries.search =
-      typeof search === "string" && search.trim().length
-        ? search
-        : null;
-
     setSearch(searchEntries);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [columnFilters, search]);
+  }, [columnFilters]);
 
   React.useEffect(() => {
     setSearch({ sort: sorting?.[0] || null });
@@ -315,10 +307,6 @@ export function CpuDataTableInfinite<TData, TValue, TMeta>({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rowSelection, selectedRow, isLoading, isFetching, onRowSelectionChange]);
 
-  const resetSearch = React.useCallback(() => {
-    setSearch({ search: null });
-  }, [setSearch]);
-
   return (
     <DataTableProvider
       table={table}
@@ -329,14 +317,13 @@ export function CpuDataTableInfinite<TData, TValue, TMeta>({
       rowSelection={rowSelection}
       checkedRows={checkedRows}
       toggleCheckedRow={toggleCheckedRow}
+      setCheckedRows={setCheckedRows}
       setColumnFilters={onColumnFiltersChange as (filters: ColumnFiltersState) => void}
       setRowSelection={onRowSelectionChange as (selection: RowSelectionState) => void}
       enableColumnOrdering={false}
       isLoading={isFetching || isLoading}
       getFacetedUniqueValues={getFacetedUniqueValues}
       getFacetedMinMaxValues={getFacetedMinMaxValues}
-      search={search}
-      resetSearch={resetSearch}
     >
       <div
         className="flex h-full w-full flex-col sm:flex-row"

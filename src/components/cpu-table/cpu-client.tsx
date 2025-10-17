@@ -155,9 +155,6 @@ export function CpuClient({ initialFavoritesData, initialFavoriteKeys }: CpuClie
   const { sort, start, size, uuid, cursor, direction, observed_at, search: globalSearchRaw, ...filter } =
     search;
 
-  // Convert null to undefined for component compatibility
-  const globalSearch = globalSearchRaw || undefined;
-
   const derivedColumnFilters = React.useMemo<ColumnFiltersState>(() => {
     const baseFilters = Object.entries(filter)
       .map(([key, value]) => ({
@@ -166,8 +163,12 @@ export function CpuClient({ initialFavoritesData, initialFavoriteKeys }: CpuClie
       }))
       .filter(({ value }) => value ?? undefined);
 
+    if (typeof globalSearchRaw === "string" && globalSearchRaw.trim().length) {
+      baseFilters.push({ id: "search", value: globalSearchRaw });
+    }
+
     return baseFilters;
-  }, [filter]);
+  }, [filter, globalSearchRaw]);
 
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     derivedColumnFilters,
@@ -283,7 +284,6 @@ export function CpuClient({ initialFavoritesData, initialFavoriteKeys }: CpuClie
       getFacetedMinMaxValues={getFacetedMinMaxValues(facets)}
       renderSheetTitle={(props) => props.row?.original.uuid}
       searchParamsParser={cpuSearchParamsParser}
-      search={globalSearch}
       focusTargetRef={contentRef}
     />
   );

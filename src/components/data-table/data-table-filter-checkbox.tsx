@@ -38,7 +38,7 @@ export function DataTableFilterCheckbox<TData>({
   if (isLoading && !filterOptions?.length)
     return (
       <div className="grid gap-2">
-        <ScrollArea className="max-h-[200px] rounded-lg">
+        <ScrollArea className="max-h-[168px] rounded-lg">
           <div className="pr-3">
             {Array.from({ length: 3 }).map((_, index) => (
               <div
@@ -56,15 +56,15 @@ export function DataTableFilterCheckbox<TData>({
 
   return (
     <div className="grid gap-2">
-      <ScrollArea className="max-h-[200px] rounded-lg">
-        <div className="pr-3">
+      <ScrollArea className="max-h-[168px] rounded-lg">
+        <div className="pr-3 space-y-2">
           {filterOptions
             // TODO: we shoudn't sort the options here, instead filterOptions should be sorted by default
             // .sort((a, b) => a.label.localeCompare(b.label))
             ?.map((option, index) => {
               const checked = filters.includes(option.value);
               const shouldCapitalizeModalities =
-                value === "inputModalities" || value === "outputModalities";
+                value === "inputModalities" || value === "outputModalities" || value === "modalities";
               const displayLabel = shouldCapitalizeModalities
                 ? (() => {
                     const label = String(option.label);
@@ -76,7 +76,7 @@ export function DataTableFilterCheckbox<TData>({
                 <div
                   key={String(option.value)}
                   className={cn(
-                    "group relative flex items-center px-2 py-2.5 hover:bg-muted/50 cursor-pointer rounded-md",
+                    "group relative flex items-center gap-2 px-2 py-2 hover:bg-muted/50 cursor-pointer rounded-md",
                     checked && "bg-muted/50",
                   )}
                   onClick={() => {

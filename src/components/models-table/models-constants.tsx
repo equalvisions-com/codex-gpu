@@ -2,7 +2,6 @@
 
 import type {
   DataTableFilterField,
-  Option,
   SheetField,
 } from "@/components/data-table/types";
 import { cn } from "@/lib/utils";
@@ -41,14 +40,8 @@ export const filterFields: DataTableFilterField<ModelsColumnSchema>[] = [
     defaultOpen: true,
   },
   {
-    label: "Input Modalities",
-    value: "inputModalities",
-    type: "checkbox",
-    defaultOpen: true,
-  },
-  {
-    label: "Output Modalities",
-    value: "outputModalities",
+    label: "Modalities",
+    value: "modalities",
     type: "checkbox",
     defaultOpen: true,
   },

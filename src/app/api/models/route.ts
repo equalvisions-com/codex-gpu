@@ -6,6 +6,8 @@ import type { ModelsSearchParamsType } from "@/components/models-table/models-se
 import { modelsCache } from "@/lib/models-cache";
 import type { AIModel } from "@/types/models";
 
+type ModalitiesDirection = "input" | "output";
+
 // Custom sorting priority for author filter options
 const AUTHOR_SORT_PRIORITY: Record<string, number> = {
   'OpenAI': 1,
@@ -186,22 +188,26 @@ function filterModelsData(data: ModelsRowWithId[], search: ModelsSearchParamsTyp
       return false;
     }
 
-    // Input modalities filter (array contains)
-    if (search.inputModalities && search.inputModalities.length > 0) {
-      const hasAllModalities = search.inputModalities.every(modality =>
-        (row.inputModalities || []).includes(modality)
-      );
-      if (!hasAllModalities) {
-        return false;
-      }
-    }
+    // Modalities filter (direction configurable per modality)
+    if (search.modalities && search.modalities.length > 0) {
+      const directionEntries = new Map<string, "input" | "output" | "both">();
+      (search.modalityDirections ?? []).forEach((entry) => {
+        const [modality, direction] = entry.split(":");
+        if (!modality) return;
+        if (direction === "input" || direction === "output") {
+          directionEntries.set(modality, direction);
+        }
+      });
 
-    // Output modalities filter (array contains)
-    if (search.outputModalities && search.outputModalities.length > 0) {
-      const hasAllOutputModalities = search.outputModalities.every(modality =>
-        (row.outputModalities || []).includes(modality)
-      );
-      if (!hasAllOutputModalities) {
+      const hasAllModalities = search.modalities.every((modality) => {
+        const direction = directionEntries.get(modality) ?? "input";
+        if (direction === "input") {
+          return (row.inputModalities || []).includes(modality);
+        }
+        return (row.outputModalities || []).includes(modality);
+      });
+
+      if (!hasAllModalities) {
         return false;
       }
     }
@@ -325,31 +331,17 @@ function generateModelsFacets(data: ModelsRowWithId[]): Record<string, { rows: {
     total: data.length
   };
 
-  // Input modalities facet
-  const inputModalityCounts: Record<string, number> = {};
-  data.forEach(row => {
-    (row.inputModalities || []).forEach(modality => {
+  // Modalities facet (combined input/output)
+  const modalityCounts: Record<string, number> = {};
+  data.forEach((row) => {
+    const combinedModalities = new Set([...(row.inputModalities || []), ...(row.outputModalities || [])]);
+    combinedModalities.forEach((modality) => {
       if (!modality) return;
-      inputModalityCounts[modality] = (inputModalityCounts[modality] || 0) + 1;
+      modalityCounts[modality] = (modalityCounts[modality] || 0) + 1;
     });
   });
-  facets.inputModalities = {
-    rows: Object.entries(inputModalityCounts)
-      .map(([value, total]) => ({ value, total }))
-      .sort((a, b) => a.value.localeCompare(b.value)),
-    total: data.length,
-  };
-
-  // Output modalities facet
-  const outputModalityCounts: Record<string, number> = {};
-  data.forEach(row => {
-    (row.outputModalities || []).forEach(modality => {
-      if (!modality) return;
-      outputModalityCounts[modality] = (outputModalityCounts[modality] || 0) + 1;
-    });
-  });
-  facets.outputModalities = {
-    rows: Object.entries(outputModalityCounts)
+  facets.modalities = {
+    rows: Object.entries(modalityCounts)
       .map(([value, total]) => ({ value, total }))
       .sort((a, b) => a.value.localeCompare(b.value)),
     total: data.length,

@@ -7,7 +7,7 @@ import type {
   SortingState,
   Table,
 } from "@tanstack/react-table";
-import { createContext, useContext, useMemo } from "react";
+import { createContext, useContext, useMemo, type Dispatch, type SetStateAction } from "react";
 
 // REMINDER: read about how to move controlled state out of the useReactTable hook
 // https://github.com/TanStack/table/discussions/4005#discussioncomment-7303569
@@ -22,12 +22,9 @@ interface DataTableStateContextType {
   // Independent checkbox state for rows (separate from selection)
   checkedRows: Record<string, boolean>;
   toggleCheckedRow: (rowId: string, next?: boolean) => void;
+  setCheckedRows: Dispatch<SetStateAction<Record<string, boolean>>>;
   setColumnFilters: (filters: ColumnFiltersState) => void;
   setRowSelection: (selection: RowSelectionState) => void;
-  // Search parameter for global search filtering
-  search?: string;
-  // Callback to reset search parameter
-  resetSearch?: () => void;
 }
 
 interface DataTableBaseContextType<TData = unknown, TValue = unknown> {
@@ -54,6 +51,8 @@ export const DataTableContext = createContext<DataTableContextType<
   any
 > | null>(null);
 
+const noopSetCheckedRows: Dispatch<SetStateAction<Record<string, boolean>>> = () => {};
+
 export function DataTableProvider<TData, TValue>({
   children,
   ...props
@@ -72,10 +71,9 @@ export function DataTableProvider<TData, TValue>({
       enableColumnOrdering: props.enableColumnOrdering ?? false,
       checkedRows: props.checkedRows ?? {},
       toggleCheckedRow: props.toggleCheckedRow ?? (() => {}),
+      setCheckedRows: props.setCheckedRows ?? noopSetCheckedRows,
       setColumnFilters: props.setColumnFilters ?? (() => {}),
       setRowSelection: props.setRowSelection ?? (() => {}),
-      search: props.search,
-      resetSearch: props.resetSearch,
     }),
     [
       props.columnFilters,
@@ -92,10 +90,9 @@ export function DataTableProvider<TData, TValue>({
       props.getFacetedMinMaxValues,
       props.checkedRows,
       props.toggleCheckedRow,
+      props.setCheckedRows,
       props.setColumnFilters,
       props.setRowSelection,
-      props.search,
-      props.resetSearch,
     ],
   );
 

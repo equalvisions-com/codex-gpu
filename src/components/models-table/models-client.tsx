@@ -16,16 +16,33 @@ interface ModelsClientProps {
 }
 
 export function ModelsClient({ initialFavoriteKeys }: ModelsClientProps) {
-  const [search, setSearch] = useQueryStates(modelsSearchParamsParser);
+  const [search] = useQueryStates(modelsSearchParamsParser);
   const queryClient = useQueryClient();
 
   // Compute initial filters once using useMemo (React best practice for expensive initial state)
   const initialFilters = useMemo(() => {
-    const filters = [];
+    const filters = [] as ColumnFiltersState;
     if (search.provider) filters.push({ id: "provider", value: search.provider });
     if (search.author) filters.push({ id: "author", value: search.author });
-    if (search.inputModalities?.length) filters.push({ id: "inputModalities", value: search.inputModalities });
-    if (search.outputModalities?.length) filters.push({ id: "outputModalities", value: search.outputModalities });
+    if (search.modalities?.length) {
+      filters.push({ id: "modalities", value: search.modalities });
+
+      const directionMap = (search.modalityDirections ?? []).reduce(
+        (acc, entry) => {
+          const [key, dir] = entry.split(":");
+          if (!key || !dir) return acc;
+          if (dir === "output" || dir === "both") {
+            acc[key] = dir;
+          }
+          return acc;
+        },
+        {} as Record<string, "input" | "output" | "both">
+      );
+
+      if (Object.keys(directionMap).length) {
+        filters.push({ id: "modalityDirections", value: directionMap });
+      }
+    }
     if (search.contextLength?.length) filters.push({ id: "contextLength", value: search.contextLength });
     if (search.inputPrice?.length) filters.push({ id: "inputPrice", value: search.inputPrice });
     if (search.outputPrice?.length) filters.push({ id: "outputPrice", value: search.outputPrice });
@@ -33,7 +50,7 @@ export function ModelsClient({ initialFavoriteKeys }: ModelsClientProps) {
     if (search.name) filters.push({ id: "name", value: search.name });
     if (search.description) filters.push({ id: "description", value: search.description });
     return filters;
-  }, [search.provider, search.author, search.inputModalities, search.outputModalities, search.contextLength, search.inputPrice, search.outputPrice, search.search, search.name, search.description]);
+  }, [search.provider, search.author, search.modalities, search.modalityDirections, search.contextLength, search.inputPrice, search.outputPrice, search.search, search.name, search.description]);
 
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(initialFilters);
 
@@ -111,7 +128,6 @@ export function ModelsClient({ initialFavoriteKeys }: ModelsClientProps) {
       fetchNextPage={dataQuery.fetchNextPage}
       renderSheetTitle={renderSheetTitle}
       modelsSearchParamsParser={modelsSearchParamsParser}
-      search={search.search || undefined}
       getRowId={(row) => row.id}
     />
   );
