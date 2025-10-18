@@ -3,6 +3,15 @@ import { aiModels } from '@/db/schema';
 import { eq, sql } from 'drizzle-orm';
 import type { AIModel, ModelScrapeResult } from '@/types/models';
 
+const parseNullableNumber = (value: unknown): number | null => {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  const parsed = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
 export class ModelsCache {
   /**
    * Store AI models data by wiping the table and inserting fresh data
@@ -41,6 +50,7 @@ export class ModelsCache {
           features: model.features,
           endpoint: model.endpoint,
           provider: model.provider,
+          mmlu: model.mmlu ?? null,
           scrapedAt: new Date(model.scrapedAt),
         }));
 
@@ -83,6 +93,7 @@ export class ModelsCache {
       features: row.features as Record<string, any>,
       endpoint: row.endpoint as Record<string, any>,
       provider: row.provider,
+      mmlu: parseNullableNumber(row.mmlu),
       scrapedAt: row.scrapedAt.toISOString(),
     }));
   }
@@ -116,6 +127,7 @@ export class ModelsCache {
       features: row.features as Record<string, any>,
       endpoint: row.endpoint as Record<string, any>,
       provider: row.provider,
+      mmlu: parseNullableNumber(row.mmlu),
       scrapedAt: row.scrapedAt.toISOString(),
     }));
   }
@@ -152,6 +164,7 @@ export class ModelsCache {
       features: row.features as Record<string, any>,
       endpoint: row.endpoint as Record<string, any>,
       provider: row.provider,
+      mmlu: parseNullableNumber(row.mmlu),
       scrapedAt: row.scrapedAt.toISOString(),
     };
   }

@@ -76,6 +76,16 @@ export const sheetFields: SheetField<ModelsColumnSchema>[] = [
     type: "readonly",
   },
   {
+    id: "mmlu",
+    label: "MMLU-Pro",
+    type: "readonly",
+    component: (row) => {
+      const score = row.mmlu;
+      if (score === null || score === undefined) return "Not available";
+      return `${(score * 100).toFixed(1)}%`;
+    },
+  },
+  {
     id: "inputModalities",
     label: "Input Modalities",
     type: "readonly",

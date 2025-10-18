@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, integer, jsonb, text as textType, uniqueIndex, index } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, integer, jsonb, text as textType, uniqueIndex, index, numeric } from "drizzle-orm/pg-core";
 import { user } from "./auth-schema";
 
 // User favorites table - stores which GPU instances users have favorited
@@ -32,6 +32,7 @@ export const aiModels = pgTable("ai_models", {
   group: text("group"),
   instructType: text("instruct_type"),
   permaslug: text("permaslug"),
+  mmlu: numeric("mmlu"),
 
   // Complex nested data stored as JSONB
   pricing: jsonb("pricing"),

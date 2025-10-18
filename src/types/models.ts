@@ -14,6 +14,7 @@ export interface AIModel {
   group?: string;
   instructType?: string | null;
   permaslug?: string;
+  mmlu?: number | null;
 
   // Complex nested data
   pricing: Record<string, any>;

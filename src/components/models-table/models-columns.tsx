@@ -36,6 +36,11 @@ function formatPricePerMillion(price: string | number | undefined): string {
   return `$${perMillion.toFixed(2)}`;
 }
 
+function formatMmluScore(score: number | null | undefined): string {
+  if (score === null || score === undefined) return '—';
+  return `${(score * 100).toFixed(1)}%`;
+}
+
 export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
   {
     id: "blank",
@@ -317,6 +322,28 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
     minSize: 155,
     meta: {
       cellClassName: "text-right min-w-[155px]",
+      headerClassName: "text-right min-w-[155px]",
+    },
+  },
+  {
+    accessorKey: "mmlu",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="MMLU-Pro" titleClassName="ml-auto text-right" />
+    ),
+    cell: ({ row }) => {
+      const score = row.original.mmlu;
+      return (
+        <span className="block text-right font-mono text-sm tabular-nums">
+          {formatMmluScore(score ?? null)}
+        </span>
+      );
+    },
+    enableSorting: true,
+    sortingFn: "auto",
+    size: 155,
+    minSize: 155,
+    meta: {
+      cellClassName: "text-right min-w-[155px] tabular-nums",
       headerClassName: "text-right min-w-[155px]",
     },
   },

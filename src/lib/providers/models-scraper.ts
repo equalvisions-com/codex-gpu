@@ -1,3 +1,5 @@
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
 import type { AIModel, ModelScrapeResult } from '@/types/models';
 import { providerParameters } from './provider-params';
 
@@ -66,11 +68,26 @@ const PROVIDER_MAP: Record<string, string> = {
   'Nvidia': 'NVIDIA',
 };
 
+interface BenchmarkModel {
+  name: string;
+  slug?: string;
+  evaluations?: {
+    mmlu_pro?: number | null;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
+interface BenchmarkDataset {
+  data?: BenchmarkModel[];
+}
+
 /**
  * Scrapes AI models from OpenRouter API
  */
 export class ModelsScraper {
   private readonly baseUrl = 'https://openrouter.ai/api/frontend/models/find?fmt=cards';
+  private benchmarkLookupPromise?: Promise<Map<string, BenchmarkModel>>;
 
   private sanitizeSuffix(value: string): string {
     return value.toLowerCase().replace(/[^a-z0-9]+/g, '-');
@@ -84,6 +101,137 @@ export class ModelsScraper {
   private transformAuthorName(author: string): string {
     // Transform author names during ingestion using lookup map
     return AUTHOR_MAP[author] ?? author;
+  }
+
+  private normalizeName(value?: string | null): string | null {
+    if (!value) {
+      return null;
+    }
+
+    const cleaned = value
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, ' ');
+
+    return cleaned.length > 0 ? cleaned : null;
+  }
+
+  private generatePermutations(words: string[]): string[] {
+    if (words.length < 3 || words.length > 4) {
+      return [];
+    }
+
+    const results: string[][] = [];
+    const used = Array(words.length).fill(false);
+    const current: string[] = [];
+
+    const backtrack = () => {
+      if (current.length === words.length) {
+        results.push([...current]);
+        return;
+      }
+
+      for (let i = 0; i < words.length; i++) {
+        if (used[i]) continue;
+        used[i] = true;
+        current.push(words[i]);
+        backtrack();
+        current.pop();
+        used[i] = false;
+      }
+    };
+
+    backtrack();
+
+    return results.map(permutation => permutation.join(' '));
+  }
+
+  private async getBenchmarkLookup(): Promise<Map<string, BenchmarkModel>> {
+    if (!this.benchmarkLookupPromise) {
+      this.benchmarkLookupPromise = this.loadBenchmarkLookup();
+    }
+
+    return this.benchmarkLookupPromise;
+  }
+
+  private async loadBenchmarkLookup(): Promise<Map<string, BenchmarkModel>> {
+    try {
+      const filePath = path.join(process.cwd(), 'public', 'model-scores.json');
+      const content = await readFile(filePath, 'utf8');
+      const parsed = JSON.parse(content) as BenchmarkDataset;
+
+      if (!parsed?.data || !Array.isArray(parsed.data)) {
+        console.warn('[ModelsScraper] Benchmark dataset missing or malformed');
+        return new Map();
+      }
+
+      const lookup = new Map<string, BenchmarkModel>();
+      for (const model of parsed.data) {
+        const normalizedName = this.normalizeName(model.name);
+        if (normalizedName) {
+          lookup.set(normalizedName, model);
+        }
+
+        if (model.slug) {
+          const normalizedSlug = this.normalizeName(model.slug);
+          if (normalizedSlug) {
+            lookup.set(normalizedSlug, model);
+          }
+        }
+      }
+
+      console.log(`[ModelsScraper] Loaded ${lookup.size} benchmark entries for MMLU matching`);
+      return lookup;
+    } catch (error: any) {
+      if (error?.code === 'ENOENT') {
+        console.warn('[ModelsScraper] Benchmark dataset public/model-scores.json not found; skipping MMLU matching');
+        return new Map();
+      }
+
+      console.error('[ModelsScraper] Failed to load benchmark dataset for MMLU matching:', error);
+      return new Map();
+    }
+  }
+
+  private findMmluScore(
+    apiModel: any,
+    benchmarkLookup: Map<string, BenchmarkModel>
+  ): number | null {
+    if (benchmarkLookup.size === 0) {
+      return null;
+    }
+
+    const candidates = new Set<string>();
+
+    const normalizedShortName = this.normalizeName(apiModel.short_name);
+    if (normalizedShortName) {
+      candidates.add(normalizedShortName);
+      const words = normalizedShortName.split(' ');
+      for (const permutation of this.generatePermutations(words)) {
+        candidates.add(permutation);
+      }
+    }
+
+    const normalizedName = this.normalizeName(apiModel.name);
+    if (normalizedName) {
+      candidates.add(normalizedName);
+    }
+
+    const endpointSlug = this.normalizeName(apiModel.slug);
+    if (endpointSlug) {
+      candidates.add(endpointSlug);
+    }
+
+    for (const candidate of candidates) {
+      const benchmark = benchmarkLookup.get(candidate);
+      if (benchmark?.evaluations?.mmlu_pro != null) {
+        return typeof benchmark.evaluations.mmlu_pro === 'number'
+          ? benchmark.evaluations.mmlu_pro
+          : Number(benchmark.evaluations.mmlu_pro);
+      }
+    }
+
+    return null;
   }
 
   /**
@@ -103,6 +251,7 @@ export class ModelsScraper {
       const slugCounters: Record<string, number> = {};
       const idCounters: Record<string, number> = {};
       let globalSequence = 0; // Fallback sequence number for guaranteed uniqueness
+      const benchmarkLookup = await this.getBenchmarkLookup();
 
       // Scrape each provider individually
       for (const { name, parameter } of confirmedProviders) {
@@ -134,6 +283,7 @@ export class ModelsScraper {
           // Process models for this provider
           const processedModels: AIModel[] = modelsData.map((model: any, index: number) => {
             globalSequence++; // Increment for each model processed
+            const mmluScore = this.findMmluScore(model, benchmarkLookup);
 
             const rawProvider = model.endpoint?.provider_name || 'unknown';
             const modelProvider = this.transformProviderName(rawProvider);
@@ -177,6 +327,7 @@ export class ModelsScraper {
               features: model.features || {},
               endpoint: model.endpoint || {},
               provider: modelProvider,
+              mmlu: mmluScore ?? null,
               scrapedAt: new Date().toISOString(),
             };
           });
