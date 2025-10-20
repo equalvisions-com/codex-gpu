@@ -64,7 +64,7 @@ export interface DataTableInfiniteProps<TData, TValue, TMeta> {
   getFacetedUniqueValues?: (
     table: TTable<TData>,
     columnId: string,
-  ) => Map<string, number>;
+  ) => Map<string, number> | undefined;
   getFacetedMinMaxValues?: (
     table: TTable<TData>,
     columnId: string,
