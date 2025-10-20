@@ -453,12 +453,13 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
   const getFacetedUniqueValues = React.useCallback(
     (table: TTable<TData>, columnId: string) => {
       const facets = meta.facets;
-      if (!facets) return new Map();
+      if (!facets) return undefined;
 
       const facetData = facets[columnId];
-      if (!facetData || typeof facetData !== 'object' || !('rows' in facetData)) return new Map();
+      if (!facetData || typeof facetData !== 'object' || !('rows' in facetData)) {
+        return new Map<string, number>();
+      }
 
-      // Convert facet data to Map<string, number>
       const map = new Map<string, number>();
       facetData.rows.forEach((row: any) => {
         if (row && typeof row === 'object' && 'value' in row && 'total' in row) {

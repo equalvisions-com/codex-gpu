@@ -19,13 +19,19 @@ export function DataTableFilterCheckbox<TData>({
   const facetedValue = getFacetedUniqueValues?.(table, value);
 
   const Component = component;
+  const staticOptions = Array.isArray(options) ? options : undefined;
+  const facetsReady = staticOptions !== undefined || facetedValue !== undefined;
 
-  // show all options without a search filter
-  // If options are not provided, generate them from faceted values
-  const filterOptions = options || (facetedValue ? Array.from(facetedValue.keys()).map((value) => ({
-    label: String(value),
-    value: String(value),
-  })) : []);
+  if (!facetsReady) {
+    return <CheckboxListSkeleton />;
+  }
+
+  const filterOptions =
+    staticOptions ??
+    Array.from(facetedValue?.keys() ?? []).map((value) => ({
+      label: String(value),
+      value: String(value),
+    }));
 
   // CHECK: it could be filterValue or searchValue
   const filters = filterValue
@@ -34,7 +40,6 @@ export function DataTableFilterCheckbox<TData>({
       : [filterValue]
     : [];
 
-  // REMINDER: only show skeletons during initial load, not during filter operations
   if (isLoading && !filterOptions?.length) {
     return <CheckboxListSkeleton />;
   }

@@ -340,10 +340,11 @@ function isLooseEqual(a: unknown, b: unknown) {
 export function getFacetedUniqueValues<TData>(
   facets?: Record<string, CpuFacetMetadataSchema>,
 ) {
-  return (_: TTable<TData>, columnId: string): Map<string, number> => {
-    return new Map(
-      facets?.[columnId]?.rows?.map(({ value, total }) => [value, total]) || [],
-    );
+  return (_: TTable<TData>, columnId: string): Map<string, number> | undefined => {
+    if (!facets) return undefined;
+    const rows = facets?.[columnId]?.rows;
+    if (!rows) return new Map();
+    return new Map(rows.map(({ value, total }) => [value, total]));
   };
 }
 

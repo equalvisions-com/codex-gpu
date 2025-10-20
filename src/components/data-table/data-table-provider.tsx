@@ -35,7 +35,7 @@ interface DataTableBaseContextType<TData = unknown, TValue = unknown> {
   getFacetedUniqueValues?: (
     table: Table<TData>,
     columnId: string,
-  ) => Map<string, number>;
+  ) => Map<string, number> | undefined;
   getFacetedMinMaxValues?: (
     table: Table<TData>,
     columnId: string,
