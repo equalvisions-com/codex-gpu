@@ -71,7 +71,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
     maxSize: 45,
     meta: {
       cellClassName: "min-w-[45px] p-0 text-center",
-      headerClassName: "min-w-[45px] px-0",
+      headerClassName: "min-w-[45px] px-0 bg-[#f8fafc] dark:bg-[#090909]",
     },
   },
   {
@@ -268,7 +268,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
     minSize: 155,
     meta: {
       cellClassName: "text-left min-w-[155px]",
-      headerClassName: "text-left min-w-[155px]",
+      headerClassName: "text-left min-w-[155px] bg-[#f8fafc] dark:bg-[#090909]",
     },
   },
   {
@@ -322,7 +322,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
     minSize: 155,
     meta: {
       cellClassName: "text-right min-w-[155px]",
-      headerClassName: "text-right min-w-[155px]",
+      headerClassName: "text-right min-w-[155px] bg-[#f8fafc] dark:bg-[#090909]",
     },
   },
   {
@@ -356,7 +356,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
     minSize: 155,
     meta: {
       cellClassName: "text-right min-w-[155px] tabular-nums",
-      headerClassName: "text-right min-w-[155px]",
+      headerClassName: "text-right min-w-[155px] bg-[#f8fafc] dark:bg-[#090909]",
     },
   },
   {
@@ -407,7 +407,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
     minSize: 155,
     meta: {
       cellClassName: "text-right min-w-[155px]",
-      headerClassName: "text-right min-w-[155px]",
+      headerClassName: "text-right min-w-[155px] bg-[#f8fafc] dark:bg-[#090909]",
     },
   },
   {
@@ -440,7 +440,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
     minSize: 155,
     meta: {
       cellClassName: "text-right min-w-[155px]",
-      headerClassName: "text-right min-w-[155px]",
+      headerClassName: "text-right min-w-[155px] bg-[#f8fafc] dark:bg-[#090909]",
     },
   },
   {
@@ -473,7 +473,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
     minSize: 155,
     meta: {
       cellClassName: "text-right min-w-[155px]",
-      headerClassName: "text-right min-w-[155px]",
+      headerClassName: "text-right min-w-[155px] bg-[#f8fafc] dark:bg-[#090909]",
     },
   },
 ];

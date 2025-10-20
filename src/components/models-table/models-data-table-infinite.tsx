@@ -562,12 +562,12 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
                 "h-full overscroll-x-none scrollbar-hide"
               )}
             >
-              <TableHeader className={cn("sticky top-0 z-20 bg-background")}>
+              <TableHeader className={cn("sticky top-0 z-20 bg-[#f8fafc] dark:bg-[#090909]")}>
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow
                     key={headerGroup.id}
                     className={cn(
-                      "bg-background",
+                      "bg-[#f8fafc] dark:bg-[#090909]",
                       "[&>:not(:last-child)]:border-r",
                     )}
                   >
@@ -576,7 +576,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
                         <TableHead
                           key={header.id}
                           className={cn(
-                            "relative select-none truncate border-b border-border text-foreground/70 [&>.cursor-col-resize]:last:opacity-0",
+                            "relative select-none truncate border-b border-border bg-[#f8fafc] dark:bg-[#090909] text-foreground/70 [&>.cursor-col-resize]:last:opacity-0",
                             header.column.columnDef.meta?.headerClassName,
                           )}
                           data-column-id={header.column.id}
