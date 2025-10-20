@@ -1,8 +1,8 @@
 "use client";
 import { useDataTable } from "@/components/data-table/data-table-provider";
-import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { CheckboxListSkeleton } from "./data-table-filter-skeletons";
 
 import type { DataTableCheckboxFilterField } from "./types";
 
@@ -35,24 +35,9 @@ export function DataTableFilterCheckbox<TData>({
     : [];
 
   // REMINDER: only show skeletons during initial load, not during filter operations
-  if (isLoading && !filterOptions?.length)
-    return (
-      <div className="grid gap-2">
-        <ScrollArea className="max-h-[168px] rounded-lg">
-          <div className="pr-3">
-            {Array.from({ length: 3 }).map((_, index) => (
-              <div
-                key={index}
-                className="flex items-center px-2 py-2.5 hover:bg-muted/50 cursor-pointer rounded-md"
-              >
-                <Skeleton className="h-4 w-4 rounded-sm" />
-                <Skeleton className="h-4 w-full rounded-sm ml-2" />
-              </div>
-            ))}
-          </div>
-        </ScrollArea>
-      </div>
-    );
+  if (isLoading && !filterOptions?.length) {
+    return <CheckboxListSkeleton />;
+  }
 
   return (
     <div className="grid gap-2">

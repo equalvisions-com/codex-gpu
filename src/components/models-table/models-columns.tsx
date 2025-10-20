@@ -37,7 +37,7 @@ function formatPricePerMillion(price: string | number | undefined): string {
 }
 
 function formatMmluScore(score: number | null | undefined): string {
-  if (score === null || score === undefined) return '—';
+  if (score === null || score === undefined) return 'N/A';
   return `${(score * 100).toFixed(1)}%`;
 }
 
@@ -332,9 +332,21 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
     ),
     cell: ({ row }) => {
       const score = row.original.mmlu;
+      const formatted = formatMmluScore(score ?? null);
+      const isMissing = formatted === "N/A";
+      const hasPercent = formatted.endsWith("%");
+      const numericPortion = hasPercent ? formatted.slice(0, -1) : formatted;
       return (
-        <span className="block text-right font-mono text-sm tabular-nums">
-          {formatMmluScore(score ?? null)}
+        <span
+          className={cn(
+            "block text-right font-mono text-sm tabular-nums",
+            isMissing && "text-foreground/70",
+          )}
+        >
+          {numericPortion}
+          {hasPercent ? (
+            <span className="text-foreground/70">%</span>
+          ) : null}
         </span>
       );
     },

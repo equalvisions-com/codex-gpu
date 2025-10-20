@@ -295,6 +295,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
         "inputPrice",
         "outputPrice",
         "contextLength",
+        "mmlu",
         "inputModalities",
       ],
       // Initialize from URL state (TanStack Table best practice)

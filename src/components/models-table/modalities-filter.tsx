@@ -3,11 +3,10 @@
 import * as React from "react";
 import { useDataTable } from "@/components/data-table/data-table-provider";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { ModelsColumnSchema } from "./models-schema";
 import { ArrowLeftRight } from "lucide-react";
+import { CheckboxListSkeleton } from "@/components/data-table/data-table-filter-skeletons";
 
 export type ModalitiesDirection = "input" | "output";
 
@@ -120,24 +119,7 @@ export function ModalitiesFilter() {
   );
 
   if (isLoading && !optionsWithSelections.length) {
-    return (
-      <div className="grid gap-2">
-        <Skeleton className="h-7 w-full rounded-md" />
-        <ScrollArea className="max-h-[200px] rounded-lg">
-          <div className="pr-3">
-            {Array.from({ length: 3 }).map((_, index) => (
-              <div
-                key={index}
-                className="flex items-center px-2 py-2"
-              >
-                <Skeleton className="h-4 w-4 rounded-sm" />
-                <Skeleton className="ml-2 h-4 w-full rounded-sm" />
-              </div>
-            ))}
-          </div>
-        </ScrollArea>
-      </div>
-    );
+    return <CheckboxListSkeleton />;
   }
 
   const showEmptyState = !isLoading && optionsWithSelections.length === 0;
