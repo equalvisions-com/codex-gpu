@@ -75,8 +75,16 @@ export function RowSkeletons<TData>({
                   <div className="flex items-center justify-center">
                     <Skeleton className="h-4 w-10" />
                   </div>
+                ) : id === "contextLength" ||
+                  id === "mmlu" ||
+                  id === "inputModalities" ||
+                  id === "inputPrice" ||
+                  id === "outputPrice" ? (
+                  <div className="flex items-center justify-end">
+                    <Skeleton className="h-4 w-16" />
+                  </div>
                 ) : (
-                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 w-[14rem]" />
                 )}
               </TableCell>
             );

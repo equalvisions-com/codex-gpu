@@ -277,27 +277,32 @@ function DataTableFilterSliderComponent<TData>({
         value={[localValue]}
         onValueChange={handleChange}
       />
-      <div className="relative px-2 pb-4">
-        <div className="absolute inset-0">
-          {/* Vertical grid lines & labels */}
-          {sliderMarks.lines.map((pos, index) => (
-            <div
-              key={`line-${index}`}
-              className="absolute w-px h-2 bg-muted-foreground/30"
-              style={{ left: pos, top: 0, transform: "translateX(-50%)" }}
-            />
-          ))}
-          {sliderMarks.labels.map(({ pos, label }, index) => (
-            <span
-              key={`label-${label}-${index}`}
-              className="absolute text-[10px] text-foreground/70 text-center"
-              style={{ left: pos, top: "12px", transform: "translateX(-50%)" }}
-            >
-              {label}
-            </span>
-          ))}
+      {(sliderMarks.lines.length > 0 || sliderMarks.labels.length > 0) ? (
+        <div className="px-2">
+          <div className="relative h-2 pointer-events-none">
+            {sliderMarks.lines.map((pos, index) => (
+              <div
+                key={`line-${index}`}
+                className="absolute inset-y-0 w-px bg-muted-foreground/30"
+                style={{ left: pos, transform: "translateX(-50%)" }}
+              />
+            ))}
+          </div>
+          {sliderMarks.labels.length > 0 ? (
+            <div className="relative mt-[3px] h-3 text-[10px] text-foreground/70 pointer-events-none">
+              {sliderMarks.labels.map(({ pos, label }, index) => (
+                <span
+                  key={`label-${label}-${index}`}
+                  className="absolute -translate-x-1/2 leading-none"
+                  style={{ left: pos }}
+                >
+                  {label}
+                </span>
+              ))}
+            </div>
+          ) : null}
         </div>
-      </div>
+      ) : null}
     </div>
   );
 }

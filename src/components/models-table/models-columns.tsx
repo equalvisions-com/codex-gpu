@@ -258,7 +258,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
             provider === "Venice" && (
             <Image src="/logos/venice.png" alt="Venice" width={20} height={20} className="rounded" />
           )}
-          <span className="truncate font-medium" title={provider ?? undefined}>
+          <span className="truncate" title={provider ?? undefined}>
             {provider}
           </span>
         </div>
@@ -282,7 +282,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
       if (!name) return <span className="text-muted-foreground">Unknown</span>;
 
       return (
-        <div className="max-w-[500px] truncate font-medium">
+        <div className="max-w-[500px] truncate">
           {name}
         </div>
       );
@@ -384,7 +384,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
       return (
         <HoverCard openDelay={0} closeDelay={0}>
           <HoverCardTrigger asChild>
-            <div className="text-sm text-right font-medium tracking-wide cursor-pointer">
+            <div className="text-sm text-right tracking-wide cursor-pointer">
               {label}
             </div>
           </HoverCardTrigger>

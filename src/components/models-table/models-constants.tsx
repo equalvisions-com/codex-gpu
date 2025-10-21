@@ -23,20 +23,20 @@ export const filterFields: DataTableFilterField<ModelsColumnSchema>[] = [
     defaultOpen: true,
   },
   {
+    label: "Prompt",
+    value: "inputPrice",
+    type: "slider",
+    min: 0,
+    max: 0.00001,
+    defaultOpen: true,
+  },
+  {
     label: "Context",
     value: "contextLength",
     type: "slider",
     min: 1000,
     max: 1000000,
     step: 1024,
-    defaultOpen: true,
-  },
-  {
-    label: "Prompt",
-    value: "inputPrice",
-    type: "slider",
-    min: 0,
-    max: 0.00001,
     defaultOpen: true,
   },
   {

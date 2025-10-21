@@ -81,7 +81,7 @@ function UserMenu({ user, onSignOut, isSigningOut }: UserMenuProps) {
           <Button
             type="button"
             variant="ghost"
-            className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm font-medium text-foreground hover:bg-muted/50 hover:text-accent-foreground"
+            className="flex w-full items-center gap-2 rounded-md p-2 h-auto text-left text-sm font-medium text-foreground hover:bg-muted/50 hover:text-accent-foreground focus-visible:ring-0 focus-visible:ring-offset-0"
             disabled={isSigningOut}
           >
             <div className="relative h-8 w-8">
@@ -108,7 +108,7 @@ function UserMenu({ user, onSignOut, isSigningOut }: UserMenuProps) {
             <ChevronsUpDown className="h-4 w-4 shrink-0 text-muted-foreground" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-60">
+        <DropdownMenuContent align="center" className="w-60">
           <DropdownMenuLabel className="flex items-center gap-2">
             <Avatar className="h-8 w-8">
               {user.image ? (
@@ -124,13 +124,13 @@ function UserMenu({ user, onSignOut, isSigningOut }: UserMenuProps) {
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
-            <Link href="/settings" className="flex w-full items-center gap-2">
+            <Link href="/settings" className="cursor-pointer flex w-full items-center gap-2">
               <SettingsIcon className="h-4 w-4" />
               <span>Settings</span>
             </Link>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem
+          <DropdownMenuItem className="cursor-pointer"
             onSelect={() => {
               if (!isSigningOut) {
                 onSignOut();
@@ -529,7 +529,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
                 </div>
               </div>
               {session ? (
-                <div className="flex-shrink-0 border-t border-border p-4">
+                <div className="flex-shrink-0 border-t border-border p-2">
                   <UserMenu
                     user={{
                       name: session.user?.name,
