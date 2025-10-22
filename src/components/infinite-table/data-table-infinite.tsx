@@ -8,17 +8,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/custom/table";
-import { DataTableFilterCommand } from "@/components/data-table/data-table-filter-command";
 import { DataTableProvider } from "@/components/data-table/data-table-provider";
 import { MemoizedDataTableSheetContent } from "@/components/data-table/data-table-sheet/data-table-sheet-content";
 import { DataTableSheetDetails } from "@/components/data-table/data-table-sheet/data-table-sheet-details";
-import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
 import type {
   DataTableFilterField,
   SheetField,
 } from "@/components/data-table/types";
 import { cn } from "@/lib/utils";
 import { type FetchNextPageOptions } from "@tanstack/react-query";
+import { useAuth } from "@/providers/auth-client-provider";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import * as React from "react";
 import type {
   ColumnDef,
   ColumnFiltersState,
@@ -31,13 +33,118 @@ import type {
 } from "@tanstack/react-table";
 import { flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { useQueryStates, type ParserBuilder } from "nuqs";
-import * as React from "react";
-import { SocialsFooter } from "./_components/socials-footer";
 import { searchParamsParser } from "./search-params";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
+import Link from "next/link";
+import {
+  LogOut,
+  ChevronsUpDown,
+  Settings as SettingsIcon,
+} from "lucide-react";
 import { RowSkeletons } from "./_components/row-skeletons";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { CheckedActionsIsland } from "./_components/checked-actions-island";
-import SidebarNav from "./_components/sidebar-nav";
+import { DataTableFilterControls } from "@/components/data-table/data-table-filter-controls";
+import { filterFields, sheetFields } from "./constants";
+
+interface UserMenuProps {
+  user: {
+    name?: string | null;
+    email?: string | null;
+    image?: string | null;
+  };
+  onSignOut: () => void;
+  isSigningOut: boolean;
+}
+
+function UserMenu({ user, onSignOut, isSigningOut }: UserMenuProps) {
+  const normalizedName = user.name?.trim();
+  const email = user.email ?? "";
+  const displayName = normalizedName || email || "Account";
+  const [imageLoaded, setImageLoaded] = React.useState(false);
+  const hasImage = Boolean(user.image);
+  return (
+    <div>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            className="flex w-full items-center gap-2 rounded-md p-2 h-auto text-left text-sm font-medium text-foreground hover:bg-muted/50 hover:text-accent-foreground focus-visible:ring-0 focus-visible:ring-offset-0"
+            disabled={isSigningOut}
+          >
+            <div className="relative h-8 w-8">
+              {hasImage && !imageLoaded ? (
+                <Skeleton className="h-8 w-8 rounded-full" />
+              ) : null}
+              <Avatar className={cn("h-8 w-8", hasImage && !imageLoaded ? "opacity-0" : "opacity-100")}>
+                {hasImage ? (
+                  <AvatarImage
+                    src={user.image!}
+                    alt={displayName}
+                    onLoad={() => setImageLoaded(true)}
+                    onError={() => setImageLoaded(true)}
+                  />
+                ) : null}
+              </Avatar>
+            </div>
+            <div className="flex min-w-0 flex-1 flex-col text-left">
+              <span className="truncate">{displayName}</span>
+              {email ? (
+                <span className="truncate text-xs text-muted-foreground">{email}</span>
+              ) : null}
+            </div>
+            <ChevronsUpDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="center" className="w-60">
+          <DropdownMenuLabel className="flex items-center gap-2">
+            <Avatar className="h-8 w-8">
+              {user.image ? (
+                <AvatarImage src={user.image} alt={displayName} />
+              ) : null}
+            </Avatar>
+            <div className="flex min-w-0 flex-1 flex-col">
+              <span className="truncate text-sm font-semibold">{displayName}</span>
+              {email ? (
+                <span className="truncate text-xs text-muted-foreground">{email}</span>
+              ) : null}
+            </div>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem asChild>
+            <Link href="/settings" className="cursor-pointer flex w-full items-center gap-2">
+              <SettingsIcon className="h-4 w-4" />
+              <span>Settings</span>
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem className="cursor-pointer"
+            onSelect={() => {
+              if (!isSigningOut) {
+                onSignOut();
+              }
+            }}
+            disabled={isSigningOut}
+          >
+            <LogOut className="h-4 w-4" />
+            <span>{isSigningOut ? "Signing out..." : "Sign out"}</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+}
 
 // FloatingControlsButton removed
 
@@ -60,19 +167,10 @@ export interface DataTableInfiniteProps<TData, TValue, TMeta> {
   onRowSelectionChange: OnChangeFn<RowSelectionState>;
   filterFields?: DataTableFilterField<TData>[];
   sheetFields?: SheetField<TData, TMeta>[];
-  // REMINDER: close to the same signature as the `getFacetedUniqueValues` of the `useReactTable`
-  getFacetedUniqueValues?: (
-    table: TTable<TData>,
-    columnId: string,
-  ) => Map<string, number> | undefined;
-  getFacetedMinMaxValues?: (
-    table: TTable<TData>,
-    columnId: string,
-  ) => undefined | [number, number];
   totalRows?: number;
   filterRows?: number;
   totalRowsFetched?: number;
-  meta: TMeta;
+  meta: TMeta & { facets?: Record<string, any> };
   isFetching?: boolean;
   isLoading?: boolean;
   isFetchingNextPage?: boolean;
@@ -109,11 +207,9 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   totalRows = 0,
   filterRows = 0,
   totalRowsFetched = 0,
-  getFacetedUniqueValues,
-  getFacetedMinMaxValues,
   meta,
   renderSheetTitle,
-  searchParamsParser,
+  searchParamsParser: searchParamsParserProp,
   focusTargetRef,
 }: DataTableInfiniteProps<TData, TValue, TMeta>) {
   // Independent checkbox-only state (does not control the details pane)
@@ -127,12 +223,28 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     });
   }, []);
 
-  const topBarRef = React.useRef<HTMLDivElement>(null);
   const tableRef = React.useRef<HTMLTableElement>(null);
-  const [topBarHeight, setTopBarHeight] = React.useState(0);
   const containerRef = React.useRef<HTMLDivElement>(null);
   // searchParamsParser is provided as a prop
-  const [_, setSearch] = useQueryStates(searchParamsParser);
+  const [_, setSearch] = useQueryStates(searchParamsParserProp);
+
+  // User menu functionality
+  const { session, signOut } = useAuth();
+  const [isSigningOut, startSignOutTransition] = React.useTransition();
+  const queryClient = useQueryClient();
+  const router = useRouter();
+
+  const handleSignOut = React.useCallback(() => {
+    startSignOutTransition(async () => {
+      try {
+        await signOut();
+      } finally {
+        queryClient.clear();
+        router.replace("/", { scroll: false });
+        router.refresh();
+      }
+    });
+  }, [queryClient, router, signOut]);
 
   const onScroll = React.useCallback(
     (e: React.UIEvent<HTMLElement>) => {
@@ -164,24 +276,16 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     return () => observer.disconnect();
   }, [containerRef, fetchNextPage, hasNextPage, isFetching]);
 
-  React.useEffect(() => {
-    const observer = new ResizeObserver(() => {
-      const rect = topBarRef.current?.getBoundingClientRect();
-      if (rect) {
-        setTopBarHeight(rect.height);
-      }
-    });
-
-    const topBar = topBarRef.current;
-    if (!topBar) return;
-
-    observer.observe(topBar);
-    return () => observer.unobserve(topBar);
-  }, [topBarRef]);
 
   const table = useReactTable({
     data,
     columns,
+    // Server-side operations (TanStack Table best practice)
+    manualFiltering: true,
+    manualSorting: true,
+    manualPagination: true,
+    // Total row count for pagination calculation
+    rowCount: totalRows,
     initialState: {
       columnOrder: [
         "blank",
@@ -194,6 +298,13 @@ export function DataTableInfinite<TData, TValue, TMeta>({
         "system_ram_gb",
         "type",
       ],
+      // Initialize from URL state (TanStack Table best practice)
+      columnFilters,
+      sorting,
+      pagination: {
+        pageIndex: 0,
+        pageSize: 50,
+      },
     },
     state: {
       columnFilters,
@@ -209,9 +320,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     onRowSelectionChange,
     onSortingChange,
     enableHiding: false,
-    // Disable client-side sorting/pagination/filtering - all happen on server
-    manualSorting: true,
-    manualFiltering: true,
     enableSorting: true, // Enable sorting UI for manual server-side sorting
     getCoreRowModel: getCoreRowModel(),
     // Facets are provided by the server; expose them via provider callbacks
@@ -264,26 +372,24 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   // Calculated width value for model column styling
   const modelColumnWidth = modelColumnWidthValue;
 
+  const previousSearchPayloadRef = React.useRef<string>("");
+
   React.useEffect(() => {
-    const columnFiltersWithNullable = filterFields.map((field) => {
-      const filterValue = columnFilters.find(
-        (filter) => filter.id === field.value,
-      );
-      if (!filterValue) return { id: field.value, value: null };
-      return { id: field.value, value: filterValue.value };
+    const searchPayload: Record<string, unknown> = {};
+
+    filterFields.forEach((field) => {
+      const columnFilter = columnFilters.find((filter) => filter.id === field.value);
+      searchPayload[field.value as string] = columnFilter ? columnFilter.value : null;
     });
 
-    const params = columnFiltersWithNullable.reduce(
-      (prev, curr) => {
-        prev[curr.id as string] = curr.value;
-        return prev;
-      },
-      {} as Record<string, unknown>,
-    );
+    const payloadString = JSON.stringify(searchPayload);
+    if (previousSearchPayloadRef.current === payloadString) {
+      return;
+    }
 
-    setSearch(params);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [columnFilters]);
+    previousSearchPayloadRef.current = payloadString;
+    setSearch(searchPayload);
+  }, [columnFilters, filterFields, setSearch]);
 
   React.useEffect(() => {
     setSearch({ sort: sorting?.[0] || null });
@@ -317,6 +423,55 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rowSelection, selectedRow, isLoading, isFetching, onRowSelectionChange]);
 
+
+  const getFacetedUniqueValues = React.useCallback(
+    (table: TTable<TData>, columnId: string) => {
+      const facets = meta.facets;
+      if (!facets) return undefined;
+
+      const facetData = facets[columnId];
+      if (!facetData || typeof facetData !== 'object' || !('rows' in facetData)) {
+        return new Map<string, number>();
+      }
+
+      const map = new Map<string, number>();
+      facetData.rows.forEach((row: any) => {
+        if (row && typeof row === 'object' && 'value' in row && 'total' in row) {
+          map.set(String(row.value), Number(row.total));
+        }
+      });
+
+      return map;
+    },
+    [meta.facets]
+  );
+
+  const getFacetedMinMaxValues = React.useCallback(
+    (table: TTable<TData>, columnId: string) => {
+      const facets = meta.facets;
+      if (!facets) return undefined;
+
+      const facetData = facets[columnId];
+      if (!facetData || typeof facetData !== 'object' || !('rows' in facetData)) return undefined;
+
+      // For numeric columns, find min/max values
+      const numericValues: number[] = facetData.rows
+        .map((row: any) => {
+          if (row && typeof row === 'object' && 'value' in row) {
+            const num = Number(row.value);
+            return isNaN(num) ? null : num;
+          }
+          return null;
+        })
+        .filter((val: number | null): val is number => val !== null);
+
+      if (numericValues.length === 0) return undefined;
+
+      return [Math.min(...numericValues), Math.max(...numericValues)] as [number, number];
+    },
+    [meta.facets]
+  );
+
   return (
     <DataTableProvider
       table={table}
@@ -335,63 +490,60 @@ export function DataTableInfinite<TData, TValue, TMeta>({
       getFacetedUniqueValues={getFacetedUniqueValues}
       getFacetedMinMaxValues={getFacetedMinMaxValues}
     >
-      <div
-        className="flex h-full w-full flex-col sm:flex-row"
-        style={
-          {
-            "--top-bar-height": `${topBarHeight}px`,
-          } as React.CSSProperties
-        }
-      >
-        <div
-          className={cn(
-            "hidden sm:flex h-full w-full flex-col sm:sticky sm:top-0 sm:max-h-screen sm:min-h-screen sm:min-w-52 sm:max-w-52 sm:self-start md:min-w-72 md:max-w-72"
-          )}
-        >
-          <div className="bg-background p-2 md:sticky md:top-0">
-            <DataTableToolbar />
-          </div>
-       
-          <div className="flex flex-1 p-[12px] sm:overflow-y-scroll scrollbar-hide">
-            <SidebarNav />
-          </div>
-          <div className="border-t border-border bg-background p-4 md:sticky md:bottom-0">
-            <SocialsFooter />
-          </div>
-        </div>
-        <div
-          className={cn(
-            "flex max-w-full flex-1 flex-col border-border sm:border-l min-w-0"
-          )}
-        >
+      <div className="grid h-full grid-cols-1 sm:grid-cols-[13rem_1fr] md:grid-cols-[18rem_1fr] gap-6">
           <div
-            ref={topBarRef}
             className={cn(
-              "flex flex-col",
-              "sticky top-0 z-10",
+              "hidden sm:flex h-[calc(100dvh-var(--total-padding-mobile))] sm:h-[calc(100dvh-var(--total-padding-desktop))] flex-col sticky top-0 min-w-52 max-w-52 self-start md:min-w-72 md:max-w-72 rounded-lg border bg-background overflow-hidden"
             )}
           >
+            <div className="relative flex flex-col h-full">
+              <div className="flex-1 overflow-y-auto p-4 scrollbar-hide">
+                <div className="w-full max-w-full mx-auto">
+                  <DataTableFilterControls />
+                </div>
+              </div>
+              {session ? (
+                <div className="flex-shrink-0 border-t border-border p-2">
+                  <UserMenu
+                    user={{
+                      name: session.user?.name,
+                      email: session.user?.email,
+                      image: session.user?.image,
+                    }}
+                    onSignOut={handleSignOut}
+                    isSigningOut={isSigningOut}
+                  />
+                </div>
+              ) : null}
+            </div>
           </div>
+        <div
+          className={cn(
+            "flex max-w-full flex-1 flex-col min-w-0"
+          )}
+          data-table-container=""
+        >
           <div className="z-0">
-            <Table
+            <div className="h-[calc(100dvh-var(--total-padding-mobile))] sm:h-[calc(100dvh-var(--total-padding-desktop))] rounded-lg border bg-background overflow-hidden">
+              <Table
               ref={tableRef}
               onScroll={onScroll}
               containerRef={containerRef}
               containerOverflowVisible={false}
-              // REMINDER: https://stackoverflow.com/questions/50361698/border-style-do-not-work-with-sticky-position-element
+              // REMINDER: https://stackoverflow.com/questions/questions/50361698/border-style-do-not-work-with-sticky-position-element
               className="border-separate border-spacing-0 w-auto min-w-full table-fixed"
               style={tableWidthStyle}
               containerClassName={cn(
-                "h-full max-h-[calc(100vh_-_var(--top-bar-height))] overscroll-x-none scrollbar-hide"
+                "h-full overscroll-x-none scrollbar-hide"
               )}
             >
-              <TableHeader className={cn("sticky top-0 z-20 bg-background")}>
+              <TableHeader className={cn("sticky top-0 z-20 bg-[#f8fafc] dark:bg-[#090909]")}>
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow
                     key={headerGroup.id}
                     className={cn(
-                      "bg-muted/50 hover:bg-muted/50",
-                      "[&>*]:border-t [&>:not(:last-child)]:border-r",
+                      "bg-[#f8fafc] dark:bg-[#090909]",
+                      "[&>:not(:last-child)]:border-r",
                     )}
                   >
                     {headerGroup.headers.map((header) => {
@@ -399,7 +551,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                         <TableHead
                           key={header.id}
                           className={cn(
-                            "relative select-none truncate border-b border-border [&>.cursor-col-resize]:last:opacity-0",
+                            "relative select-none truncate border-b border-border bg-[#f8fafc] dark:bg-[#090909] text-foreground/70 [&>.cursor-col-resize]:last:opacity-0",
                             header.column.columnDef.meta?.headerClassName,
                           )}
                           data-column-id={header.column.id}
@@ -421,8 +573,8 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                             header.column.getIsSorted() === "asc"
                               ? "ascending"
                               : header.column.getIsSorted() === "desc"
-                                ? "descending"
-                                : "none"
+                              ? "descending"
+                              : "none"
                           }
                         >
                           {header.isPlaceholder
@@ -455,7 +607,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                 className="outline-1 -outline-offset-1 outline-primary transition-colors focus-visible:outline"
                 // REMINDER: avoids scroll (skipping the table header) when using skip to content
                 style={{
-                  scrollMarginTop: "calc(var(--top-bar-height) + 40px)",
+                  scrollMarginTop: "40px",
                 }}
             aria-busy={Boolean(isLoading || (isFetching && !data.length))}
             aria-live="polite"
@@ -489,7 +641,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                                   row={row}
                                   table={table}
                                   selected={row.getIsSelected()}
-                                checked={checkedRows[row.id] ?? false}
+                                  checked={checkedRows[row.id] ?? false}
                                   modelColumnWidth="var(--model-column-width)"
                                   rowRef={rowVirtualizer.measureElement}
                                 />
@@ -531,7 +683,8 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                   </React.Fragment>
                 )}
               </TableBody>
-            </Table>
+              </Table>
+            </div>
           </div>
         </div>
       </div>

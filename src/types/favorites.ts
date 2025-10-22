@@ -7,7 +7,5 @@ export interface FavoritesResponse {
 // Keep property name aligned with existing API contract
 export interface FavoritesRequest {
   gpuUuids?: FavoriteKey[];
-  cpuUuids?: FavoriteKey[];
 }
-
 

@@ -543,11 +543,12 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
               ) : null}
             </div>
           </div>
-          <div
-            className={cn(
-              "flex max-w-full flex-1 flex-col min-w-0"
-            )}
-          >
+        <div
+          className={cn(
+            "flex max-w-full flex-1 flex-col min-w-0"
+          )}
+          data-table-container=""
+        >
           <div className="z-0">
             <div className="h-[calc(100dvh-var(--total-padding-mobile))] sm:h-[calc(100dvh-var(--total-padding-desktop))] rounded-lg border bg-background overflow-hidden">
               <Table

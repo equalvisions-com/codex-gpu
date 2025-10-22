@@ -114,13 +114,8 @@ export class NebiusScraper implements ProviderScraper {
           const title = block.title || '';
 
           if (title.includes('NVIDIA GPU Instances')) {
-            // Parse GPU table
-            const gpuRows = this.parseTableData(tableContent, 'GPU', observedAt);
+            const gpuRows = this.parseGpuTable(tableContent, observedAt);
             rows.push(...gpuRows);
-          } else if (title.includes('CPU-only instances')) {
-            // Parse CPU table
-            const cpuRows = this.parseTableData(tableContent, 'CPU', observedAt);
-            rows.push(...cpuRows);
           }
         }
       }
@@ -131,7 +126,7 @@ export class NebiusScraper implements ProviderScraper {
     return rows;
   }
 
-  private parseTableData(tableContent: string[][], instanceClass: 'GPU' | 'CPU', observedAt: string): NebiusPriceRow[] {
+  private parseGpuTable(tableContent: string[][], observedAt: string): NebiusPriceRow[] {
     const rows: NebiusPriceRow[] = [];
 
     // Skip header row (first row)
@@ -146,11 +141,11 @@ export class NebiusScraper implements ProviderScraper {
         source_url: PRICING_URL,
         observed_at: observedAt,
         item: cleanGpuModelName(item),
-        class: instanceClass,
-        ...(instanceClass === 'GPU' && { gpu_count: 1 }),
+        class: 'GPU',
+        gpu_count: 1,
         vcpus,
         ram_gb: ramGb,
-        price_unit: instanceClass === 'GPU' ? 'gpu_hour' : 'hour',
+        price_unit: 'gpu_hour',
         price_usd: parsePrice(priceText),
         raw_cost: priceText,
         type: 'Virtual Machine',

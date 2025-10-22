@@ -13,6 +13,27 @@
       "when": 1760795314645,
       "tag": "0001_flaky_lady_vermin",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1761133382066,
+      "tag": "0002_remove_cpu_favorites",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1761136509615,
+      "tag": "0003_gpus_to_postgres",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1761140925983,
+      "tag": "0004_add_model_favorites",
+      "breakpoints": true
     }
   ]
 }

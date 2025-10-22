@@ -438,7 +438,11 @@ export async function GET(req: NextRequest): Promise<Response> {
       nextCursor: start + size < filteredData.length ? start + size : null,
     };
 
-    return Response.json(response);
+    return Response.json(response, {
+      headers: {
+        "Cache-Control": "public, s-maxage=120, stale-while-revalidate=86400",
+      },
+    });
   } catch (error) {
     console.error("Models API error:", error);
     return Response.json(

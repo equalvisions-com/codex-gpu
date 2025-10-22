@@ -12,14 +12,22 @@ import type { ColumnSchema } from "./schema";
 // GPU pricing filter fields
 export const filterFields: DataTableFilterField<ColumnSchema>[] = [
   {
+    label: "Search",
+    value: "search",
+    type: "input",
+    defaultOpen: true,
+  },
+  {
     label: "Provider",
     value: "provider",
     type: "checkbox",
+    defaultOpen: true,
   },
   {
     label: "GPU Model",
     value: "gpu_model",
     type: "input",
+    defaultOpen: true,
   },
   {
     label: "GPU Count",
@@ -27,6 +35,7 @@ export const filterFields: DataTableFilterField<ColumnSchema>[] = [
     type: "slider",
     min: 1,
     max: 8,
+    defaultOpen: true,
   },
   {
     label: "VRAM (GB)",
@@ -34,6 +43,7 @@ export const filterFields: DataTableFilterField<ColumnSchema>[] = [
     type: "slider",
     min: 8,
     max: 128,
+    defaultOpen: true,
   },
   {
     label: "vCPUs",
@@ -41,6 +51,7 @@ export const filterFields: DataTableFilterField<ColumnSchema>[] = [
     type: "slider",
     min: 1,
     max: 256,
+    defaultOpen: true,
   },
   {
     label: "System RAM (GB)",
@@ -48,6 +59,7 @@ export const filterFields: DataTableFilterField<ColumnSchema>[] = [
     type: "slider",
     min: 8,
     max: 4096,
+    defaultOpen: true,
   },
   {
     label: "Hourly Rate ($)",
@@ -55,6 +67,7 @@ export const filterFields: DataTableFilterField<ColumnSchema>[] = [
     type: "slider",
     min: 0.1,
     max: 50,
+    defaultOpen: true,
   },
 ];
 

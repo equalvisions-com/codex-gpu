@@ -38,7 +38,7 @@ export const columnSchema = z.object({
 
   // Flags
   spot: z.boolean().optional(),
-  class: z.enum(["GPU", "CPU", "service"]).optional(),
+  class: z.literal("GPU").optional(),
   network: z.enum(["InfiniBand", "Ethernet", "Unknown"]).optional(),
   type: z.enum(["VM", "Bare Metal"]).optional(),
 
@@ -53,7 +53,6 @@ export const columnFilterSchema = z.object({
   provider: z.enum(["coreweave", "nebius", "hyperstack"]).optional(),
   gpu_model: z.string().optional(),
   instance_id: z.string().optional(),
-  cpu_model: z.string().optional(),
   gpu_count: z
     .string()
     .transform((val) => val.split(SLIDER_DELIMITER))
@@ -84,7 +83,6 @@ export const columnFilterSchema = z.object({
     .transform((val) => val.split(RANGE_DELIMITER).map(Number))
     .pipe(z.coerce.date().array())
     .optional(),
-  class: z.enum(["GPU", "CPU", "service"]).optional(),
   network: z.enum(["InfiniBand", "Ethernet", "Unknown"]).optional(),
   type: z.enum(["VM", "Bare Metal"]).optional(),
 });
@@ -100,4 +98,3 @@ export const facetMetadataSchema = z.object({
 });
 
 export type FacetMetadataSchema = z.infer<typeof facetMetadataSchema>;
-

@@ -13,13 +13,11 @@ export type CoreWeavePriceRow = {
 
   // Hardware
   gpu_model?: string;           // e.g., "NVIDIA GB200 NVL72", "H100 PCIe"
-  gpu_count?: number;           // integer parsed from "GPU Count" (empty for CPU rows)
+  gpu_count?: number;           // integer parsed from "GPU Count"
   vram_gb?: number;             // number parsed from "VRAM"
   vcpus?: number;               // integer parsed from "vCPUs"
   system_ram_gb?: number;       // integer parsed from "System RAM"
   local_storage_tb?: number;    // number parsed from "Local Storage (TB)"
-  cpu_model?: string;           // e.g., "AMD Genoa (9454)" for CPU rows
-  cpu_type?: string;            // "High Performance", "General Purpose", etc.
 
   // Pricing
   price_unit: "hour" | "month" | "gb_month"; // price units vary by service
@@ -29,7 +27,7 @@ export type CoreWeavePriceRow = {
   billing_notes?: string;       // freeform for footnotes (e.g., "superscript 1")
 
   // Flags
-  class: "GPU" | "CPU" | "service"; // "GPU" if GPU Count is present, "CPU" if not, or "service" for NAT/VPC/Data Transfer rows
+  class: "GPU";                  // GPU rows only
   network?: "InfiniBand" | "Ethernet" | "Unknown"; // hint from name/ID (contains "IB" => InfiniBand)
   spot?: boolean;               // marketing page lists on‑demand rates; leave undefined
   type?: "Virtual Machine" | "Bare Metal";    // instance type
@@ -42,8 +40,8 @@ export type NebiusPriceRow = {
   observed_at: string;          // ISO timestamp
 
   // Compute identifiers
-  item: string;                 // e.g. "NVIDIA HGX H100" or "AMD EPYC Genoa"
-  class: "GPU" | "CPU";         // GPU or CPU table
+  item: string;                 // e.g. "NVIDIA HGX H100"
+  class: "GPU";                 // GPU table only
 
   // Hardware
   gpu_count?: number;           // Always 1 for GPU instances
@@ -53,7 +51,7 @@ export type NebiusPriceRow = {
   ram_gb: string;               // "200", "32-160", etc.
 
   // Pricing
-  price_unit: "gpu_hour" | "hour"; // GPU table uses per GPU-hour, CPU uses per hour
+  price_unit: "gpu_hour";       // per GPU-hour
   price_usd?: number;           // numeric price (e.g. 2.95); undefined if "Contact us"
   raw_cost: string;             // original price string (e.g. "$2.95", "from $1.82", "Contact us")
 

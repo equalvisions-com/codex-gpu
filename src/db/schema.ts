@@ -54,3 +54,30 @@ export const aiModels = pgTable("ai_models", {
   // GIN index for pricing queries
   pricingIndex: index("ai_models_pricing_idx").using("gin", table.pricing),
 }));
+
+// GPU Pricing table - stores scraped GPU pricing data (wiped on each scrape)
+export const gpuPricing = pgTable("gpu_pricing", {
+  id: text("id").primaryKey(),
+  provider: text("provider").notNull(),
+  observedAt: timestamp("observed_at").notNull(),
+  version: integer("version").notNull().default(1),
+  sourceHash: text("source_hash"),
+  data: jsonb("data").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  providerIndex: index("gpu_pricing_provider_idx").on(table.provider),
+  observedAtIndex: index("gpu_pricing_observed_at_idx").on(table.observedAt),
+}));
+
+// User model favorites table - stores which AI models users have favorited
+export const userModelFavorites = pgTable("user_model_favorites", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  modelId: text("model_id").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  userModelUnique: uniqueIndex("user_model_unique").on(table.userId, table.modelId),
+  userIdIndex: index("user_model_favorites_user_id_idx").on(table.userId),
+}));

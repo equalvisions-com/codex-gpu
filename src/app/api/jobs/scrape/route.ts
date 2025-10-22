@@ -1,222 +1,135 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { coreweaveScraper, nebiusScraper, hyperstackScraper, runpodScraper, lambdaScraper, digitaloceanScraper, oracleScraper, crusoeScraper } from '@/lib/providers';
-import { pricingCache } from '@/lib/redis';
-import type { ProviderScraper } from '@/lib/providers';
-import { logger } from '@/lib/logger';
-import { revalidatePath, revalidateTag } from 'next/cache';
+import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { logger } from "@/lib/logger";
+import { gpuPricingScraper } from "@/lib/providers/gpu-pricing-scraper";
+import { gpuPricingStore } from "@/lib/gpu-pricing-store";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 export const maxDuration = 30; // Allow up to 30 seconds for scraping
-
-const scrapers: Record<string, ProviderScraper> = {
-  coreweave: coreweaveScraper,
-  nebius: nebiusScraper,
-  hyperstack: hyperstackScraper,
-  runpod: runpodScraper,
-  lambda: lambdaScraper,
-  digitalocean: digitaloceanScraper,
-  oracle: oracleScraper,
-  crusoe: crusoeScraper,
-};
 
 export async function POST(request: NextRequest) {
   try {
-    // Note: add auth if you expose this publicly
-
-    // Get provider from query parameter, default to coreweave
     const { searchParams } = new URL(request.url);
-    const provider = searchParams.get('provider') || 'coreweave';
-    const force = searchParams.get('force') === '1';
+    const providerParam = searchParams.get("provider");
+    const force = searchParams.get("force") === "1";
 
-    if (provider === 'all') {
-      const startedAt = Date.now();
-      const summary: Array<{ provider: string; rowsScraped: number; wasUpdated: boolean; duration: number }>
-        = [];
-      let anyUpdated = false;
-
-      for (const key of Object.keys(scrapers)) {
-        const s = scrapers[key];
-        const t0 = Date.now();
-        logger.info(`Starting ${key} scraping job...`);
-        try {
-          const result = await s.scrape();
-          const updated = await pricingCache.storePricingData(result, force);
-          summary.push({ provider: key, rowsScraped: result.rows.length, wasUpdated: updated, duration: Date.now() - t0 });
-          logger.info(`${key} scraping completed in ${Date.now() - t0}ms. Updated: ${updated}`);
-          if (updated) anyUpdated = true;
-        } catch (e) {
-          summary.push({ provider: key, rowsScraped: 0, wasUpdated: false, duration: Date.now() - t0 });
-          logger.error(`${key} scraping failed:`, e);
-        }
-      }
-      if (anyUpdated) {
-        revalidateTag('pricing');
-        revalidatePath('/api');
-        revalidatePath('/api/pricing');
-        revalidatePath('/api/infinite-table');
-      }
-
-      return NextResponse.json({
-        success: true,
-        force,
-        totalDuration: Date.now() - startedAt,
-        results: summary,
-      });
-    }
-
-    const scraper = scrapers[provider];
-    if (!scraper) {
-      return NextResponse.json({
-        success: false,
-        error: `Unknown provider: ${provider}. Available providers: ${Object.keys(scrapers).join(', ')}`,
-      }, { status: 400 });
+    if (providerParam && providerParam !== "all") {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Partial provider scrapes are no longer supported. Use provider=all or omit the parameter.",
+        },
+        { status: 400 },
+      );
     }
 
     const startTime = Date.now();
+    logger.info("[GpuPricingJob] Starting full GPU pricing scrape...");
 
-    // Run the scraper
-      logger.info(`Starting ${provider} scraping job...`);
-    const result = await scraper.scrape();
+    const scrapeResult = await gpuPricingScraper.scrapeAll();
+    const stored = await gpuPricingStore.replaceAll(scrapeResult.providerResults);
 
-    // Store the results in Redis (only if content changed)
-    const wasUpdated = await pricingCache.storePricingData(result, force);
-    if (wasUpdated) {
-      // Invalidate data/tagged caches and route caches
-      revalidateTag('pricing');
-      revalidatePath('/api');
-      revalidatePath('/api/pricing');
-      revalidatePath('/api/infinite-table');
-    }
+    revalidateTag("pricing");
+    revalidatePath("/api");
+    // `/api` already covers the main GPU data endpoint
 
     const duration = Date.now() - startTime;
+    const totalRows = scrapeResult.providerResults.reduce((acc, result) => acc + result.rows.length, 0);
 
-      logger.info(`${provider} scraping completed in ${duration}ms. Updated: ${wasUpdated}`);
+    logger.info(`[GpuPricingJob] Scrape completed in ${duration}ms. Stored ${stored} rows.`);
 
     return NextResponse.json({
       success: true,
-      provider: result.provider,
-      rowsScraped: result.rows.length,
-      wasUpdated,
       force,
       duration,
-      observedAt: result.observedAt,
-      sourceHash: result.sourceHash,
+      stored,
+      rowsScraped: totalRows,
+      scrapedAt: scrapeResult.scrapedAt,
+      sourceHash: scrapeResult.sourceHash,
+      summaries: scrapeResult.summaries,
     });
-
   } catch (error) {
-    console.error('Scraping job failed:', error);
+    console.error("Scraping job failed:", error);
 
-    return NextResponse.json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error occurred',
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error occurred",
+      },
+      { status: 500 },
+    );
   }
 }
 
-// GET /api/jobs/scrape - Get cache stats
+// GET /api/jobs/scrape - Get cache stats or trigger scraping
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const run = searchParams.get('run') === '1';
-    const provider = searchParams.get('provider') || 'coreweave';
-    const force = searchParams.get('force') === '1';
+    const run = searchParams.get("run") === "1";
+    const providerParam = searchParams.get("provider");
+    const force = searchParams.get("force") === "1";
+
+    if (providerParam && providerParam !== "all") {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Partial provider scrapes are no longer supported. Use provider=all or omit the parameter.",
+        },
+        { status: 400 },
+      );
+    }
 
     if (run) {
-      if (provider === 'all') {
-        const startedAt = Date.now();
-        const summary: Array<{ provider: string; rowsScraped: number; wasUpdated: boolean; duration: number }>
-          = [];
-        let anyUpdated = false;
+      const startedAt = Date.now();
+      logger.info("[GpuPricingJob][cron] Starting scheduled GPU pricing scrape...");
 
-        for (const key of Object.keys(scrapers)) {
-          const s = scrapers[key];
-          const t0 = Date.now();
-          logger.info(`[cron] Starting ${key} scraping job...`);
-          try {
-            const result = await s.scrape();
-            const updated = await pricingCache.storePricingData(result, force);
-            summary.push({ provider: key, rowsScraped: result.rows.length, wasUpdated: updated, duration: Date.now() - t0 });
-            logger.info(`[cron] ${key} scraping completed in ${Date.now() - t0}ms. Updated: ${updated}`);
-            if (updated) anyUpdated = true;
-          } catch (e) {
-            summary.push({ provider: key, rowsScraped: 0, wasUpdated: false, duration: Date.now() - t0 });
-            logger.error(`[cron] ${key} scraping failed:`, e);
-          }
-        }
-        if (anyUpdated) {
-          revalidateTag('pricing');
-          revalidatePath('/api');
-          revalidatePath('/api/pricing');
-          revalidatePath('/api/infinite-table');
-        }
+      const scrapeResult = await gpuPricingScraper.scrapeAll();
+      const stored = await gpuPricingStore.replaceAll(scrapeResult.providerResults);
 
-        return NextResponse.json({
-          success: true,
-          force,
-          totalDuration: Date.now() - startedAt,
-          results: summary,
-        });
-      }
+      revalidateTag("pricing");
+      revalidatePath("/api");
+      // `/api` already covers the main GPU data endpoint
 
-      const scraper = scrapers[provider];
-      if (!scraper) {
-        return NextResponse.json({
-          success: false,
-          error: `Unknown provider: ${provider}. Available providers: ${Object.keys(scrapers).join(', ')}`,
-        }, { status: 400 });
-      }
+      const duration = Date.now() - startedAt;
+      const totalRows = scrapeResult.providerResults.reduce((acc, result) => acc + result.rows.length, 0);
 
-      const startTime = Date.now();
-      logger.info(`[cron] Starting ${provider} scraping job...`);
-      const result = await scraper.scrape();
-      const wasUpdated = await pricingCache.storePricingData(result, force);
-      if (wasUpdated) {
-        revalidateTag('pricing');
-        revalidatePath('/api');
-        revalidatePath('/api/pricing');
-        revalidatePath('/api/infinite-table');
-      }
-      const duration = Date.now() - startTime;
-      logger.info(`[cron] ${provider} scraping completed in ${duration}ms. Updated: ${wasUpdated}`);
+      logger.info(`[GpuPricingJob][cron] Scrape completed in ${duration}ms. Stored ${stored} rows.`);
 
       return NextResponse.json({
         success: true,
-        provider: result.provider,
-        rowsScraped: result.rows.length,
-        wasUpdated,
         force,
         duration,
-        observedAt: result.observedAt,
-        sourceHash: result.sourceHash,
+        stored,
+        rowsScraped: totalRows,
+        scrapedAt: scrapeResult.scrapedAt,
+        sourceHash: scrapeResult.sourceHash,
+        summaries: scrapeResult.summaries,
       });
     }
 
-    // Default: return cache stats
-    const stats = await pricingCache.getCacheStats();
+    const stats = await gpuPricingStore.getCacheStats();
     return NextResponse.json({
-      status: 'operational',
+      status: "operational",
+      totalRows: stats.totalRows,
       providers: stats.providers,
-      totalInstances: stats.totalInstances,
-      lastUpdated: new Date().toISOString(),
+      lastScrapedAt: stats.lastScrapedAt,
     });
-
   } catch (error) {
-    console.error('Cache stats / cron failed:', error);
-    return NextResponse.json({
-      status: 'error',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    }, { status: 500 });
+    console.error("Cache stats / cron failed:", error);
+    return NextResponse.json(
+      {
+        status: "error",
+        error: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    );
   }
 }
+
 // Periodic maintenance endpoint (e.g., cron ping)
-export async function PUT(request: NextRequest) {
+export async function PUT(_request: NextRequest) {
   try {
-    const url = new URL(request.url);
-    const days = Number(url.searchParams.get('days') ?? '30');
-    const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
-    const removed = await pricingCache.trimOldRows(cutoff);
-    // Note: orphan row cleanup can be added if storage growth becomes a concern
-    return NextResponse.json({ ok: true, removed });
+    return NextResponse.json({ ok: true, removed: 0 });
   } catch (e) {
     return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 500 });
   }

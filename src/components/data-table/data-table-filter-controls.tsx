@@ -84,9 +84,8 @@ export function DataTableFilterControls() {
     showSignIn({ callbackUrl });
   }, [showSignIn]);
 
-  const isLLMsActive = normalizedPath.startsWith("/models");
-  const isGpuActive = normalizedPath === "/" || normalizedPath.startsWith("/gpus");
-  const isToolsActive = normalizedPath.startsWith("/cpus");
+  const isLLMsActive = normalizedPath === "/" || normalizedPath.startsWith("/llms");
+  const isGpuActive = normalizedPath.startsWith("/gpus");
   const isFavoritesActive = normalizedPath.startsWith("/favorites");
 
   return (
@@ -109,9 +108,8 @@ export function DataTableFilterControls() {
           <AccordionContent className="[&>div]:pb-0">
             <div className="p-1">
               <div className="space-y-1">
-                <SidebarLink href="/models" label="LLMs" isActive={isLLMsActive} />
-                <SidebarLink href="/" label="GPUs" isActive={isGpuActive} />
-                <SidebarLink href="/cpus" label="Tools" isActive={isToolsActive} />
+                <SidebarLink href="/llms" label="LLMs" isActive={isLLMsActive} />
+                <SidebarLink href="/gpus" label="GPUs" isActive={isGpuActive} />
                 {session ? (
                   <SidebarLink href="/favorites" label="Favorites" isActive={isFavoritesActive} />
                 ) : (

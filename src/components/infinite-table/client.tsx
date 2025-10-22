@@ -6,7 +6,6 @@ import type {
   ColumnFiltersState,
   RowSelectionState,
   SortingState,
-  Table as TTable,
 } from "@tanstack/react-table";
 import { useQueryStates } from "nuqs";
 import * as React from "react";
@@ -14,7 +13,6 @@ import { columns } from "./columns";
 import { filterFields as defaultFilterFields, sheetFields } from "./constants";
 import { DataTableInfinite } from "./data-table-infinite";
 import { dataOptions } from "./query-options";
-import type { FacetMetadataSchema } from "./schema";
 import { searchParamsParser } from "./search-params";
 import type { RowWithId } from "@/types/api";
 import type { ColumnSchema } from "./schema";
@@ -277,7 +275,13 @@ export function Client({ initialFavoritesData, initialFavoriteKeys }: ClientProp
       onSortingChange={setSorting}
       rowSelection={rowSelection}
       onRowSelectionChange={setRowSelection}
-      meta={metadata}
+      meta={{
+        ...metadata,
+        facets,
+        totalRows: totalDBRowCount ?? 0,
+        filterRows: filterDBRowCount ?? 0,
+        totalRowsFetched: totalFetched ?? 0,
+      }}
       filterFields={filterFields}
       sheetFields={sheetFields}
       isFetching={isFavoritesMode ? false : isFetching}
@@ -287,8 +291,6 @@ export function Client({ initialFavoritesData, initialFavoriteKeys }: ClientProp
       hasNextPage={isFavoritesMode ? false : hasNextPage}
       getRowClassName={() => "opacity-100"}
       getRowId={(row) => row.uuid}
-      getFacetedUniqueValues={getFacetedUniqueValues(facets)}
-      getFacetedMinMaxValues={getFacetedMinMaxValues(facets)}
       renderSheetTitle={(props) => props.row?.original.uuid}
       searchParamsParser={searchParamsParser}
       focusTargetRef={contentRef}
@@ -341,28 +343,4 @@ function isLooseEqual(a: unknown, b: unknown) {
     }
   }
   return false;
-}
-
-export function getFacetedUniqueValues<TData>(
-  facets?: Record<string, FacetMetadataSchema>,
-) {
-  return (_: TTable<TData>, columnId: string): Map<string, number> | undefined => {
-    if (!facets) return undefined;
-    const rows = facets?.[columnId]?.rows;
-    if (!rows) return new Map();
-    return new Map(rows.map(({ value, total }) => [value, total]));
-  };
-}
-
-export function getFacetedMinMaxValues<TData>(
-  facets?: Record<string, FacetMetadataSchema>,
-) {
-  return (_: TTable<TData>, columnId: string): [number, number] | undefined => {
-    const min = facets?.[columnId]?.min;
-    const max = facets?.[columnId]?.max;
-    if (typeof min === "number" && typeof max === "number") return [min, max];
-    if (typeof min === "number") return [min, min];
-    if (typeof max === "number") return [max, max];
-    return undefined;
-  };
 }
