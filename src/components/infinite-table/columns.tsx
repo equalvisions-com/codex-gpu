@@ -81,8 +81,8 @@ export const columns: ColumnDef<ColumnSchema>[] = [
     size: 155,
     minSize: 155,
     meta: {
-      cellClassName: "min-w-[155px]",
-      headerClassName: "text-center min-w-[155px]",
+      cellClassName: "text-left min-w-[155px]",
+      headerClassName: "text-left min-w-[155px] bg-[#f8fafc] dark:bg-[#090909]",
     },
   },
   {
@@ -104,8 +104,8 @@ export const columns: ColumnDef<ColumnSchema>[] = [
     size: 261,
     minSize: 261,
     meta: {
-      cellClassName: "overflow-hidden min-w-[261px]",
-      headerClassName: "text-center overflow-hidden min-w-[261px]",
+      cellClassName: "text-left overflow-hidden min-w-[261px]",
+      headerClassName: "text-left overflow-hidden min-w-[261px] bg-[#f8fafc] dark:bg-[#090909]",
     },
   },
   {
@@ -137,7 +137,7 @@ export const columns: ColumnDef<ColumnSchema>[] = [
   {
     accessorKey: "price_hour_usd",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Price" centerTitle />
+      <DataTableColumnHeader column={column} title="Price" titleClassName="ml-auto text-right" />
     ),
     cell: ({ row }) => {
       const original = row.original;
@@ -147,127 +147,127 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       if (!price) return <span className="text-muted-foreground">N/A</span>;
 
       return (
-        <>
+        <div className="text-right">
           <span className="font-mono">${price.toFixed(2)}</span>{" "}
           <span className="font-mono text-muted-foreground">/hr</span>
-        </>
+        </div>
       );
     },
     filterFn: "inNumberRange",
     size: 155,
     minSize: 155,
     meta: {
-      headerClassName: "text-center min-w-[155px]",
-      cellClassName: "text-center min-w-[155px]",
+      headerClassName: "text-right min-w-[155px] bg-[#f8fafc] dark:bg-[#090909]",
+      cellClassName: "text-right min-w-[155px]",
     },
   },
   {
     accessorKey: "gpu_count",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="GPUs" centerTitle />
+      <DataTableColumnHeader column={column} title="GPUs" titleClassName="ml-auto text-right" />
     ),
     cell: ({ row }) => {
       const gpuCount = row.getValue<ColumnSchema["gpu_count"]>("gpu_count");
       if (!gpuCount) return <span className="text-muted-foreground">N/A</span>;
 
       return (
-        <>
+        <div className="text-right">
           <span className="font-mono">{gpuCount}</span>{" "}
           <span className="text-muted-foreground">{gpuCount === 1 ? 'GPU' : 'GPUs'}</span>
-        </>
+        </div>
       );
     },
     filterFn: "inNumberRange",
     size: 155,
     minSize: 155,
     meta: {
-      cellClassName: "text-center min-w-[155px]",
-      headerClassName: "text-center min-w-[155px]",
+      cellClassName: "text-right min-w-[155px]",
+      headerClassName: "text-right min-w-[155px] bg-[#f8fafc] dark:bg-[#090909]",
     },
   },
   {
     accessorKey: "vram_gb",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="VRAM" centerTitle />
+      <DataTableColumnHeader column={column} title="VRAM" titleClassName="ml-auto text-right" />
     ),
     cell: ({ row }) => {
       const vramGb = row.getValue<ColumnSchema["vram_gb"]>("vram_gb");
       return vramGb ? (
-        <>
+        <div className="text-right">
           <span className="font-mono">{vramGb}</span>{" "}
           <span className="text-muted-foreground">GB</span>
-        </>
+        </div>
       ) : <span className="text-muted-foreground">N/A</span>;
     },
     filterFn: "inNumberRange",
     size: 155,
     minSize: 155,
     meta: {
-      cellClassName: "text-center min-w-[155px]",
-      headerClassName: "text-center min-w-[155px]",
+      cellClassName: "text-right min-w-[155px]",
+      headerClassName: "text-right min-w-[155px] bg-[#f8fafc] dark:bg-[#090909]",
     },
   },
   {
     accessorKey: "vcpus",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="vCPUs" centerTitle />
+      <DataTableColumnHeader column={column} title="vCPUs" titleClassName="ml-auto text-right" />
     ),
     cell: ({ row }) => {
       const vcpus = row.getValue<ColumnSchema["vcpus"]>("vcpus");
       if (!vcpus) return <span className="text-muted-foreground">N/A</span>;
 
       return (
-        <>
+        <div className="text-right">
           <span className="font-mono">{vcpus}</span>{" "}
           <span className="text-muted-foreground">vCPUs</span>
-        </>
+        </div>
       );
     },
     filterFn: "inNumberRange",
     size: 155,
     minSize: 155,
     meta: {
-      cellClassName: "text-center min-w-[155px]",
-      headerClassName: "text-center min-w-[155px]",
+      cellClassName: "text-right min-w-[155px]",
+      headerClassName: "text-right min-w-[155px] bg-[#f8fafc] dark:bg-[#090909]",
     },
   },
   {
     accessorKey: "system_ram_gb",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="RAM" centerTitle />
+      <DataTableColumnHeader column={column} title="RAM" titleClassName="ml-auto text-right" />
     ),
     cell: ({ row }) => {
       const original = row.original;
       const ramGb = original.system_ram_gb || original.ram_gb;
       return ramGb ? (
-        <>
+        <div className="text-right">
           <span className="font-mono">{ramGb}</span>{" "}
           <span className="text-muted-foreground">GB</span>
-        </>
+        </div>
       ) : <span className="text-muted-foreground">N/A</span>;
     },
     filterFn: "inNumberRange",
     size: 155,
     minSize: 155,
     meta: {
-      cellClassName: "text-center min-w-[155px]",
-      headerClassName: "text-center min-w-[155px]",
+      cellClassName: "text-right min-w-[155px]",
+      headerClassName: "text-right min-w-[155px] bg-[#f8fafc] dark:bg-[#090909]",
     },
   },
   {
     accessorKey: "type",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Config" centerTitle />
+      <DataTableColumnHeader column={column} title="Config" titleClassName="ml-auto text-right" />
     ),
     cell: ({ row }) => {
       const type = row.getValue<ColumnSchema["type"]>("type");
-      return type ? <span>{type}</span> : <span className="text-muted-foreground">N/A</span>;
+      return type ? <span className="block text-right">{type}</span> : <span className="text-muted-foreground">N/A</span>;
     },
     size: 155,
     minSize: 155,
     meta: {
-      cellClassName: "text-center min-w-[155px]",
-      headerClassName: "text-center min-w-[155px]",
+      cellClassName: "text-right min-w-[155px]",
+      headerClassName: "text-right min-w-[155px] bg-[#f8fafc] dark:bg-[#090909]",
     },
   },
 ];
