@@ -50,9 +50,11 @@ import {
   LogOut,
   ChevronsUpDown,
   Settings as SettingsIcon,
+  Sun
 } from "lucide-react";
 import { RowSkeletons } from "./_components/row-skeletons";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import { ModeToggle } from "@/components/theme/toggle-mode";
 import { CheckedActionsIsland } from "./_components/checked-actions-island";
 import { DataTableFilterControls } from "@/components/data-table/data-table-filter-controls";
 import { filterFields, sheetFields } from "./constants";
@@ -127,6 +129,18 @@ function UserMenu({ user, onSignOut, isSigningOut }: UserMenuProps) {
               <SettingsIcon className="h-4 w-4" />
               <span>Settings</span>
             </Link>
+          </DropdownMenuItem>
+                <DropdownMenuItem
+            className="cursor-default focus:bg-transparent focus:text-foreground"
+            onSelect={(event) => event.preventDefault()}
+          >
+            <div className="flex w-full items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-sm">
+                <Sun className="h-4 w-4" />
+                <span>Theme</span>
+              </div>
+              <ModeToggle className="h-8 w-8 [&>svg]:h-4 [&>svg]:w-4" />
+            </div>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem className="cursor-pointer"

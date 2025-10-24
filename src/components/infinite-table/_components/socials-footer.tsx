@@ -3,7 +3,6 @@ import { Link } from "@/components/custom/link";
 import { Bluesky } from "@/components/icons/bluesky";
 import { Github } from "@/components/icons/github";
 import { X } from "@/components/icons/x";
-import { ModeToggle } from "@/components/theme/toggle-mode";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -16,7 +15,7 @@ import NextLink from "next/link";
 export function SocialsFooter() {
   return (
     <div className="flex flex-col gap-2">
-      <div className="grid w-full grid-cols-3 items-center justify-center gap-2 p-1 md:grid-cols-6">
+      <div className="grid w-full grid-cols-3 items-center justify-center gap-2 p-1 md:grid-cols-5">
         <Button variant="ghost" size="sm" className="h-8 w-8 px-0" asChild>
           <NextLink href="https://github.com/openstatusHQ/data-table-filters">
             <Github className="h-4 w-4" />
@@ -32,7 +31,6 @@ export function SocialsFooter() {
             <Bluesky className="h-4 w-4" />
           </NextLink>
         </Button>
-        <ModeToggle className="h-8 w-8 [&>svg]:h-4 [&>svg]:w-4" />
         <Popover>
           <PopoverTrigger asChild>
             <Button variant="ghost" size="sm" className="h-8 w-8 px-0">
