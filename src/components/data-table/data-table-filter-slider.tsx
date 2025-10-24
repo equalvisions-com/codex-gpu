@@ -12,6 +12,113 @@ const PROMPT_PRICE_SLIDER_STEP = 0.001;
 const PROMPT_PRICE_DECIMALS = 2;
 const PROMPT_PRICE_EXPONENT = Math.log(4 / 9) / Math.log(0.5);
 
+const GPU_PRICE_SLIDER_MIN = 0.01;
+const GPU_PRICE_SLIDER_MAX = 20;
+const GPU_PRICE_SLIDER_STEP = 0.01;
+const VRAM_STOPS = [16, 32, 48, 64, 80, 96, 192];
+const VRAM_VALUE_MIN = VRAM_STOPS[0];
+const VRAM_VALUE_MAX = VRAM_STOPS[VRAM_STOPS.length - 1];
+const VRAM_SLIDER_MIN = 0;
+const VRAM_SLIDER_MAX = VRAM_STOPS.length - 1;
+const VRAM_SLIDER_STEP = 0.001;
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function sliderToVram(sliderValue: number) {
+  const clamped = clamp(sliderValue, VRAM_SLIDER_MIN, VRAM_SLIDER_MAX);
+  const lowerIndex = Math.floor(clamped);
+  const upperIndex = Math.min(VRAM_STOPS.length - 1, Math.ceil(clamped));
+
+  if (lowerIndex === upperIndex) {
+    return VRAM_STOPS[lowerIndex];
+  }
+
+  const lowerValue = VRAM_STOPS[lowerIndex];
+  const upperValue = VRAM_STOPS[upperIndex];
+  const fraction = clamped - lowerIndex;
+
+  return lowerValue + (upperValue - lowerValue) * fraction;
+}
+
+function vramValueToSlider(vramValue: number) {
+  const clamped = clamp(vramValue, VRAM_VALUE_MIN, VRAM_VALUE_MAX);
+
+  for (let index = 0; index < VRAM_STOPS.length - 1; index++) {
+    const lower = VRAM_STOPS[index];
+    const upper = VRAM_STOPS[index + 1];
+
+    if (clamped <= upper) {
+      const fraction = (clamped - lower) / (upper - lower);
+      return index + fraction;
+    }
+  }
+
+  return VRAM_SLIDER_MAX;
+}
+
+type SliderConfig = {
+  sliderMin: number;
+  sliderMax: number;
+  sliderStep: number;
+  valueMin: number;
+  valueMax: number;
+  toSlider: (value: number) => number;
+  fromSlider: (sliderValue: number) => number;
+  postProcessMax?: (value: number) => number;
+  tickValues: number[];
+  labelValues: number[];
+  formatLabel: (value: number) => string;
+};
+
+const GPU_PRICE_TICKS = Array.from({ length: 7 }, (_, index) => {
+  if (index === 0) return GPU_PRICE_SLIDER_MIN;
+  if (index === 6) return GPU_PRICE_SLIDER_MAX;
+  const fraction = index / 6;
+  return GPU_PRICE_SLIDER_MIN + (GPU_PRICE_SLIDER_MAX - GPU_PRICE_SLIDER_MIN) * fraction;
+});
+
+const SLIDER_CONFIG: Record<"price_hour_usd" | "vram_gb", SliderConfig> = {
+  price_hour_usd: {
+    sliderMin: GPU_PRICE_SLIDER_MIN,
+    sliderMax: GPU_PRICE_SLIDER_MAX,
+    sliderStep: GPU_PRICE_SLIDER_STEP,
+    valueMin: GPU_PRICE_SLIDER_MIN,
+    valueMax: GPU_PRICE_SLIDER_MAX,
+    toSlider: value => clamp(value, GPU_PRICE_SLIDER_MIN, GPU_PRICE_SLIDER_MAX),
+    fromSlider: sliderValue => clamp(sliderValue, GPU_PRICE_SLIDER_MIN, GPU_PRICE_SLIDER_MAX),
+    postProcessMax: value => Number(value.toFixed(2)),
+    tickValues: GPU_PRICE_TICKS,
+    labelValues: [GPU_PRICE_SLIDER_MIN, 10, GPU_PRICE_SLIDER_MAX],
+    formatLabel: value => {
+      if (value >= GPU_PRICE_SLIDER_MAX) {
+        return `$${value.toFixed(0)}+`;
+      }
+      if (value <= GPU_PRICE_SLIDER_MIN) {
+        return `$${value.toFixed(2)}`;
+      }
+      return `$${value.toFixed(0)}`;
+    },
+  },
+  vram_gb: {
+    sliderMin: VRAM_SLIDER_MIN,
+    sliderMax: VRAM_SLIDER_MAX,
+    sliderStep: VRAM_SLIDER_STEP,
+    valueMin: VRAM_VALUE_MIN,
+    valueMax: VRAM_VALUE_MAX,
+    toSlider: vramValueToSlider,
+    fromSlider: sliderToVram,
+    postProcessMax: value => Math.round(value),
+    tickValues: VRAM_STOPS,
+    labelValues: [VRAM_VALUE_MIN, VRAM_STOPS[3], VRAM_VALUE_MAX],
+    formatLabel: value => {
+      const numeric = Math.round(value);
+      return numeric >= VRAM_VALUE_MAX ? `${numeric}GB+` : `${numeric}GB`;
+    },
+  },
+};
+
 /**
  * Prompt price slider uses a hybrid scale:
  * - 0 → 0.5 covers $0 → $1 linearly for fine-grained free-tier values.
@@ -117,9 +224,18 @@ function DataTableFilterSliderComponent<TData>({
   const value = _value as string;
   const { columnFilters, setColumnFilters } = useDataTable();
   const isPriceFilter = value === "inputPrice";
-  const sliderRangeMin = isPriceFilter ? PROMPT_PRICE_SLIDER_MIN : defaultMin;
-  const sliderRangeMax = isPriceFilter ? PROMPT_PRICE_SLIDER_MAX : defaultMax;
-  const sliderStep = isPriceFilter ? PROMPT_PRICE_SLIDER_STEP : step;
+  const sliderConfig = isPriceFilter
+    ? undefined
+    : SLIDER_CONFIG[value as keyof typeof SLIDER_CONFIG];
+  const sliderRangeMin = isPriceFilter
+    ? PROMPT_PRICE_SLIDER_MIN
+    : sliderConfig?.sliderMin ?? defaultMin;
+  const sliderRangeMax = isPriceFilter
+    ? PROMPT_PRICE_SLIDER_MAX
+    : sliderConfig?.sliderMax ?? defaultMax;
+  const sliderStep = isPriceFilter
+    ? PROMPT_PRICE_SLIDER_STEP
+    : sliderConfig?.sliderStep ?? step;
 
   const priceToSlider = useCallback(
     (pricePerToken: number) => {
@@ -145,12 +261,33 @@ function DataTableFilterSliderComponent<TData>({
     if (filter?.value && Array.isArray(filter.value)) {
       const raw = getFilter(filter.value);
       if (typeof raw === "number") {
-        const asPerToken = isPriceFilter ? raw / 1_000_000 : raw;
-        return priceToSlider(asPerToken);
+        if (isPriceFilter) {
+          return priceToSlider(raw / 1_000_000);
+        }
+        if (sliderConfig) {
+          const min = typeof sliderRangeMin === "number" ? sliderRangeMin : sliderConfig.sliderMin;
+          const max = typeof sliderRangeMax === "number" ? sliderRangeMax : sliderConfig.sliderMax;
+          return clamp(sliderConfig.toSlider(raw), min, max);
+        }
+        return raw;
       }
     }
-    return sliderRangeMax;
-  }, [columnFilters, value, sliderRangeMax, priceToSlider, isPriceFilter]);
+
+    if (sliderConfig) {
+      return typeof sliderRangeMax === "number" ? sliderRangeMax : sliderConfig.sliderMax;
+    }
+
+    return sliderRangeMax ?? defaultMax ?? 0;
+  }, [
+    columnFilters,
+    defaultMax,
+    isPriceFilter,
+    priceToSlider,
+    sliderConfig,
+    sliderRangeMax,
+    sliderRangeMin,
+    value,
+  ]);
 
   // Local state for responsive UI updates (synced with external state)
   const [localValue, setLocalValue] = useState(currentValue);
@@ -171,26 +308,79 @@ function DataTableFilterSliderComponent<TData>({
   useEffect(() => {
     const otherFilters = columnFiltersRef.current.filter((f: any) => f.id !== value);
     const tolerance = Math.max(1e-12, sliderStep ?? (defaultMax - defaultMin) * 0.001);
+
+    if (isPriceFilter) {
+      const isAtMax = debouncedValue >= sliderRangeMax - tolerance;
+      const actualMax = sliderToPrice(debouncedValue);
+      const normalizedMax = Number((actualMax * 1_000_000).toFixed(PROMPT_PRICE_DECIMALS));
+      const normalizedMin = 0;
+
+      if (!isAtMax) {
+        const previous = columnFiltersRef.current.find((f: any) => f.id === value);
+        if (previous && Array.isArray(previous.value)) {
+          const [prevMin, prevMax] = previous.value as (string | number)[];
+          if (Number(prevMax) === Number(normalizedMax) && Number(prevMin) === Number(normalizedMin)) {
+            return;
+          }
+        }
+      }
+
+      const newFilters = isAtMax
+        ? otherFilters
+        : [...otherFilters, { id: value, value: [normalizedMin, normalizedMax] }];
+
+      setColumnFilters(newFilters);
+      return;
+    }
+
+    if (sliderConfig) {
+      const isAtMax = debouncedValue >= sliderRangeMax - tolerance;
+      const rawMax = sliderConfig.fromSlider(debouncedValue);
+      const processedMax = sliderConfig.postProcessMax
+        ? sliderConfig.postProcessMax(rawMax)
+        : rawMax;
+      const boundedMax = clamp(processedMax, sliderConfig.valueMin, sliderConfig.valueMax);
+      const normalizedMin = sliderConfig.valueMin;
+
+      if (!isAtMax) {
+        const previous = columnFiltersRef.current.find((f: any) => f.id === value);
+        if (previous && Array.isArray(previous.value)) {
+          const [prevMin, prevMax] = previous.value as (string | number)[];
+          if (Number(prevMax) === Number(boundedMax) && Number(prevMin) === Number(normalizedMin)) {
+            return;
+          }
+        }
+      }
+
+      const newFilters = isAtMax
+        ? otherFilters
+        : [...otherFilters, { id: value, value: [normalizedMin, boundedMax] }];
+
+      setColumnFilters(newFilters);
+      return;
+    }
+
     const isAtMax = debouncedValue >= sliderRangeMax - tolerance;
-    const actualMax = sliderToPrice(debouncedValue);
-    const normalizedMax = isPriceFilter
-      ? Number((actualMax * 1_000_000).toFixed(PROMPT_PRICE_DECIMALS))
-      : actualMax;
-    const normalizedMin = isPriceFilter ? 0 : sliderRangeMin;
+    const maxValue = debouncedValue;
+    const normalizedMin = typeof sliderRangeMin === "number"
+      ? sliderRangeMin
+      : typeof defaultMin === "number"
+        ? defaultMin
+        : 0;
 
     if (!isAtMax) {
       const previous = columnFiltersRef.current.find((f: any) => f.id === value);
       if (previous && Array.isArray(previous.value)) {
         const [prevMin, prevMax] = previous.value as (string | number)[];
-        if (Number(prevMax) === Number(normalizedMax) && Number(prevMin) === Number(normalizedMin)) {
+        if (Number(prevMax) === Number(maxValue) && Number(prevMin) === Number(normalizedMin)) {
           return;
         }
       }
     }
 
     const newFilters = isAtMax
-      ? otherFilters // Remove filter at max (show all)
-      : [...otherFilters, { id: value, value: [normalizedMin, normalizedMax] }];
+      ? otherFilters
+      : [...otherFilters, { id: value, value: [normalizedMin, maxValue] }];
 
     setColumnFilters(newFilters);
   }, [
@@ -204,12 +394,16 @@ function DataTableFilterSliderComponent<TData>({
     defaultMax,
     defaultMin,
     isPriceFilter,
+    sliderConfig,
   ]);
-
   // Memoize expensive grid line calculations
   const sliderMarks = useMemo(() => {
-    const min = sliderRangeMin;
-    const max = sliderRangeMax;
+    const min = typeof sliderRangeMin === "number"
+      ? sliderRangeMin
+      : sliderConfig?.sliderMin ?? sliderRangeMin ?? 0;
+    const max = typeof sliderRangeMax === "number"
+      ? sliderRangeMax
+      : sliderConfig?.sliderMax ?? sliderRangeMax ?? 0;
     if (min >= max) {
       return { lines: [] as string[], labels: [] as { pos: string; label: string }[] };
     }
@@ -260,8 +454,36 @@ function DataTableFilterSliderComponent<TData>({
       return { lines, labels };
     }
 
+    if (sliderConfig) {
+      const sliderPositions = sliderConfig.tickValues.map(tick => sliderConfig.toSlider(tick));
+      const rawLines = sliderPositions.map(toPercent);
+      const useEdgeOffsets =
+        (value === "price_hour_usd" || value === "vram_gb") && rawLines.length > 0;
+
+      if (useEdgeOffsets) {
+        rawLines[0] = "3%";
+        rawLines[rawLines.length - 1] = "97%";
+      }
+
+      const lines = rawLines.filter((pos, index, arr) => arr.indexOf(pos) === index);
+
+      const labels = sliderConfig.labelValues.map((labelValue, index, arr) => {
+        let position = toPercent(sliderConfig.toSlider(labelValue));
+        if (useEdgeOffsets) {
+          if (index === 0) position = "3%";
+          if (index === arr.length - 1) position = "97%";
+        }
+        return {
+          pos: position,
+          label: sliderConfig.formatLabel(labelValue),
+        };
+      });
+
+      return { lines, labels };
+    }
+
     return { lines: [], labels: [] };
-  }, [sliderRangeMin, sliderRangeMax, value, defaultMin, defaultMax]);
+  }, [sliderRangeMin, sliderRangeMax, sliderConfig, value, defaultMin, defaultMax]);
 
   // Stable change handler
   const handleChange = useCallback((values: number[]) => {

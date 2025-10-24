@@ -17,6 +17,44 @@ export const dynamic = 'force-dynamic';
 
  
 
+const PROVIDER_SORT_PRIORITY: Record<string, number> = {
+  coreweave: 1,
+  lambda: 2,
+  runpod: 3,
+  digitalocean: 4,
+  oracle: 5,
+  nebius: 6,
+  hyperstack: 7,
+  crusoe: 8,
+};
+
+function sortProviderFacet(facets?: Record<string, FacetMetadataSchema>) {
+  if (!facets?.provider?.rows?.length) return;
+
+  facets.provider.rows.sort((a, b) => {
+    const aKey = String(a.value).toLowerCase();
+    const bKey = String(b.value).toLowerCase();
+    const aPriority = PROVIDER_SORT_PRIORITY[aKey] ?? Number.MAX_SAFE_INTEGER;
+    const bPriority = PROVIDER_SORT_PRIORITY[bKey] ?? Number.MAX_SAFE_INTEGER;
+
+    if (aPriority !== bPriority) {
+      return aPriority - bPriority;
+    }
+
+    return aKey.localeCompare(bKey);
+  });
+}
+
+function sortModelFacet(facets?: Record<string, FacetMetadataSchema>) {
+  if (!facets?.gpu_model?.rows?.length) return;
+
+  facets.gpu_model.rows.sort((a, b) =>
+    String(a.value).localeCompare(String(b.value), undefined, {
+      sensitivity: "base",
+    }),
+  );
+}
+
 export async function GET(req: NextRequest): Promise<Response> {
   try {
     // Note: using GET for simplicity; consider POST if query size grows
@@ -48,8 +86,9 @@ export async function GET(req: NextRequest): Promise<Response> {
     const filteredData = filterData(withoutSliderData, { ...search, observed_at: null });
     const sortParam = search.sort ?? { id: "provider", desc: false };
     const sortedData = sortData(filteredData, sortParam);
-    const withoutSliderFacets = getFacetsFromData(withoutSliderData);
-    const facets = getFacetsFromData(filteredData);
+    const facets = getFacetsFromData(totalData);
+    sortProviderFacet(facets);
+    sortModelFacet(facets);
     const withPercentileData = percentileData(sortedData);
 
     // Cursor windowing by numeric offset (simple, server-driven)
@@ -67,7 +106,6 @@ export async function GET(req: NextRequest): Promise<Response> {
         totalRowCount: totalData.length,
         filterRowCount: filteredData.length,
         facets: {
-          ...withoutSliderFacets,
           ...facets,
         },
         metadata: {} satisfies LogsMeta,

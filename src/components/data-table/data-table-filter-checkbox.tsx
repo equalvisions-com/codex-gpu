@@ -66,7 +66,7 @@ export function DataTableFilterCheckbox<TData>({
                 <div
                   key={String(option.value)}
                   className={cn(
-                    "group relative flex items-center gap-2 px-2 py-2 hover:bg-muted/50 cursor-pointer rounded-md",
+                    "group relative flex w-full items-center gap-2 px-2 py-2 hover:bg-muted/50 cursor-pointer rounded-md",
                     checked && "bg-muted/50",
                   )}
                   onClick={() => {
@@ -84,11 +84,11 @@ export function DataTableFilterCheckbox<TData>({
                     setColumnFilters(newFilters.filter(f => f.value !== undefined));
                   }}
                 >
-                  <div className="flex w-full items-center truncate text-foreground group-hover:text-accent-foreground">
+                  <div className="flex w-full items-center text-foreground group-hover:text-accent-foreground">
                     {Component ? (
                       <Component {...option} />
                     ) : (
-                      <span className="truncate font-normal">{displayLabel}</span>
+                      <span className="block w-full truncate font-normal">{displayLabel}</span>
                     )}
                   </div>
                 </div>

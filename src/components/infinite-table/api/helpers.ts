@@ -16,10 +16,7 @@ import type {
 import type { SearchParamsType } from "../search-params";
 
 export const sliderFilterValues = [
-  "gpu_count",
   "vram_gb",
-  "vcpus",
-  "system_ram_gb",
   "price_hour_usd",
 ] as const satisfies (keyof ColumnSchema)[];
 
@@ -40,28 +37,15 @@ export function filterData(
       const filter = filters[key as keyof typeof filters];
       if (filter === undefined || filter === null) continue;
 
-      // Handle slider filters (gpu_count, vram_gb, vcpus, system_ram_gb, price_hour_usd)
-      if ((key === "gpu_count" || key === "vram_gb" || key === "vcpus" || key === "system_ram_gb" || key === "price_hour_usd") && isArrayOfNumbers(filter)) {
+      // Handle slider filters (vram_gb, price_hour_usd)
+      if ((key === "vram_gb" || key === "price_hour_usd") && isArrayOfNumbers(filter)) {
         let value: number | undefined;
         switch (key) {
-          case "gpu_count":
-            value = typeof row.gpu_count === 'number' ? row.gpu_count : undefined;
-            break;
-          case "vram_gb":
-            value = typeof row.vram_gb === 'number' ? row.vram_gb : undefined;
-            break;
-          case "vcpus": {
-            if (typeof row.vcpus === 'number') value = row.vcpus;
-            else if (row.vcpus !== undefined) {
-              const parsed = parseFloat(String(row.vcpus));
-              value = Number.isFinite(parsed) ? parsed : undefined;
-            }
-            break;
-          }
-          case "system_ram_gb": {
-            if (typeof row.system_ram_gb === 'number') value = row.system_ram_gb;
-            else if (row.ram_gb !== undefined) {
-              const parsed = parseFloat(String(row.ram_gb));
+          case "vram_gb": {
+            if (typeof row.vram_gb === "number") {
+              value = row.vram_gb;
+            } else if (typeof row.vram_gb === "string") {
+              const parsed = Number(row.vram_gb);
               value = Number.isFinite(parsed) ? parsed : undefined;
             }
             break;
@@ -118,9 +102,24 @@ export function filterData(
         }
       }
 
-      if (key === "gpu_model" && typeof filter === 'string') {
-        const value = row.gpu_model ?? row.item;
-        if (typeof value === 'string' && !value.toLowerCase().includes(filter.toLowerCase())) {
+      if (key === "gpu_model") {
+        const rawValue = row.gpu_model ?? row.item;
+        const value = typeof rawValue === "string" ? rawValue : undefined;
+        if (Array.isArray(filter)) {
+          if (filter.length) {
+            const normalized = value?.toLowerCase().trim() ?? "";
+            const match = filter.some((entry) => normalized === String(entry).toLowerCase().trim());
+            if (!match) {
+              return false;
+            }
+          }
+          continue;
+        }
+        if (typeof filter === "string") {
+          if (value && value.toLowerCase().includes(filter.toLowerCase())) {
+            continue;
+          }
+          // If there is no match, reject row
           return false;
         }
         continue;
@@ -239,14 +238,6 @@ export function getFacetsFromData(data: ColumnSchema[]) {
     if (filterValues.includes('gpu_model' as any)) entries.push(['gpu_model', curr.gpu_model ?? curr.item]);
     if (filterValues.includes('gpu_count' as any)) entries.push(['gpu_count', curr.gpu_count]);
     if (filterValues.includes('vram_gb' as any)) entries.push(['vram_gb', curr.vram_gb]);
-    if (filterValues.includes('vcpus' as any)) {
-      const val = typeof curr.vcpus === 'number' ? curr.vcpus : (curr.vcpus !== undefined ? parseFloat(String(curr.vcpus)) : undefined);
-      entries.push(['vcpus', Number.isFinite(val as number) ? val : undefined]);
-    }
-    if (filterValues.includes('system_ram_gb' as any)) {
-      const val = typeof curr.system_ram_gb === 'number' ? curr.system_ram_gb : (curr.ram_gb !== undefined ? parseFloat(String(curr.ram_gb)) : undefined);
-      entries.push(['system_ram_gb', Number.isFinite(val as number) ? val : undefined]);
-    }
     if (filterValues.includes('price_hour_usd' as any)) {
       const val = typeof curr.price_hour_usd === 'number' ? curr.price_hour_usd : curr.price_usd;
       entries.push(['price_hour_usd', val]);
@@ -301,5 +292,3 @@ export function getPercentileFromData(data: ColumnSchema[]) {
 
   return { p50, p75, p90, p95, p99 };
 }
-
-

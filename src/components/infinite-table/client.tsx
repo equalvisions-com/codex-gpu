@@ -15,7 +15,7 @@ import { DataTableInfinite } from "./data-table-infinite";
 import { dataOptions } from "./query-options";
 import { searchParamsParser } from "./search-params";
 import type { RowWithId } from "@/types/api";
-import type { ColumnSchema } from "./schema";
+import type { ColumnSchema, FacetMetadataSchema } from "./schema";
 import { stableGpuKey } from "./stable-key";
 // Inline notices handle favorites feedback; no toasts here.
 import type { FavoriteKey } from "@/types/favorites";
@@ -147,6 +147,16 @@ export function Client({ initialFavoritesData, initialFavoriteKeys }: ClientProp
     initialFavoriteKeys,
   } as Record<string, unknown>;
   const facets = isFavoritesMode ? {} : lastPage?.meta?.facets;
+  const facetsRef = React.useRef<Record<string, FacetMetadataSchema> | undefined>(undefined);
+  React.useEffect(() => {
+    if (facets && Object.keys(facets).length) {
+      facetsRef.current = facets;
+    }
+  }, [facets]);
+  const stableFacets = React.useMemo(() => {
+    if (isFavoritesMode) return {};
+    return facets && Object.keys(facets).length ? facets : facetsRef.current ?? {};
+  }, [facets, isFavoritesMode]);
   const totalFetched = flatData?.length;
 
   const { sort, start, size, uuid, cursor, direction, observed_at, search: globalSearch, ...filter } =
@@ -156,12 +166,12 @@ export function Client({ initialFavoritesData, initialFavoriteKeys }: ClientProp
     const baseFilters = Object.entries(filter)
       .map(([key, value]) => ({
         id: key,
-        value,
+        value: value as unknown,
       }))
-      .filter(({ value }) => value ?? undefined);
+      .filter(({ value }) => value ?? undefined) as ColumnFiltersState;
 
     if (typeof globalSearch === "string" && globalSearch.trim().length) {
-      baseFilters.push({ id: "search", value: globalSearch });
+      baseFilters.push({ id: "search", value: globalSearch } as { id: string; value: unknown });
     }
 
     return baseFilters;
@@ -230,7 +240,7 @@ export function Client({ initialFavoritesData, initialFavoriteKeys }: ClientProp
   // TODO: auto search via API when the user changes the filter instead of hardcoded
   const filterFields = React.useMemo(() => {
     return defaultFilterFields.map((field) => {
-      const facetsField = facets?.[field.value];
+      const facetsField = stableFacets?.[field.value];
       if (!facetsField) return field;
       if (field.options && field.options.length > 0) return field;
 
@@ -258,7 +268,7 @@ export function Client({ initialFavoritesData, initialFavoriteKeys }: ClientProp
 
     return field;
     });
-  }, [facets]);
+  }, [stableFacets]);
 
   return (
       <DataTableInfinite
@@ -277,7 +287,7 @@ export function Client({ initialFavoritesData, initialFavoriteKeys }: ClientProp
       onRowSelectionChange={setRowSelection}
       meta={{
         ...metadata,
-        facets,
+        facets: stableFacets,
         totalRows: totalDBRowCount ?? 0,
         filterRows: filterDBRowCount ?? 0,
         totalRowsFetched: totalFetched ?? 0,

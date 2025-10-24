@@ -5,9 +5,24 @@ import type {
   Option,
   SheetField,
 } from "@/components/data-table/types";
-import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import type { ColumnSchema } from "./schema";
+
+const TruncatedOption = ({ label }: Option) => {
+  const base = String(label ?? "");
+  const maxLength = 23;
+  const display = base.length > maxLength ? `${base.slice(0, maxLength)}…` : base;
+  return <span className="block w-full truncate font-normal" title={base}>{display}</span>;
+};
+
+const CapitalizedOption = ({ label }: Option) => {
+  const base = String(label ?? "");
+  return <span className="block w-full truncate font-normal capitalize" title={base}>{base}</span>;
+};
+
+const VRAM_SLIDER_MIN = 16;
+const VRAM_SLIDER_MAX = 192;
+const VRAM_SLIDER_STEP = 1;
 
 // GPU pricing filter fields
 export const filterFields: DataTableFilterField<ColumnSchema>[] = [
@@ -22,52 +37,32 @@ export const filterFields: DataTableFilterField<ColumnSchema>[] = [
     value: "provider",
     type: "checkbox",
     defaultOpen: true,
+    component: CapitalizedOption,
   },
   {
-    label: "GPU Model",
-    value: "gpu_model",
-    type: "input",
-    defaultOpen: true,
-  },
-  {
-    label: "GPU Count",
-    value: "gpu_count",
-    type: "slider",
-    min: 1,
-    max: 8,
-    defaultOpen: true,
-  },
-  {
-    label: "VRAM (GB)",
-    value: "vram_gb",
-    type: "slider",
-    min: 8,
-    max: 128,
-    defaultOpen: true,
-  },
-  {
-    label: "vCPUs",
-    value: "vcpus",
-    type: "slider",
-    min: 1,
-    max: 256,
-    defaultOpen: true,
-  },
-  {
-    label: "System RAM (GB)",
-    value: "system_ram_gb",
-    type: "slider",
-    min: 8,
-    max: 4096,
-    defaultOpen: true,
-  },
-  {
-    label: "Hourly Rate ($)",
+    label: "Price",
     value: "price_hour_usd",
     type: "slider",
-    min: 0.1,
-    max: 50,
+    min: 0.01,
+    max: 20,
+    step: 0.01,
     defaultOpen: true,
+  },
+  {
+    label: "VRAM",
+    value: "vram_gb",
+    type: "slider",
+    min: VRAM_SLIDER_MIN,
+    max: VRAM_SLIDER_MAX,
+    step: VRAM_SLIDER_STEP,
+    defaultOpen: true,
+  },
+  {
+    label: "Model",
+    value: "gpu_model",
+    type: "checkbox",
+    defaultOpen: true,
+    component: TruncatedOption,
   },
 ];
 
@@ -139,7 +134,7 @@ export const sheetFields = [
   },
   {
     id: "price_hour_usd",
-    label: "Hourly Rate",
+    label: "Price",
     type: "readonly",
     component: (props) => props.price_hour_usd ? (
       <div className="flex items-center gap-1">

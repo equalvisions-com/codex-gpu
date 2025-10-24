@@ -16,6 +16,7 @@ import { ModelsDataTableInfinite } from "./models-data-table-infinite";
 import { filterFields as defaultFilterFields, sheetFields } from "./models-constants";
 import type { ModelsColumnSchema, ModelsFacetMetadataSchema } from "./models-schema";
 import { stableModelKey } from "./stable-key";
+import type { ModalitiesDirection } from "./modalities-filter";
 import type { ModelFavoriteKey } from "@/types/model-favorites";
 import { MODEL_FAVORITES_BROADCAST_CHANNEL, MODEL_FAVORITES_QUERY_KEY } from "@/lib/model-favorites/constants";
 import { getModelFavorites } from "@/lib/model-favorites/api-client";
@@ -99,10 +100,20 @@ export function ModelsClient({ initialFavoritesData, initialFavoriteKeys }: Mode
   }, [data?.pages, isFavoritesMode, favoritesData, initialFavoritesData]);
 
   const lastPage = data?.pages?.[data?.pages.length - 1];
+  const rawFacets = isFavoritesMode ? {} : lastPage?.meta?.facets;
+  const facetsRef = React.useRef<Record<string, ModelsFacetMetadataSchema> | undefined>(undefined);
+  React.useEffect(() => {
+    if (rawFacets && Object.keys(rawFacets).length) {
+      facetsRef.current = rawFacets;
+    }
+  }, [rawFacets]);
+  const stableFacets = React.useMemo(() => {
+    if (isFavoritesMode) return {};
+    return rawFacets && Object.keys(rawFacets).length ? rawFacets : facetsRef.current ?? {};
+  }, [rawFacets, isFavoritesMode]);
+  const castFacets = stableFacets as Record<string, ModelsFacetMetadataSchema> | undefined;
   const totalDBRowCount = isFavoritesMode ? flatData.length : lastPage?.meta?.totalRowCount;
   const filterDBRowCount = isFavoritesMode ? flatData.length : lastPage?.meta?.filterRowCount;
-  const facets = isFavoritesMode ? {} : lastPage?.meta?.facets;
-  const castFacets = facets as Record<string, ModelsFacetMetadataSchema> | undefined;
   const totalFetched = flatData.length;
 
   const metadata = {
@@ -114,7 +125,25 @@ export function ModelsClient({ initialFavoritesData, initialFavoriteKeys }: Mode
 
   const derivedColumnFilters = React.useMemo<ColumnFiltersState>(() => {
     const baseFilters = Object.entries(filter)
-      .map(([key, value]) => ({ id: key, value }))
+      .map(([key, value]) => {
+        if (key === "modalityDirections" && Array.isArray(value)) {
+          const directionEntries = value
+            .map((entry) => {
+              const [modality, dir] = String(entry).split(":");
+              if (!modality) return null;
+              const direction = dir === "output" ? "output" : "input";
+              return [modality, direction] as const;
+            })
+            .filter((entry): entry is readonly [string, ModalitiesDirection] => Boolean(entry));
+
+          return {
+            id: key,
+            value: Object.fromEntries(directionEntries),
+          };
+        }
+
+        return { id: key, value };
+      })
       .filter(({ value }) => value ?? undefined);
 
     if (typeof globalSearch === "string" && globalSearch.trim().length) {
@@ -196,7 +225,7 @@ export function ModelsClient({ initialFavoritesData, initialFavoriteKeys }: Mode
 
       return field;
     });
-  }, [facets]);
+  }, [stableFacets]);
 
   return (
     <ModelsDataTableInfinite
