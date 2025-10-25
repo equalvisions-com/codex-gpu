@@ -126,15 +126,59 @@ export function filterData(
       }
 
       if (key === "search" && typeof filter === 'string') {
-        // Search on the appropriate model field based on data type with exact matching
-        const value = row.gpu_model ?? row.item;
-        if (typeof value === 'string') {
-          // Exact case-insensitive match (like TanStack Table's equalsString filter)
-          const normalizedValue = value.toString().toLowerCase().trim();
-          const normalizedFilter = filter.toString().toLowerCase().trim();
-          if (normalizedValue !== normalizedFilter) {
-            return false;
+        const normalizedFilter = filter.toLowerCase().trim();
+        if (!normalizedFilter.length) {
+          continue;
+        }
+
+        const candidateText: Array<string> = [];
+
+        const textFields: Array<unknown> = [
+          row.gpu_model,
+          row.item,
+          row.provider,
+          row.region,
+          row.zone,
+          row.sku,
+          row.billing_notes,
+          row.price_unit,
+          row.type,
+          row.network,
+        ];
+
+        const numericFields: Array<unknown> = [
+          row.gpu_count,
+          row.vram_gb,
+          row.system_ram_gb,
+          row.local_storage_tb,
+          row.vcpus,
+          row.price_hour_usd,
+          row.price_month_usd,
+          row.price_usd,
+          row.raw_cost,
+        ];
+
+        for (const field of textFields) {
+          if (typeof field === "string" && field.trim().length) {
+            candidateText.push(field);
           }
+        }
+
+        for (const field of numericFields) {
+          if (
+            (typeof field === "number" && Number.isFinite(field)) ||
+            typeof field === "string"
+          ) {
+            candidateText.push(String(field));
+          }
+        }
+
+        const searchableText = candidateText
+          .join(" ")
+          .toLowerCase();
+
+        if (!searchableText.includes(normalizedFilter)) {
+          return false;
         }
         continue;
       }

@@ -3,7 +3,7 @@
 import type { DataTableInputFilterField } from "./types";
 import { InputWithAddons } from "@/components/custom/input-with-addons";
 import { Label } from "@/components/ui/label";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useDataTable } from "@/components/data-table/data-table-provider";
@@ -16,13 +16,14 @@ export function DataTableFilterInput<TData>({
   value: _value,
 }: DataTableInputFilterField<TData>) {
   const value = _value as string;
-  const { table, columnFilters, setColumnFilters } = useDataTable();
+  const { columnFilters, setColumnFilters } = useDataTable();
   const filterValue = columnFilters.find((i) => i.id === value)?.value;
   const filters = getFilter(filterValue);
   const [input, setInput] = useState<string | null>(filters);
 
   // Track if the current input change came from user interaction
   const isUserInputRef = useRef(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const debouncedInput = useDebounce(input, 500);
 
@@ -55,24 +56,50 @@ export function DataTableFilterInput<TData>({
     }
   }, [filters, input]);
 
+  const isFilterActive = Boolean(filters && filters.trim() !== "");
+
+  const handleClear = () => {
+    isUserInputRef.current = false;
+    if (isFilterActive) {
+      const newFilters = columnFilters.filter((f) => f.id !== value);
+      setColumnFilters(newFilters);
+    }
+    setInput(null);
+    inputRef.current?.focus();
+  };
+
   return (
     <div className="grid w-full gap-1.5">
       <Label htmlFor={value} className="sr-only px-2 text-muted-foreground">
         {value}
       </Label>
-      <InputWithAddons
-        placeholder="Search"
-        leading={<Search className="mt-0.5 h-4 w-4" />}
-        containerClassName="h-9 rounded-lg"
-        className="placeholder:text-foreground/70"
-        name={value}
-        id={value}
-        value={input || ""}
-        onChange={(e) => {
-          isUserInputRef.current = true;
-          setInput(e.target.value);
-        }}
-      />
+      <div className="relative">
+        <InputWithAddons
+          ref={inputRef}
+          placeholder="Search"
+          leading={<Search className="mt-0.5 h-4 w-4" />}
+          containerClassName="h-9 rounded-lg"
+          className="placeholder:text-foreground/70 pr-12"
+          name={value}
+          id={value}
+          value={input || ""}
+          onChange={(e) => {
+            isUserInputRef.current = true;
+            setInput(e.target.value);
+          }}
+        />
+        {isFilterActive ? (
+          <button
+            type="button"
+            onClick={handleClear}
+            className="absolute right-2 top-1/2 inline-flex h-5 -translate-y-1/2 items-center justify-center rounded-full border border-input bg-background px-1.5 py-1 text-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            aria-label="Clear search filter"
+            title="Clear search filter"
+          >
+            <X className="h-2.5 w-2.5 text-muted-foreground" aria-hidden="true" />
+          </button>
+        ) : null}
+      </div>
     </div>
   );
 }
