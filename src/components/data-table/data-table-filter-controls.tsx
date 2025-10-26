@@ -30,8 +30,8 @@ function SidebarLink({ href, label, isActive }: SidebarItemProps) {
     <Link
       href={href}
       className={cn(
-        "group flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm transition-colors text-foreground hover:bg-muted/50 hover:text-accent-foreground",
-        isActive ? "bg-muted/50 text-accent-foreground" : null,
+        "group flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm transition-colors text-foreground hover:bg-muted/70 hover:text-accent-foreground",
+        isActive ? "bg-muted/70 text-accent-foreground" : null,
       )}
     >
       <span className="truncate">{label}</span>
@@ -48,7 +48,7 @@ function SidebarAction({ label, onClick }: {
       type="button"
       onClick={onClick}
       className={cn(
-        "group flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm transition-colors text-foreground hover:bg-muted/50 hover:text-accent-foreground",
+        "group flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm transition-colors text-foreground hover:bg-muted/70 hover:text-accent-foreground",
       )}
     >
       <span className="truncate">{label}</span>

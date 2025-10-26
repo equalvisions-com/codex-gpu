@@ -505,7 +505,7 @@ function DataTableFilterSliderComponent<TData>({
             {sliderMarks.lines.map((pos, index) => (
               <div
                 key={`line-${index}`}
-                className="absolute inset-y-0 w-px bg-muted-foreground/30"
+                className="absolute inset-y-0 w-px bg-muted-foreground/50"
                 style={{ left: pos, transform: "translateX(-50%)" }}
               />
             ))}

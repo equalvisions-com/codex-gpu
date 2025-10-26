@@ -38,7 +38,7 @@ function RowAction({ label, value }: { label: string; value: string }) {
         copy(value);
       }}
     >
-      <TableCell className="bg-muted/50 py-1 font-mono">
+      <TableCell className="bg-muted/70 py-1 font-mono">
         {label}
       </TableCell>
       <TableCell className="relative py-1 font-mono">

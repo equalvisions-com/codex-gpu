@@ -35,6 +35,7 @@ export const parseAsSort = createParser({
 export const searchParamsParser = {
   // GPU PRICING FILTERS
   provider: parseAsArrayOf(parseAsString, ARRAY_DELIMITER),
+  type: parseAsArrayOf(parseAsString, ARRAY_DELIMITER),
   gpu_model: parseAsArrayOf(parseAsString, ARRAY_DELIMITER),
   vram_gb: parseAsArrayOf(parseAsInteger, SLIDER_DELIMITER),
   price_hour_usd: parseAsArrayOf(parseAsFloat, SLIDER_DELIMITER),

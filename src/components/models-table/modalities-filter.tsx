@@ -145,8 +145,8 @@ export function ModalitiesFilter() {
               <div
                 key={option.value}
                 className={cn(
-                  "group relative flex w-full items-center gap-1 rounded-md px-2 py-2 text-left hover:bg-muted/50",
-                  checked && "bg-muted/50",
+                  "group relative flex w-full items-center gap-1 rounded-md px-2 py-2 text-left hover:bg-muted/70",
+                  checked && "bg-muted/70",
                 )}
               >
                 <button

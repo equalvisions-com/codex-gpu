@@ -3,7 +3,7 @@ import { Link } from "@/components/custom/link";
 
 export function TopBanner() {
   return (
-    <div className="group bg-muted/50 text-foreground border-b">
+    <div className="group bg-muted/70 text-foreground border-b">
       <div className="container mx-auto px-4 py-2 sm:px-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-8">
           <p className="flex items-center justify-center gap-2">

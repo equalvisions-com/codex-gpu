@@ -10,6 +10,7 @@ export function DataTableFilterCheckbox<TData>({
   value: _value,
   options,
   component,
+  skeletonRows,
 }: DataTableCheckboxFilterField<TData>) {
   const value = _value as string;
   const { table, columnFilters, isLoading, getFacetedUniqueValues, setColumnFilters } =
@@ -23,7 +24,7 @@ export function DataTableFilterCheckbox<TData>({
   const facetsReady = staticOptions !== undefined || facetedValue !== undefined;
 
   if (!facetsReady) {
-    return <CheckboxListSkeleton />;
+    return <CheckboxListSkeleton rows={skeletonRows} />;
   }
 
   const filterOptions =
@@ -41,7 +42,7 @@ export function DataTableFilterCheckbox<TData>({
     : [];
 
   if (isLoading && !filterOptions?.length) {
-    return <CheckboxListSkeleton />;
+    return <CheckboxListSkeleton rows={skeletonRows} />;
   }
 
   return (
@@ -66,8 +67,8 @@ export function DataTableFilterCheckbox<TData>({
                 <div
                   key={String(option.value)}
                   className={cn(
-                    "group relative flex w-full items-center gap-2 px-2 py-2 hover:bg-muted/50 cursor-pointer rounded-md",
-                    checked && "bg-muted/50",
+                    "group relative flex w-full items-center gap-2 px-2 py-2 hover:bg-muted/70 cursor-pointer rounded-md",
+                    checked && "bg-muted/70",
                   )}
                   onClick={() => {
                     const newValue = checked

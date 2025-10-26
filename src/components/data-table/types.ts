@@ -20,6 +20,10 @@ export type Checkbox = {
   type: "checkbox";
   component?: (props: Option) => JSX.Element | null;
   options?: Option[];
+  /**
+   * Optionally define how many placeholder rows to render while facets load.
+   */
+  skeletonRows?: number;
 };
 
 export type Slider = {

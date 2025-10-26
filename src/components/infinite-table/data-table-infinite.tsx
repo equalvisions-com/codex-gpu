@@ -82,7 +82,7 @@ function UserMenu({ user, onSignOut, isSigningOut }: UserMenuProps) {
           <Button
             type="button"
             variant="ghost"
-            className="flex w-full items-center gap-2 rounded-md p-2 h-auto text-left text-sm font-medium text-foreground hover:bg-muted/50 hover:text-accent-foreground focus-visible:ring-0 focus-visible:ring-offset-0"
+            className="flex w-full items-center gap-2 rounded-md p-2 h-auto text-left text-sm font-medium text-foreground hover:bg-muted/70 hover:text-accent-foreground focus-visible:ring-0 focus-visible:ring-offset-0"
             disabled={isSigningOut}
           >
             <div className="relative h-8 w-8">
@@ -773,7 +773,7 @@ function Row<TData>({
       }}
       className={cn(
         "[&>:not(:last-child)]:border-r",
-        "transition-colors focus-visible:bg-muted/50 data-[checked=checked]:bg-muted/50 hover:cursor-pointer",
+        "transition-colors focus-visible:bg-muted/70 data-[checked=checked]:bg-muted/70 hover:cursor-pointer",
         table.options.meta?.getRowClassName?.(row),
       )}
     >

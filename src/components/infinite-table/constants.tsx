@@ -33,11 +33,11 @@ export const filterFields: DataTableFilterField<ColumnSchema>[] = [
     defaultOpen: true,
   },
   {
-    label: "Provider",
-    value: "provider",
+    label: "Model",
+    value: "gpu_model",
     type: "checkbox",
     defaultOpen: true,
-    component: CapitalizedOption,
+    component: TruncatedOption,
   },
   {
     label: "Price",
@@ -58,11 +58,19 @@ export const filterFields: DataTableFilterField<ColumnSchema>[] = [
     defaultOpen: true,
   },
   {
-    label: "Model",
-    value: "gpu_model",
+    label: "Config",
+    value: "type",
     type: "checkbox",
     defaultOpen: true,
-    component: TruncatedOption,
+    component: CapitalizedOption,
+    skeletonRows: 2,
+  },
+  {
+    label: "Provider",
+    value: "provider",
+    type: "checkbox",
+    defaultOpen: true,
+    component: CapitalizedOption,
   },
 ];
 

@@ -153,7 +153,7 @@ export function DataTableFilterCommand({
       </button>
       <Command
         className={cn(
-          "overflow-visible rounded-lg border border-border shadow-md dark:bg-muted/50 [&>div]:border-none",
+          "overflow-visible rounded-lg border border-border shadow-md dark:bg-muted/70 [&>div]:border-none",
           open ? "visible" : "hidden",
         )}
         filter={(value, search, keywords) =>

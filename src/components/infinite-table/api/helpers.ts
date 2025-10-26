@@ -22,6 +22,7 @@ export const sliderFilterValues = [
 
 export const filterValues = [
   "provider",
+  "type",
   "gpu_model",
   ...sliderFilterValues,
   "observed_at",
@@ -96,6 +97,24 @@ export function filterData(
         }
         if (typeof filter === 'string') {
           if (typeof value === 'string' && !value.toLowerCase().includes(filter.toLowerCase())) {
+            return false;
+          }
+          continue;
+        }
+      }
+
+      if (key === "type") {
+        const value = row.type;
+        if (Array.isArray(filter)) {
+          const ok = filter.some((f) => String(value) === String(f));
+          if (!ok) return false;
+          continue;
+        }
+        if (typeof filter === "string") {
+          if (
+            typeof value === "string" &&
+            !value.toLowerCase().includes(filter.toLowerCase())
+          ) {
             return false;
           }
           continue;
@@ -279,6 +298,7 @@ export function getFacetsFromData(data: ColumnSchema[]) {
     // Compute canonical facet values per key
     const entries: Array<[string, any]> = [];
     if (filterValues.includes('provider' as any)) entries.push(['provider', curr.provider]);
+    if (filterValues.includes('type' as any)) entries.push(['type', curr.type]);
     if (filterValues.includes('gpu_model' as any)) entries.push(['gpu_model', curr.gpu_model ?? curr.item]);
     if (filterValues.includes('gpu_count' as any)) entries.push(['gpu_count', curr.gpu_count]);
     if (filterValues.includes('vram_gb' as any)) entries.push(['vram_gb', curr.vram_gb]);
