@@ -115,7 +115,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
   focusTargetRef,
   account,
   headerSlot,
-  mobileHeaderOffset,
+  mobileHeaderOffset: _mobileHeaderOffset,
 }: ModelsDataTableInfiniteProps<TData, TValue, TMeta>) {
   // Independent checkbox-only state (does not control the details pane)
   const [checkedRows, setCheckedRows] = React.useState<Record<string, boolean>>({});
@@ -135,39 +135,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
   const accountUser: AccountUser | null = account?.user ?? null;
   const accountOnSignOut = account?.onSignOut ?? noop;
   const accountIsSigningOut = account?.isSigningOut ?? false;
-  const mobileHeightClass = mobileHeaderOffset
-    ? "h-[calc(100dvh-var(--total-padding-mobile)-var(--mobile-header-offset))]"
-    : "h-[calc(100dvh-var(--total-padding-mobile))]";
-  const mobileHeightStyle = React.useMemo(() => {
-    if (!mobileHeaderOffset) return undefined;
-    const trimmed = mobileHeaderOffset.replace(/\s+/g, "");
-    const spacedChars: string[] = [];
-    for (let index = 0; index < trimmed.length; index++) {
-      const char = trimmed[index];
-      if (char === "+") {
-        spacedChars.push(" ", "+", " ");
-        continue;
-      }
-      if (char === "-") {
-        const prev = trimmed[index - 1];
-        const next = trimmed[index + 1];
-        if (prev === "-" || next === "-") {
-          spacedChars.push(char);
-          continue;
-        }
-        spacedChars.push(" ", "-", " ");
-        continue;
-      }
-      spacedChars.push(char);
-    }
-    const normalized = spacedChars.join("").replace(/\s{2,}/g, " ").trim();
-    const offsetValue = normalized.startsWith("calc(")
-      ? normalized
-      : `calc(${normalized})`;
-    return {
-      "--mobile-header-offset": offsetValue,
-    } as React.CSSProperties;
-  }, [mobileHeaderOffset]);
+  void _mobileHeaderOffset;
 
   const onScroll = React.useCallback(
     (e: React.UIEvent<HTMLElement>) => {
@@ -435,10 +403,8 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
             <div className="z-0">
               <div
                 className={cn(
-                  mobileHeightClass,
-                  "sm:h-[calc(100dvh-var(--total-padding-desktop))] rounded-lg border bg-background overflow-hidden"
+                  "sm:h-[calc(100dvh-var(--total-padding-desktop))] border-y border-x-0 bg-background overflow-hidden sm:rounded-lg sm:border"
                 )}
-                style={mobileHeightStyle}
               >
                 <Table
                   ref={tableRef}

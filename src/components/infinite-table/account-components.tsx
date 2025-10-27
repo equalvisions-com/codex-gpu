@@ -339,7 +339,7 @@ export function MobileTopNav({
   sheetTitle = "Filters & account",
 }: MobileTopNavProps) {
   return (
-    <NavigationMenu className="flex w-full max-w-none justify-between sm:hidden">
+    <NavigationMenu className="flex w-full max-w-none justify-between px-4 sm:hidden">
       <NavigationMenuList className="flex w-full items-center gap-3">
         <NavigationMenuItem className="mr-auto">
           <NavigationMenuLink asChild>
