@@ -9,6 +9,9 @@ import type {
 } from "@tanstack/react-table";
 import { useQueryStates } from "nuqs";
 import * as React from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/providers/auth-client-provider";
+import { useAuthDialog } from "@/providers/auth-dialog-provider";
 import { modelsColumns } from "./models-columns";
 import { modelsDataOptions } from "./models-query-options";
 import { modelsSearchParamsParser } from "./models-search-params";
@@ -20,6 +23,7 @@ import type { ModalitiesDirection } from "./modalities-filter";
 import type { ModelFavoriteKey } from "@/types/model-favorites";
 import { MODEL_FAVORITES_BROADCAST_CHANNEL, MODEL_FAVORITES_QUERY_KEY } from "@/lib/model-favorites/constants";
 import { getModelFavorites } from "@/lib/model-favorites/api-client";
+import { MobileTopNav, SidebarPanel, type AccountUser } from "../infinite-table/account-components";
 
 interface ModelsClientProps {
   initialFavoritesData?: ModelsColumnSchema[];
@@ -30,6 +34,41 @@ export function ModelsClient({ initialFavoritesData, initialFavoriteKeys }: Mode
   const contentRef = React.useRef<HTMLTableSectionElement>(null);
   const [search] = useQueryStates(modelsSearchParamsParser);
   const queryClient = useQueryClient();
+  const router = useRouter();
+  const { session, signOut } = useAuth();
+  const { showSignIn, showSignUp } = useAuthDialog();
+  const [isSigningOut, startSignOutTransition] = React.useTransition();
+  const accountUser = (session?.user ?? null) as AccountUser | null;
+
+  const handleSignIn = React.useCallback(() => {
+    if (!showSignIn) return;
+    const callbackUrl =
+      typeof window !== "undefined"
+        ? `${window.location.pathname}${window.location.search}`
+        : "/";
+    showSignIn({ callbackUrl });
+  }, [showSignIn]);
+
+  const handleSignUp = React.useCallback(() => {
+    if (!showSignUp) return;
+    const callbackUrl =
+      typeof window !== "undefined"
+        ? `${window.location.pathname}${window.location.search}`
+        : "/";
+    showSignUp({ callbackUrl });
+  }, [showSignUp]);
+
+  const handleSignOut = React.useCallback(() => {
+    startSignOutTransition(async () => {
+      try {
+        await signOut();
+      } finally {
+        queryClient.clear();
+        router.replace("/", { scroll: false });
+        router.refresh();
+      }
+    });
+  }, [queryClient, router, signOut]);
 
   const isFavoritesMode = !!initialFavoritesData;
 
@@ -258,6 +297,30 @@ export function ModelsClient({ initialFavoritesData, initialFavoriteKeys }: Mode
       modelsSearchParamsParser={modelsSearchParamsParser}
       getRowId={(row) => row.id}
       focusTargetRef={contentRef}
+      account={{
+        user: accountUser,
+        onSignOut: handleSignOut,
+        isSigningOut,
+      }}
+      headerSlot={
+        <MobileTopNav
+          user={accountUser}
+          onSignOut={handleSignOut}
+          onSignIn={handleSignIn}
+          onSignUp={handleSignUp}
+          isSigningOut={isSigningOut}
+          renderSidebar={() => (
+            <SidebarPanel
+              user={accountUser}
+              onSignOut={handleSignOut}
+              isSigningOut={isSigningOut}
+              className="flex-1"
+              hideNavigation
+            />
+          )}
+        />
+      }
+      mobileHeaderOffset="38px+1rem"
     />
   );
 }

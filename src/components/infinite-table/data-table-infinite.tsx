@@ -17,9 +17,6 @@ import type {
 } from "@/components/data-table/types";
 import { cn } from "@/lib/utils";
 import { type FetchNextPageOptions } from "@tanstack/react-query";
-import { useAuth } from "@/providers/auth-client-provider";
-import { useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
 import * as React from "react";
 import type {
   ColumnDef,
@@ -34,131 +31,13 @@ import type {
 import { flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { useQueryStates, type ParserBuilder } from "nuqs";
 import { searchParamsParser } from "./search-params";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarImage } from "@/components/ui/avatar";
-import { Skeleton } from "@/components/ui/skeleton";
-import Link from "next/link";
-import {
-  LogOut,
-  ChevronsUpDown,
-  Settings as SettingsIcon,
-  Sun
-} from "lucide-react";
 import { RowSkeletons } from "./_components/row-skeletons";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { ModeToggle } from "@/components/theme/toggle-mode";
 import { CheckedActionsIsland } from "./_components/checked-actions-island";
-import { DataTableFilterControls } from "@/components/data-table/data-table-filter-controls";
 import { filterFields, sheetFields } from "./constants";
+import { SidebarPanel, type AccountUser } from "./account-components";
 
-interface UserMenuProps {
-  user: {
-    name?: string | null;
-    email?: string | null;
-    image?: string | null;
-  };
-  onSignOut: () => void;
-  isSigningOut: boolean;
-}
-
-function UserMenu({ user, onSignOut, isSigningOut }: UserMenuProps) {
-  const normalizedName = user.name?.trim();
-  const email = user.email ?? "";
-  const displayName = normalizedName || email || "Account";
-  const [imageLoaded, setImageLoaded] = React.useState(false);
-  const hasImage = Boolean(user.image);
-  return (
-    <div>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            type="button"
-            variant="ghost"
-            className="flex w-full items-center gap-2 rounded-md p-2 h-auto text-left text-sm font-medium text-foreground hover:bg-muted/70 hover:text-accent-foreground focus-visible:ring-0 focus-visible:ring-offset-0"
-            disabled={isSigningOut}
-          >
-            <div className="relative h-8 w-8">
-              {hasImage && !imageLoaded ? (
-                <Skeleton className="h-8 w-8 rounded-full" />
-              ) : null}
-              <Avatar className={cn("h-8 w-8", hasImage && !imageLoaded ? "opacity-0" : "opacity-100")}>
-                {hasImage ? (
-                  <AvatarImage
-                    src={user.image!}
-                    alt={displayName}
-                    onLoad={() => setImageLoaded(true)}
-                    onError={() => setImageLoaded(true)}
-                  />
-                ) : null}
-              </Avatar>
-            </div>
-            <div className="flex min-w-0 flex-1 flex-col text-left">
-              <span className="truncate">{displayName}</span>
-              {email ? (
-                <span className="truncate text-xs text-muted-foreground">{email}</span>
-              ) : null}
-            </div>
-            <ChevronsUpDown className="h-4 w-4 shrink-0 text-muted-foreground" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="center" className="w-60">
-          <DropdownMenuLabel className="flex items-center gap-2">
-            <Avatar className="h-8 w-8">
-              {user.image ? (
-                <AvatarImage src={user.image} alt={displayName} />
-              ) : null}
-            </Avatar>
-            <div className="flex min-w-0 flex-1 flex-col">
-              <span className="truncate text-sm font-semibold">{displayName}</span>
-              {email ? (
-                <span className="truncate text-xs text-muted-foreground">{email}</span>
-              ) : null}
-            </div>
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem asChild>
-            <Link href="/settings" className="cursor-pointer flex w-full items-center gap-2">
-              <SettingsIcon className="h-4 w-4" />
-              <span>Settings</span>
-            </Link>
-          </DropdownMenuItem>
-                <DropdownMenuItem
-            className="cursor-default focus:bg-transparent focus:text-foreground"
-            onSelect={(event) => event.preventDefault()}
-          >
-            <div className="flex w-full items-center justify-between gap-2">
-              <div className="flex items-center gap-2 text-sm">
-                <Sun className="h-4 w-4" />
-                <span>Theme</span>
-              </div>
-              <ModeToggle className="h-8 w-8 [&>svg]:h-4 [&>svg]:w-4" />
-            </div>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem className="cursor-pointer"
-            onSelect={() => {
-              if (!isSigningOut) {
-                onSignOut();
-              }
-            }}
-            disabled={isSigningOut}
-          >
-            <LogOut className="h-4 w-4" />
-            <span>{isSigningOut ? "Signing out..." : "Sign out"}</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
-  );
-}
+const noop = () => {};
 
 // FloatingControlsButton removed
 
@@ -196,6 +75,13 @@ export interface DataTableInfiniteProps<TData, TValue, TMeta> {
   searchParamsParser: Record<string, ParserBuilder<any>>;
   // Optional ref target to programmatically focus the table body
   focusTargetRef?: React.Ref<HTMLTableSectionElement>;
+  account?: {
+    user: AccountUser | null | undefined;
+    onSignOut: () => void;
+    isSigningOut: boolean;
+  };
+  headerSlot?: React.ReactNode;
+  mobileHeaderOffset?: string;
 }
 
 export function DataTableInfinite<TData, TValue, TMeta>({
@@ -225,6 +111,9 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   renderSheetTitle,
   searchParamsParser: searchParamsParserProp,
   focusTargetRef,
+  account,
+  headerSlot,
+  mobileHeaderOffset,
 }: DataTableInfiniteProps<TData, TValue, TMeta>) {
   // Independent checkbox-only state (does not control the details pane)
   const [checkedRows, setCheckedRows] = React.useState<Record<string, boolean>>({});
@@ -242,24 +131,14 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   // searchParamsParser is provided as a prop
   const [_, setSearch] = useQueryStates(searchParamsParserProp);
 
+  const accountUser: AccountUser | null = account?.user ?? null;
+  const accountOnSignOut = account?.onSignOut ?? noop;
+  const accountIsSigningOut = account?.isSigningOut ?? false;
+  const mobileHeightClass = mobileHeaderOffset
+    ? `h-[calc(100dvh-var(--total-padding-mobile)-(${mobileHeaderOffset}))]`
+    : "h-[calc(100dvh-var(--total-padding-mobile))]";
+
   // User menu functionality
-  const { session, signOut } = useAuth();
-  const [isSigningOut, startSignOutTransition] = React.useTransition();
-  const queryClient = useQueryClient();
-  const router = useRouter();
-
-  const handleSignOut = React.useCallback(() => {
-    startSignOutTransition(async () => {
-      try {
-        await signOut();
-      } finally {
-        queryClient.clear();
-        router.replace("/", { scroll: false });
-        router.refresh();
-      }
-    });
-  }, [queryClient, router, signOut]);
-
   const onScroll = React.useCallback(
     (e: React.UIEvent<HTMLElement>) => {
       const onPageBottom =
@@ -504,53 +383,45 @@ export function DataTableInfinite<TData, TValue, TMeta>({
       getFacetedUniqueValues={getFacetedUniqueValues}
       getFacetedMinMaxValues={getFacetedMinMaxValues}
     >
-      <div className="grid h-full grid-cols-1 sm:grid-cols-[13rem_1fr] md:grid-cols-[18rem_1fr] gap-6">
+      <div className="flex flex-col gap-4">
+        {headerSlot}
+        <div className="grid h-full grid-cols-1 gap-6 sm:grid-cols-[13rem_1fr] md:grid-cols-[18rem_1fr]">
           <div
             className={cn(
               "hidden sm:flex h-[calc(100dvh-var(--total-padding-mobile))] sm:h-[calc(100dvh-var(--total-padding-desktop))] flex-col sticky top-0 min-w-52 max-w-52 self-start md:min-w-72 md:max-w-72 rounded-lg border bg-background overflow-hidden"
             )}
           >
-            <div className="relative flex flex-col h-full">
-              <div className="flex-1 overflow-y-auto p-4 scrollbar-hide">
-                <div className="w-full max-w-full mx-auto">
-                  <DataTableFilterControls />
-                </div>
-              </div>
-              {session ? (
-                <div className="flex-shrink-0 border-t border-border p-2">
-                  <UserMenu
-                    user={{
-                      name: session.user?.name,
-                      email: session.user?.email,
-                      image: session.user?.image,
-                    }}
-                    onSignOut={handleSignOut}
-                    isSigningOut={isSigningOut}
-                  />
-                </div>
-              ) : null}
-            </div>
+            <SidebarPanel
+              user={accountUser}
+              onSignOut={accountOnSignOut}
+              isSigningOut={accountIsSigningOut}
+            />
           </div>
-        <div
-          className={cn(
-            "flex max-w-full flex-1 flex-col min-w-0"
-          )}
-          data-table-container=""
-        >
-          <div className="z-0">
-            <div className="h-[calc(100dvh-var(--total-padding-mobile))] sm:h-[calc(100dvh-var(--total-padding-desktop))] rounded-lg border bg-background overflow-hidden">
-              <Table
-              ref={tableRef}
-              onScroll={onScroll}
-              containerRef={containerRef}
-              containerOverflowVisible={false}
-              // REMINDER: https://stackoverflow.com/questions/questions/50361698/border-style-do-not-work-with-sticky-position-element
-              className="border-separate border-spacing-0 w-auto min-w-full table-fixed"
-              style={tableWidthStyle}
-              containerClassName={cn(
-                "h-full overscroll-x-none scrollbar-hide"
-              )}
-            >
+          <div
+            className={cn(
+              "flex max-w-full flex-1 flex-col min-w-0"
+            )}
+            data-table-container=""
+          >
+            <div className="z-0">
+              <div
+                className={cn(
+                  mobileHeightClass,
+                  "sm:h-[calc(100dvh-var(--total-padding-desktop))] rounded-lg border bg-background overflow-hidden"
+                )}
+              >
+                <Table
+                  ref={tableRef}
+                  onScroll={onScroll}
+                  containerRef={containerRef}
+                  containerOverflowVisible={false}
+                  // REMINDER: https://stackoverflow.com/questions/questions/50361698/border-style-do-not-work-with-sticky-position-element
+                  className="border-separate border-spacing-0 w-auto min-w-full table-fixed"
+                  style={tableWidthStyle}
+                  containerClassName={cn(
+                    "h-full overscroll-x-none scrollbar-hide"
+                  )}
+                >
               <TableHeader className={cn("sticky top-0 z-20 bg-[#f8fafc] dark:bg-[#090909]")}>
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow
@@ -696,8 +567,9 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                     </TableRow>
                   </React.Fragment>
                 )}
-              </TableBody>
-              </Table>
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           </div>
         </div>

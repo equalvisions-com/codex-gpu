@@ -9,6 +9,9 @@ import type {
 } from "@tanstack/react-table";
 import { useQueryStates } from "nuqs";
 import * as React from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/providers/auth-client-provider";
+import { useAuthDialog } from "@/providers/auth-dialog-provider";
 import { columns } from "./columns";
 import { filterFields as defaultFilterFields, sheetFields } from "./constants";
 import { DataTableInfinite } from "./data-table-infinite";
@@ -24,6 +27,7 @@ import {
   FAVORITES_BROADCAST_CHANNEL,
 } from "@/lib/favorites/constants";
 import { getFavorites } from "@/lib/favorites/api-client";
+import { MobileTopNav, SidebarPanel, type AccountUser } from "./account-components";
 
 interface ClientProps {
   initialFavoritesData?: ColumnSchema[];
@@ -34,6 +38,41 @@ export function Client({ initialFavoritesData, initialFavoriteKeys }: ClientProp
   const contentRef = React.useRef<HTMLTableSectionElement>(null);
   const [search] = useQueryStates(searchParamsParser);
   const queryClient = useQueryClient();
+  const router = useRouter();
+  const { session, signOut } = useAuth();
+  const { showSignIn, showSignUp } = useAuthDialog();
+  const [isSigningOut, startSignOutTransition] = React.useTransition();
+  const accountUser = (session?.user ?? null) as AccountUser | null;
+
+  const handleSignIn = React.useCallback(() => {
+    if (!showSignIn) return;
+    const callbackUrl =
+      typeof window !== "undefined"
+        ? `${window.location.pathname}${window.location.search}`
+        : "/";
+    showSignIn({ callbackUrl });
+  }, [showSignIn]);
+
+  const handleSignUp = React.useCallback(() => {
+    if (!showSignUp) return;
+    const callbackUrl =
+      typeof window !== "undefined"
+        ? `${window.location.pathname}${window.location.search}`
+        : "/";
+    showSignUp({ callbackUrl });
+  }, [showSignUp]);
+
+  const handleSignOut = React.useCallback(() => {
+    startSignOutTransition(async () => {
+      try {
+        await signOut();
+      } finally {
+        queryClient.clear();
+        router.replace("/", { scroll: false });
+        router.refresh();
+      }
+    });
+  }, [queryClient, router, signOut]);
 
   // Use favorites data if provided, otherwise use infinite query
   const isFavoritesMode = !!initialFavoritesData;
@@ -271,11 +310,11 @@ export function Client({ initialFavoritesData, initialFavoriteKeys }: ClientProp
   }, [stableFacets]);
 
   return (
-      <DataTableInfinite
-      key={`table-${isFavoritesMode ? `favorites-${favorites?.length || 0}` : 'all'}`}
+    <DataTableInfinite
+      key={`table-${isFavoritesMode ? `favorites-${favorites?.length || 0}` : "all"}`}
       columns={columns}
       data={flatData}
-        skeletonRowCount={search.size ?? 50}
+      skeletonRowCount={search.size ?? 50}
       totalRows={totalDBRowCount}
       filterRows={filterDBRowCount}
       totalRowsFetched={totalFetched}
@@ -304,9 +343,34 @@ export function Client({ initialFavoritesData, initialFavoriteKeys }: ClientProp
       renderSheetTitle={(props) => props.row?.original.uuid}
       searchParamsParser={searchParamsParser}
       focusTargetRef={contentRef}
+      account={{
+        user: accountUser,
+        onSignOut: handleSignOut,
+        isSigningOut,
+      }}
+      headerSlot={
+        <MobileTopNav
+          user={accountUser}
+          onSignOut={handleSignOut}
+          onSignIn={handleSignIn}
+          onSignUp={handleSignUp}
+          isSigningOut={isSigningOut}
+          renderSidebar={() => (
+            <SidebarPanel
+              user={accountUser}
+              onSignOut={handleSignOut}
+              isSigningOut={isSigningOut}
+              className="flex-1"
+              hideNavigation
+            />
+          )}
+        />
+      }
+      mobileHeaderOffset="38px+1rem"
     />
   );
 }
+
 
 
 function areColumnFiltersEqual(

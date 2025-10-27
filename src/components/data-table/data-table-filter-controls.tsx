@@ -56,7 +56,13 @@ function SidebarAction({ label, onClick }: {
   );
 }
 
-export function DataTableFilterControls() {
+interface DataTableFilterControlsProps {
+  hideNavigation?: boolean;
+}
+
+export function DataTableFilterControls({
+  hideNavigation = false,
+}: DataTableFilterControlsProps = {}) {
   const { filterFields } = useDataTable();
   const { session } = useAuth();
   const { showSignIn } = useAuthDialog();
@@ -68,12 +74,12 @@ export function DataTableFilterControls() {
 
   const defaultAccordionValues = React.useMemo(
     () => [
-      "navigation",
+      ...(hideNavigation ? [] : ["navigation"]),
       ...(otherFilters
         ?.filter(({ defaultOpen }) => defaultOpen)
         ?.map(({ value }) => value as string) ?? []),
     ],
-    [otherFilters],
+    [hideNavigation, otherFilters],
   );
 
   const handleSignIn = React.useCallback(() => {
@@ -97,28 +103,30 @@ export function DataTableFilterControls() {
       ) : null}
 
       <Accordion type="multiple" defaultValue={defaultAccordionValues}>
-        <AccordionItem value="navigation" className="border-none mb-4 last:mb-0">
-          <AccordionTrigger className="w-full py-0 hover:no-underline data-[state=closed]:text-muted-foreground data-[state=open]:text-foreground focus-within:data-[state=closed]:text-foreground hover:data-[state=closed]:text-foreground [&>svg]:text-foreground/70">
-            <div className="flex w-full items-center justify-between gap-2 truncate pb-2 pr-2">
-              <div className="flex items-center gap-2 truncate">
-                <p className="text-sm font-semibold text-foreground/70">Navigation</p>
+        {!hideNavigation ? (
+          <AccordionItem value="navigation" className="border-none mb-4 last:mb-0">
+            <AccordionTrigger className="w-full py-0 hover:no-underline data-[state=closed]:text-muted-foreground data-[state=open]:text-foreground focus-within:data-[state=closed]:text-foreground hover:data-[state=closed]:text-foreground [&>svg]:text-foreground/70">
+              <div className="flex w-full items-center justify-between gap-2 truncate pb-2 pr-2">
+                <div className="flex items-center gap-2 truncate">
+                  <p className="text-sm font-semibold text-foreground/70">Navigation</p>
+                </div>
               </div>
-            </div>
-          </AccordionTrigger>
-          <AccordionContent className="[&>div]:pb-0">
-            <div className="p-1">
-              <div className="space-y-1">
-                <SidebarLink href="/llms" label="LLMs" isActive={isLLMsActive} />
-                <SidebarLink href="/gpus" label="GPUs" isActive={isGpuActive} />
-                {session ? (
-                  <SidebarLink href="/favorites" label="Favorites" isActive={isFavoritesActive} />
-                ) : (
-                  <SidebarAction label="Sign in" onClick={handleSignIn} />
-                )}
+            </AccordionTrigger>
+            <AccordionContent className="[&>div]:pb-0">
+              <div className="p-1">
+                <div className="space-y-1">
+                  <SidebarLink href="/llms" label="LLMs" isActive={isLLMsActive} />
+                  <SidebarLink href="/gpus" label="GPUs" isActive={isGpuActive} />
+                  {session ? (
+                    <SidebarLink href="/favorites" label="Favorites" isActive={isFavoritesActive} />
+                  ) : (
+                    <SidebarAction label="Sign in" onClick={handleSignIn} />
+                  )}
+                </div>
               </div>
-            </div>
-          </AccordionContent>
-        </AccordionItem>
+            </AccordionContent>
+          </AccordionItem>
+        ) : null}
 
         {otherFilters?.map((field) => {
           const value = field.value as string;
