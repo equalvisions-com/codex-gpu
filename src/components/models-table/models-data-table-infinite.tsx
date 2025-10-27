@@ -403,19 +403,19 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
             <div className="z-0">
               <div
                 className={cn(
-                  "sm:h-[calc(100dvh-var(--total-padding-desktop))] border-y border-x-0 bg-background overflow-hidden sm:rounded-lg sm:border"
+                  "sm:h-[calc(100dvh-var(--total-padding-desktop))] border-y border-x-0 bg-background overflow-visible sm:overflow-hidden sm:rounded-lg sm:border"
                 )}
               >
                 <Table
                   ref={tableRef}
                   onScroll={onScroll}
                   containerRef={containerRef}
-                  containerOverflowVisible={false}
+                  containerOverflowVisible={true}
                   // REMINDER: https://stackoverflow.com/questions/questions/50361698/border-style-do-not-work-with-sticky-position-element
                   className="border-separate border-spacing-0 w-auto min-w-full table-fixed"
                   style={tableWidthStyle}
                   containerClassName={cn(
-                    "h-full overscroll-x-none scrollbar-hide"
+                    "h-full overscroll-x-none scrollbar-hide sm:overflow-auto"
                   )}
                 >
               <TableHeader className={cn("sticky top-0 z-20 bg-[#f8fafc] dark:bg-[#090909]")}>
