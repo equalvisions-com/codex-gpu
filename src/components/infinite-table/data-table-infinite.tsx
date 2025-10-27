@@ -135,8 +135,38 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   const accountOnSignOut = account?.onSignOut ?? noop;
   const accountIsSigningOut = account?.isSigningOut ?? false;
   const mobileHeightClass = mobileHeaderOffset
-    ? `h-[calc(100dvh-var(--total-padding-mobile)-(${mobileHeaderOffset}))]`
+    ? "h-[calc(100dvh-var(--total-padding-mobile)-var(--mobile-header-offset))]"
     : "h-[calc(100dvh-var(--total-padding-mobile))]";
+  const mobileHeightStyle = React.useMemo(() => {
+    if (!mobileHeaderOffset) return undefined;
+    const trimmed = mobileHeaderOffset.replace(/\s+/g, "");
+    const spacedChars: string[] = [];
+    for (let index = 0; index < trimmed.length; index++) {
+      const char = trimmed[index];
+      if (char === "+") {
+        spacedChars.push(" ", "+", " ");
+        continue;
+      }
+      if (char === "-") {
+        const prev = trimmed[index - 1];
+        const next = trimmed[index + 1];
+        if (prev === "-" || next === "-") {
+          spacedChars.push(char);
+          continue;
+        }
+        spacedChars.push(" ", "-", " ");
+        continue;
+      }
+      spacedChars.push(char);
+    }
+    const normalized = spacedChars.join("").replace(/\s{2,}/g, " ").trim();
+    const offsetValue = normalized.startsWith("calc(")
+      ? normalized
+      : `calc(${normalized})`;
+    return {
+      "--mobile-header-offset": offsetValue,
+    } as React.CSSProperties;
+  }, [mobileHeaderOffset]);
 
   // User menu functionality
   const onScroll = React.useCallback(
@@ -409,6 +439,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                   mobileHeightClass,
                   "sm:h-[calc(100dvh-var(--total-padding-desktop))] rounded-lg border bg-background overflow-hidden"
                 )}
+                style={mobileHeightStyle}
               >
                 <Table
                   ref={tableRef}
