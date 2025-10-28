@@ -82,7 +82,7 @@ export const columns: ColumnDef<ColumnSchema>[] = [
     minSize: 155,
     meta: {
       cellClassName: "text-left min-w-[155px]",
-      headerClassName: "text-left min-w-[155px] bg-[#f8fafc] dark:bg-[#090909]",
+      headerClassName: "text-left min-w-[155px]",
     },
   },
   {
@@ -105,7 +105,7 @@ export const columns: ColumnDef<ColumnSchema>[] = [
     minSize: 261,
     meta: {
       cellClassName: "text-left overflow-hidden min-w-[261px]",
-      headerClassName: "text-left overflow-hidden min-w-[261px] bg-[#f8fafc] dark:bg-[#090909]",
+      headerClassName: "text-left overflow-hidden min-w-[261px]",
     },
   },
   {
@@ -157,7 +157,7 @@ export const columns: ColumnDef<ColumnSchema>[] = [
     size: 155,
     minSize: 155,
     meta: {
-      headerClassName: "text-right min-w-[155px] bg-[#f8fafc] dark:bg-[#090909]",
+      headerClassName: "text-right min-w-[155px]",
       cellClassName: "text-right min-w-[155px]",
     },
   },
@@ -182,7 +182,7 @@ export const columns: ColumnDef<ColumnSchema>[] = [
     minSize: 155,
     meta: {
       cellClassName: "text-right min-w-[155px]",
-      headerClassName: "text-right min-w-[155px] bg-[#f8fafc] dark:bg-[#090909]",
+      headerClassName: "text-right min-w-[155px]",
     },
   },
   {
@@ -204,7 +204,7 @@ export const columns: ColumnDef<ColumnSchema>[] = [
     minSize: 155,
     meta: {
       cellClassName: "text-right min-w-[155px]",
-      headerClassName: "text-right min-w-[155px] bg-[#f8fafc] dark:bg-[#090909]",
+      headerClassName: "text-right min-w-[155px]",
     },
   },
   {
@@ -228,7 +228,7 @@ export const columns: ColumnDef<ColumnSchema>[] = [
     minSize: 155,
     meta: {
       cellClassName: "text-right min-w-[155px]",
-      headerClassName: "text-right min-w-[155px] bg-[#f8fafc] dark:bg-[#090909]",
+      headerClassName: "text-right min-w-[155px]",
     },
   },
   {
@@ -251,7 +251,7 @@ export const columns: ColumnDef<ColumnSchema>[] = [
     minSize: 155,
     meta: {
       cellClassName: "text-right min-w-[155px]",
-      headerClassName: "text-right min-w-[155px] bg-[#f8fafc] dark:bg-[#090909]",
+      headerClassName: "text-right min-w-[155px]",
     },
   },
   {
@@ -267,7 +267,7 @@ export const columns: ColumnDef<ColumnSchema>[] = [
     minSize: 155,
     meta: {
       cellClassName: "text-right min-w-[155px]",
-      headerClassName: "text-right min-w-[155px] bg-[#f8fafc] dark:bg-[#090909]",
+      headerClassName: "text-right min-w-[155px]",
     },
   },
 ];

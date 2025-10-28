@@ -19,7 +19,7 @@ interface DataTableSkeletonProps {
 export function DataTableSkeleton({ rows = 10 }: DataTableSkeletonProps) {
   return (
     <Table>
-      <TableHeader className="bg-muted/70">
+      <TableHeader className="bg-muted">
         <TableRow className="hover:bg-transparent">
           <TableHead>
             <Skeleton className="my-1.5 h-4 w-24" />

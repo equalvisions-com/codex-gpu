@@ -67,8 +67,8 @@ export function DataTableFilterCheckbox<TData>({
                 <div
                   key={String(option.value)}
                   className={cn(
-                    "group relative flex w-full items-center gap-2 px-2 py-2 hover:bg-muted/70 cursor-pointer rounded-md",
-                    checked && "bg-muted/70",
+                    "group relative flex w-full items-center gap-2 px-2 py-2 hover:bg-muted cursor-pointer rounded-md",
+                    checked && "bg-muted",
                   )}
                   onClick={() => {
                     const newValue = checked

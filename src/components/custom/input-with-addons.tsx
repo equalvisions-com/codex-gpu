@@ -20,7 +20,7 @@ const InputWithAddons = React.forwardRef<
       )}
     >
       {leading ? (
-        <div className="bg-muted/70 border-r px-3 py-2">
+        <div className="bg-muted/70  border-r px-3 py-2">
           {leading}
         </div>
       ) : null}

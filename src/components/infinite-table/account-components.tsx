@@ -102,7 +102,7 @@ export function UserMenu({
             role="group"
             aria-label="Account actions"
             className={cn(
-              "flex items-center overflow-hidden rounded-full border border-border bg-muted/70",
+              "flex items-center overflow-hidden rounded-full border border-border bg-muted",
               triggerClassName,
             )}
           >
@@ -137,10 +137,10 @@ export function UserMenu({
               type="button"
               variant="ghost"
               className={cn(
-                "flex items-center gap-2 rounded-md p-2 h-auto text-left text-sm font-medium text-foreground bg-background hover:bg-muted/70 hover:text-accent-foreground focus-visible:ring-0 focus-visible:ring-offset-0",
+                "flex items-center gap-2 rounded-md p-2 h-auto text-left text-sm font-medium text-foreground bg-background hover:bg-muted hover:text-accent-foreground focus-visible:ring-0 focus-visible:ring-offset-0",
                 fullWidth ? "w-full justify-start" : "w-auto justify-center",
                 !showDetails
-                  ? "rounded-full border border-border bg-muted/70 !px-2 !py-1.5 !gap-1.5"
+                  ? "rounded-full border border-border bg-muted !px-2 !py-1.5 !gap-1.5"
                   : null,
                 triggerClassName,
               )}

@@ -454,12 +454,12 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                     "h-full overscroll-x-none scrollbar-hide"
                   )}
                 >
-              <TableHeader className={cn("sticky top-0 z-50 bg-[#f8fafc] dark:bg-[#090909]")}>
+              <TableHeader className={cn("sticky top-0 z-50 bg-muted")}>
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow
                     key={headerGroup.id}
                     className={cn(
-                      "bg-[#f8fafc] dark:bg-[#090909]",
+                      "bg-muted",
                       "[&>:not(:last-child)]:border-r",
                     )}
                   >
@@ -469,7 +469,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                         <TableHead
                           key={header.id}
                           className={cn(
-                            "relative select-none truncate border-b border-border bg-[#f8fafc] dark:bg-[#090909] text-foreground/70 [&>.cursor-col-resize]:last:opacity-0",
+                            "relative select-none truncate border-b border-border bg-muted text-foreground/70 [&>.cursor-col-resize]:last:opacity-0",
                             isModelColumn && "shadow-[inset_-1px_0_0_var(--border)]",
                             header.column.columnDef.meta?.headerClassName,
                           )}
@@ -668,12 +668,19 @@ function Row<TData>({
   dataIndex?: number;
   modelColumnWidth: string;
 }) {
+  const canHover =
+    typeof window !== "undefined" &&
+    window.matchMedia &&
+    window.matchMedia("(hover: hover) and (pointer: fine)").matches
+      ? true
+      : undefined;
+
   return (
     <TableRow
       ref={rowRef}
       data-index={dataIndex}
       id={row.id}
-      data-can-hover={typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches ? true : undefined}
+      data-can-hover={canHover}
       tabIndex={0}
       data-state={selected && "selected"}
       aria-selected={row.getIsSelected()}
@@ -687,7 +694,7 @@ function Row<TData>({
       }}
       className={cn(
         "group/model-row relative [&>:not(:last-child)]:border-r",
-        "transition-colors focus-visible:bg-muted/70 data-[checked=checked]:bg-muted/70 hover:cursor-pointer",
+        "bg-background data-[can-hover=true]:hover:bg-muted data-[state=selected]:bg-muted border-b transition-colors focus-visible:bg-muted data-[checked=checked]:bg-muted hover:cursor-pointer",
         table.options.meta?.getRowClassName?.(row),
       )}
     >
@@ -697,10 +704,6 @@ function Row<TData>({
           e.stopPropagation();
         };
         const isModelColumn = cell.column.id === "gpu_model";
-        const stickyBackground =
-          isModelColumn && (selected || checked)
-            ? "hsl(var(--muted) / 0.7)"
-            : undefined;
         return (
           <TableCell
             key={cell.id}
@@ -709,10 +712,10 @@ function Row<TData>({
             onPointerDown={isCheckboxCell ? stopPropagation : undefined}
             onKeyDown={isCheckboxCell ? stopPropagation : undefined}
             className={cn(
-              "truncate border-b border-border p-[12px]",
+              "truncate border-b border-border p-[12px] transition-colors",
               isCheckboxCell && "cursor-default hover:cursor-default",
               isModelColumn &&
-                "bg-background shadow-[inset_-1px_0_0_var(--border)] group-hover/model-row:bg-muted/70 group-focus-visible/model-row:bg-muted/70",
+                "bg-background shadow-[inset_-1px_0_0_var(--border)] group-hover/model-row:bg-muted group-focus-visible/model-row:bg-muted group-data-[state=selected]/model-row:bg-muted group-data-[checked=checked]/model-row:bg-muted",
               cell.column.columnDef.meta?.cellClassName,
             )}
             style={{
@@ -733,7 +736,6 @@ function Row<TData>({
                     position: "sticky",
                     left: 0,
                     zIndex: 40,
-                    ...(stickyBackground ? { backgroundColor: stickyBackground } : {}),
                   }
                 : {}),
             }}
