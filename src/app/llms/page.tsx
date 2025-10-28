@@ -80,7 +80,7 @@ export default async function Models({
 
   return (
     <div
-      className="flex min-h-dvh w-full flex-col sm:flex-row pt-4 sm:p-6 min-h-0"
+      className="flex min-h-dvh w-full flex-col sm:flex-row p-4 sm:p-6 min-h-0"
       style={{
         '--total-padding-mobile': '2rem',
         '--total-padding-desktop': '3rem',
