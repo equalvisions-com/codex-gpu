@@ -366,7 +366,7 @@ export function Client({ initialFavoritesData, initialFavoriteKeys }: ClientProp
           )}
         />
       }
-      mobileHeaderOffset="38px+1rem"
+      mobileHeaderOffset="38px"
     />
   );
 }

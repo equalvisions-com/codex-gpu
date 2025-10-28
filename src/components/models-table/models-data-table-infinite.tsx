@@ -436,7 +436,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
               <div
                 className={cn(
                   mobileHeightClass,
-                  "sm:h-[calc(100dvh-var(--total-padding-desktop))] rounded-lg border bg-background overflow-hidden"
+                  "sm:h-[calc(100dvh-var(--total-padding-desktop))] rounded-none sm:rounded-lg border bg-background overflow-hidden"
                 )}
                 style={mobileHeightStyle}
               >

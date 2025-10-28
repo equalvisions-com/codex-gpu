@@ -320,7 +320,7 @@ export function ModelsClient({ initialFavoritesData, initialFavoriteKeys }: Mode
           )}
         />
       }
-      mobileHeaderOffset="38px+1rem"
+      mobileHeaderOffset="38px"
     />
   );
 }
