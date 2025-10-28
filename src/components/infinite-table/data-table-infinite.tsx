@@ -694,7 +694,10 @@ function Row<TData>({
       }}
       className={cn(
         "group/model-row relative [&>:not(:last-child)]:border-r",
-        "bg-background data-[can-hover=true]:hover:bg-muted data-[state=selected]:bg-muted border-b transition-colors focus-visible:bg-muted data-[checked=checked]:bg-muted hover:cursor-pointer",
+        "bg-background border-b transition-colors focus-visible:bg-muted hover:cursor-pointer",
+        canHover && "data-[can-hover=true]:hover:bg-muted data-[state=selected]:bg-muted data-[checked=checked]:bg-muted",
+        !canHover && selected && "bg-muted",
+        !canHover && checked && "bg-muted",
         table.options.meta?.getRowClassName?.(row),
       )}
     >
@@ -715,7 +718,12 @@ function Row<TData>({
               "truncate border-b border-border p-[12px] transition-colors",
               isCheckboxCell && "cursor-default hover:cursor-default",
               isModelColumn &&
-                "bg-background shadow-[inset_-1px_0_0_var(--border)] group-hover/model-row:bg-muted group-focus-visible/model-row:bg-muted group-data-[state=selected]/model-row:bg-muted group-data-[checked=checked]/model-row:bg-muted",
+                cn(
+                  "bg-background shadow-[inset_-1px_0_0_var(--border)]",
+                  canHover && "group-hover/model-row:bg-muted group-focus-visible/model-row:bg-muted group-data-[state=selected]/model-row:bg-muted group-data-[checked=checked]/model-row:bg-muted",
+                  !canHover && selected && "bg-muted",
+                  !canHover && checked && "bg-muted",
+                ),
               cell.column.columnDef.meta?.cellClassName,
             )}
             style={{
