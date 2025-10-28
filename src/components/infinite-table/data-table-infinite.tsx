@@ -288,8 +288,9 @@ export function DataTableInfinite<TData, TValue, TMeta>({
       ({
         width: "100%",
         minWidth: `${effectiveFixedColumnsWidth + minimumModelColumnWidth}px`,
+        "--model-column-width": modelColumnWidthValue,
       }) as React.CSSProperties,
-    [effectiveFixedColumnsWidth, minimumModelColumnWidth],
+    [effectiveFixedColumnsWidth, minimumModelColumnWidth, modelColumnWidthValue],
   );
 
   // Calculated width value for model column styling
@@ -453,7 +454,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                     "h-full overscroll-x-none scrollbar-hide"
                   )}
                 >
-              <TableHeader className={cn("sticky top-0 z-20 bg-[#f8fafc] dark:bg-[#090909]")}>
+              <TableHeader className={cn("sticky top-0 z-50 bg-[#f8fafc] dark:bg-[#090909]")}>
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow
                     key={headerGroup.id}
@@ -463,11 +464,13 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                     )}
                   >
                     {headerGroup.headers.map((header) => {
+                      const isModelColumn = header.id === "gpu_model";
                       return (
                         <TableHead
                           key={header.id}
                           className={cn(
                             "relative select-none truncate border-b border-border bg-[#f8fafc] dark:bg-[#090909] text-foreground/70 [&>.cursor-col-resize]:last:opacity-0",
+                            isModelColumn && "shadow-[inset_-1px_0_0_var(--border)]",
                             header.column.columnDef.meta?.headerClassName,
                           )}
                           data-column-id={header.column.id}
@@ -484,6 +487,14 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                               header.id === "gpu_model"
                                 ? "var(--model-column-width)"
                                 : undefined,
+                            ...(isModelColumn
+                              ? {
+                                  position: "sticky",
+                                  left: 0,
+                                  top: 0,
+                                  zIndex: 60,
+                                }
+                              : {}),
                           }}
                           aria-sort={
                             header.column.getIsSorted() === "asc"
@@ -675,7 +686,7 @@ function Row<TData>({
         }
       }}
       className={cn(
-        "[&>:not(:last-child)]:border-r",
+        "group/model-row relative [&>:not(:last-child)]:border-r",
         "transition-colors focus-visible:bg-muted/70 data-[checked=checked]:bg-muted/70 hover:cursor-pointer",
         table.options.meta?.getRowClassName?.(row),
       )}
@@ -685,6 +696,11 @@ function Row<TData>({
         const stopPropagation = (e: any) => {
           e.stopPropagation();
         };
+        const isModelColumn = cell.column.id === "gpu_model";
+        const stickyBackground =
+          isModelColumn && (selected || checked)
+            ? "hsl(var(--muted) / 0.7)"
+            : undefined;
         return (
           <TableCell
             key={cell.id}
@@ -695,6 +711,8 @@ function Row<TData>({
             className={cn(
               "truncate border-b border-border p-[12px]",
               isCheckboxCell && "cursor-default hover:cursor-default",
+              isModelColumn &&
+                "bg-background shadow-[inset_-1px_0_0_var(--border)] group-hover/model-row:bg-muted/70 group-focus-visible/model-row:bg-muted/70",
               cell.column.columnDef.meta?.cellClassName,
             )}
             style={{
@@ -710,6 +728,14 @@ function Row<TData>({
                 cell.column.id === "gpu_model"
                   ? modelColumnWidth
                   : undefined,
+              ...(isModelColumn
+                ? {
+                    position: "sticky",
+                    left: 0,
+                    zIndex: 40,
+                    ...(stickyBackground ? { backgroundColor: stickyBackground } : {}),
+                  }
+                : {}),
             }}
           >
             {flexRender(cell.column.columnDef.cell, cell.getContext())}

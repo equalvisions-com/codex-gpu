@@ -28,20 +28,28 @@ export function RowSkeletons<TData>({
         >
           {visibleColumns.map((column) => {
             const id = column.id;
-            const width =
-              id === "gpu_model" ? modelColumnWidth : column.getSize();
+            const isModelColumn = id === "gpu_model" || id === "name";
+            const width = isModelColumn ? modelColumnWidth : column.getSize();
 
             return (
               <TableCell
                 key={`${id}-${rowIndex}`}
                 className={cn(
                   "truncate border-b border-border p-[12px]",
+                  isModelColumn && "bg-background shadow-[inset_-1px_0_0_var(--border)]",
                   column.columnDef.meta?.cellClassName,
                 )}
                 style={{
                   width,
-                  minWidth: id === "gpu_model" ? modelColumnWidth : column.columnDef.minSize,
-                  maxWidth: id === "gpu_model" ? modelColumnWidth : undefined,
+                  minWidth: isModelColumn ? modelColumnWidth : column.columnDef.minSize,
+                  maxWidth: isModelColumn ? modelColumnWidth : undefined,
+                  ...(isModelColumn
+                    ? {
+                        position: "sticky",
+                        left: 0,
+                        zIndex: 30,
+                      }
+                    : {}),
                 }}
               >
                 {id === "blank" ? (
