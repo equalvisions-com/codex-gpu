@@ -489,7 +489,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
       getFacetedUniqueValues={getFacetedUniqueValues}
       getFacetedMinMaxValues={getFacetedMinMaxValues}
     >
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-2 sm:gap-4">
         {headerSlot}
         <div className="grid h-full grid-cols-1 gap-4 sm:grid-cols-[13rem_1fr] md:grid-cols-[18rem_1fr]">
           <div
