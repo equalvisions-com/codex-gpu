@@ -69,7 +69,7 @@ export default async function Gpus({
       className="flex min-h-dvh w-full flex-col sm:flex-row pt-4 sm:p-6 min-h-0"
       style={
         {
-          "--total-padding-mobile": "1rem",
+          "--total-padding-mobile": "16px",
           "--total-padding-desktop": "3rem",
         } as React.CSSProperties
       }

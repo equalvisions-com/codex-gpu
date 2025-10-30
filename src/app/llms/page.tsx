@@ -82,7 +82,7 @@ export default async function Models({
     <div
       className="flex min-h-dvh w-full flex-col sm:flex-row pt-2 sm:p-0 min-h-0"
       style={{
-        '--total-padding-mobile': '1rem',
+        '--total-padding-mobile': '16px',
         '--total-padding-desktop': '3rem',
       } as React.CSSProperties}
     >
