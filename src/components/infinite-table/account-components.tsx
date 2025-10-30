@@ -208,7 +208,7 @@ export function UserMenu({
               type="button"
               variant="ghost"
               className={cn(
-                "flex items-center gap-2 rounded-md p-2 h-auto text-left text-sm font-medium text-foreground hover:text-accent-foreground focus-visible:ring-0 focus-visible:ring-offset-0",
+                "flex items-center gap-4 rounded-md p-2 h-auto text-left text-sm font-medium text-foreground hover:text-accent-foreground focus-visible:ring-0 focus-visible:ring-offset-0",
                 showDetails
                   ? "bg-transparent hover:bg-transparent"
                   : cn(
