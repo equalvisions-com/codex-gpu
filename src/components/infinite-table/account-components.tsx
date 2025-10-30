@@ -22,6 +22,7 @@ import {
   Sun,
   Settings as SettingsIcon,
   Search,
+  X,
 } from "lucide-react";
 import {
   NavigationMenu,
@@ -31,11 +32,16 @@ import {
 } from "@/components/ui/navigation-menu";
 import {
   Sheet,
+  SheetClose,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@/components/ui/sheet";
+} from "@/components/custom/sheet";
+
+const gradientSurfaceClass =
+  "border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground hover:bg-gradient-to-b hover:from-muted/70 hover:via-muted/40 hover:to-background hover:text-accent-foreground";
 
 export interface AccountUser {
   name?: string | null;
@@ -53,6 +59,7 @@ export interface UserMenuProps {
   isAuthenticated?: boolean;
   onSignIn?: () => void;
   onSignUp?: () => void;
+  forceUnauthSignInButton?: boolean;
 }
 
 export function UserMenu({
@@ -65,6 +72,7 @@ export function UserMenu({
   isAuthenticated: isAuthenticatedProp,
   onSignIn,
   onSignUp,
+  forceUnauthSignInButton = false,
 }: UserMenuProps) {
   const normalizedName = user?.name?.trim();
   const email = user?.email ?? "";
@@ -82,7 +90,11 @@ export function UserMenu({
   const inferredAuthenticated = Boolean(normalizedName || email || user?.image);
   const isAuthenticated = isAuthenticatedProp ?? inferredAuthenticated;
   const shouldRenderAvatar = (showDetails || hasImage) && user;
-  const isSplitTrigger = !showDetails && !isAuthenticated;
+  const hasSignInHandler = typeof onSignIn === "function";
+  const shouldForceSignInButton =
+    forceUnauthSignInButton && !isAuthenticated && hasSignInHandler;
+  const isSplitTrigger = !showDetails && !isAuthenticated && !shouldForceSignInButton;
+  const secondaryText = isAuthenticated ? email ?? "" : "Sign in or Sign up";
 
   const handleSignInClick = React.useCallback(() => {
     onSignIn?.();
@@ -94,6 +106,58 @@ export function UserMenu({
 
   const triggerAriaLabel = !showDetails ? displayName : undefined;
 
+  if (shouldForceSignInButton) {
+    const buttonClassName = cn(
+      "flex items-center gap-2 rounded-md p-2 h-auto text-left text-sm font-medium text-foreground hover:text-accent-foreground focus-visible:ring-0 focus-visible:ring-offset-0",
+      showDetails
+        ? "bg-transparent hover:bg-transparent"
+        : gradientSurfaceClass,
+      fullWidth ? "w-full justify-start" : "w-auto justify-center",
+      !showDetails ? "rounded-full md:rounded-md md:h-9 !px-2 !py-1.5 !gap-1.5" : null,
+      triggerClassName,
+    );
+    const ariaLabel = showDetails ? undefined : triggerAriaLabel ?? "Sign in";
+
+    return (
+      <div>
+        <Button
+          type="button"
+          variant="ghost"
+          className={buttonClassName}
+          onClick={handleSignInClick}
+          disabled={isSigningOut}
+          aria-label={ariaLabel}
+        >
+          {showDetails ? (
+            <>
+              <div
+                className={cn(
+                  "flex items-center justify-center rounded-full border border-border text-muted-foreground",
+                  avatarSizeClass,
+                )}
+              >
+                <LogIn className="h-4 w-4" />
+              </div>
+              <div className="flex min-w-0 flex-1 flex-col text-left">
+                <span className="truncate">{displayName}</span>
+                {secondaryText ? (
+                  <span className="truncate text-xs text-muted-foreground">
+                    {secondaryText}
+                  </span>
+                ) : null}
+              </div>
+            </>
+          ) : (
+            <>
+              <LogIn className="h-4 w-4 text-foreground/70" />
+              <span className="sr-only">Sign in</span>
+            </>
+          )}
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div>
       <DropdownMenu>
@@ -102,28 +166,35 @@ export function UserMenu({
             role="group"
             aria-label="Account actions"
             className={cn(
-              "flex items-center overflow-hidden rounded-full border border-border bg-muted",
+              "flex items-center overflow-hidden rounded-full",
               triggerClassName,
             )}
           >
-            <Button
-              type="button"
-              variant="ghost"
-              className="h-9 min-w-[76px] flex-1 rounded-none rounded-l-full border-r border-border/70 px-3 text-xs font-bold text-foreground/70 hover:bg-muted focus-visible:ring-0 focus-visible:ring-offset-0"
-              onClick={handleSignUpClick}
-              disabled={isSigningOut}
-            >
+          <Button
+            type="button"
+            variant="ghost"
+            className={cn(
+              "h-9 min-w-[76px] flex-1 rounded-none rounded-l-full px-3 text-xs font-bold focus-visible:ring-0 focus-visible:ring-offset-0",
+              "border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground shadow-[0_1px_0_0_hsl(var(--foreground)_/_6%),0_4px_8px_-10px_hsl(var(--foreground)_/_28%)]",
+              "border-r-0",
+            )}
+            onClick={handleSignUpClick}
+            disabled={isSigningOut}
+          >
               Sign up
             </Button>
             <DropdownMenuTrigger asChild>
               <Button
                 type="button"
                 variant="ghost"
-                className="h-9 w-9 rounded-none rounded-r-full px-0 text-foreground/70 hover:bg-muted focus-visible:ring-0 focus-visible:ring-offset-0"
+                className={cn(
+                  "h-9 w-9 rounded-none rounded-r-full px-0 focus-visible:ring-0 focus-visible:ring-offset-0",
+                  "border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground shadow-[0_1px_0_0_hsl(var(--foreground)_/_6%),0_4px_8px_-10px_hsl(var(--foreground)_/_28%)]",
+                )}
                 aria-label="Open account menu"
                 disabled={isSigningOut}
               >
-                <span className="relative flex w-[18px] items-center justify-center">
+                <span className="relative flex w-[18px] items-center justify-center text-foreground/70">
                   <span className="absolute h-px w-3 -translate-y-1 rounded-full bg-current" />
                   <span className="absolute h-px w-3 rounded-full bg-current" />
                   <span className="absolute h-px w-3 translate-y-1 rounded-full bg-current" />
@@ -137,10 +208,16 @@ export function UserMenu({
               type="button"
               variant="ghost"
               className={cn(
-                "flex items-center gap-2 rounded-md p-2 h-auto text-left text-sm font-medium text-foreground bg-background hover:bg-muted hover:text-accent-foreground focus-visible:ring-0 focus-visible:ring-offset-0",
+                "flex items-center gap-2 rounded-md p-2 h-auto text-left text-sm font-medium text-foreground hover:text-accent-foreground focus-visible:ring-0 focus-visible:ring-offset-0",
+                showDetails
+                  ? "bg-transparent hover:bg-transparent"
+                  : cn(
+                      gradientSurfaceClass,
+                      "shadow-[0_1px_0_0_hsl(var(--foreground)_/_6%),0_4px_8px_-10px_hsl(var(--foreground)_/_28%)] hover:bg-transparent",
+                    ),
                 fullWidth ? "w-full justify-start" : "w-auto justify-center",
                 !showDetails
-                  ? "rounded-full border border-border bg-muted !px-2 !py-1.5 !gap-1.5"
+                  ? "rounded-full md:rounded-md md:h-9 !px-2 !py-1.5 !gap-1.5"
                   : null,
                 triggerClassName,
               )}
@@ -154,7 +231,7 @@ export function UserMenu({
                   <span className="absolute h-px w-3 translate-y-1 rounded-full bg-current" />
                 </span>
               ) : null}
-              {shouldRenderAvatar && (
+              {shouldRenderAvatar ? (
                 <div className={cn("relative", avatarSizeClass)}>
                   {hasImage && !imageLoaded ? (
                     <Skeleton className={cn("rounded-full", avatarSizeClass)} />
@@ -176,12 +253,24 @@ export function UserMenu({
                     ) : null}
                   </Avatar>
                 </div>
-              )}
+              ) : null}
+              {!shouldRenderAvatar && showDetails && !isAuthenticated ? (
+                <div
+                  className={cn(
+                    "flex items-center justify-center rounded-full border border-border text-muted-foreground",
+                    avatarSizeClass,
+                  )}
+                >
+                  <LogIn className="h-4 w-4" />
+                </div>
+              ) : null}
               {showDetails ? (
                 <div className="flex min-w-0 flex-1 flex-col text-left">
                   <span className="truncate">{displayName}</span>
-                  {email ? (
-                    <span className="truncate text-xs text-muted-foreground">{email}</span>
+                  {secondaryText ? (
+                    <span className="truncate text-xs text-muted-foreground">
+                      {secondaryText}
+                    </span>
                   ) : null}
                 </div>
               ) : null}
@@ -285,7 +374,9 @@ export interface SidebarPanelProps {
   isSigningOut: boolean;
   onSignOut: () => void;
   className?: string;
-  hideNavigation?: boolean;
+  showUserMenuFooter?: boolean;
+  onSignIn?: () => void;
+  onSignUp?: () => void;
 }
 
 export function SidebarPanel({
@@ -293,23 +384,28 @@ export function SidebarPanel({
   isSigningOut,
   onSignOut,
   className,
-  hideNavigation,
+  showUserMenuFooter = true,
+  onSignIn,
+  onSignUp,
 }: SidebarPanelProps) {
   const isAuthenticated = Boolean(user);
   return (
     <div className={cn("relative flex h-full flex-col", className)}>
-      <div className="flex-1 overflow-y-auto p-4 scrollbar-hide">
+      <div className="flex-1 overflow-y-auto scrollbar-hide">
         <div className="mx-auto w-full max-w-full">
-          <DataTableFilterControls hideNavigation={hideNavigation} />
+          <DataTableFilterControls />
         </div>
       </div>
-      {isAuthenticated ? (
+      {showUserMenuFooter ? (
         <div className="flex-shrink-0 border-t border-border p-2">
           <UserMenu
             user={user}
             onSignOut={onSignOut}
             isSigningOut={isSigningOut}
-            isAuthenticated
+            onSignIn={onSignIn}
+            onSignUp={onSignUp}
+            forceUnauthSignInButton
+            isAuthenticated={isAuthenticated}
           />
         </div>
       ) : null}
@@ -336,10 +432,10 @@ export function MobileTopNav({
   onSignUp,
   isSigningOut,
   renderSidebar,
-  sheetTitle = "Filters & account",
+  sheetTitle = "Search",
 }: MobileTopNavProps) {
   return (
-    <NavigationMenu className="flex w-full max-w-none justify-between sm:hidden px-4">
+    <NavigationMenu className="flex w-full max-w-none justify-between sm:hidden px-2">
       <NavigationMenuList className="flex w-full items-center gap-3">
         <NavigationMenuItem className="mr-auto">
           <NavigationMenuLink asChild>
@@ -362,15 +458,27 @@ export function MobileTopNav({
               </Button>
             </SheetTrigger>
             <SheetContent
-              side="left"
-              className="flex w-full max-w-full flex-col p-0 sm:max-w-sm"
+              side="right"
+              className="overflow-y-auto p-0 sm:max-w-md"
+              hideClose
             >
-              <SheetHeader className="border-b border-border px-4 py-3 text-left">
-                <SheetTitle className="text-sm font-semibold">
-                  {sheetTitle}
-                </SheetTitle>
+              <SheetHeader className="sticky top-0 z-10 border-b border-border bg-background p-4">
+                <div className="flex items-center justify-between gap-2">
+                  <SheetTitle className="text-sm font-semibold">
+                    {sheetTitle}
+                  </SheetTitle>
+                  <SheetClose asChild>
+                    <Button size="icon" variant="ghost" className="h-7 w-7">
+                      <X className="h-5 w-5" />
+                      <span className="sr-only">Close</span>
+                    </Button>
+                  </SheetClose>
+                </div>
               </SheetHeader>
-              {renderSidebar()}
+              <SheetDescription className="sr-only">
+                Filters and account options
+              </SheetDescription>
+              <div className="p-4">{renderSidebar()}</div>
             </SheetContent>
           </Sheet>
         </NavigationMenuItem>

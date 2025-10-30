@@ -79,6 +79,8 @@ export interface DataTableInfiniteProps<TData, TValue, TMeta> {
     user: AccountUser | null | undefined;
     onSignOut: () => void;
     isSigningOut: boolean;
+    onSignIn?: () => void;
+    onSignUp?: () => void;
   };
   headerSlot?: React.ReactNode;
   mobileHeaderOffset?: string;
@@ -134,6 +136,8 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   const accountUser: AccountUser | null = account?.user ?? null;
   const accountOnSignOut = account?.onSignOut ?? noop;
   const accountIsSigningOut = account?.isSigningOut ?? false;
+  const accountOnSignIn = account?.onSignIn;
+  const accountOnSignUp = account?.onSignUp;
   const mobileHeightClass = mobileHeaderOffset
     ? "h-[calc(100dvh-var(--total-padding-mobile)-var(--mobile-header-offset))]"
     : "h-[calc(100dvh-var(--total-padding-mobile))]";
@@ -419,13 +423,15 @@ export function DataTableInfinite<TData, TValue, TMeta>({
         <div className="grid h-full grid-cols-1 gap-6 sm:grid-cols-[13rem_1fr] md:grid-cols-[18rem_1fr]">
           <div
             className={cn(
-              "hidden sm:flex h-[calc(100dvh-var(--total-padding-mobile))] sm:h-[calc(100dvh-var(--total-padding-desktop))] flex-col sticky top-0 min-w-52 max-w-52 self-start md:min-w-72 md:max-w-72 rounded-lg border bg-background overflow-hidden"
+              "hidden sm:flex h-[calc(100dvh-var(--total-padding-mobile))] sm:h-[100dvh] flex-col sticky top-0 min-w-52 max-w-52 self-start md:min-w-72 md:max-w-72 rounded-lg bg-background overflow-hidden"
             )}
           >
             <SidebarPanel
               user={accountUser}
               onSignOut={accountOnSignOut}
               isSigningOut={accountIsSigningOut}
+              onSignIn={accountOnSignIn}
+              onSignUp={accountOnSignUp}
             />
           </div>
           <div
@@ -438,7 +444,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
               <div
                 className={cn(
                   mobileHeightClass,
-                  "sm:h-[calc(100dvh-var(--total-padding-desktop))] rounded-none sm:rounded-lg border bg-background overflow-hidden"
+                  "sm:h-[100dvh] rounded-none sm:rounded-lg border bg-background overflow-hidden"
                 )}
                 style={mobileHeightStyle}
               >

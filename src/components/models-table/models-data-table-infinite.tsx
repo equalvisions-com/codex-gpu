@@ -9,11 +9,14 @@ import {
   TableRow,
 } from "@/components/custom/table";
 import { DataTableProvider } from "@/components/data-table/data-table-provider";
+import { DataTableFilterControls } from "@/components/data-table/data-table-filter-controls";
+import { DataTableFilterInput } from "@/components/data-table/data-table-filter-input";
 import { MemoizedDataTableSheetContent } from "@/components/data-table/data-table-sheet/data-table-sheet-content";
 import { DataTableSheetDetails } from "@/components/data-table/data-table-sheet/data-table-sheet-details";
 import type {
   DataTableFilterField,
   SheetField,
+  DataTableInputFilterField,
 } from "@/components/data-table/types";
 import { cn } from "@/lib/utils";
 import { type FetchNextPageOptions } from "@tanstack/react-query";
@@ -36,9 +39,14 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { ModelsCheckedActionsIsland } from "./models-checked-actions-island";
 import type { ModalitiesDirection } from "./modalities-filter";
 import { filterFields, sheetFields } from "./models-constants";
+import { UserMenu, type AccountUser } from "../infinite-table/account-components";
+import { usePathname } from "next/navigation";
+import { Search } from "lucide-react";
+import { DesktopNavTabs, type DesktopNavItem } from "./nav-tabs";
 
 const noop = () => {};
-import { SidebarPanel, type AccountUser } from "../infinite-table/account-components";
+const gradientSurfaceClass =
+  "border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-foreground";
 
 // FloatingControlsButton removed
 
@@ -81,6 +89,8 @@ export interface ModelsDataTableInfiniteProps<TData, TValue, TMeta> {
     user: AccountUser | null | undefined;
     onSignOut: () => void;
     isSigningOut: boolean;
+    onSignIn?: () => void;
+    onSignUp?: () => void;
   };
   headerSlot?: React.ReactNode;
   mobileHeaderOffset?: string;
@@ -135,6 +145,54 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
   const accountUser: AccountUser | null = account?.user ?? null;
   const accountOnSignOut = account?.onSignOut ?? noop;
   const accountIsSigningOut = account?.isSigningOut ?? false;
+  const accountOnSignIn = account?.onSignIn;
+  const accountOnSignUp = account?.onSignUp;
+  const pathname = usePathname() ?? "";
+  const [isDesktopSearchOpen, setIsDesktopSearchOpen] = React.useState(false);
+  const searchFilterField = React.useMemo(
+    () =>
+      filterFields.find(
+        (field): field is DataTableInputFilterField<TData> =>
+          field.type === "input" && field.value === "search",
+      ),
+    [filterFields],
+  );
+  const toggleDesktopSearch = React.useCallback(() => {
+    setIsDesktopSearchOpen((prev) => !prev);
+  }, []);
+  React.useEffect(() => {
+    setIsDesktopSearchOpen(false);
+  }, [pathname]);
+  const navigationItems = React.useMemo<DesktopNavItem[]>(
+    () => [
+      {
+        type: "link",
+        href: "/llms",
+        label: "LLMs",
+        isActive: pathname === "/" || pathname.startsWith("/llms"),
+      },
+      {
+        type: "link",
+        href: "/gpus",
+        label: "GPUs",
+        isActive: pathname.startsWith("/gpus"),
+      },
+      {
+        type: "link",
+        href: "/tools",
+        label: "Tools",
+        isActive: pathname.startsWith("/tools"),
+      },
+      {
+        type: "action",
+        label: "Search",
+        icon: Search,
+        isActive: isDesktopSearchOpen,
+        onSelect: toggleDesktopSearch,
+      },
+    ],
+    [isDesktopSearchOpen, pathname, toggleDesktopSearch],
+  );
   const mobileHeightClass = mobileHeaderOffset
     ? "h-[calc(100dvh-var(--total-padding-mobile)-var(--mobile-header-offset))]"
     : "h-[calc(100dvh-var(--total-padding-mobile))]";
@@ -301,6 +359,24 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
     const searchPayload: Record<string, unknown> = {};
 
     filterFields.forEach((field) => {
+      if (field.value === "modalities") {
+        const modalitiesFilter = columnFilters.find((filter) => filter.id === field.value);
+        const modalityValue = modalitiesFilter?.value as string[] | undefined;
+        const values = modalityValue ?? [];
+
+        const directionsFilter = columnFilters.find((filter) => filter.id === "modalityDirections");
+        const directionsValue = directionsFilter?.value as Record<string, ModalitiesDirection> | undefined;
+        const directionEntries = directionsValue
+          ? Object.entries(directionsValue)
+              .map(([key, dir]) => `${key}:${dir}`)
+              .sort()
+          : [];
+
+        searchPayload[field.value as string] = values.length ? values : null;
+        searchPayload.modalityDirections = values.length && directionEntries.length ? directionEntries : null;
+        return;
+      }
+
       const columnFilter = columnFilters.find((filter) => filter.id === field.value);
       searchPayload[field.value as string] = columnFilter ? columnFilter.value : null;
     });
@@ -415,17 +491,52 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
     >
       <div className="flex flex-col gap-4">
         {headerSlot}
-        <div className="grid h-full grid-cols-1 gap-6 sm:grid-cols-[13rem_1fr] md:grid-cols-[18rem_1fr]">
+        <div className="grid h-full grid-cols-1 gap-4 sm:grid-cols-[13rem_1fr] md:grid-cols-[18rem_1fr]">
           <div
             className={cn(
-              "hidden sm:flex h-[calc(100dvh-var(--total-padding-mobile))] sm:h-[calc(100dvh-var(--total-padding-desktop))] flex-col sticky top-0 min-w-52 max-w-52 self-start md:min-w-72 md:max-w-72 rounded-lg border bg-background overflow-hidden"
+              "hidden sm:flex h-[calc(100dvh-var(--total-padding-mobile))] sm:h-[100dvh] flex-col sticky top-0 min-w-52 max-w-52 self-start md:min-w-72 md:max-w-72 rounded-lg overflow-hidden"
             )}
           >
-            <SidebarPanel
-              user={accountUser}
-              onSignOut={accountOnSignOut}
-              isSigningOut={accountIsSigningOut}
-            />
+            <div className="flex h-full w-full flex-col">
+              <div className="mx-auto w-full max-w-full pl-4 pr-0 pt-4 mb-6 space-y-4">
+                <DesktopNavTabs
+                  items={navigationItems}
+                  className={gradientSurfaceClass}
+                />
+                {searchFilterField ? (
+                  <>
+                    <div className="flex items-center gap-2 sm:hidden">
+                      <div className="flex-1">
+                        <DataTableFilterInput {...searchFilterField} />
+                      </div>
+                    </div>
+                    {isDesktopSearchOpen ? (
+                      <div className="hidden items-center gap-2 sm:flex">
+                        <div className="flex-1">
+                          <DataTableFilterInput {...searchFilterField} />
+                        </div>
+                      </div>
+                    ) : null}
+                  </>
+                ) : null}
+              </div>
+              <div className="flex-1 overflow-y-auto scrollbar-hide">
+                <div className="mx-auto w-full max-w-full pl-4 pr-0 pb-4">
+                  <DataTableFilterControls showSearch={false} />
+                </div>
+              </div>
+              <div className="flex-shrink-0 pl-2 pb-2 pt-0 pr-0">
+                <UserMenu
+                  user={accountUser}
+                  onSignOut={accountOnSignOut}
+                  isSigningOut={accountIsSigningOut}
+                  isAuthenticated={Boolean(accountUser)}
+                  forceUnauthSignInButton
+                  onSignIn={accountOnSignIn}
+                  onSignUp={accountOnSignUp}
+                />
+              </div>
+            </div>
           </div>
           <div
             className={cn(
@@ -437,7 +548,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
               <div
                 className={cn(
                   mobileHeightClass,
-                  "sm:h-[calc(100dvh-var(--total-padding-desktop))] rounded-none sm:rounded-lg border bg-background overflow-hidden"
+                  "sm:h-[100dvh] border-0 md:border-l bg-background overflow-hidden"
                 )}
                 style={mobileHeightStyle}
               >
@@ -453,7 +564,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
                     "h-full overscroll-x-none scrollbar-hide"
                   )}
                 >
-              <TableHeader className={cn("sticky top-0 z-50 bg-muted")}>
+              <TableHeader className={cn("sticky top-0 z-50 bg-background")}> 
                 {table.getHeaderGroups().map((headerGroup) => (
                     <TableRow
                       key={headerGroup.id}
@@ -468,7 +579,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
                         <TableHead
                           key={header.id}
                           className={cn(
-                            "relative select-none truncate border-b border-border bg-muted text-foreground/70 [&>.cursor-col-resize]:last:opacity-0",
+                            "relative select-none truncate border-b border-border bg-background text-foreground/70 [&>.cursor-col-resize]:last:opacity-0",
                             isModelColumn && "shadow-[inset_-1px_0_0_var(--border)]",
                             header.column.columnDef.meta?.headerClassName,
                           )}

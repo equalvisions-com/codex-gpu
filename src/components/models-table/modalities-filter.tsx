@@ -134,8 +134,8 @@ export function ModalitiesFilter() {
 
   return (
     <div className="grid gap-2">
-      <ScrollArea className="max-h-[168px] rounded-lg">
-        <div className="pr-3 space-y-2">
+      <ScrollArea className="max-h-[168px]">
+        <div className="pr-0 space-y-1">
           {optionsWithSelections.map((option) => {
             const checked = selectedValues.includes(option.value);
             const label = option.label.charAt(0).toUpperCase() + option.label.slice(1);
@@ -145,16 +145,18 @@ export function ModalitiesFilter() {
               <div
                 key={option.value}
                 className={cn(
-                  "group relative flex w-full items-center gap-1 rounded-md px-2 py-2 text-left hover:bg-muted",
-                  checked && "bg-muted",
+                  "group relative flex w-full items-center gap-2 px-2 py-2 rounded-md border border-transparent transition-all",
+                  checked
+                    ? "border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground shadow-[0_1px_0_0_hsl(var(--foreground)_/_6%),0_4px_8px_-10px_hsl(var(--foreground)_/_28%)]"
+                    : "hover:border-border hover:bg-gradient-to-b hover:from-muted/70 hover:via-muted/40 hover:to-background hover:shadow-[0_1px_0_0_hsl(var(--foreground)_/_4%),0_4px_8px_-12px_hsl(var(--foreground)_/_20%)]",
                 )}
               >
                 <button
                   type="button"
-                  className="flex flex-1 items-center justify-between"
+                  className="flex flex-1 items-center justify-between text-left"
                   onClick={() => toggleValue(option.value)}
                 >
-                  <span className="truncate font-normal text-foreground group-hover:text-accent-foreground">
+                  <span className="truncate font-normal text-foreground/90 group-hover:text-accent-foreground/90">
                     {label}
                     {checked ? (
                       <span className="text-foreground/70">{` / ${directionLabels[optionDirection]}`}</span>
@@ -176,7 +178,7 @@ export function ModalitiesFilter() {
                       updateFilters(selectedValues, nextDirections);
                     }}
                     aria-label={`Toggle ${label} direction`}
-                    className="text-foreground/70"
+                    className="text-foreground/70 hover:text-foreground"
                   >
                     <ArrowLeftRight className="h-4 w-4" aria-hidden="true" />
                     <span className="sr-only">Toggle modality direction</span>

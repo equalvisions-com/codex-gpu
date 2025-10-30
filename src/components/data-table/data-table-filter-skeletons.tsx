@@ -21,7 +21,7 @@ export function CheckboxListSkeleton({
   return (
     <div className={cn("grid gap-2", className)}>
       <ScrollArea className="max-h-[168px] rounded-lg">
-        <div className="space-y-2 pr-3">
+        <div className="space-y-1 pr-0">
           {Array.from({ length: rows }).map((_, index) => (
             <div
               key={index}

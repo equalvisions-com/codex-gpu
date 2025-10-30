@@ -47,8 +47,8 @@ export function DataTableFilterCheckbox<TData>({
 
   return (
     <div className="grid gap-2">
-      <ScrollArea className="max-h-[168px] rounded-lg">
-        <div className="pr-3 space-y-2">
+      <ScrollArea className="max-h-[168px]">
+        <div className="space-y-1">
           {filterOptions
             // TODO: we shoudn't sort the options here, instead filterOptions should be sorted by default
             // .sort((a, b) => a.label.localeCompare(b.label))
@@ -67,8 +67,10 @@ export function DataTableFilterCheckbox<TData>({
                 <div
                   key={String(option.value)}
                   className={cn(
-                    "group relative flex w-full items-center gap-2 px-2 py-2 hover:bg-muted cursor-pointer rounded-md",
-                    checked && "bg-muted",
+                    "group relative flex w-full items-center gap-2 px-2 py-2 cursor-pointer rounded-md transition-all",
+                    checked
+                      ? "border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground shadow-[0_1px_0_0_hsl(var(--foreground)_/_6%),0_4px_8px_-10px_hsl(var(--foreground)_/_28%)]"
+                      : "border border-transparent hover:border-border hover:bg-gradient-to-b hover:from-muted/70 hover:via-muted/40 hover:to-background hover:shadow-[0_1px_0_0_hsl(var(--foreground)_/_4%),0_4px_8px_-12px_hsl(var(--foreground)_/_20%)]",
                   )}
                   onClick={() => {
                     const newValue = checked
@@ -85,7 +87,7 @@ export function DataTableFilterCheckbox<TData>({
                     setColumnFilters(newFilters.filter(f => f.value !== undefined));
                   }}
                 >
-                  <div className="flex w-full items-center text-foreground group-hover:text-accent-foreground">
+                  <div className="flex w-full items-center text-foreground/90 group-hover:text-accent-foreground/90">
                     {Component ? (
                       <Component {...option} />
                     ) : (

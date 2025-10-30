@@ -301,6 +301,8 @@ export function ModelsClient({ initialFavoritesData, initialFavoriteKeys }: Mode
         user: accountUser,
         onSignOut: handleSignOut,
         isSigningOut,
+        onSignIn: handleSignIn,
+        onSignUp: handleSignUp,
       }}
       headerSlot={
         <MobileTopNav
@@ -315,7 +317,7 @@ export function ModelsClient({ initialFavoritesData, initialFavoriteKeys }: Mode
               onSignOut={handleSignOut}
               isSigningOut={isSigningOut}
               className="flex-1"
-              hideNavigation
+              showUserMenuFooter={false}
             />
           )}
         />
