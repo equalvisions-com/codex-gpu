@@ -35,6 +35,7 @@ import { flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-tabl
 import { useQueryStates, type ParserBuilder } from "nuqs";
 import { modelsSearchParamsParser } from "./models-search-params";
 import { RowSkeletons } from "../infinite-table/_components/row-skeletons";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ModelsCheckedActionsIsland } from "./models-checked-actions-island";
 import type { ModalitiesDirection } from "./modalities-filter";
 import { filterFields, sheetFields } from "./models-constants";
@@ -339,7 +340,13 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
 
 
   // Table rows for rendering order
-  const rows = table.getRowModel().rows;
+  // Memoize to avoid expensive recalculation when table grows large
+  // Use data reference instead of table to ensure stable memoization
+  const rows = React.useMemo(
+    () => table.getRowModel().rows,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [data]
+  );
 
   const sentinelNodeRef = React.useRef<HTMLTableRowElement | null>(null);
   const sentinelRef = React.useCallback((node: HTMLTableRowElement | null) => {
