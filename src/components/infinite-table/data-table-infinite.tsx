@@ -580,18 +580,28 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                   />
                 ) : rows.length ? (
                   <React.Fragment>
-                    {rows.map((row) => (
-                      <MemoizedRow
-                        key={row.id}
-                        row={row}
-                        table={table}
-                        selected={row.getIsSelected()}
-                        checked={checkedRows[row.id] ?? false}
-                        modelColumnWidth="var(--model-column-width)"
-                      />
-                    ))}
-                    {/* Sentinel row for prefetch */}
-                    <TableRow ref={sentinelRef} aria-hidden style={{ height: "1px" }} />
+                    {rows.map((row, index) => {
+                      const triggerIndex = Math.max(0, rows.length - 15);
+                      const shouldAttachSentinel =
+                        hasNextPage && index === triggerIndex;
+
+                      return (
+                        <React.Fragment key={row.id}>
+                          <MemoizedRow
+                            row={row}
+                            table={table}
+                            selected={row.getIsSelected()}
+                            checked={checkedRows[row.id] ?? false}
+                            modelColumnWidth="var(--model-column-width)"
+                          />
+                          {shouldAttachSentinel ? (
+                            <TableRow ref={sentinelRef} aria-hidden>
+                              <TableCell colSpan={columns.length} className="p-0" />
+                            </TableRow>
+                          ) : null}
+                        </React.Fragment>
+                      );
+                    })}
                     {(hasNextPage && (isFetchingNextPage || isPrefetching)) && (
                       <RowSkeletons
                         table={table}
