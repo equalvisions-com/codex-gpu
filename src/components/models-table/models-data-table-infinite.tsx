@@ -35,7 +35,7 @@ import { flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-tabl
 import { useQueryStates, type ParserBuilder } from "nuqs";
 import { modelsSearchParamsParser } from "./models-search-params";
 import { RowSkeletons } from "../infinite-table/_components/row-skeletons";
-import { Skeleton } from "@/components/ui/skeleton";
+import { PaginationSkeletons } from "../infinite-table/_components/pagination-skeletons";
 import { ModelsCheckedActionsIsland } from "./models-checked-actions-island";
 import type { ModalitiesDirection } from "./modalities-filter";
 import { filterFields, sheetFields } from "./models-constants";
@@ -746,14 +746,9 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
                       );
                     })}
                     {(hasNextPage && (isFetchingNextPage || isPrefetching)) && (
-                      <RowSkeletons
-                        key={`skeletons-${isFetchingNextPage}-${isPrefetching}-${data.length}-${typeof skeletonNextPageRowCount === "number" ? skeletonNextPageRowCount : skeletonRowCount}`}
+                      <PaginationSkeletons
+                        key={`pagination-skeletons-${isFetchingNextPage}-${isPrefetching}-${data.length}`}
                         table={table}
-                        rows={
-                          typeof skeletonNextPageRowCount === "number"
-                            ? skeletonNextPageRowCount
-                            : skeletonRowCount
-                        }
                         modelColumnWidth="var(--model-column-width)"
                       />
                     )}
