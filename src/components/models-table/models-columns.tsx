@@ -158,6 +158,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
                 fill
                 sizes="20px"
                 className="object-contain"
+                loading="eager"
               />
             ) : fallbackInitial ? (
               <span className="text-[10px] font-semibold uppercase text-muted-foreground">
