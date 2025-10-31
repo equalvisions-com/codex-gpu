@@ -246,6 +246,21 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
     }
   }, [isFetchingNextPage]);
 
+  // Force layout recalculation when skeleton rows are added to prevent clipping
+  React.useEffect(() => {
+    if (isFetchingNextPage || isPrefetching) {
+      // Use requestAnimationFrame to ensure this runs after React has rendered
+      requestAnimationFrame(() => {
+        const container = containerRef.current;
+        if (!container) return;
+        // Force browser to recalculate layout by reading scrollHeight
+        // This ensures the container expands properly when skeleton rows are added
+        void container.offsetHeight;
+        void container.scrollHeight;
+      });
+    }
+  }, [isFetchingNextPage, isPrefetching]);
+
   const requestNextPage = React.useCallback(() => {
     if (isPrefetching || isFetching || isFetchingNextPage || !hasNextPage) {
       return;
