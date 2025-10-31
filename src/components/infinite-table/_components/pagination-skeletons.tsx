@@ -14,7 +14,9 @@ interface PaginationSkeletonsProps<TData> {
 /**
  * Dedicated skeleton component for pagination loading
  * Always renders exactly 15 rows - hardcoded for reliability
- * This eliminates prop-based branching that can confuse React Compiler optimizations
+ * 
+ * Simple, direct rendering - no progressive loading, no batching
+ * React Compiler will optimize this component appropriately
  */
 export function PaginationSkeletons<TData>({
   table,
@@ -42,10 +44,13 @@ export function PaginationSkeletons<TData>({
     [visibleColumns, modelColumnWidth]
   );
 
-  // Hardcoded to 15 rows - no dynamic prop
+  // Always render all 15 rows immediately - no batching, no progressive rendering
+  // Hardcoded to ensure consistent rendering
+  const TOTAL_ROWS = 15;
+  
   return (
     <React.Fragment>
-      {Array.from({ length: 15 }).map((_, rowIndex) => (
+      {Array.from({ length: TOTAL_ROWS }).map((_, rowIndex) => (
         <SkeletonRow
           key={`pagination-skeleton-row-${rowIndex}`}
           columnConfigs={columnConfigs}

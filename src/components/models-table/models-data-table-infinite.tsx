@@ -21,6 +21,7 @@ import type {
 import { cn } from "@/lib/utils";
 import { type FetchNextPageOptions } from "@tanstack/react-query";
 import * as React from "react";
+import { flushSync } from "react-dom";
 import type {
   ColumnDef,
   ColumnFiltersState,
@@ -241,6 +242,8 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
   }, [mobileHeaderOffset]);
 
   const [isPrefetching, setIsPrefetching] = React.useState(false);
+  const [forceSkeletonRender, setForceSkeletonRender] = React.useState(0);
+  
   React.useEffect(() => {
     if (!isFetchingNextPage) {
       setIsPrefetching(false);
@@ -266,7 +269,12 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
     if (isPrefetching || isFetching || isFetchingNextPage || !hasNextPage) {
       return;
     }
-    setIsPrefetching(true);
+    // Force synchronous rendering of skeletons when pagination starts
+    // This prevents React from deferring when DOM is large
+    flushSync(() => {
+      setIsPrefetching(true);
+      setForceSkeletonRender((prev) => prev + 1);
+    });
     void fetchNextPage();
   }, [fetchNextPage, hasNextPage, isFetching, isFetchingNextPage, isPrefetching]);
 
@@ -747,7 +755,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
                     })}
                     {(hasNextPage && (isFetchingNextPage || isPrefetching)) && (
                       <PaginationSkeletons
-                        key={`pagination-skeletons-${isFetchingNextPage}-${isPrefetching}-${data.length}`}
+                        key={`pagination-skeletons-${isFetchingNextPage}-${isPrefetching}-${data.length}-${forceSkeletonRender}`}
                         table={table}
                         modelColumnWidth="var(--model-column-width)"
                       />
