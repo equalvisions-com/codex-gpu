@@ -11,6 +11,69 @@ import type { ColumnDef } from "@tanstack/react-table";
 import Image from "next/image";
 import type { ModelsColumnSchema } from "./models-schema";
 
+const MODEL_PROVIDER_LOGOS: Record<
+  string,
+  {
+    src: string;
+    alt: string;
+  }
+> = {
+  Anthropic: { src: "/logos/Anthropic.svg", alt: "Anthropic" },
+  Alibaba: { src: "/logos/alibaba.png", alt: "Alibaba" },
+  "Amazon Bedrock": { src: "/logos/Bedrock.svg", alt: "Amazon Bedrock" },
+  AI21: { src: "/logos/ai21.png", alt: "AI21" },
+  AionLabs: { src: "/logos/aionlabs.png", alt: "AionLabs" },
+  AtlasCloud: { src: "/logos/atlascloud.png", alt: "AtlasCloud" },
+  Azure: { src: "/logos/Azure.svg", alt: "Azure" },
+  BaseTen: { src: "/logos/baseten.svg", alt: "BaseTen" },
+  Cerebras: { src: "/logos/cerebras.png", alt: "Cerebras" },
+  Chutes: { src: "/logos/chutes.png", alt: "Chutes" },
+  Cohere: { src: "/logos/Cohere.png", alt: "Cohere" },
+  Cloudflare: { src: "/logos/cloudflare.png", alt: "Cloudflare" },
+  Crusoe: { src: "/logos/crusoe.png", alt: "Crusoe" },
+  DeepSeek: { src: "/logos/deepseek.png", alt: "DeepSeek" },
+  DeepInfra: { src: "/logos/deepinfra.png", alt: "DeepInfra" },
+  Featherless: { src: "/logos/featherless.svg", alt: "Featherless" },
+  Fireworks: { src: "/logos/Fireworks.png", alt: "Fireworks" },
+  Friendli: { src: "/logos/friendli.png", alt: "Friendli" },
+  GMICloud: { src: "/logos/gmicloud.png", alt: "GMICloud" },
+  "Google AI Studio": { src: "/logos/GoogleAIStudio.png", alt: "Google AI Studio" },
+  Groq: { src: "/logos/groq.png", alt: "Groq" },
+  "Z.AI": { src: "/logos/zai.png", alt: "Z.AI" },
+  xAI: { src: "/logos/xai.png", alt: "xAI" },
+  Together: { src: "/logos/together.svg", alt: "Together" },
+  Perplexity: { src: "/logos/Perplexity.svg", alt: "Perplexity" },
+  "Weights and Biases": { src: "/logos/wandb.png", alt: "Weights and Biases" },
+  "Google Vertex": { src: "/logos/GoogleVertex.png", alt: "Google Vertex" },
+  Hyperbolic: { src: "/logos/hyperbolic.png", alt: "Hyperbolic" },
+  Meta: { src: "/logos/meta.png", alt: "Meta" },
+  Mistral: { src: "/logos/Mistral.png", alt: "Mistral" },
+  Inception: { src: "/logos/inception.png", alt: "Inception" },
+  OpenAI: { src: "/logos/openai.png", alt: "OpenAI" },
+  Nebius: { src: "/logos/nebius.png", alt: "Nebius" },
+  Novita: { src: "/logos/novita.jpeg", alt: "Novita" },
+  InferenceNet: { src: "/logos/inferencenet.png", alt: "InferenceNet" },
+  Nvidia: { src: "/logos/nvidia.png", alt: "NVIDIA" },
+  Infermatic: { src: "/logos/infermatic.png", alt: "Infermatic" },
+  Inflection: { src: "/logos/inflection.png", alt: "Inflection" },
+  Liquid: { src: "/logos/liquid.png", alt: "Liquid" },
+  Mancer: { src: "/logos/mancer.svg", alt: "Mancer" },
+  MiniMax: { src: "/logos/minimax.png", alt: "MiniMax" },
+  OpenInference: { src: "/logos/openinference.png", alt: "OpenInference" },
+  Parasail: { src: "/logos/parasail.png", alt: "Parasail" },
+  Phala: { src: "/logos/phala.png", alt: "Phala" },
+  MoonshotAI: { src: "/logos/moonshot.png", alt: "Moonshot AI" },
+  NCompass: { src: "/logos/ncompass.png", alt: "nCompass" },
+  Morph: { src: "/logos/morph.png", alt: "Morph" },
+  NextBit: { src: "/logos/nextbit.png", alt: "NextBit" },
+  Relace: { src: "/logos/relace.png", alt: "Relace" },
+  SambaNova: { src: "/logos/sambanova.png", alt: "SambaNova" },
+  SiliconFlow: { src: "/logos/siliconflow.png", alt: "SiliconFlow" },
+  Switchpoint: { src: "/logos/switchpoint.png", alt: "Switchpoint" },
+  Targon: { src: "/logos/targon.svg", alt: "Targon" },
+  Venice: { src: "/logos/venice.png", alt: "Venice" },
+};
+
 function RowCheckboxCell({ rowId }: { rowId: string }) {
   const { checkedRows, toggleCheckedRow } = useDataTable<ModelsColumnSchema, unknown>();
   const isChecked = checkedRows[rowId] ?? false;
@@ -80,186 +143,30 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
       <DataTableColumnHeader column={column} title="Provider" />
     ),
     cell: ({ row }) => {
-      const provider = row.getValue<ModelsColumnSchema["provider"]>("provider");
+      const providerRaw = row.getValue<ModelsColumnSchema["provider"]>("provider") ?? "";
+      const provider = typeof providerRaw === "string" ? providerRaw : "";
+      const logo = MODEL_PROVIDER_LOGOS[provider];
+      const fallbackInitial = provider ? provider.charAt(0).toUpperCase() : "";
+
       return (
         <div className="flex min-w-0 items-center gap-2">
-          {provider === "Anthropic" && (
-            <Image src="/logos/Anthropic.svg" alt="Anthropic" width={20} height={20} className="rounded" />
-          )}
-          {provider === "Alibaba" && (
-            <Image src="/logos/alibaba.png" alt="Alibaba" width={20} height={20} className="rounded" />
-          )}
-          {provider === "Amazon Bedrock" && (
-            <Image src="/logos/Bedrock.svg" alt="Amazon Bedrock" width={20} height={20} className="rounded" />
-          )}
-          {provider === "AI21" && (
-            <Image src="/logos/ai21.png" alt="AI21" width={20} height={20} className="rounded" />
-          )}
-          {provider === "AionLabs" && (
-            <Image src="/logos/aionlabs.png" alt="AionLabs" width={20} height={20} className="rounded" />
-          )}
-          {provider === "AtlasCloud" && (
-            <Image src="/logos/atlascloud.png" alt="AtlasCloud" width={20} height={20} className="rounded" />
-          )}
-          {provider === "Azure" && (
-            <Image src="/logos/Azure.svg" alt="Azure" width={20} height={20} className="rounded" />
-          )}
-          {provider === "BaseTen" && (
-            <Image src="/logos/baseten.svg" alt="BaseTen" width={20} height={20} className="rounded" />
-          )}
-          {provider === "Cerebras" && (
-            <Image src="/logos/cerebras.png" alt="Cerebras" width={20} height={20} className="rounded" />
-          )}
-          {provider === "Chutes" && (
-            <Image src="/logos/chutes.png" alt="Chutes" width={20} height={20} className="rounded" />
-          )}
-          {provider === "Cohere" && (
-            <Image src="/logos/Cohere.png" alt="Cohere" width={20} height={20} className="rounded" />
-          )}
-          {provider === "Cloudflare" && (
-            <Image src="/logos/cloudflare.png" alt="Cloudflare" width={20} height={20} className="rounded" />
-          )}
-          {provider === "Crusoe" && (
-            <Image src="/logos/crusoe.png" alt="Crusoe" width={20} height={20} className="rounded" />
-          )}
-          {provider === "DeepSeek" && (
-            <Image src="/logos/deepseek.png" alt="Deepseek" width={20} height={20} className="rounded" />
-          )}
-          {provider === "DeepInfra" && (
-            <Image src="/logos/deepinfra.png" alt="DeepInfra" width={20} height={20} className="rounded" />
-          )}
-          {provider === "Featherless" && (
-            <Image src="/logos/featherless.svg" alt="Featherless" width={20} height={20} className="rounded" />
-          )}
-          {provider === "Fireworks" && (
-            <Image src="/logos/Fireworks.png" alt="Fireworks" width={20} height={20} className="rounded" />
-          )}
-          {provider === "Friendli" && (
-            <Image src="/logos/friendli.png" alt="Friendli" width={20} height={20} className="rounded" />
-          )}
-          {provider === "GMICloud" && (
-            <Image src="/logos/gmicloud.png" alt="GMICloud" width={20} height={20} className="rounded" />
-          )}
-          {provider === "Google AI Studio" && (
-            <Image src="/logos/GoogleAIStudio.png" alt="Google AI Studio" width={20} height={20} className="rounded" />
-          )}
-          {provider === "Groq" && (
-            <Image src="/logos/groq.png" alt="Groq" width={20} height={20} className="rounded" />
-          )}
-          {provider === "Z.AI" && (
-            <Image src="/logos/zai.png" alt="Z.AI" width={20} height={20} className="rounded" />
-          )}
-          {provider === "xAI" && (
-            <Image src="/logos/xai.png" alt="xAI" width={20} height={20} className="rounded" />
-          )}
-          {provider === "Together" && (
-            <Image src="/logos/together.svg" alt="Together" width={20} height={20} className="rounded" />
-          )}
-          {provider === "Perplexity" && (
-            <Image src="/logos/Perplexity.svg" alt="Perplexity" width={20} height={20} className="rounded" />
-          )}
-          {provider === "Weights and Biases" && (
-            <Image src="/logos/wandb.png" alt="Weights and Biases" width={20} height={20} className="rounded" />
-          )}
-          {provider === "Google Vertex" && (
-            <Image src="/logos/GoogleVertex.png" alt="Google Vertex" width={20} height={20} className="rounded" />
-          )}
-          {provider === "Hyperbolic" && (
-            <Image src="/logos/hyperbolic.png" alt="Hyperbolic" width={20} height={20} className="rounded" />
-          )}
-          {provider === "Meta" && (
-            <Image src="/logos/meta.png" alt="Meta" width={20} height={20} className="rounded" />
-          )}
-          {provider === "Mistral" && (
-            <Image src="/logos/Mistral.png" alt="Mistral" width={20} height={20} className="rounded" />
-          )}
-          {provider === "Inception" && (
-            <Image src="/logos/inception.png" alt="Inception" width={20} height={20} className="rounded" />
-          )}
-          {provider === "OpenAI" && (
-            <Image src="/logos/openai.png" alt="OpenAI" width={20} height={20} className="rounded" />
-          )}
-          {provider === "Nebius" && (
-            <Image src="/logos/nebius.png" alt="Nebius" width={20} height={20} className="rounded" />
-          )}
-          {provider === "Novita" && (
-            <Image src="/logos/novita.jpeg" alt="Novita" width={20} height={20} className="rounded" />
-          )}
-          {provider === "InferenceNet" && (
-            <Image src="/logos/inferencenet.png" alt="InferenceNet" width={20} height={20} className="rounded" />
-          )}
-          {provider === "Nvidia" && (
-            <Image src="/logos/nvidia.png" alt="NVIDIA" width={20} height={20} className="rounded" />
-          )}
-          {provider === "Infermatic" && (
-            <Image src="/logos/infermatic.png" alt="Infermatic" width={20} height={20} className="rounded" />
-          )}
-          {provider === "Inflection" && (
-            <Image src="/logos/inflection.png" alt="Inflection" width={20} height={20} className="rounded" />
-          )}
-          {provider === "Liquid" && (
-            <Image src="/logos/liquid.png" alt="Liquid" width={20} height={20} className="rounded" />
-          )}
-          {provider === "Mancer" && (
-            <Image src="/logos/mancer.svg" alt="Mancer" width={20} height={20} className="rounded" />
-          )}
-          {provider === "MiniMax" && (
-            <Image src="/logos/minimax.png" alt="Minimax" width={20} height={20} className="rounded" />
-          )}
-          {
-            provider === "OpenInference" && (
-            <Image src="/logos/openinference.png" alt="OpenInference" width={20} height={20} className="rounded" />
-          )}
-          {
-            provider === "Parasail" && (
-            <Image src="/logos/parasail.png" alt="Parasail" width={20} height={20} className="rounded" />
-          )}
-          {
-            provider === "Phala" && (
-            <Image src="/logos/phala.png" alt="Phala" width={20} height={20} className="rounded" />
-          )}
-          {
-            provider === "MoonshotAI" && (
-            <Image src="/logos/moonshot.png" alt="Moonshot AI" width={20} height={20} className="rounded" />
-          )}
-          {
-            provider === "NCompass" && (
-            <Image src="/logos/ncompass.png" alt="nCompass" width={20} height={20} className="rounded" />
-          )}
-          {
-            provider === "Morph" && (
-            <Image src="/logos/morph.png" alt="Morph" width={20} height={20} className="rounded" />
-          )}
-          {
-            provider === "NextBit" && (
-            <Image src="/logos/nextbit.png" alt="Nextbit" width={20} height={20} className="rounded" />
-          )}
-          {
-            provider === "Relace" && (
-            <Image src="/logos/relace.png" alt="Relace" width={20} height={20} className="rounded" />
-          )}
-          {
-            provider === "SambaNova" && (
-            <Image src="/logos/sambanova.png" alt="SambaNova" width={20} height={20} className="rounded" />
-          )}
-          {
-            provider === "SiliconFlow" && (
-            <Image src="/logos/siliconflow.png" alt="SiliconFlow" width={20} height={20} className="rounded" />
-          )}
-          {
-            provider === "Switchpoint" && (
-            <Image src="/logos/switchpoint.png" alt="Switchpoint" width={20} height={20} className="rounded" />
-          )}
-          {
-            provider === "Targon" && (
-            <Image src="/logos/targon.svg" alt="Targon" width={20} height={20} className="rounded" />
-          )}
-          {
-            provider === "Venice" && (
-            <Image src="/logos/venice.png" alt="Venice" width={20} height={20} className="rounded" />
-          )}
-          <span className="truncate" title={provider ?? undefined}>
-            {provider}
+          <span className="relative flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border/40 bg-background">
+            {logo ? (
+              <Image
+                src={logo.src}
+                alt={logo.alt}
+                fill
+                sizes="20px"
+                className="object-contain"
+              />
+            ) : fallbackInitial ? (
+              <span className="text-[10px] font-semibold uppercase text-muted-foreground">
+                {fallbackInitial}
+              </span>
+            ) : null}
+          </span>
+          <span className="truncate" title={provider || undefined}>
+            {provider || "Unknown"}
           </span>
         </div>
       );

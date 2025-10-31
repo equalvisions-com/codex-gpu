@@ -26,6 +26,22 @@ import Image from "next/image";
 import { HoverCardTimestamp } from "./_components/hover-card-timestamp";
 import type { ColumnSchema } from "./schema";
 
+const PROVIDER_LOGOS: Record<
+  string,
+  {
+    src: string;
+    alt: string;
+  }
+> = {
+  coreweave: { src: "/logos/coreweave.png", alt: "CoreWeave" },
+  nebius: { src: "/logos/nebius.png", alt: "Nebius" },
+  hyperstack: { src: "/logos/hyperstack.png", alt: "Hyperstack" },
+  runpod: { src: "/logos/runpod.png", alt: "RunPod" },
+  lambda: { src: "/logos/lambda.png", alt: "Lambda" },
+  digitalocean: { src: "/logos/digitalocean.png", alt: "DigitalOcean" },
+  oracle: { src: "/logos/oracle.png", alt: "Oracle" },
+  crusoe: { src: "/logos/crusoe.png", alt: "Crusoe" },
+};
 
 function RowCheckboxCell({ rowId }: { rowId: string }) {
   const { checkedRows, toggleCheckedRow } = useDataTable<ColumnSchema, unknown>();
@@ -47,34 +63,30 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       <DataTableColumnHeader column={column} title="Provider" />
     ),
     cell: ({ row }) => {
-      const provider = row.getValue<ColumnSchema["provider"]>("provider");
+      const providerRaw = row.getValue<ColumnSchema["provider"]>("provider") ?? "";
+      const provider = typeof providerRaw === "string" ? providerRaw : "";
+      const normalizedProvider = provider.toLowerCase();
+      const logo = PROVIDER_LOGOS[normalizedProvider];
+      const fallbackInitial = provider ? provider.charAt(0).toUpperCase() : "";
+
       return (
-        <div className="flex items-center gap-2">
-          {provider === "coreweave" && (
-            <Image src="/logos/coreweave.png" alt="CoreWeave" width={20} height={20} className="rounded" />
-          )}
-          {provider === "nebius" && (
-            <Image src="/logos/nebius.png" alt="Nebius" width={20} height={20} className="rounded" />
-          )}
-          {provider === "hyperstack" && (
-            <Image src="/logos/hyperstack.png" alt="Hyperstack" width={20} height={20} className="rounded" />
-          )}
-          {provider === "runpod" && (
-            <Image src="/logos/runpod.png" alt="RunPod" width={20} height={20} className="rounded" />
-          )}
-          {provider === "lambda" && (
-            <Image src="/logos/lambda.png" alt="Lambda" width={20} height={20} className="rounded" />
-          )}
-          {provider === "digitalocean" && (
-            <Image src="/logos/digitalocean.png" alt="DigitalOcean" width={20} height={20} className="rounded" />
-          )}
-          {provider === "oracle" && (
-            <Image src="/logos/oracle.png" alt="Oracle" width={20} height={20} className="rounded" />
-          )}
-          {provider === "crusoe" && (
-            <Image src="/logos/crusoe.png" alt="Crusoe" width={20} height={20} className="rounded" />
-          )}
-          <span className="capitalize">{provider}</span>
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="relative flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border/40 bg-background">
+            {logo ? (
+              <Image
+                src={logo.src}
+                alt={logo.alt}
+                fill
+                sizes="20px"
+                className="object-contain"
+              />
+            ) : fallbackInitial ? (
+              <span className="text-[10px] font-semibold uppercase text-muted-foreground">
+                {fallbackInitial}
+              </span>
+            ) : null}
+          </span>
+          <span className="truncate capitalize">{provider || "Unknown"}</span>
         </div>
       );
     },
