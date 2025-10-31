@@ -43,13 +43,6 @@ export function RowSkeletons<TData>({
                   width,
                   minWidth: isModelColumn ? modelColumnWidth : column.columnDef.minSize,
                   maxWidth: isModelColumn ? modelColumnWidth : undefined,
-                  ...(isModelColumn
-                    ? {
-                        position: "sticky",
-                        left: 0,
-                        zIndex: 30,
-                      }
-                    : {}),
                 }}
               >
                 {id === "blank" ? (

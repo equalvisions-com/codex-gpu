@@ -173,35 +173,31 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   }, [mobileHeaderOffset]);
 
   // User menu functionality
+  const [isPrefetching, setIsPrefetching] = React.useState(false);
+  React.useEffect(() => {
+    if (!isFetchingNextPage) {
+      setIsPrefetching(false);
+    }
+  }, [isFetchingNextPage]);
+
+  const requestNextPage = React.useCallback(() => {
+    if (isPrefetching || isFetching || isFetchingNextPage || !hasNextPage) {
+      return;
+    }
+    setIsPrefetching(true);
+    void fetchNextPage();
+  }, [fetchNextPage, hasNextPage, isFetching, isFetchingNextPage, isPrefetching]);
+
   const onScroll = React.useCallback(
     (e: React.UIEvent<HTMLElement>) => {
-      const onPageBottom =
-        Math.ceil(e.currentTarget.scrollTop + e.currentTarget.clientHeight) >=
-        e.currentTarget.scrollHeight;
-
-      if (onPageBottom && !isFetching && hasNextPage) {
-        fetchNextPage();
+      const { scrollTop, clientHeight, scrollHeight } = e.currentTarget;
+      const distanceToBottom = scrollHeight - (scrollTop + clientHeight);
+      if (distanceToBottom <= 600) {
+        requestNextPage();
       }
     },
-    [fetchNextPage, isFetching, hasNextPage],
+    [requestNextPage],
   );
-
-  // IntersectionObserver sentinel for near-bottom prefetch
-  const sentinelRef = React.useCallback((node: HTMLTableRowElement | null) => {
-    if (!node) return;
-    const root = (containerRef.current ?? undefined);
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0];
-        if (entry.isIntersecting && hasNextPage && !isFetching) {
-          fetchNextPage();
-        }
-      },
-      { root, rootMargin: "600px 0px 0px 0px" }
-    );
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, [containerRef, fetchNextPage, hasNextPage, isFetching]);
 
 
   const table = useReactTable({
@@ -262,12 +258,32 @@ export function DataTableInfinite<TData, TValue, TMeta>({
 
   // Virtualizer
   const rows = table.getRowModel().rows;
+
+  const sentinelNodeRef = React.useRef<HTMLTableRowElement | null>(null);
+  const sentinelRef = React.useCallback((node: HTMLTableRowElement | null) => {
+    sentinelNodeRef.current = node;
+  }, []);
+  React.useEffect(() => {
+    const node = sentinelNodeRef.current;
+    if (!node) return;
+    const root = containerRef.current ?? undefined;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          requestNextPage();
+        }
+      },
+      { root, rootMargin: "600px 0px 0px 0px" },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [requestNextPage, rows.length]);
   const containerVirtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => containerRef.current,
     estimateSize: () => 45,
     getItemKey: (index) => rows[index]?.id ?? index,
-    overscan: 40,
+    overscan: 125,
   });
   const rowVirtualizer = containerVirtualizer;
 
@@ -493,14 +509,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                               header.id === "gpu_model"
                                 ? "var(--model-column-width)"
                                 : undefined,
-                            ...(isModelColumn
-                              ? {
-                                  position: "sticky",
-                                  left: 0,
-                                  top: 0,
-                                  zIndex: 60,
-                                }
-                              : {}),
                           }}
                           aria-sort={
                             header.column.getIsSorted() === "asc"
@@ -590,8 +598,8 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                       );
                     })()}
                     {/* Sentinel row for prefetch */}
-                    <TableRow ref={sentinelRef} aria-hidden />
-                    {(isFetchingNextPage && hasNextPage) && (
+                    <TableRow ref={sentinelRef} aria-hidden style={{ height: "1px" }} />
+                    {(hasNextPage && (isFetchingNextPage || isPrefetching)) && (
                       <RowSkeletons
                         table={table}
                         rows={
@@ -745,13 +753,6 @@ function Row<TData>({
                 cell.column.id === "gpu_model"
                   ? modelColumnWidth
                   : undefined,
-              ...(isModelColumn
-                ? {
-                    position: "sticky",
-                    left: 0,
-                    zIndex: 40,
-                  }
-                : {}),
             }}
           >
             {flexRender(cell.column.columnDef.cell, cell.getContext())}
