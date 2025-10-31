@@ -278,11 +278,23 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     return () => observer.disconnect();
   }, [requestNextPage, rows.length]);
 
+  const previousFiltersRef = React.useRef<string>("__init__");
   React.useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
     container.scrollTop = 0;
   }, [sorting]);
+
+  React.useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const serializedFilters = JSON.stringify(columnFilters ?? []);
+    if (previousFiltersRef.current === serializedFilters) {
+      return;
+    }
+    previousFiltersRef.current = serializedFilters;
+    container.scrollTop = 0;
+  }, [columnFilters]);
 
   const minimumModelColumnWidth =
     table.getColumn("gpu_model")?.columnDef.minSize ?? 250;
@@ -329,8 +341,18 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     setSearch(searchPayload);
   }, [columnFilters, filterFields, setSearch]);
 
+  const previousSortParamRef = React.useRef<string>("__init__");
   React.useEffect(() => {
-    setSearch({ sort: sorting?.[0] || null });
+    const sortEntry = sorting?.[0] ?? null;
+    const serializedSort =
+      sortEntry === null
+        ? "null"
+        : `${sortEntry.id}:${sortEntry.desc ? "desc" : "asc"}`;
+    if (previousSortParamRef.current === serializedSort) {
+      return;
+    }
+    previousSortParamRef.current = serializedSort;
+    setSearch({ sort: sortEntry ?? null });
   }, [setSearch, sorting]);
 
   const selectedRow = React.useMemo(() => {
@@ -342,14 +364,26 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   }, [rowSelection, table, isLoading, isFetching, data]);
 
   // Selection sync limited to the current batch
+  const previousUuidRef = React.useRef<string>("__init__");
   React.useEffect(() => {
     if (isLoading || isFetching) return;
-    if (Object.keys(rowSelection)?.length && !selectedRow) {
+    const selectedKeys = Object.keys(rowSelection ?? {});
+    const nextUuid = selectedKeys[0] ?? null;
+
+    if (selectedKeys.length && !selectedRow) {
+      previousUuidRef.current = "null";
       setSearch({ uuid: null });
       onRowSelectionChange({});
-    } else {
-      setSearch({ uuid: Object.keys(rowSelection)?.[0] || null });
+      return;
     }
+
+    const serializedUuid = nextUuid ?? "null";
+    if (previousUuidRef.current === serializedUuid) {
+      return;
+    }
+
+    previousUuidRef.current = serializedUuid;
+    setSearch({ uuid: nextUuid });
   }, [isFetching, isLoading, onRowSelectionChange, rowSelection, selectedRow, setSearch]);
 
 
