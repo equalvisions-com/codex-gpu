@@ -148,6 +148,19 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
   const accountOnSignUp = account?.onSignUp;
   const pathname = usePathname() ?? "";
   const [isDesktopSearchOpen, setIsDesktopSearchOpen] = React.useState(false);
+  // Detect mobile once and reuse
+  const [isMobile, setIsMobile] = React.useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.innerWidth < 640;
+  });
+  
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
   const searchFilterField = React.useMemo(
     () =>
       filterFields.find(
@@ -245,11 +258,13 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
     (e: React.UIEvent<HTMLElement>) => {
       const { scrollTop, clientHeight, scrollHeight } = e.currentTarget;
       const distanceToBottom = scrollHeight - (scrollTop + clientHeight);
-      if (distanceToBottom <= 600) {
+      // Use smaller threshold on mobile to trigger earlier
+      const threshold = isMobile ? 300 : 600;
+      if (distanceToBottom <= threshold) {
         requestNextPage();
       }
     },
-    [requestNextPage],
+    [requestNextPage, isMobile],
   );
 
 
@@ -319,17 +334,19 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
     const node = sentinelNodeRef.current;
     if (!node) return;
     const root = containerRef.current ?? undefined;
+    // Use more aggressive rootMargin on mobile (smaller screens) to trigger earlier
+    const rootMargin = isMobile ? "300px 0px 0px 0px" : "600px 0px 0px 0px";
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0]?.isIntersecting) {
           requestNextPage();
         }
       },
-      { root, rootMargin: "600px 0px 0px 0px" },
+      { root, rootMargin },
     );
     observer.observe(node);
     return () => observer.disconnect();
-  }, [requestNextPage, rows.length]);
+  }, [requestNextPage, rows.length, isMobile]);
 
   const previousFiltersRef = React.useRef<string>("__init__");
   React.useEffect(() => {
@@ -579,13 +596,11 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
             )}
             data-table-container=""
           >
-            <div className="z-0">
+            <div className={cn("z-0 flex flex-col", mobileHeightClass, "sm:h-[100dvh]")} style={mobileHeightStyle}>
               <div
                 className={cn(
-                  mobileHeightClass,
-                  "sm:h-[100dvh] border-0 md:border-l bg-background overflow-hidden"
+                  "border-0 md:border-l bg-background overflow-hidden flex-1 min-h-0 flex flex-col"
                 )}
-                style={mobileHeightStyle}
               >
                 <Table
                   ref={tableRef}
@@ -596,7 +611,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
                   className="border-separate border-spacing-0 w-auto min-w-full table-fixed"
                   style={tableWidthStyle}
                   containerClassName={cn(
-                    "h-full overscroll-x-none scrollbar-hide"
+                    "h-full overscroll-x-none scrollbar-hide flex-1 min-h-0"
                   )}
                 >
               <TableHeader className={cn("sticky top-0 z-50 bg-background")}> 
@@ -685,7 +700,9 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
                 ) : rows.length ? (
                   <React.Fragment>
                     {rows.map((row, index) => {
-                      const triggerIndex = Math.max(0, rows.length - 15);
+                      // Trigger earlier on mobile (smaller screens) to prevent bottoming out
+                      const triggerOffset = isMobile ? 8 : 15;
+                      const triggerIndex = Math.max(0, rows.length - triggerOffset);
                       const shouldAttachSentinel =
                         hasNextPage && index === triggerIndex;
 
