@@ -35,7 +35,6 @@ import { flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-tabl
 import { useQueryStates, type ParserBuilder } from "nuqs";
 import { modelsSearchParamsParser } from "./models-search-params";
 import { RowSkeletons } from "../infinite-table/_components/row-skeletons";
-import { useVirtualizer } from "@tanstack/react-virtual";
 import { ModelsCheckedActionsIsland } from "./models-checked-actions-island";
 import type { ModalitiesDirection } from "./modalities-filter";
 import { filterFields, sheetFields } from "./models-constants";
@@ -309,7 +308,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
   });
 
 
-  // Virtualizer
+  // Table rows for rendering order
   const rows = table.getRowModel().rows;
 
   const sentinelNodeRef = React.useRef<HTMLTableRowElement | null>(null);
@@ -331,24 +330,19 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
     observer.observe(node);
     return () => observer.disconnect();
   }, [requestNextPage, rows.length]);
-  const containerVirtualizer = useVirtualizer({
-    count: rows.length,
-    getScrollElement: () => containerRef.current,
-    estimateSize: () => 45,
-    getItemKey: (index) => rows[index]?.id ?? index,
-    overscan: 125,
-  });
-  const rowVirtualizer = containerVirtualizer;
 
-  const columnSizingState = table.getState().columnSizing;
+  React.useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    container.scrollTop = 0;
+  }, [sorting]);
+
   const minimumModelColumnWidth =
     table.getColumn("name")?.columnDef.minSize ?? 250;
-  const fixedColumnsWidth = React.useMemo(() => {
-    return table
-      .getVisibleLeafColumns()
-      .filter((column) => column.id !== "name")
-      .reduce((acc, column) => acc + column.getSize(), 0);
-  }, [table, columnSizingState]);
+  const fixedColumnsWidth = table
+    .getVisibleLeafColumns()
+    .filter((column) => column.id !== "name")
+    .reduce((acc, column) => acc + column.getSize(), 0);
 
   const effectiveFixedColumnsWidth = fixedColumnsWidth;
 
@@ -408,15 +402,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
 
   React.useEffect(() => {
     setSearch({ sort: sorting?.[0] || null });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sorting]);
-
-  // Reset virtualizer when sorting changes to prevent flickering
-  React.useEffect(() => {
-    // Reset measurements and scroll to top for fresh sorted data
-    containerVirtualizer.measure();
-    containerVirtualizer.scrollToIndex(0, { align: 'start' });
-  }, [sorting, containerVirtualizer]);
+  }, [setSearch, sorting]);
 
   const selectedRow = React.useMemo(() => {
     if ((isLoading || isFetching) && !data.length) return;
@@ -435,8 +421,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
     } else {
       setSearch({ uuid: Object.keys(rowSelection)?.[0] || null });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rowSelection, selectedRow, isLoading, isFetching, onRowSelectionChange]);
+  }, [isFetching, isLoading, onRowSelectionChange, rowSelection, selectedRow, setSearch]);
 
 
   const getFacetedUniqueValues = React.useCallback(
@@ -663,44 +648,18 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
                     rows={skeletonRowCount}
                     modelColumnWidth="var(--model-column-width)"
                   />
-                ) : table.getRowModel().rows?.length ? (
+                ) : rows.length ? (
                   <React.Fragment>
-                    {(() => {
-                      const virtualRows = rowVirtualizer.getVirtualItems();
-                      const totalSize = rowVirtualizer.getTotalSize();
-                      const paddingTop = virtualRows.length > 0 ? virtualRows[0].start : 0;
-                      const paddingBottom = virtualRows.length > 0 ? totalSize - virtualRows[virtualRows.length - 1].end : 0;
-                      return (
-                        <React.Fragment>
-                          {paddingTop > 0 && (
-                            <TableRow aria-hidden>
-                              <TableCell colSpan={columns.length} style={{ height: paddingTop }} />
-                            </TableRow>
-                          )}
-                          {virtualRows.map((vRow) => {
-                            const row = rows[vRow.index];
-                            return (
-                              <React.Fragment key={row.id}>
-                                <MemoizedRow
-                                  dataIndex={vRow.index}
-                                  row={row}
-                                  table={table}
-                                  selected={row.getIsSelected()}
-                                  checked={checkedRows[row.id] ?? false}
-                                  modelColumnWidth="var(--model-column-width)"
-                                  rowRef={rowVirtualizer.measureElement}
-                                />
-                              </React.Fragment>
-                            );
-                          })}
-                          {paddingBottom > 0 && (
-                            <TableRow aria-hidden>
-                              <TableCell colSpan={columns.length} style={{ height: paddingBottom }} />
-                            </TableRow>
-                          )}
-                        </React.Fragment>
-                      );
-                    })()}
+                    {rows.map((row) => (
+                      <MemoizedRow
+                        key={row.id}
+                        row={row}
+                        table={table}
+                        selected={row.getIsSelected()}
+                        checked={checkedRows[row.id] ?? false}
+                        modelColumnWidth="var(--model-column-width)"
+                      />
+                    ))}
                     {/* Sentinel row for prefetch */}
                     <TableRow ref={sentinelRef} aria-hidden style={{ height: "1px" }} />
                     {(hasNextPage && (isFetchingNextPage || isPrefetching)) && (
@@ -770,8 +729,6 @@ function Row<TData>({
   table,
   selected,
   checked,
-  rowRef,
-  dataIndex,
   modelColumnWidth,
 }: {
   row: Row<TData>;
@@ -780,10 +737,6 @@ function Row<TData>({
   selected?: boolean;
   // Memoize checked highlight without forcing full row rerender otherwise
   checked?: boolean;
-  // Used by the virtualizer to dynamically measure row height
-  rowRef?: (el: HTMLTableRowElement | null) => void;
-  // Virtual index for measurement mapping
-  dataIndex?: number;
   modelColumnWidth: string;
 }) {
   const canHover =
@@ -795,8 +748,6 @@ function Row<TData>({
 
   return (
     <TableRow
-      ref={rowRef}
-      data-index={dataIndex}
       id={row.id}
       data-can-hover={canHover}
       tabIndex={0}
@@ -871,6 +822,7 @@ const MemoizedRow = React.memo(
   Row,
   (prev, next) =>
     prev.row.id === next.row.id &&
+    Object.is(prev.row.original, next.row.original) &&
     prev.selected === next.selected &&
     prev.checked === next.checked &&
     prev.modelColumnWidth === next.modelColumnWidth,
