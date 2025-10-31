@@ -21,7 +21,6 @@ import type {
 import { cn } from "@/lib/utils";
 import { type FetchNextPageOptions } from "@tanstack/react-query";
 import * as React from "react";
-import { flushSync } from "react-dom";
 import type {
   ColumnDef,
   ColumnFiltersState,
@@ -33,10 +32,10 @@ import type {
   OnChangeFn,
 } from "@tanstack/react-table";
 import { flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { useQueryStates, type ParserBuilder } from "nuqs";
 import { modelsSearchParamsParser } from "./models-search-params";
 import { RowSkeletons } from "../infinite-table/_components/row-skeletons";
-import { PaginationSkeletons } from "../infinite-table/_components/pagination-skeletons";
 import { ModelsCheckedActionsIsland } from "./models-checked-actions-island";
 import type { ModalitiesDirection } from "./modalities-filter";
 import { filterFields, sheetFields } from "./models-constants";
@@ -242,39 +241,17 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
   }, [mobileHeaderOffset]);
 
   const [isPrefetching, setIsPrefetching] = React.useState(false);
-  const [forceSkeletonRender, setForceSkeletonRender] = React.useState(0);
-  
   React.useEffect(() => {
     if (!isFetchingNextPage) {
       setIsPrefetching(false);
     }
   }, [isFetchingNextPage]);
 
-  // Force layout recalculation when skeleton rows are added to prevent clipping
-  React.useEffect(() => {
-    if (isFetchingNextPage || isPrefetching) {
-      // Use requestAnimationFrame to ensure this runs after React has rendered
-      requestAnimationFrame(() => {
-        const container = containerRef.current;
-        if (!container) return;
-        // Force browser to recalculate layout by reading scrollHeight
-        // This ensures the container expands properly when skeleton rows are added
-        void container.offsetHeight;
-        void container.scrollHeight;
-      });
-    }
-  }, [isFetchingNextPage, isPrefetching]);
-
   const requestNextPage = React.useCallback(() => {
     if (isPrefetching || isFetching || isFetchingNextPage || !hasNextPage) {
       return;
     }
-    // Force synchronous rendering of skeletons when pagination starts
-    // This prevents React from deferring when DOM is large
-    flushSync(() => {
-      setIsPrefetching(true);
-      setForceSkeletonRender((prev) => prev + 1);
-    });
+    setIsPrefetching(true);
     void fetchNextPage();
   }, [fetchNextPage, hasNextPage, isFetching, isFetchingNextPage, isPrefetching]);
 
@@ -348,13 +325,32 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
 
 
   // Table rows for rendering order
-  // Memoize to avoid expensive recalculation when table grows large
-  // Use data reference instead of table to ensure stable memoization
-  const rows = React.useMemo(
-    () => table.getRowModel().rows,
+  const rows = table.getRowModel().rows;
+
+  // Virtual scrolling setup - properly configured to reduce DOM size
+  const rowVirtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => containerRef.current,
+    estimateSize: () => 45, // Row height in pixels
+    overscan: 50, // Render 50 extra rows above and below viewport for smoother scrolling
+    enabled: !isLoading && !(isFetching && !data.length) && rows.length > 0,
+  });
+
+  // Get virtual items (cached to avoid multiple calls)
+  const virtualItems = rowVirtualizer.getVirtualItems();
+  const totalSize = rowVirtualizer.getTotalSize();
+  
+  // Force virtualizer to recalculate when rows change (important for pagination)
+  React.useEffect(() => {
+    if (rows.length > 0 && containerRef.current) {
+      // Small delay to ensure DOM is updated before measuring
+      requestAnimationFrame(() => {
+        rowVirtualizer.measure();
+      });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [data]
-  );
+    // rowVirtualizer is a stable reference from useVirtualizer hook
+  }, [rows.length]);
 
   const sentinelNodeRef = React.useRef<HTMLTableRowElement | null>(null);
   const sentinelRef = React.useCallback((node: HTMLTableRowElement | null) => {
@@ -377,6 +373,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
     observer.observe(node);
     return () => observer.disconnect();
   }, [requestNextPage, rows.length, isMobile]);
+
 
   const previousFiltersRef = React.useRef<string>("__init__");
   React.useEffect(() => {
@@ -728,39 +725,96 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
                     modelColumnWidth="var(--model-column-width)"
                   />
                 ) : rows.length ? (
-                  <React.Fragment>
-                    {rows.map((row, index) => {
-                      // Trigger earlier on mobile (smaller screens) to prevent bottoming out
-                      const triggerOffset = isMobile ? 8 : 15;
-                      const triggerIndex = Math.max(0, rows.length - triggerOffset);
-                      const shouldAttachSentinel =
-                        hasNextPage && index === triggerIndex;
+                  <>
+                    {/* Fallback: render all rows if virtualization is disabled or no virtual items */}
+                    {virtualItems.length === 0 ? (
+                      <>
+                        {rows.map((row, index) => {
+                          const triggerOffset = isMobile ? 8 : 15;
+                          const triggerIndex = Math.max(0, rows.length - triggerOffset);
+                          const shouldAttachSentinel =
+                            hasNextPage && index === triggerIndex;
 
-                      return (
-                        <React.Fragment key={row.id}>
-                          <MemoizedRow
-                            row={row}
-                            table={table}
-                            selected={row.getIsSelected()}
-                            checked={checkedRows[row.id] ?? false}
-                            modelColumnWidth="var(--model-column-width)"
-                          />
-                          {shouldAttachSentinel ? (
-                            <TableRow ref={sentinelRef} aria-hidden>
-                              <TableCell colSpan={columns.length} className="p-0" />
-                            </TableRow>
-                          ) : null}
-                        </React.Fragment>
-                      );
-                    })}
+                          return (
+                            <React.Fragment key={row.id}>
+                              <MemoizedRow
+                                row={row}
+                                table={table}
+                                selected={row.getIsSelected()}
+                                checked={checkedRows[row.id] ?? false}
+                                modelColumnWidth="var(--model-column-width)"
+                                data-index={index}
+                              />
+                              {shouldAttachSentinel ? (
+                                <TableRow ref={sentinelRef} aria-hidden>
+                                  <TableCell colSpan={columns.length} className="p-0" />
+                                </TableRow>
+                              ) : null}
+                            </React.Fragment>
+                          );
+                        })}
+                      </>
+                    ) : (
+                      <>
+                        {/* Virtual spacer for rows before visible range */}
+                        {virtualItems[0]?.index > 0 && (
+                          <tr aria-hidden style={{ height: `${virtualItems[0].start}px`, border: 0 }}>
+                            <td colSpan={columns.length} style={{ padding: 0, border: 0 }} />
+                          </tr>
+                        )}
+                        {/* Render only visible virtual items (reduces DOM size) */}
+                        {virtualItems.map((virtualItem) => {
+                          const row = rows[virtualItem.index];
+                          if (!row) return null;
+
+                          // Trigger earlier on mobile (smaller screens) to prevent bottoming out
+                          const triggerOffset = isMobile ? 8 : 15;
+                          const triggerIndex = Math.max(0, rows.length - triggerOffset);
+                          const shouldAttachSentinel =
+                            hasNextPage && virtualItem.index === triggerIndex;
+
+                          return (
+                            <React.Fragment key={virtualItem.key}>
+                              <MemoizedRow
+                                row={row}
+                                table={table}
+                                selected={row.getIsSelected()}
+                                checked={checkedRows[row.id] ?? false}
+                                modelColumnWidth="var(--model-column-width)"
+                                data-index={virtualItem.index}
+                                ref={rowVirtualizer.measureElement}
+                              />
+                              {shouldAttachSentinel ? (
+                                <TableRow ref={sentinelRef} aria-hidden>
+                                  <TableCell colSpan={columns.length} className="p-0" />
+                                </TableRow>
+                              ) : null}
+                            </React.Fragment>
+                          );
+                        })}
+                        {/* Virtual spacer for rows after visible range */}
+                        {virtualItems[virtualItems.length - 1]?.index < rows.length - 1 && (
+                          <tr aria-hidden style={{ 
+                            height: `${totalSize - virtualItems[virtualItems.length - 1].end}px`, 
+                            border: 0 
+                          }}>
+                            <td colSpan={columns.length} style={{ padding: 0, border: 0 }} />
+                          </tr>
+                        )}
+                      </>
+                    )}
                     {(hasNextPage && (isFetchingNextPage || isPrefetching)) && (
-                      <PaginationSkeletons
-                        key={`pagination-skeletons-${isFetchingNextPage}-${isPrefetching}-${data.length}-${forceSkeletonRender}`}
+                      <RowSkeletons
                         table={table}
+                        rows={
+                          typeof skeletonNextPageRowCount === "number"
+                            ? skeletonNextPageRowCount
+                            : skeletonRowCount
+                        }
                         modelColumnWidth="var(--model-column-width)"
                       />
                     )}
-                  </React.Fragment>
+                  </>
                 ) : (
                   <React.Fragment>
                     <TableRow>
@@ -817,6 +871,8 @@ function Row<TData>({
   selected,
   checked,
   modelColumnWidth,
+  "data-index": dataIndex,
+  ref: measureRef,
 }: {
   row: Row<TData>;
   table: TTable<TData>;
@@ -825,6 +881,8 @@ function Row<TData>({
   // Memoize checked highlight without forcing full row rerender otherwise
   checked?: boolean;
   modelColumnWidth: string;
+  "data-index"?: number;
+  ref?: React.Ref<HTMLTableRowElement>;
 }) {
   const canHover =
     typeof window !== "undefined" &&
@@ -835,8 +893,10 @@ function Row<TData>({
 
   return (
     <TableRow
+      ref={measureRef}
       id={row.id}
       data-can-hover={canHover}
+      data-index={dataIndex}
       tabIndex={0}
       data-state={selected && "selected"}
       aria-selected={row.getIsSelected()}
