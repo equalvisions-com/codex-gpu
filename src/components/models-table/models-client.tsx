@@ -271,7 +271,8 @@ export function ModelsClient({ initialFavoritesData, initialFavoriteKeys }: Mode
       key={`models-table-${isFavoritesMode ? `favorites-${favorites?.length || 0}` : "all"}`}
       columns={modelsColumns}
       data={flatData}
-      skeletonRowCount={search.size ?? 50}
+      skeletonRowCount={50}
+      skeletonNextPageRowCount={15}
       totalRows={totalDBRowCount}
       filterRows={filterDBRowCount}
       totalRowsFetched={totalFetched}
