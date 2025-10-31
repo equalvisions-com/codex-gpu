@@ -22,11 +22,25 @@ function RowSkeletonsComponent<TData>({
     [table]
   );
 
+  // Use useLayoutEffect to ensure skeletons render synchronously before browser paint
+  React.useLayoutEffect(() => {
+    // Force browser to render skeletons immediately by accessing layout properties
+    // This prevents React from deferring rendering during fast scrolling
+    const forceLayout = () => {
+      if (typeof document !== 'undefined') {
+        // Accessing document.body forces a layout recalculation
+        void document.body.offsetHeight;
+      }
+    };
+    // Use requestAnimationFrame to ensure this runs after React commits but before paint
+    requestAnimationFrame(forceLayout);
+  }, [rows, visibleColumns.length]);
+
   return (
     <React.Fragment>
       {Array.from({ length: rows }).map((_, rowIndex) => (
         <TableRow
-          key={`skeleton-${rowIndex}`}
+          key={`skeleton-row-${rowIndex}-${rows}`}
           className={cn("[&>:not(:last-child)]:border-r", "hover:bg-transparent")}
         >
           {visibleColumns.map((column) => {
@@ -99,15 +113,17 @@ function RowSkeletonsComponent<TData>({
   );
 }
 
-// Memoize to prevent unnecessary re-renders during fast scrolling
+// Simplified memo comparison - only check props that actually matter
+// Don't check table columns in comparison as it's expensive and causes rendering issues
 export const RowSkeletons = React.memo(
   RowSkeletonsComponent,
-  (prev, next) =>
-    prev.rows === next.rows &&
-    prev.modelColumnWidth === next.modelColumnWidth &&
-    // Compare column count and IDs instead of table reference
-    prev.table.getVisibleLeafColumns().length === next.table.getVisibleLeafColumns().length &&
-    prev.table.getVisibleLeafColumns().every((col, i) => 
-      col.id === next.table.getVisibleLeafColumns()[i]?.id
-    )
+  (prev, next) => {
+    // Only compare the props that actually affect rendering
+    // Checking table columns is expensive and causes React to defer rendering
+    return (
+      prev.rows === next.rows &&
+      prev.modelColumnWidth === next.modelColumnWidth &&
+      prev.table === next.table
+    );
+  }
 ) as typeof RowSkeletonsComponent;
