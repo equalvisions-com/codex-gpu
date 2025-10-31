@@ -740,6 +740,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
                     })}
                     {(hasNextPage && (isFetchingNextPage || isPrefetching)) && (
                       <RowSkeletons
+                        key={`skeletons-${isFetchingNextPage}-${isPrefetching}-${data.length}`}
                         table={table}
                         rows={
                           typeof skeletonNextPageRowCount === "number"

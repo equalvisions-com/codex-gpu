@@ -12,12 +12,15 @@ interface RowSkeletonsProps<TData> {
   modelColumnWidth: string;
 }
 
-export function RowSkeletons<TData>({
+function RowSkeletonsComponent<TData>({
   table,
   rows = 10,
   modelColumnWidth,
 }: RowSkeletonsProps<TData>) {
-  const visibleColumns = table.getVisibleLeafColumns();
+  const visibleColumns = React.useMemo(
+    () => table.getVisibleLeafColumns(),
+    [table]
+  );
 
   return (
     <React.Fragment>
@@ -95,3 +98,16 @@ export function RowSkeletons<TData>({
     </React.Fragment>
   );
 }
+
+// Memoize to prevent unnecessary re-renders during fast scrolling
+export const RowSkeletons = React.memo(
+  RowSkeletonsComponent,
+  (prev, next) =>
+    prev.rows === next.rows &&
+    prev.modelColumnWidth === next.modelColumnWidth &&
+    // Compare column count and IDs instead of table reference
+    prev.table.getVisibleLeafColumns().length === next.table.getVisibleLeafColumns().length &&
+    prev.table.getVisibleLeafColumns().every((col, i) => 
+      col.id === next.table.getVisibleLeafColumns()[i]?.id
+    )
+) as typeof RowSkeletonsComponent;
