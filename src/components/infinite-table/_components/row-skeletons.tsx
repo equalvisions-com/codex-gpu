@@ -12,7 +12,10 @@ interface RowSkeletonsProps<TData> {
   modelColumnWidth: string;
 }
 
-function RowSkeletonsComponent<TData>({
+// React Compiler automatically memoizes components in production
+// Manual React.memo conflicts with compiler optimizations
+// Let the compiler handle memoization automatically
+export function RowSkeletons<TData>({
   table,
   rows = 10,
   modelColumnWidth,
@@ -21,20 +24,6 @@ function RowSkeletonsComponent<TData>({
     () => table.getVisibleLeafColumns(),
     [table]
   );
-
-  // Use useLayoutEffect to ensure skeletons render synchronously before browser paint
-  React.useLayoutEffect(() => {
-    // Force browser to render skeletons immediately by accessing layout properties
-    // This prevents React from deferring rendering during fast scrolling
-    const forceLayout = () => {
-      if (typeof document !== 'undefined') {
-        // Accessing document.body forces a layout recalculation
-        void document.body.offsetHeight;
-      }
-    };
-    // Use requestAnimationFrame to ensure this runs after React commits but before paint
-    requestAnimationFrame(forceLayout);
-  }, [rows, visibleColumns.length]);
 
   return (
     <React.Fragment>
@@ -112,18 +101,3 @@ function RowSkeletonsComponent<TData>({
     </React.Fragment>
   );
 }
-
-// Simplified memo comparison - only check props that actually matter
-// Don't check table columns in comparison as it's expensive and causes rendering issues
-export const RowSkeletons = React.memo(
-  RowSkeletonsComponent,
-  (prev, next) => {
-    // Only compare the props that actually affect rendering
-    // Checking table columns is expensive and causes React to defer rendering
-    return (
-      prev.rows === next.rows &&
-      prev.modelColumnWidth === next.modelColumnWidth &&
-      prev.table === next.table
-    );
-  }
-) as typeof RowSkeletonsComponent;
