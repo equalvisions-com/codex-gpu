@@ -272,7 +272,7 @@ export function ModelsClient({ initialFavoritesData, initialFavoriteKeys }: Mode
       columns={modelsColumns}
       data={flatData}
       skeletonRowCount={50}
-      skeletonNextPageRowCount={15}
+      skeletonNextPageRowCount={undefined}
       totalRows={totalDBRowCount}
       filterRows={filterDBRowCount}
       totalRowsFetched={totalFetched}

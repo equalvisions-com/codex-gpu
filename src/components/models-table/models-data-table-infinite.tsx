@@ -48,9 +48,6 @@ const noop = () => {};
 const gradientSurfaceClass =
   "border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-foreground";
 
-// FloatingControlsButton removed
-
-
 // Note: chart groupings could be added later if needed
 export interface ModelsDataTableInfiniteProps<TData, TValue, TMeta> {
   columns: ColumnDef<TData, TValue>[];
@@ -332,7 +329,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
     count: rows.length,
     getScrollElement: () => containerRef.current,
     estimateSize: () => 45, // Row height in pixels
-    overscan: 50, // Render 50 extra rows above and below viewport for smoother scrolling
+    overscan: isMobile ? 25 : 50, // Mobile: 25, Desktop: 50 extra rows above/below viewport
     enabled: !isLoading && !(isFetching && !data.length) && rows.length > 0,
   });
 
@@ -400,24 +397,19 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
     .filter((column) => column.id !== "name")
     .reduce((acc, column) => acc + column.getSize(), 0);
 
-  const effectiveFixedColumnsWidth = fixedColumnsWidth;
-
-  const modelColumnWidthValue = React.useMemo(() => {
-    return `max(${minimumModelColumnWidth}px, calc(100% - ${effectiveFixedColumnsWidth}px))`;
-  }, [minimumModelColumnWidth, effectiveFixedColumnsWidth]);
+  const modelColumnWidth = React.useMemo(() => {
+    return `max(${minimumModelColumnWidth}px, calc(100% - ${fixedColumnsWidth}px))`;
+  }, [minimumModelColumnWidth, fixedColumnsWidth]);
 
   const tableWidthStyle = React.useMemo(
     () =>
       ({
         width: "100%",
-        minWidth: `${effectiveFixedColumnsWidth + minimumModelColumnWidth}px`,
-        "--model-column-width": modelColumnWidthValue,
+        minWidth: `${fixedColumnsWidth + minimumModelColumnWidth}px`,
+        "--model-column-width": modelColumnWidth,
       }) as React.CSSProperties,
-    [effectiveFixedColumnsWidth, minimumModelColumnWidth, modelColumnWidthValue],
+    [fixedColumnsWidth, minimumModelColumnWidth, modelColumnWidth],
   );
-
-  // Calculated width value for model column styling
-  const modelColumnWidth = modelColumnWidthValue;
 
   const previousSearchPayloadRef = React.useRef<string>("");
 
@@ -722,7 +714,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
                   <RowSkeletons
                     table={table}
                     rows={skeletonRowCount}
-                    modelColumnWidth="var(--model-column-width)"
+                    modelColumnWidth={modelColumnWidth}
                   />
                 ) : rows.length ? (
                   <>
@@ -742,7 +734,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
                                 table={table}
                                 selected={row.getIsSelected()}
                                 checked={checkedRows[row.id] ?? false}
-                                modelColumnWidth="var(--model-column-width)"
+                                modelColumnWidth={modelColumnWidth}
                                 data-index={index}
                               />
                               {shouldAttachSentinel ? (
@@ -780,7 +772,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
                                 table={table}
                                 selected={row.getIsSelected()}
                                 checked={checkedRows[row.id] ?? false}
-                                modelColumnWidth="var(--model-column-width)"
+                                modelColumnWidth={modelColumnWidth}
                                 data-index={virtualItem.index}
                                 ref={rowVirtualizer.measureElement}
                               />
@@ -809,9 +801,11 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
                         rows={
                           typeof skeletonNextPageRowCount === "number"
                             ? skeletonNextPageRowCount
-                            : skeletonRowCount
+                            : isMobile
+                              ? 15
+                              : 50
                         }
-                        modelColumnWidth="var(--model-column-width)"
+                        modelColumnWidth={modelColumnWidth}
                       />
                     )}
                   </>
@@ -972,5 +966,6 @@ const MemoizedRow = React.memo(
     Object.is(prev.row.original, next.row.original) &&
     prev.selected === next.selected &&
     prev.checked === next.checked &&
-    prev.modelColumnWidth === next.modelColumnWidth,
+    prev.modelColumnWidth === next.modelColumnWidth &&
+    prev["data-index"] === next["data-index"],
 ) as typeof Row;

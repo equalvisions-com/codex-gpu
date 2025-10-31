@@ -9,11 +9,14 @@ import {
   TableRow,
 } from "@/components/custom/table";
 import { DataTableProvider } from "@/components/data-table/data-table-provider";
+import { DataTableFilterControls } from "@/components/data-table/data-table-filter-controls";
+import { DataTableFilterInput } from "@/components/data-table/data-table-filter-input";
 import { MemoizedDataTableSheetContent } from "@/components/data-table/data-table-sheet/data-table-sheet-content";
 import { DataTableSheetDetails } from "@/components/data-table/data-table-sheet/data-table-sheet-details";
 import type {
   DataTableFilterField,
   SheetField,
+  DataTableInputFilterField,
 } from "@/components/data-table/types";
 import { cn } from "@/lib/utils";
 import { type FetchNextPageOptions } from "@tanstack/react-query";
@@ -29,16 +32,20 @@ import type {
   OnChangeFn,
 } from "@tanstack/react-table";
 import { flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { useQueryStates, type ParserBuilder } from "nuqs";
 import { searchParamsParser } from "./search-params";
 import { RowSkeletons } from "./_components/row-skeletons";
 import { CheckedActionsIsland } from "./_components/checked-actions-island";
 import { filterFields, sheetFields } from "./constants";
-import { SidebarPanel, type AccountUser } from "./account-components";
+import { UserMenu, type AccountUser } from "./account-components";
+import { usePathname } from "next/navigation";
+import { Search } from "lucide-react";
+import { DesktopNavTabs, type DesktopNavItem } from "./nav-tabs";
 
 const noop = () => {};
-
-// FloatingControlsButton removed
+const gradientSurfaceClass =
+  "border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-foreground";
 
 // Note: chart groupings could be added later if needed
 export interface DataTableInfiniteProps<TData, TValue, TMeta> {
@@ -137,6 +144,65 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   const accountIsSigningOut = account?.isSigningOut ?? false;
   const accountOnSignIn = account?.onSignIn;
   const accountOnSignUp = account?.onSignUp;
+  const pathname = usePathname() ?? "";
+  const [isDesktopSearchOpen, setIsDesktopSearchOpen] = React.useState(false);
+  // Detect mobile once and reuse
+  const [isMobile, setIsMobile] = React.useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.innerWidth < 640;
+  });
+  
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+  const searchFilterField = React.useMemo(
+    () =>
+      filterFields.find(
+        (field): field is DataTableInputFilterField<TData> =>
+          field.type === "input" && field.value === "search",
+      ),
+    [filterFields],
+  );
+  const toggleDesktopSearch = React.useCallback(() => {
+    setIsDesktopSearchOpen((prev) => !prev);
+  }, []);
+  React.useEffect(() => {
+    setIsDesktopSearchOpen(false);
+  }, [pathname]);
+  const navigationItems = React.useMemo<DesktopNavItem[]>(
+    () => [
+      {
+        type: "link",
+        href: "/llms",
+        label: "LLMs",
+        isActive: pathname === "/" || pathname.startsWith("/llms"),
+      },
+      {
+        type: "link",
+        href: "/gpus",
+        label: "GPUs",
+        isActive: pathname.startsWith("/gpus"),
+      },
+      {
+        type: "link",
+        href: "/tools",
+        label: "Tools",
+        isActive: pathname.startsWith("/tools"),
+      },
+      {
+        type: "action",
+        label: "Search",
+        icon: Search,
+        isActive: isDesktopSearchOpen,
+        onSelect: toggleDesktopSearch,
+      },
+    ],
+    [isDesktopSearchOpen, pathname, toggleDesktopSearch],
+  );
   const mobileHeightClass = mobileHeaderOffset
     ? "h-[calc(100dvh-var(--total-padding-mobile)-var(--mobile-header-offset))]"
     : "h-[calc(100dvh-var(--total-padding-mobile))]";
@@ -191,11 +257,13 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     (e: React.UIEvent<HTMLElement>) => {
       const { scrollTop, clientHeight, scrollHeight } = e.currentTarget;
       const distanceToBottom = scrollHeight - (scrollTop + clientHeight);
-      if (distanceToBottom <= 600) {
+      // Use smaller threshold on mobile to trigger earlier
+      const threshold = isMobile ? 300 : 600;
+      if (distanceToBottom <= threshold) {
         requestNextPage();
       }
     },
-    [requestNextPage],
+    [requestNextPage, isMobile],
   );
 
 
@@ -258,6 +326,31 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   // Table rows for rendering order
   const rows = table.getRowModel().rows;
 
+  // Virtual scrolling setup - properly configured to reduce DOM size
+  const rowVirtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => containerRef.current,
+    estimateSize: () => 45, // Row height in pixels
+    overscan: isMobile ? 25 : 50, // Mobile: 25, Desktop: 50 extra rows above/below viewport
+    enabled: !isLoading && !(isFetching && !data.length) && rows.length > 0,
+  });
+
+  // Get virtual items (cached to avoid multiple calls)
+  const virtualItems = rowVirtualizer.getVirtualItems();
+  const totalSize = rowVirtualizer.getTotalSize();
+  
+  // Force virtualizer to recalculate when rows change (important for pagination)
+  React.useEffect(() => {
+    if (rows.length > 0 && containerRef.current) {
+      // Small delay to ensure DOM is updated before measuring
+      requestAnimationFrame(() => {
+        rowVirtualizer.measure();
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // rowVirtualizer is a stable reference from useVirtualizer hook
+  }, [rows.length]);
+
   const sentinelNodeRef = React.useRef<HTMLTableRowElement | null>(null);
   const sentinelRef = React.useCallback((node: HTMLTableRowElement | null) => {
     sentinelNodeRef.current = node;
@@ -266,17 +359,19 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     const node = sentinelNodeRef.current;
     if (!node) return;
     const root = containerRef.current ?? undefined;
+    // Use more aggressive rootMargin on mobile (smaller screens) to trigger earlier
+    const rootMargin = isMobile ? "300px 0px 0px 0px" : "600px 0px 0px 0px";
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0]?.isIntersecting) {
           requestNextPage();
         }
       },
-      { root, rootMargin: "600px 0px 0px 0px" },
+      { root, rootMargin },
     );
     observer.observe(node);
     return () => observer.disconnect();
-  }, [requestNextPage, rows.length]);
+  }, [requestNextPage, rows.length, isMobile]);
 
   const previousFiltersRef = React.useRef<string>("__init__");
   React.useEffect(() => {
@@ -303,24 +398,19 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     .filter((column) => column.id !== "gpu_model")
     .reduce((acc, column) => acc + column.getSize(), 0);
 
-  const effectiveFixedColumnsWidth = fixedColumnsWidth;
-
-  const modelColumnWidthValue = React.useMemo(() => {
-    return `max(${minimumModelColumnWidth}px, calc(100% - ${effectiveFixedColumnsWidth}px))`;
-  }, [minimumModelColumnWidth, effectiveFixedColumnsWidth]);
+  const modelColumnWidth = React.useMemo(() => {
+    return `max(${minimumModelColumnWidth}px, calc(100% - ${fixedColumnsWidth}px))`;
+  }, [minimumModelColumnWidth, fixedColumnsWidth]);
 
   const tableWidthStyle = React.useMemo(
     () =>
       ({
         width: "100%",
-        minWidth: `${effectiveFixedColumnsWidth + minimumModelColumnWidth}px`,
-        "--model-column-width": modelColumnWidthValue,
+        minWidth: `${fixedColumnsWidth + minimumModelColumnWidth}px`,
+        "--model-column-width": modelColumnWidth,
       }) as React.CSSProperties,
-    [effectiveFixedColumnsWidth, minimumModelColumnWidth, modelColumnWidthValue],
+    [fixedColumnsWidth, minimumModelColumnWidth, modelColumnWidth],
   );
-
-  // Calculated width value for model column styling
-  const modelColumnWidth = modelColumnWidthValue;
 
   const previousSearchPayloadRef = React.useRef<string>("");
 
@@ -453,21 +543,54 @@ export function DataTableInfinite<TData, TValue, TMeta>({
       getFacetedUniqueValues={getFacetedUniqueValues}
       getFacetedMinMaxValues={getFacetedMinMaxValues}
     >
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-2 sm:gap-4">
         {headerSlot}
-        <div className="grid h-full grid-cols-1 gap-6 sm:grid-cols-[13rem_1fr] md:grid-cols-[18rem_1fr]">
+        <div className="grid h-full grid-cols-1 gap-4 sm:grid-cols-[13rem_1fr] md:grid-cols-[18rem_1fr]">
           <div
             className={cn(
-              "hidden sm:flex h-[calc(100dvh-var(--total-padding-mobile))] sm:h-[100dvh] flex-col sticky top-0 min-w-52 max-w-52 self-start md:min-w-72 md:max-w-72 rounded-lg bg-background overflow-hidden"
+              "hidden sm:flex h-[calc(100dvh-var(--total-padding-mobile))] sm:h-[100dvh] flex-col sticky top-0 min-w-52 max-w-52 self-start md:min-w-72 md:max-w-72 rounded-lg overflow-hidden"
             )}
           >
-            <SidebarPanel
-              user={accountUser}
-              onSignOut={accountOnSignOut}
-              isSigningOut={accountIsSigningOut}
-              onSignIn={accountOnSignIn}
-              onSignUp={accountOnSignUp}
-            />
+            <div className="flex h-full w-full flex-col">
+              <div className="mx-auto w-full max-w-full pl-4 pr-0 pt-4 mb-6 space-y-4">
+                <DesktopNavTabs
+                  items={navigationItems}
+                  className={gradientSurfaceClass}
+                />
+                {searchFilterField ? (
+                  <>
+                    <div className="flex items-center gap-2 sm:hidden">
+                      <div className="flex-1">
+                        <DataTableFilterInput {...searchFilterField} />
+                      </div>
+                    </div>
+                    {isDesktopSearchOpen ? (
+                      <div className="hidden items-center gap-2 sm:flex">
+                        <div className="flex-1">
+                          <DataTableFilterInput {...searchFilterField} />
+                        </div>
+                      </div>
+                    ) : null}
+                  </>
+                ) : null}
+              </div>
+              <div className="flex-1 overflow-y-auto scrollbar-hide">
+                <div className="mx-auto w-full max-w-full pl-4 pr-0 pb-4">
+                  <DataTableFilterControls showSearch={false} />
+                </div>
+              </div>
+              <div className="flex-shrink-0 pl-2 pb-2 pt-0 pr-0">
+                <UserMenu
+                  user={accountUser}
+                  onSignOut={accountOnSignOut}
+                  isSigningOut={accountIsSigningOut}
+                  isAuthenticated={Boolean(accountUser)}
+                  forceUnauthSignInButton
+                  onSignIn={accountOnSignIn}
+                  onSignUp={accountOnSignUp}
+                />
+              </div>
+            </div>
           </div>
           <div
             className={cn(
@@ -475,13 +598,11 @@ export function DataTableInfinite<TData, TValue, TMeta>({
             )}
             data-table-container=""
           >
-            <div className="z-0">
+            <div className={cn("z-0 flex flex-col", mobileHeightClass, "sm:h-[100dvh]")} style={mobileHeightStyle}>
               <div
                 className={cn(
-                  mobileHeightClass,
-                  "sm:h-[100dvh] rounded-none sm:rounded-lg border bg-background overflow-hidden"
+                  "border-0 md:border-l bg-background overflow-hidden flex-1 min-h-0 flex flex-col"
                 )}
-                style={mobileHeightStyle}
               >
                 <Table
                   ref={tableRef}
@@ -492,10 +613,10 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                   className="border-separate border-spacing-0 w-auto min-w-full table-fixed"
                   style={tableWidthStyle}
                   containerClassName={cn(
-                    "h-full overscroll-x-none scrollbar-hide"
+                    "h-full overscroll-x-none scrollbar-hide flex-1 min-h-0"
                   )}
                 >
-              <TableHeader className={cn("sticky top-0 z-50 bg-muted")}>
+              <TableHeader className={cn("sticky top-0 z-50 bg-background")}>
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow
                     key={headerGroup.id}
@@ -510,7 +631,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                         <TableHead
                           key={header.id}
                           className={cn(
-                            "relative select-none truncate border-b border-border bg-muted text-foreground/70 [&>.cursor-col-resize]:last:opacity-0",
+                            "relative select-none truncate border-b border-border bg-background text-foreground/70 [&>.cursor-col-resize]:last:opacity-0",
                             isModelColumn && "shadow-[inset_-1px_0_0_var(--border)]",
                             header.column.columnDef.meta?.headerClassName,
                           )}
@@ -576,44 +697,101 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                   <RowSkeletons
                     table={table}
                     rows={skeletonRowCount}
-                    modelColumnWidth="var(--model-column-width)"
+                    modelColumnWidth={modelColumnWidth}
                   />
                 ) : rows.length ? (
-                  <React.Fragment>
-                    {rows.map((row, index) => {
-                      const triggerIndex = Math.max(0, rows.length - 15);
-                      const shouldAttachSentinel =
-                        hasNextPage && index === triggerIndex;
+                  <>
+                    {/* Fallback: render all rows if virtualization is disabled or no virtual items */}
+                    {virtualItems.length === 0 ? (
+                      <>
+                        {rows.map((row, index) => {
+                          const triggerOffset = isMobile ? 8 : 15;
+                          const triggerIndex = Math.max(0, rows.length - triggerOffset);
+                          const shouldAttachSentinel =
+                            hasNextPage && index === triggerIndex;
 
-                      return (
-                        <React.Fragment key={row.id}>
-                          <MemoizedRow
-                            row={row}
-                            table={table}
-                            selected={row.getIsSelected()}
-                            checked={checkedRows[row.id] ?? false}
-                            modelColumnWidth="var(--model-column-width)"
-                          />
-                          {shouldAttachSentinel ? (
-                            <TableRow ref={sentinelRef} aria-hidden>
-                              <TableCell colSpan={columns.length} className="p-0" />
-                            </TableRow>
-                          ) : null}
-                        </React.Fragment>
-                      );
-                    })}
+                          return (
+                            <React.Fragment key={row.id}>
+                              <MemoizedRow
+                                row={row}
+                                table={table}
+                                selected={row.getIsSelected()}
+                                checked={checkedRows[row.id] ?? false}
+                                modelColumnWidth={modelColumnWidth}
+                                data-index={index}
+                              />
+                              {shouldAttachSentinel ? (
+                                <TableRow ref={sentinelRef} aria-hidden>
+                                  <TableCell colSpan={columns.length} className="p-0" />
+                                </TableRow>
+                              ) : null}
+                            </React.Fragment>
+                          );
+                        })}
+                      </>
+                    ) : (
+                      <>
+                        {/* Virtual spacer for rows before visible range */}
+                        {virtualItems[0]?.index > 0 && (
+                          <tr aria-hidden style={{ height: `${virtualItems[0].start}px`, border: 0 }}>
+                            <td colSpan={columns.length} style={{ padding: 0, border: 0 }} />
+                          </tr>
+                        )}
+                        {/* Render only visible virtual items (reduces DOM size) */}
+                        {virtualItems.map((virtualItem) => {
+                          const row = rows[virtualItem.index];
+                          if (!row) return null;
+
+                          // Trigger earlier on mobile (smaller screens) to prevent bottoming out
+                          const triggerOffset = isMobile ? 8 : 15;
+                          const triggerIndex = Math.max(0, rows.length - triggerOffset);
+                          const shouldAttachSentinel =
+                            hasNextPage && virtualItem.index === triggerIndex;
+
+                          return (
+                            <React.Fragment key={virtualItem.key}>
+                              <MemoizedRow
+                                row={row}
+                                table={table}
+                                selected={row.getIsSelected()}
+                                checked={checkedRows[row.id] ?? false}
+                                modelColumnWidth={modelColumnWidth}
+                                data-index={virtualItem.index}
+                                ref={rowVirtualizer.measureElement}
+                              />
+                              {shouldAttachSentinel ? (
+                                <TableRow ref={sentinelRef} aria-hidden>
+                                  <TableCell colSpan={columns.length} className="p-0" />
+                                </TableRow>
+                              ) : null}
+                            </React.Fragment>
+                          );
+                        })}
+                        {/* Virtual spacer for rows after visible range */}
+                        {virtualItems[virtualItems.length - 1]?.index < rows.length - 1 && (
+                          <tr aria-hidden style={{ 
+                            height: `${totalSize - virtualItems[virtualItems.length - 1].end}px`, 
+                            border: 0 
+                          }}>
+                            <td colSpan={columns.length} style={{ padding: 0, border: 0 }} />
+                          </tr>
+                        )}
+                      </>
+                    )}
                     {(hasNextPage && (isFetchingNextPage || isPrefetching)) && (
                       <RowSkeletons
                         table={table}
                         rows={
                           typeof skeletonNextPageRowCount === "number"
                             ? skeletonNextPageRowCount
-                            : skeletonRowCount
+                            : isMobile
+                              ? 15
+                              : 50
                         }
-                        modelColumnWidth="var(--model-column-width)"
+                        modelColumnWidth={modelColumnWidth}
                       />
                     )}
-                  </React.Fragment>
+                  </>
                 ) : (
                   <React.Fragment>
                     <TableRow>
@@ -670,6 +848,8 @@ function Row<TData>({
   selected,
   checked,
   modelColumnWidth,
+  "data-index": dataIndex,
+  ref: measureRef,
 }: {
   row: Row<TData>;
   table: TTable<TData>;
@@ -678,6 +858,8 @@ function Row<TData>({
   // Memoize checked highlight without forcing full row rerender otherwise
   checked?: boolean;
   modelColumnWidth: string;
+  "data-index"?: number;
+  ref?: React.Ref<HTMLTableRowElement>;
 }) {
   const canHover =
     typeof window !== "undefined" &&
@@ -688,8 +870,10 @@ function Row<TData>({
 
   return (
     <TableRow
+      ref={measureRef}
       id={row.id}
       data-can-hover={canHover}
+      data-index={dataIndex}
       tabIndex={0}
       data-state={selected && "selected"}
       aria-selected={row.getIsSelected()}
@@ -765,5 +949,6 @@ const MemoizedRow = React.memo(
     Object.is(prev.row.original, next.row.original) &&
     prev.selected === next.selected &&
     prev.checked === next.checked &&
-    prev.modelColumnWidth === next.modelColumnWidth,
+    prev.modelColumnWidth === next.modelColumnWidth &&
+    prev["data-index"] === next["data-index"],
 ) as typeof Row;

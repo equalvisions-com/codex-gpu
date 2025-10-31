@@ -314,7 +314,8 @@ export function Client({ initialFavoritesData, initialFavoriteKeys }: ClientProp
       key={`table-${isFavoritesMode ? `favorites-${favorites?.length || 0}` : "all"}`}
       columns={columns}
       data={flatData}
-      skeletonRowCount={search.size ?? 50}
+      skeletonRowCount={50}
+      skeletonNextPageRowCount={undefined}
       totalRows={totalDBRowCount}
       filterRows={filterDBRowCount}
       totalRowsFetched={totalFetched}

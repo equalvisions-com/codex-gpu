@@ -87,7 +87,9 @@ export const columns: ColumnDef<ColumnSchema>[] = [
               </span>
             ) : null}
           </span>
-          <span className="truncate capitalize">{provider || "Unknown"}</span>
+          <span className="truncate capitalize" title={provider || undefined}>
+            {provider || "Unknown"}
+          </span>
         </div>
       );
     },
