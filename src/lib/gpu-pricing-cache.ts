@@ -3,6 +3,7 @@ import { gpuPricing, userFavorites } from "@/db/schema";
 import { eq, sql, inArray, and, or, ilike, between, asc, desc } from "drizzle-orm";
 import { stableGpuKey } from "@/components/infinite-table/stable-key";
 import type { SearchParamsType } from "@/components/infinite-table/search-params";
+import type { RowWithId } from "@/types/api";
 import { createHash } from "crypto";
 import { isArrayOfDates, isArrayOfNumbers } from "@/lib/is-array";
 import { isSameDay } from "date-fns";
