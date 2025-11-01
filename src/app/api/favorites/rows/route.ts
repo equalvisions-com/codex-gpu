@@ -111,9 +111,9 @@ async function getFavoriteRowsDirect(
     meta: {
       totalRowCount: totalCount,
       filterRowCount: filterCount,
-      facets: {}, // No facets for favorites view
+      facets: {},
     },
-    prevCursor: start > 0 ? Math.max(0, start - size) : null,
+    prevCursor: start > 0 ? start - size : null,
     nextCursor: start + size < totalCount ? start + size : null,
   };
 }
@@ -159,7 +159,7 @@ export async function GET(req: NextRequest) {
 
     // Get paginated rows with database-level sorting and pagination
     // This only loads the rows needed for the current page, not all favorites
-    // Cached server-side with 1min TTL to reduce DB load
+    // Cached server-side with 12 hour TTL to reduce DB load
     const result = await getFavoriteRowsDirect(session.user.id, cursor, size, sort);
     return NextResponse.json(result, {
       headers: {
@@ -177,38 +177,22 @@ export async function GET(req: NextRequest) {
 
 /**
  * POST /api/favorites/rows
- * Fetches rows for specific favorite keys (used for optimistic updates)
+ * Fetches rows for specific favorite stable keys (used for optimistic updates)
+ * Note: Keys are stable keys (not UUIDs) since GPU UUIDs change between scrapes
  */
-export async function POST(req: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
-    const hdrs = await headers();
-    const session = await auth.api.getSession({ headers: hdrs });
-
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const body = await req.json();
-    const parsed = RequestSchema.safeParse(body);
-
+    const parsed = RequestSchema.safeParse(await request.json());
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Invalid request body", details: parsed.error.errors },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
     }
 
-    // Fetch GPU rows by UUIDs
-    const rows = await gpuPricingCache.getAllRows();
-    const filteredRows = rows.filter((row) => parsed.data.keys.includes(row.uuid));
-
-    return NextResponse.json({
-      rows: filteredRows,
-    });
+    // Keys are stable keys, not UUIDs
+    const rows = await gpuPricingCache.getGpusByStableKeys(parsed.data.keys);
+    return NextResponse.json({ rows });
   } catch (error) {
-    console.error("[POST /api/favorites/rows] Failed to fetch favorite rows", {
+    console.error("[POST /api/favorites/rows] Failed to resolve rows", {
       error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
     });
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }

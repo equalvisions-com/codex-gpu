@@ -7,9 +7,6 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { getCookieCache } from "better-auth/cookies";
 import type { Session } from "@/lib/auth-client";
-import { unstable_cache } from "next/cache";
-import { gpuPricingStore } from "@/lib/gpu-pricing-store";
-import { stableGpuKey } from "@/components/infinite-table/stable-key";
 
 export default async function Gpus({
   searchParams,
@@ -63,6 +60,7 @@ export default async function Gpus({
     >
       <Client
         initialFavoriteKeys={initialFavoriteKeys}
+        isFavoritesMode={isFavoritesMode}
       />
     </div>
   );

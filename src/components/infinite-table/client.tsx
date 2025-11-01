@@ -29,14 +29,17 @@ import {
 } from "@/lib/favorites/constants";
 import { getFavorites } from "@/lib/favorites/api-client";
 import { syncFavorites } from "@/lib/favorites/sync";
+import { getFavoritesBroadcastId } from "@/lib/favorites/broadcast";
 import { MobileTopNav, SidebarPanel, type AccountUser } from "./account-components";
 
 interface ClientProps {
   initialFavoriteKeys?: string[];
+  isFavoritesMode?: boolean;
 }
 
-export function Client({ initialFavoriteKeys }: ClientProps = {}) {
+export function Client({ initialFavoriteKeys, isFavoritesMode = false }: ClientProps = {}) {
   const contentRef = React.useRef<HTMLTableSectionElement>(null);
+  const broadcastChannelRef = React.useRef<BroadcastChannel | null>(null);
   const [search] = useQueryStates(searchParamsParser);
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -44,6 +47,7 @@ export function Client({ initialFavoriteKeys }: ClientProps = {}) {
   const { showSignIn, showSignUp } = useAuthDialog();
   const [isSigningOut, startSignOutTransition] = React.useTransition();
   const accountUser = (session?.user ?? null) as AccountUser | null;
+  const broadcastId = React.useMemo(() => getFavoritesBroadcastId(), []);
 
   const handleSignIn = React.useCallback(() => {
     if (!showSignIn) return;
@@ -75,12 +79,9 @@ export function Client({ initialFavoriteKeys }: ClientProps = {}) {
     });
   }, [queryClient, router, signOut]);
 
-  // Use favorites mode based on URL parameter
-  const isFavoritesMode = search.favorites === "true";
-
   // Seed cache with initialFavoriteKeys if provided (from SSR)
   // This is an optimization - the query will still run to ensure fresh data
-  const initializedRef = React.useRef(false);
+const initializedRef = React.useRef(false);
   React.useEffect(() => {
     if (!initializedRef.current && initialFavoriteKeys) {
       syncFavorites({
@@ -92,10 +93,45 @@ export function Client({ initialFavoriteKeys }: ClientProps = {}) {
     }
   }, [initialFavoriteKeys, queryClient]);
 
-  /**
-   * Subscribe to cache updates without fetching
-   * Only used for checkbox UI, not for favorites view data
-   */
+  const FAVORITES_CHUNK_SIZE = 200;
+
+  const fetchFavoriteRowsByKeys = React.useCallback(
+    async (keys: FavoriteKey[]): Promise<RowWithId[]> => {
+      if (!keys.length) return [];
+
+      const uniqueKeys = Array.from(new Set(keys));
+      const rowsByKey = new Map<string, RowWithId>();
+
+      for (let index = 0; index < uniqueKeys.length; index += FAVORITES_CHUNK_SIZE) {
+        const chunk = uniqueKeys.slice(index, index + FAVORITES_CHUNK_SIZE);
+        const response = await fetch("/api/favorites/rows", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ keys: chunk }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to load favorite rows");
+        }
+
+        const json = (await response.json()) as { rows: RowWithId[] };
+        for (const row of json.rows ?? []) {
+          rowsByKey.set(row.uuid, row);
+          rowsByKey.set(stableGpuKey(row), row);
+        }
+      }
+
+      return keys
+        .map((key) => rowsByKey.get(key))
+        .filter((row): row is RowWithId => Boolean(row));
+    },
+    [],
+  );
+
+  // Fetch favorites when in favorites mode (for checkbox UI)
+  // Only needed for the checkbox/selection UI, not for favorites view data
   const { data: favorites = [] } = useQuery({
     queryKey: FAVORITES_QUERY_KEY,
     queryFn: getFavorites,
@@ -104,10 +140,6 @@ export function Client({ initialFavoriteKeys }: ClientProps = {}) {
     refetchOnMount: false,
     refetchOnWindowFocus: false,
   });
-
-  // BroadcastChannel for cross-tab synchronization
-  const broadcastChannelRef = React.useRef<BroadcastChannel | null>(null);
-  const broadcastId = React.useMemo(() => `${Date.now()}-${Math.random()}`, []);
 
   React.useEffect(() => {
     if (!isFavoritesMode) {
@@ -164,6 +196,7 @@ export function Client({ initialFavoriteKeys }: ClientProps = {}) {
 
   // Fetch favorite rows with pagination when in favorites mode
   // Uses useInfiniteQuery for pagination (same as main table)
+  // API endpoint uses unstable_cache server-side for favorite keys
   const {
     data: favoriteData,
     isFetching: isFetchingFavorites,
@@ -181,6 +214,7 @@ export function Client({ initialFavoriteKeys }: ClientProps = {}) {
   // - Query is loading
   // - Query is pending (not started yet, including when disabled)
   // - Query is disabled but we're waiting for auth (session pending or not authenticated)
+  // When query is disabled, TanStack Query sets isLoading=false, so we need to check status and auth state
   const isFavoritesLoading = isLoadingFavorites || 
     favoritesStatus === 'pending' || 
     (isFavoritesMode && (authPending || !session));
@@ -210,6 +244,7 @@ export function Client({ initialFavoriteKeys }: ClientProps = {}) {
       }
     }
   }, [isFavoritesMode, favoriteKeysFromRows, queryClient]);
+
 
   const {
     data,

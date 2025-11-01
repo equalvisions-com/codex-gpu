@@ -8,7 +8,6 @@ import { Star, GitCompare, Rocket } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { logger } from "@/lib/logger";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
-// No Sonner toasts for favorites flows; use inline notice instead
 import { useEphemeralNotice } from "@/hooks/use-ephemeral-notice";
 import { FavoritesNotice } from "./favorites-notice";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -28,9 +27,10 @@ import {
 } from "@/lib/favorites/api-client";
 import { useAuthDialog } from "@/providers/auth-dialog-provider";
 import { useAuth } from "@/providers/auth-client-provider";
+import { getFavoritesBroadcastId } from "@/lib/favorites/broadcast";
 
 export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteKeys?: FavoriteKey[] }) {
-  const { checkedRows, table, toggleCheckedRow } = useDataTable<ColumnSchema, unknown>();
+  const { checkedRows, table } = useDataTable<ColumnSchema, unknown>();
   const queryClient = useQueryClient();
   const bcRef = React.useRef<BroadcastChannel | null>(null);
   const isMountedRef = React.useRef(true);
@@ -38,7 +38,7 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
   const [noticeVariant, setNoticeVariant] = React.useState<"success" | "error">("success");
   const { showSignIn } = useAuthDialog();
   const { session, isPending: authPending } = useAuth();
-  const broadcastId = React.useMemo(() => `${Date.now()}-${Math.random()}`, []);
+  const broadcastId = React.useMemo(() => getFavoritesBroadcastId(), []);
 
   const promptForAuth = React.useCallback(() => {
     const callbackUrl =
@@ -48,7 +48,6 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
     showSignIn({ callbackUrl });
   }, [showSignIn]);
 
-  // Cleanup flag (other timers are handled in the hook)
   React.useEffect(() => {
     return () => {
       isMountedRef.current = false;
@@ -67,10 +66,7 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
     return false;
   }, [checkedRows, visibleRowIds]);
 
-  /**
-   * Initialize query cache with SSR data for optimistic updates to work
-   * Only initializes if cache is empty to prevent overwriting optimistic updates
-   */
+  // Seed React Query cache with initialFavoriteKeys if provided (from SSR)
   React.useEffect(() => {
     if (initialFavoriteKeys) {
       const existing = queryClient.getQueryData<FavoriteKey[]>(FAVORITES_QUERY_KEY);
@@ -112,6 +108,7 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
     }
   }, [favorites]);
 
+
   React.useEffect(() => {
     if (authPending) return;
     if (!session) {
@@ -121,20 +118,17 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
     }
   }, [authPending, queryClient, session]);
 
-  /**
-   * Initialize BroadcastChannel for cross-tab synchronization
-   * Receives favorites data directly from other tabs (no API call)
-   * This optimizes multi-tab scenarios by avoiding redundant server requests
-   */
   React.useEffect(() => {
+    if (typeof window === "undefined" || typeof BroadcastChannel === "undefined") {
+      return;
+    }
     const bc = new BroadcastChannel(FAVORITES_BROADCAST_CHANNEL);
     bcRef.current = bc;
-    
-    // Listen for updates from other tabs - receive data directly (no API call)
+
     bc.onmessage = (event) => {
       if (event.data?.type === "updated" && Array.isArray(event.data?.favorites)) {
         if (event.data?.source === broadcastId) {
-          return; // Prevent self-updates
+          return;
         }
         const newFavorites = event.data.favorites as FavoriteKey[];
         queryClient.setQueryData(FAVORITES_QUERY_KEY, newFavorites);
@@ -154,7 +148,7 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
         }
       }
     };
-    
+
     return () => {
       bc.close();
       bcRef.current = null;
@@ -168,8 +162,6 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
     return new Set(list);
   }, [localFavorites, initialFavoriteKeys]);
 
-  // hasSelection computed above
-
   const canCompare = React.useMemo(() => {
     let count = 0;
     for (const _ in checkedRows) {
@@ -179,20 +171,20 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
     return false;
   }, [checkedRows]);
 
-  // Determine favorite status of selected items
   const favoriteStatus = React.useMemo(() => {
     const selectedRowIds = Object.keys(checkedRows);
     const rowById = new Map(table.getRowModel().flatRows.map(r => [r.id, r.original as ColumnSchema]));
-    const selectedKeys = selectedRowIds
+    const selectedRows = selectedRowIds
       .map(id => rowById.get(id))
-      .filter(Boolean)
-      .map(row => stableGpuKey(row as ColumnSchema));
+      .filter(Boolean) as ColumnSchema[];
+    
+    // Use stable keys for matching/comparison (UI purposes) and database storage
+    // Stable keys persist across scrapes since GPU UUIDs change but configurations don't
+    const selectedKeys = selectedRows.map(row => stableGpuKey(row));
 
     const alreadyFavorited = selectedKeys.filter(key => favoriteKeys.has(key));
     const notFavorited = selectedKeys.filter(key => !favoriteKeys.has(key));
 
-    // Only remove if ALL selected items are already favorited
-    // Otherwise, only add the unfavorited ones
     const shouldRemove = alreadyFavorited.length === selectedKeys.length && selectedKeys.length > 0;
     const shouldAdd = notFavorited.length > 0;
 
@@ -243,11 +235,6 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
       .filter((row): row is ColumnSchema => Boolean(row));
   }, []);
 
-  /**
-   * Handles favorite/unfavorite action for selected rows
-   * Implements optimistic updates with automatic rollback on error
-   * Broadcasts changes to other tabs for real-time sync
-   */
   const handleFavorite = async () => {
     if (!hasSelection) return;
     if (!session) {
@@ -259,29 +246,25 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
 
     const { toAdd, toRemove } = favoriteStatus;
 
-    // Store original state for potential rollback
     const snapshot = (queryClient.getQueryData(FAVORITES_QUERY_KEY) as FavoriteKey[] | undefined)
       ?? (Array.isArray(favorites) ? (favorites as FavoriteKey[]) : undefined)
       ?? (initialFavoriteKeys || []);
     const originalFavorites = [...snapshot];
 
-    // Immediately update UI with optimistic state (no loading state)
     const current = (localFavorites ?? (Array.isArray(favorites) ? (favorites as FavoriteKey[]) : []) ?? []);
-    
-    // Cancel any in-flight fetch to prevent overwriting optimistic state
-    try { 
-      await queryClient.cancelQueries({ queryKey: FAVORITES_QUERY_KEY }); 
+
+    try {
+      await queryClient.cancelQueries({ queryKey: FAVORITES_QUERY_KEY });
     } catch {}
 
     const optimisticFavorites = [
-      ...current.filter((uuid) => !toRemove.includes(uuid as FavoriteKey)), // Remove items
-      ...toAdd // Add items
+      ...current.filter((id) => !toRemove.includes(id as FavoriteKey)),
+      ...toAdd,
     ];
 
     queryClient.setQueryData(FAVORITES_QUERY_KEY, optimisticFavorites);
     setLocalFavorites(optimisticFavorites);
 
-    // Optimistically update favorites rows query (for favorites view)
     if (toRemove.length > 0) {
       const removalSet = new Set(toRemove);
       // Update all favorites queries (with any search params) using partial key match
@@ -293,6 +276,7 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
           }
 
           // Filter rows from all pages but keep page structure intact to preserve pagination
+          // Compare by stable key since favorites are stored as stable keys
           const filteredPages = previous.pages.map((page) => {
             const filteredData = page.data.filter(
               (row) => !removalSet.has(stableGpuKey(row))
@@ -306,6 +290,7 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
                 filterRowCount: optimisticFavorites.length,
               },
               // Keep original cursors intact to preserve pagination
+              // Only set nextCursor to null if this was the last page and we removed all remaining items
             };
           });
 
@@ -328,22 +313,11 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
       );
     }
 
-    // Perform API calls in background using centralized API client with timeout
     try {
-      // Execute mutations in parallel
       await Promise.all([
         toAdd.length > 0 ? addFavorites(toAdd) : Promise.resolve(),
         toRemove.length > 0 ? removeFavorites(toRemove) : Promise.resolve(),
       ]);
-
-      // Success - notify other tabs with the updated data (no need for them to refetch)
-      try { 
-        bcRef.current?.postMessage({ 
-          type: "updated", 
-          favorites: optimisticFavorites,
-          source: broadcastId,
-        }); 
-      } catch {}
 
       if (toAdd.length > 0) {
         try {
@@ -361,7 +335,6 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
                       totalRowCount: optimisticFavorites.length,
                       filterRowCount: optimisticFavorites.length,
                       facets: {},
-                      metadata: {} satisfies LogsMeta,
                     },
                     prevCursor: null,
                     nextCursor: null,
@@ -408,7 +381,6 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
                       totalRowCount: optimisticFavorites.length,
                       filterRowCount: optimisticFavorites.length,
                       facets: {},
-                      metadata: {} satisfies LogsMeta,
                     },
                     prevCursor: lastPage?.nextCursor ?? null,
                     nextCursor: null,
@@ -429,6 +401,13 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
           void queryClient.invalidateQueries({ queryKey: ["favorites", "rows"], exact: false });
         }
       }
+      try {
+        bcRef.current?.postMessage({
+          type: "updated",
+          favorites: optimisticFavorites,
+          source: broadcastId,
+        });
+      } catch {}
 
       // After successful mutation, invalidate to refetch with correct pagination
       // This ensures pagination works correctly after favorites are added/removed
@@ -439,7 +418,6 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
         setIsMutating(false);
       }
 
-      // Inline success notice rendered within the island (shares centering context)
       setNoticeVariant("success");
       if (toAdd.length > 0) {
         showFavoritesNotice("Added to favorites");
@@ -447,44 +425,38 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
         showFavoritesNotice("Removed from favorites");
       }
     } catch (error) {
-      logger.warn('[handleFavorite] Mutation failed', {
+      logger.warn("[gpu favorites] mutation failed", {
         toAddCount: toAdd.length,
         toRemoveCount: toRemove.length,
         error: error instanceof Error ? error.message : String(error),
       });
 
-      // Rollback optimistic update on error
       queryClient.setQueryData(FAVORITES_QUERY_KEY, originalFavorites);
       setLocalFavorites(originalFavorites);
       void queryClient.invalidateQueries({ queryKey: ["favorites", "rows"], exact: false });
-      
+
       if (isMountedRef.current) {
         setIsMutating(false);
-        
-        // Handle specific error types with lightweight inline-styled toasts (no global favorites styling)
+        setNoticeVariant("error");
         if (error instanceof FavoritesAPIError) {
           if (error.status === 401) {
             promptForAuth();
             return;
           }
-          
-          if (error.code === "RATE_LIMIT") {
-            setNoticeVariant("error");
-            showFavoritesNotice('Rate limit exceeded. Try again later');
+
+          if (error.status === 429) {
+            showFavoritesNotice("Rate limit exceeded. Try again later");
             return;
           }
-          
+
           if (error.code === "TIMEOUT") {
-            setNoticeVariant("error");
-            showFavoritesNotice('Server took too long. Please try again.');
+            showFavoritesNotice("Server took too long. Please try again.");
             return;
           }
-          
-          setNoticeVariant("error");
+
           showFavoritesNotice(error.message);
         } else {
-          setNoticeVariant("error");
-          showFavoritesNotice('Failed to update favorites');
+          showFavoritesNotice("Failed to update favorites");
         }
       }
     }
@@ -518,8 +490,8 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
           <Star
             className={`h-4 w-4 ${
               favoriteStatus.shouldRemove
-                ? 'fill-yellow-400 text-yellow-400'
-                : ''
+                ? "fill-yellow-400 text-yellow-400"
+                : ""
             }`}
           />
           <span>

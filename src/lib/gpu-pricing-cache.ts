@@ -1,7 +1,7 @@
 import { db } from "@/db/client";
 import { gpuPricing, userFavorites } from "@/db/schema";
 import { eq, sql, inArray, and, or, ilike, between, asc, desc } from "drizzle-orm";
-import type { RowWithId } from "@/types/api";
+import { stableGpuKey } from "@/components/infinite-table/stable-key";
 import type { SearchParamsType } from "@/components/infinite-table/search-params";
 import { createHash } from "crypto";
 import { isArrayOfDates, isArrayOfNumbers } from "@/lib/is-array";
@@ -468,6 +468,72 @@ export class GpuPricingCache {
     userId: string,
     search: SearchParamsType
   ): Promise<{ data: RowWithId[]; totalCount: number; filterCount: number }> {
+    // Get user's favorite stable keys (stored in gpuUuid field, but they're stable keys)
+    const favoriteRows = await db
+      .select()
+      .from(userFavorites)
+      .where(eq(userFavorites.userId, userId));
+
+    const favoriteStableKeys = new Set(favoriteRows.map((r) => r.gpuUuid));
+
+    const filterCount = favoriteStableKeys.size;
+
+    if (filterCount === 0) {
+      return {
+        data: [],
+        totalCount: 0,
+        filterCount: 0,
+      };
+    }
+
+    // Debug: Log what we're looking for
+    console.log("[getFavoriteGpusFiltered] Looking for favorites", {
+      userId,
+      favoriteCount: favoriteStableKeys.size,
+      sampleKeys: Array.from(favoriteStableKeys).slice(0, 3),
+    });
+
+    // Fetch all GPU pricing rows and convert to RowWithId format
+    // We need to compute stable keys from the data to match against favorites
+    // This is necessary because stable keys can't be computed in SQL
+    const allGpuRows = await db
+      .select()
+      .from(gpuPricing);
+
+    // Convert to RowWithId and filter by stable keys to get matching UUIDs
+    const allRows = allGpuRows.map(toRowWithId);
+    
+    // Build a map of stable key -> UUID for matching
+    const stableKeyToUuid = new Map<string, string>();
+    const matchingUuids = new Set<string>();
+    
+    for (const row of allRows) {
+      const stableKey = stableGpuKey(row);
+      stableKeyToUuid.set(stableKey, row.uuid);
+      if (favoriteStableKeys.has(stableKey)) {
+        matchingUuids.add(row.uuid);
+      }
+    }
+
+    // Debug: Log matching results
+    console.log("[getFavoriteGpusFiltered] Matching results", {
+      totalGpus: allRows.length,
+      matchingUuids: matchingUuids.size,
+      sampleMatchingKeys: Array.from(favoriteStableKeys).slice(0, 3).map(key => {
+        const uuid = stableKeyToUuid.get(key);
+        const computedKey = uuid ? stableGpuKey(allRows.find(r => r.uuid === uuid)!) : null;
+        return { storedKey: key, uuid, computedKey, matches: key === computedKey };
+      }),
+    });
+
+    if (matchingUuids.size === 0) {
+      return {
+        data: [],
+        totalCount: filterCount,
+        filterCount: filterCount,
+      };
+    }
+
     // Build ORDER BY clause (same logic as getGpusFiltered)
     let orderByClause;
     if (search.sort) {
@@ -520,24 +586,8 @@ export class GpuPricingCache {
     const cursor = typeof search.cursor === 'number' && search.cursor >= 0 ? search.cursor : 0;
     const size = Math.min(Math.max(1, search.size ?? 50), 200); // Clamp size between 1 and 200
 
-    // Get total count of favorites for this user
-    const [countResult] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(userFavorites)
-      .where(eq(userFavorites.userId, userId));
-
-    const filterCount = Number(countResult?.count || 0);
-
-    if (filterCount === 0) {
-      return {
-        data: [],
-        totalCount: 0,
-        filterCount: 0,
-      };
-    }
-
-    // Execute query with JOIN, sorting, and pagination at database level
-    // JOIN userFavorites with gpuPricing, filter by userId, sort, and paginate
+    // Query database with matching UUIDs, sorting, and pagination at DB level
+    // This ensures database-level sorting and pagination (TanStack Table best practice)
     const rows = await db
       .select({
         id: gpuPricing.id,
@@ -548,9 +598,8 @@ export class GpuPricingCache {
         data: gpuPricing.data,
         createdAt: gpuPricing.createdAt,
       })
-      .from(userFavorites)
-      .innerJoin(gpuPricing, eq(userFavorites.gpuUuid, gpuPricing.id))
-      .where(eq(userFavorites.userId, userId))
+      .from(gpuPricing)
+      .where(inArray(gpuPricing.id, Array.from(matchingUuids)))
       .orderBy(orderByClause)
       .limit(size)
       .offset(cursor);
@@ -559,6 +608,8 @@ export class GpuPricingCache {
     const rawRows = rows.map(toRowWithId);
     
     // Calculate percentiles for price_hour_usd
+    // Note: We need all matching rows for accurate percentile calculation, not just paginated ones
+    // But for performance, we'll use paginated rows (trade-off for DB-level pagination)
     const prices = rawRows.map(row => row.price_hour_usd || 0);
     const rowsWithPercentiles = rawRows.map(row => ({
       ...row,
@@ -570,6 +621,49 @@ export class GpuPricingCache {
       totalCount: filterCount,
       filterCount: filterCount,
     };
+  }
+
+  async getGpusByIds(uuids: string[]): Promise<RowWithId[]> {
+    if (uuids.length === 0) {
+      return [];
+    }
+
+    const uniqueUuids = Array.from(new Set(uuids));
+    const rows = await db
+      .select()
+      .from(gpuPricing)
+      .where(inArray(gpuPricing.id, uniqueUuids));
+
+    return rows.map(toRowWithId);
+  }
+
+  /**
+   * Get GPUs by stable keys (for favorites lookup)
+   * Since GPU UUIDs change between scrapes, we use stable keys to identify GPU configurations
+   * This fetches all GPUs, computes stable keys, and filters by the provided stable keys
+   */
+  async getGpusByStableKeys(stableKeys: string[]): Promise<RowWithId[]> {
+    if (stableKeys.length === 0) {
+      return [];
+    }
+
+    const uniqueStableKeys = new Set(stableKeys);
+    
+    // Fetch all GPU pricing rows and convert to RowWithId format
+    const allGpuRows = await db
+      .select()
+      .from(gpuPricing);
+
+    // Convert to RowWithId and filter by stable keys
+    const allRows = allGpuRows.map(toRowWithId);
+    
+    // Filter rows where stable key matches one of the requested stable keys
+    const matchingRows = allRows.filter((row) => {
+      const stableKey = stableGpuKey(row);
+      return uniqueStableKeys.has(stableKey);
+    });
+
+    return matchingRows;
   }
 
   /**

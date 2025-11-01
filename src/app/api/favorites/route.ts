@@ -57,20 +57,20 @@ export async function GET() {
     // Use unstable_cache to leverage server-side cache
     const getCachedFavorites = unstable_cache(
       async (userId: string) => {
-        /**
-         * Type suppression needed due to Drizzle ORM build artifact conflicts
-         * Issue: Multiple Drizzle versions in node_modules create incompatible type declarations
-         * Solution: Use type assertion after query execution - runtime behavior is correct
-         * TODO: Remove when Drizzle resolves upstream type conflicts
-         */
-        const rows = await db
-          .select()
-          // @ts-ignore - Drizzle ORM type conflict between build artifacts (see comment above)
-          .from(userFavorites)
-          // @ts-ignore - Drizzle ORM type conflict between build artifacts
+    /**
+     * Type suppression needed due to Drizzle ORM build artifact conflicts
+     * Issue: Multiple Drizzle versions in node_modules create incompatible type declarations
+     * Solution: Use type assertion after query execution - runtime behavior is correct
+     * TODO: Remove when Drizzle resolves upstream type conflicts
+     */
+    const rows = await db
+      .select()
+      // @ts-ignore - Drizzle ORM type conflict between build artifacts (see comment above)
+      .from(userFavorites)
+      // @ts-ignore - Drizzle ORM type conflict between build artifacts
           .where(eq(userFavorites.userId, userId));
-        
-        const typedRows = rows as unknown as UserFavoriteRow[];
+    
+    const typedRows = rows as unknown as UserFavoriteRow[];
         return (typedRows || []).map((r) => r.gpuUuid as FavoriteKey);
       },
       ["favorites:api", session.user.id],
