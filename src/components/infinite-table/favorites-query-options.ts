@@ -14,7 +14,7 @@ export const favoritesDataOptions = (search: SearchParamsType) => {
     queryFn: async ({ pageParam }) => {
       const result = await getFavoriteRows(
         pageParam?.cursor ? { cursor: pageParam.cursor, size: pageParam.size } : undefined,
-        { sort: search.sort, size: search.size }
+        { sort: search.sort ?? undefined, size: search.size }
       );
       return result as InfiniteQueryResponse<ColumnSchema[], LogsMeta>;
     },
