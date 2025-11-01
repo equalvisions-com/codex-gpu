@@ -670,7 +670,7 @@ export class ModelsCache {
     `);
 
     const modalityFacet = {
-      rows: (modalityRows.rows as Array<{ modality: string; count: string | number }>)
+      rows: (modalityRows as unknown as Array<{ modality: string; count: string | number }>)
         .map((r) => ({ value: r.modality, total: Number(r.count) }))
         .sort((a, b) => a.value.localeCompare(b.value)),
       total: totalCount,
