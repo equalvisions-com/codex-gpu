@@ -164,7 +164,7 @@ export async function GET(req: NextRequest) {
 
     // Get paginated rows with database-level sorting and pagination
     // This only loads the rows needed for the current page, not all favorites
-    // Cached server-side with 1min TTL to reduce DB load
+    // Cached server-side with 12 hour TTL to reduce DB load
     const result = await getFavoriteRowsDirect(session.user.id, cursor, size, sort);
     return NextResponse.json(result, {
       headers: {

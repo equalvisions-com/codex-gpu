@@ -126,6 +126,7 @@ export async function POST(request: NextRequest) {
 
     try {
       revalidateTag(getModelFavoritesCacheTag(session.user.id));
+      revalidateTag("model-favorites"); // Invalidate favorites rows cache
     } catch (revalidateError) {
       console.error("[POST /api/models/favorites] Cache revalidation failed", {
         userId: session.user.id,
@@ -201,6 +202,7 @@ export async function DELETE(request: NextRequest) {
 
     try {
       revalidateTag(getModelFavoritesCacheTag(session.user.id));
+      revalidateTag("model-favorites"); // Invalidate favorites rows cache
     } catch (revalidateError) {
       console.error("[DELETE /api/models/favorites] Cache revalidation failed", {
         userId: session.user.id,

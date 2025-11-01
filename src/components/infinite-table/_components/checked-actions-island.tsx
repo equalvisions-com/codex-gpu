@@ -174,13 +174,10 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
   const favoriteStatus = React.useMemo(() => {
     const selectedRowIds = Object.keys(checkedRows);
     const rowById = new Map(table.getRowModel().flatRows.map(r => [r.id, r.original as ColumnSchema]));
-    const selectedRows = selectedRowIds
+    const selectedKeys = selectedRowIds
       .map(id => rowById.get(id))
-      .filter(Boolean) as ColumnSchema[];
-    
-    // Use stable keys for matching/comparison (UI purposes) and database storage
-    // Stable keys persist across scrapes since GPU UUIDs change but configurations don't
-    const selectedKeys = selectedRows.map(row => stableGpuKey(row));
+      .filter(Boolean)
+      .map(row => stableGpuKey(row as ColumnSchema));
 
     const alreadyFavorited = selectedKeys.filter(key => favoriteKeys.has(key));
     const notFavorited = selectedKeys.filter(key => !favoriteKeys.has(key));
@@ -276,7 +273,6 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
           }
 
           // Filter rows from all pages but keep page structure intact to preserve pagination
-          // Compare by stable key since favorites are stored as stable keys
           const filteredPages = previous.pages.map((page) => {
             const filteredData = page.data.filter(
               (row) => !removalSet.has(stableGpuKey(row))
@@ -409,10 +405,9 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
         });
       } catch {}
 
-      // After successful mutation, invalidate to refetch with correct pagination
-      // This ensures pagination works correctly after favorites are added/removed
-      // The optimistic update provides instant UI feedback, then we refetch for correctness
-      void queryClient.invalidateQueries({ queryKey: ["favorites", "rows"], exact: false });
+      // Don't invalidate immediately after successful mutation - the optimistic update already shows correct state
+      // Server-side cache invalidation happens in the API route, so next natural refetch will get fresh data
+      // Immediate invalidation causes race condition where refetch gets stale cache before tag invalidation propagates
 
       if (isMountedRef.current) {
         setIsMutating(false);

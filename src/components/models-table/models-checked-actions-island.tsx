@@ -405,10 +405,9 @@ export function ModelsCheckedActionsIsland({ initialFavoriteKeys }: { initialFav
         });
       } catch {}
 
-      // After successful mutation, invalidate to refetch with correct pagination
-      // This ensures pagination works correctly after favorites are added/removed
-      // The optimistic update provides instant UI feedback, then we refetch for correctness
-      void queryClient.invalidateQueries({ queryKey: ["model-favorites", "rows"], exact: false });
+      // Don't invalidate immediately after successful mutation - the optimistic update already shows correct state
+      // Server-side cache invalidation happens in the API route, so next natural refetch will get fresh data
+      // Immediate invalidation causes race condition where refetch gets stale cache before tag invalidation propagates
 
       if (isMountedRef.current) {
         setIsMutating(false);

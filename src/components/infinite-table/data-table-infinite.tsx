@@ -42,12 +42,18 @@ import { UserMenu, type AccountUser } from "./account-components";
 import { usePathname } from "next/navigation";
 import { Search } from "lucide-react";
 import { DesktopNavTabs, type DesktopNavItem } from "./nav-tabs";
+import type { FavoriteKey } from "@/types/favorites";
 
 const noop = () => {};
 const gradientSurfaceClass =
   "border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-foreground";
 
 // Note: chart groupings could be added later if needed
+export type DataTableMeta<TMeta> = TMeta & {
+  facets?: Record<string, any>;
+  initialFavoriteKeys?: FavoriteKey[];
+};
+
 export interface DataTableInfiniteProps<TData, TValue, TMeta> {
   columns: ColumnDef<TData, TValue>[];
   getRowClassName?: (row: Row<TData>) => string;
@@ -69,7 +75,7 @@ export interface DataTableInfiniteProps<TData, TValue, TMeta> {
   totalRows?: number;
   filterRows?: number;
   totalRowsFetched?: number;
-  meta: TMeta & { facets?: Record<string, any> };
+  meta: DataTableMeta<TMeta>;
   isFetching?: boolean;
   isLoading?: boolean;
   isFetchingNextPage?: boolean;
@@ -238,7 +244,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     } as React.CSSProperties;
   }, [mobileHeaderOffset]);
 
-  // User menu functionality
   const [isPrefetching, setIsPrefetching] = React.useState(false);
   React.useEffect(() => {
     if (!isFetchingNextPage) {
@@ -434,6 +439,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     observer.observe(node);
     return () => observer.disconnect();
   }, [requestNextPage, rows.length, isMobile]);
+
 
   const previousFiltersRef = React.useRef<string>("__init__");
   React.useEffect(() => {

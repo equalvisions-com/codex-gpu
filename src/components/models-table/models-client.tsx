@@ -137,15 +137,9 @@ const initializedRef = React.useRef(false);
     refetchOnWindowFocus: false,
   });
 
+  // BroadcastChannel setup - always active to sync favorites across tabs
+  // This ensures favorites sync works whether viewing main table or favorites view
   React.useEffect(() => {
-    if (!isFavoritesMode) {
-      // Clean up if mode changes away from favorites
-      if (broadcastChannelRef.current) {
-        broadcastChannelRef.current.close();
-        broadcastChannelRef.current = null;
-      }
-      return;
-    }
     if (typeof window === "undefined" || typeof BroadcastChannel === "undefined") {
       return;
     }
@@ -174,12 +168,14 @@ const initializedRef = React.useRef(false);
         favorites: newFavorites,
       });
 
-      // Invalidate favorites query to refetch with new favorites
-      // This ensures pagination works correctly with updated favorites
-      void queryClient.invalidateQueries({
-        queryKey: ["model-favorites", "rows"],
-        exact: false,
-      });
+      // Only invalidate favorites rows query if in favorites mode
+      // Main table doesn't need to refetch rows, just update favorites cache
+      if (isFavoritesMode) {
+        void queryClient.invalidateQueries({
+          queryKey: ["model-favorites", "rows"],
+          exact: false,
+        });
+      }
     };
     
     return () => {

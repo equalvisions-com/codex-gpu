@@ -46,7 +46,8 @@ export default async function Models({
   // Cache check happens client-side via prefetch (non-blocking HTTP request)
   // API endpoint uses unstable_cache server-side, so cache still benefits users
   // This ensures fast, non-blocking page render for all users
-  let initialFavoriteKeys: string[] | undefined;
+  // initialFavoriteKeys is always undefined from server, forcing client-side lazy loading or prefetching
+  const initialFavoriteKeys: string[] | undefined = undefined;
 
   return (
     <div
