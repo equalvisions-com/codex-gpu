@@ -328,7 +328,7 @@ export class GpuPricingCache {
         ORDER BY count DESC
       `);
 
-      typeRowsArray = (typeRowsResult.rows as Array<{ type: string; count: string | number }>);
+      typeRowsArray = (typeRowsResult as unknown as Array<{ type: string; count: string | number }>);
     } catch (error) {
       console.warn("[getGpusFacets] Failed to generate type facet", {
         error: error instanceof Error ? error.message : String(error),
@@ -355,7 +355,7 @@ export class GpuPricingCache {
         ORDER BY count DESC
       `);
 
-      modelRowsArray = (modelRowsResult.rows as Array<{ model: string; count: string | number }>);
+      modelRowsArray = (modelRowsResult as unknown as Array<{ model: string; count: string | number }>);
     } catch (error) {
       console.warn("[getGpusFacets] Failed to generate model facet", {
         error: error instanceof Error ? error.message : String(error),
@@ -383,7 +383,7 @@ export class GpuPricingCache {
         ORDER BY vram ASC
       `);
 
-      vramRowsArray = (vramRowsResult.rows as Array<{ vram: number | string; count: string | number }>);
+      vramRowsArray = (vramRowsResult as unknown as Array<{ vram: number | string; count: string | number }>);
     } catch (error) {
       console.warn("[getGpusFacets] Failed to generate VRAM facet", {
         error: error instanceof Error ? error.message : String(error),
@@ -426,7 +426,7 @@ export class GpuPricingCache {
         ORDER BY price ASC
       `);
 
-      priceRowsArray = (priceRowsResult.rows as Array<{ price: number | string; count: string | number }>);
+      priceRowsArray = (priceRowsResult as unknown as Array<{ price: number | string; count: string | number }>);
     } catch (error) {
       console.warn("[getGpusFacets] Failed to generate price facet", {
         error: error instanceof Error ? error.message : String(error),
