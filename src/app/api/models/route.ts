@@ -5,6 +5,7 @@ import { modelsSearchParamsCache } from "@/components/models-table/models-search
 import type { ModelsSearchParamsType } from "@/components/models-table/models-search-params";
 import { modelsCache } from "@/lib/models-cache";
 import type { AIModel } from "@/types/models";
+import { unstable_cache } from "next/cache";
 
 type ModalitiesDirection = "input" | "output";
 
@@ -372,6 +373,56 @@ function generateModelsFacets(data: ModelsRowWithId[]): Record<string, { rows: {
 
 export const dynamic = 'force-dynamic';
 
+// Cache facets generation (uses SQL aggregations, not full data load)
+// This avoids the 2MB cache limit while still providing facet data
+// Cache for 12 hours - data only changes when scraper runs, which invalidates cache
+const getCachedFacets = unstable_cache(
+  async () => {
+    return await modelsCache.getModelsFacets();
+  },
+  ["models:facets"],
+  {
+    revalidate: 43200, // 12 hours (data only changes when scraper runs, cache invalidated on scrape)
+    tags: ["models"],
+  }
+);
+
+const CACHE_SIZE_LIMIT_BYTES = 2 * 1024 * 1024; // 2MB
+
+// Cache paginated query results (with search params in cache key)
+// This reduces DB load while maintaining data freshness
+// Includes explicit 2MB size check to handle large JSONB fields gracefully
+const getCachedModelsFiltered = unstable_cache(
+  async (search: ModelsSearchParamsType) => {
+    const result = await modelsCache.getModelsFiltered(search);
+    
+    // Check size before caching (conservative estimate using JSON.stringify)
+    // If > 2MB, Next.js unstable_cache will fail to cache, so we throw here
+    // to trigger fallback to direct DB query in the caller
+    const estimatedSize = JSON.stringify(result).length;
+    
+    if (estimatedSize > CACHE_SIZE_LIMIT_BYTES) {
+      console.warn("[getCachedModelsFiltered] Cache size limit exceeded, will fall back to direct DB query", {
+        estimatedSizeBytes: estimatedSize,
+        limitBytes: CACHE_SIZE_LIMIT_BYTES,
+        rowCount: result.data.length,
+        searchParams: { cursor: search.cursor, size: search.size, sort: search.sort },
+      });
+      
+      // Throw error to prevent caching and trigger fallback
+      // Next.js unstable_cache will fail anyway, but this ensures we handle it gracefully
+      throw new Error(`Cache size (${estimatedSize} bytes) exceeds limit (${CACHE_SIZE_LIMIT_BYTES} bytes)`);
+    }
+    
+    return result;
+  },
+  ["models:filtered"],
+  {
+    revalidate: 43200, // 12 hours (data only changes when scraper runs, cache invalidated on scrape)
+    tags: ["models"],
+  }
+);
+
 export async function GET(req: NextRequest): Promise<Response> {
   try {
     // Note: using GET for simplicity; consider POST if query size grows
@@ -380,28 +431,53 @@ export async function GET(req: NextRequest): Promise<Response> {
 
     const search: ModelsSearchParamsType = modelsSearchParamsCache.parse(Object.fromEntries(_search));
 
-    // Get all models from database
-    const allModels = await modelsCache.getAllModels();
+    // Fetch filtered, sorted, paginated data from database (TanStack Table best practice)
+    // Cached server-side with 2min TTL to reduce DB load
+    // This only loads the rows needed for the current page, not all rows
+    // If cache fails (e.g., > 2MB), falls back to DB query gracefully
+    let filteredModels: AIModel[];
+    let totalCount: number;
+    let filterCount: number;
+    
+    try {
+      const result = await getCachedModelsFiltered(search);
+      filteredModels = result.data;
+      totalCount = result.totalCount;
+      filterCount = result.filterCount;
+    } catch (error) {
+      // Fallback to direct DB query if cache fails (e.g., > 2MB or cache error)
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const isSizeError = errorMessage.includes("2MB") || errorMessage.includes("size") || errorMessage.includes("cache");
+      
+      if (isSizeError) {
+        console.warn("[GET /api/models] Cache size limit exceeded, using direct DB query", {
+          searchParams: { cursor: search.cursor, size: search.size, sort: search.sort },
+          error: errorMessage,
+        });
+      }
+      
+      // Fallback to direct DB query
+      const result = await modelsCache.getModelsFiltered(search);
+      filteredModels = result.data;
+      totalCount = result.totalCount;
+      filterCount = result.filterCount;
+    }
 
     // Convert to ModelsRowWithId format
-    const totalData: ModelsRowWithId[] = allModels.map((model) => ({
+    const paginatedData: ModelsRowWithId[] = filteredModels.map((model) => ({
       uuid: model.id,
       ...model,
     }));
 
-    // Apply filters
-    const filteredData = filterModelsData(totalData, search);
-
-    // Apply sorting
-    const sortedData = sortModelsData(filteredData, search.sort || undefined);
-
-    // Apply pagination using cursor (for infinite scrolling)
-    const start = typeof search.cursor === 'number' && search.cursor >= 0 ? search.cursor : 0;
-    const size = search.size ?? 50;
-    const paginatedData = sortedData.slice(start, start + size);
-
-    // Generate facets for filter UI (from all data, not filtered data)
-    const facets = generateModelsFacets(totalData);
+    // Generate facets from database using SQL aggregations (no full data load)
+    // This avoids the 2MB cache limit while still providing facet data
+    const facetsData = await getCachedFacets();
+    const facets = {
+      provider: facetsData.provider,
+      author: facetsData.author,
+      modalities: facetsData.modalities,
+      name: facetsData.name,
+    };
 
     // Convert back to ModelsColumnSchema format
     const data: ModelsColumnSchema[] = paginatedData.map((row) => ({
@@ -427,20 +503,23 @@ export async function GET(req: NextRequest): Promise<Response> {
       scrapedAt: row.scrapedAt,
     }));
 
+    const cursor = typeof search.cursor === 'number' && search.cursor >= 0 ? search.cursor : 0;
+    const size = Math.min(Math.max(1, search.size ?? 50), 200); // Clamp size between 1 and 200
+
     const response: ModelsInfiniteQueryResponse<ModelsColumnSchema[], ModelsLogsMeta> = {
       data,
       meta: {
-        totalRowCount: filteredData.length,
-        filterRowCount: filteredData.length,
+        totalRowCount: totalCount, // Total matching filters
+        filterRowCount: filterCount, // Same as totalCount
         facets,
       },
-      prevCursor: start > 0 ? start - size : null,
-      nextCursor: start + size < filteredData.length ? start + size : null,
+      prevCursor: cursor > 0 ? cursor - size : null,
+      nextCursor: cursor + size < totalCount ? cursor + size : null,
     };
 
     return Response.json(response, {
       headers: {
-        "Cache-Control": "public, s-maxage=120, stale-while-revalidate=86400",
+        "Cache-Control": "public, s-maxage=43200, stale-while-revalidate=3600",
       },
     });
   } catch (error) {

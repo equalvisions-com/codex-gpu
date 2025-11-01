@@ -34,6 +34,20 @@
       "when": 1761140925983,
       "tag": "0004_add_model_favorites",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1762022953638,
+      "tag": "0005_amazing_thing",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1762023772121,
+      "tag": "0006_lyrical_exiles",
+      "breakpoints": true
     }
   ]
 }

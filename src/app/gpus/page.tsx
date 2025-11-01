@@ -5,7 +5,6 @@ import { dataOptions } from "@/components/infinite-table/query-options";
 import { Client } from "@/components/infinite-table/client";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { getUserFavoritesFromCache } from "@/lib/favorites/cache";
 import { getCookieCache } from "better-auth/cookies";
 import type { Session } from "@/lib/auth-client";
 import { unstable_cache } from "next/cache";
@@ -25,44 +24,34 @@ export default async function Gpus({
   const prefetchPromise = queryClient.prefetchInfiniteQuery(dataOptions(search));
 
   const hdrs = await headers();
-  const sessionFromCookie = await getCookieCache(new Headers(hdrs), {
+  // Start cookie cache check in parallel with prefetch (both are fast, no DB hits)
+  const cookieCachePromise = getCookieCache(new Headers(hdrs), {
     secret: process.env.BETTER_AUTH_SECRET,
-  }) as Session | null;
+  }) as Promise<Session | null>;
+  
+  // Wait for cookie cache result first (it's very fast, ~1-5ms)
+  // This allows us to start DB hit immediately if cache misses, without waiting for prefetch
+  const sessionFromCookie = await cookieCachePromise;
+  
+  // If cookie cache missed, start DB hit immediately (in parallel with prefetch)
+  // If cookie cache hit, use it (no DB hit needed)
   const sessionPromise = sessionFromCookie
     ? Promise.resolve(sessionFromCookie)
     : auth.api.getSession({ headers: hdrs });
+  
+  // Wait for both prefetch and session in parallel
+  // This ensures DB hit (if needed) runs concurrently with prefetch, not sequentially
   const [, session] = await Promise.all([
     prefetchPromise,
     sessionPromise,
   ]);
 
-  const getPricingRows = unstable_cache(
-    async () => {
-      return await gpuPricingStore.getAllRows();
-    },
-    ["pricing:rows"],
-    { revalidate: 900, tags: ["pricing"] },
-  );
-
-  let initialFavoriteKeys: string[] | undefined;
-  let initialFavoritesData:
-    | Awaited<ReturnType<typeof gpuPricingStore.getAllRows>>
-    | undefined;
-
-  if (session) {
-    initialFavoriteKeys = await getUserFavoritesFromCache(session.user.id);
-
-    if (isFavoritesMode && initialFavoriteKeys.length > 0) {
-      const pricingRows = await getPricingRows();
-      const favoriteKeys = new Set(initialFavoriteKeys);
-      initialFavoritesData = pricingRows
-        .filter((row) => favoriteKeys.has(stableGpuKey(row)));
-    }
-  }
-
-  if (isFavoritesMode && !session) {
-    return <div>Please sign in to view favorites</div>;
-  }
+  // Skip server-side cache check to avoid blocking SSR
+  // Cache check happens client-side via prefetch (non-blocking HTTP request)
+  // API endpoint uses unstable_cache server-side, so cache still benefits users
+  // This ensures fast, non-blocking page render for all users
+  // initialFavoriteKeys is always undefined from server, forcing client-side lazy loading or prefetching
+  const initialFavoriteKeys: string[] | undefined = undefined;
 
   return (
     <div
@@ -73,7 +62,6 @@ export default async function Gpus({
       } as React.CSSProperties}
     >
       <Client
-        initialFavoritesData={initialFavoritesData}
         initialFavoriteKeys={initialFavoriteKeys}
       />
     </div>

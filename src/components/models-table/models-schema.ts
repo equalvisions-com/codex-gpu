@@ -31,6 +31,8 @@ export const modelsColumnSchema = z.object({
 
   // Pricing data
   pricing: z.record(z.any()),
+  features: z.record(z.any()).optional(),
+  endpoint: z.record(z.any()).optional(),
 
   // Metadata
   scrapedAt: z.string(),

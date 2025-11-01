@@ -1,21 +1,13 @@
 import { NextRequest } from "next/server";
 import type { InfiniteQueryResponse, LogsMeta } from "@/components/infinite-table/query-options";
 import type { ColumnSchema, FacetMetadataSchema } from "@/components/infinite-table/schema";
-import type { RowWithId, RowId } from "@/types/api";
 import { searchParamsCache } from "@/components/infinite-table/search-params";
 import type { SearchParamsType } from "@/components/infinite-table/search-params";
 import { logger } from "@/lib/logger";
-import { gpuPricingStore } from "@/lib/gpu-pricing-store";
-import {
-  filterData,
-  getFacetsFromData,
-  percentileData,
-  sliderFilterValues,
-  sortData,
-} from "@/components/infinite-table/api/helpers";
-export const dynamic = 'force-dynamic';
+import { gpuPricingCache } from "@/lib/gpu-pricing-cache";
+import { unstable_cache } from "next/cache";
 
- 
+export const dynamic = 'force-dynamic';
 
 const PROVIDER_SORT_PRIORITY: Record<string, number> = {
   coreweave: 1,
@@ -55,6 +47,56 @@ function sortModelFacet(facets?: Record<string, FacetMetadataSchema>) {
   );
 }
 
+const CACHE_SIZE_LIMIT_BYTES = 2 * 1024 * 1024; // 2MB
+
+// Cache facets generation (uses SQL aggregations, not full data load)
+// This avoids the 2MB cache limit while still providing facet data
+// Cache for 12 hours - data only changes when scraper runs, which invalidates cache
+const getCachedFacets = unstable_cache(
+  async () => {
+    return await gpuPricingCache.getGpusFacets();
+  },
+  ["pricing:facets"],
+  {
+    revalidate: 43200, // 12 hours (data only changes when scraper runs, cache invalidated on scrape)
+    tags: ["pricing"],
+  }
+);
+
+// Cache paginated query results (with search params in cache key)
+// This reduces DB load while maintaining data freshness
+// Includes explicit 2MB size check to handle large JSONB fields gracefully
+const getCachedGpusFiltered = unstable_cache(
+  async (search: SearchParamsType) => {
+    const result = await gpuPricingCache.getGpusFiltered(search);
+    
+    // Check size before caching (conservative estimate using JSON.stringify)
+    // If > 2MB, Next.js unstable_cache will fail to cache, so we throw here
+    // to trigger fallback to direct DB query in the caller
+    const estimatedSize = JSON.stringify(result).length;
+    
+    if (estimatedSize > CACHE_SIZE_LIMIT_BYTES) {
+      console.warn("[getCachedGpusFiltered] Cache size limit exceeded, will fall back to direct DB query", {
+        estimatedSizeBytes: estimatedSize,
+        limitBytes: CACHE_SIZE_LIMIT_BYTES,
+        rowCount: result.data.length,
+        searchParams: { cursor: search.cursor, size: search.size, sort: search.sort },
+      });
+      
+      // Throw error to prevent caching and trigger fallback
+      // Next.js unstable_cache will fail anyway, but this ensures we handle it gracefully
+      throw new Error(`Cache size (${estimatedSize} bytes) exceeds limit (${CACHE_SIZE_LIMIT_BYTES} bytes)`);
+    }
+    
+    return result;
+  },
+  ["pricing:filtered"],
+  {
+    revalidate: 43200, // 12 hours (data only changes when scraper runs, cache invalidated on scrape)
+    tags: ["pricing"],
+  }
+);
+
 export async function GET(req: NextRequest): Promise<Response> {
   try {
     // Note: using GET for simplicity; consider POST if query size grows
@@ -63,61 +105,77 @@ export async function GET(req: NextRequest): Promise<Response> {
 
     const search: SearchParamsType = searchParamsCache.parse(Object.fromEntries(_search));
 
-    const pricingRows = await gpuPricingStore.getAllRows();
-    let totalData: RowWithId[] = pricingRows;
-
-    // Apply date filtering if specified
-    const observedFilter = Array.isArray(search.observed_at)
-      ? (search.observed_at as unknown as Date[])
-      : undefined;
-    const dateRange =
-      observedFilter?.length === 1
-        ? [observedFilter[0], new Date(observedFilter[0].getTime() + 24 * 60 * 60 * 1000)]
-        : observedFilter;
-
-    // Exclude slider filters when building facets to preserve min/max metadata
-    const restFilters: Partial<SearchParamsType> = { ...search };
-    for (const key of sliderFilterValues) {
-      delete (restFilters as Record<string, unknown>)[key];
+    // Fetch filtered, sorted, paginated data from database (TanStack Table best practice)
+    // Cached server-side with 2min TTL to reduce DB load
+    // This only loads the rows needed for the current page, not all rows
+    // If cache fails (e.g., > 2MB), falls back to DB query gracefully
+    let filteredGpus: ColumnSchema[];
+    let totalCount: number;
+    let filterCount: number;
+    
+    try {
+      const result = await getCachedGpusFiltered(search);
+      filteredGpus = result.data;
+      totalCount = result.totalCount;
+      filterCount = result.filterCount;
+    } catch (error) {
+      // Fallback to direct DB query if cache fails (e.g., > 2MB or cache error)
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const isSizeError = errorMessage.includes("2MB") || errorMessage.includes("size") || errorMessage.includes("cache");
+      
+      if (isSizeError) {
+        console.warn("[GET /api] Cache size limit exceeded, using direct DB query", {
+          searchParams: { cursor: search.cursor, size: search.size, sort: search.sort },
+          error: errorMessage,
+        });
+      }
+      
+      // Fallback to direct DB query
+      const result = await gpuPricingCache.getGpusFiltered(search);
+      filteredGpus = result.data;
+      totalCount = result.totalCount;
+      filterCount = result.filterCount;
     }
 
-    const rangedData = filterData(totalData, { observed_at: dateRange });
-    const withoutSliderData = filterData(rangedData, { ...restFilters, observed_at: null });
-    const filteredData = filterData(withoutSliderData, { ...search, observed_at: null });
-    const sortParam = search.sort ?? { id: "provider", desc: false };
-    const sortedData = sortData(filteredData, sortParam);
-    const facets = getFacetsFromData(totalData);
+    // Generate facets from database using SQL aggregations (no full data load)
+    // This avoids the 2MB cache limit while still providing facet data
+    const facetsData = await getCachedFacets();
+    
+    // Apply facet sorting (provider and model)
+    const facets = {
+      provider: facetsData.provider,
+      type: facetsData.type,
+      gpu_model: facetsData.gpu_model,
+      vram_gb: facetsData.vram_gb,
+      price_hour_usd: facetsData.price_hour_usd,
+    };
+    
     sortProviderFacet(facets);
     sortModelFacet(facets);
-    const withPercentileData = percentileData(sortedData);
 
-    // Cursor windowing by numeric offset (simple, server-driven)
+    // Pagination cursor calculation
     const pageSize = search.size ?? 50;
     const startOffset = typeof search.cursor === 'number' && search.cursor >= 0 ? search.cursor : 0;
-    const data = withPercentileData.slice(startOffset, startOffset + pageSize);
-    const nextCursor = startOffset + data.length < withPercentileData.length ? startOffset + data.length : null;
+    const nextCursor = startOffset + filteredGpus.length < filterCount ? startOffset + filteredGpus.length : null;
     const prevCursor = startOffset > 0 ? Math.max(0, startOffset - pageSize) : null;
 
     const t1 = Date.now();
-    const rowsOut = data;
     const res = Response.json({
-      data: rowsOut,
+      data: filteredGpus,
       meta: {
-        totalRowCount: totalData.length,
-        filterRowCount: filteredData.length,
-        facets: {
-          ...facets,
-        },
+        totalRowCount: totalCount,
+        filterRowCount: filterCount,
+        facets,
         metadata: {} satisfies LogsMeta,
       },
       prevCursor,
       nextCursor,
     } satisfies InfiniteQueryResponse<ColumnSchema[], LogsMeta>, {
       headers: {
-        'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=86400',
+        'Cache-Control': 'public, s-maxage=43200, stale-while-revalidate=3600',
       },
     });
-    logger.info(JSON.stringify({ event: 'api.page', rowsReturned: rowsOut.length, latencyMs: Date.now() - t1 }));
+    logger.info(JSON.stringify({ event: 'api.page', rowsReturned: filteredGpus.length, latencyMs: Date.now() - t1 }));
     return res;
   } catch (error) {
     console.error('Error in pricing API:', error);

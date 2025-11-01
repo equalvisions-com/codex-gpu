@@ -14,6 +14,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ModelsColumnSchema } from "./models-schema";
 import type { ModelFavoriteKey } from "@/types/model-favorites";
 import { stableModelKey } from "./stable-key";
+import type { ModelsInfiniteQueryResponse, ModelsLogsMeta } from "./models-query-options";
 import {
   MODEL_FAVORITES_QUERY_KEY,
   MODEL_FAVORITES_BROADCAST_CHANNEL,
@@ -26,6 +27,7 @@ import {
 } from "@/lib/model-favorites/api-client";
 import { useAuthDialog } from "@/providers/auth-dialog-provider";
 import { useAuth } from "@/providers/auth-client-provider";
+import { getFavoritesBroadcastId } from "@/lib/model-favorites/broadcast";
 
 export function ModelsCheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteKeys?: ModelFavoriteKey[] }) {
   const { checkedRows, table } = useDataTable<ModelsColumnSchema, unknown>();
@@ -36,6 +38,7 @@ export function ModelsCheckedActionsIsland({ initialFavoriteKeys }: { initialFav
   const [noticeVariant, setNoticeVariant] = React.useState<"success" | "error">("success");
   const { showSignIn } = useAuthDialog();
   const { session, isPending: authPending } = useAuth();
+  const broadcastId = React.useMemo(() => getFavoritesBroadcastId(), []);
 
   const promptForAuth = React.useCallback(() => {
     const callbackUrl =
@@ -51,29 +54,49 @@ export function ModelsCheckedActionsIsland({ initialFavoriteKeys }: { initialFav
     };
   }, []);
 
+  const flatRows = table.getRowModel().flatRows;
+  const visibleRowIds = React.useMemo(() => new Set(flatRows.map((row) => row.id)), [flatRows]);
+
   const hasSelection = React.useMemo(() => {
-    for (const _ in checkedRows) return true;
+    for (const key in checkedRows) {
+      if (visibleRowIds.has(key)) {
+        return true;
+      }
+    }
     return false;
-  }, [checkedRows]);
+  }, [checkedRows, visibleRowIds]);
+
+  // Seed React Query cache with initialFavoriteKeys if provided (from SSR)
+  React.useEffect(() => {
+    if (initialFavoriteKeys) {
+      const existing = queryClient.getQueryData<ModelFavoriteKey[]>(MODEL_FAVORITES_QUERY_KEY);
+      if (!existing) {
+        queryClient.setQueryData(MODEL_FAVORITES_QUERY_KEY, initialFavoriteKeys);
+      }
+    }
+  }, [initialFavoriteKeys, queryClient]);
+
+  const prevFavoritesRef = React.useRef<string>("");
+  
+  // Initialize localFavorites from initialFavoriteKeys or React Query cache
+  // Only seed if data already exists (from SSR or previous query)
+  const [localFavorites, setLocalFavorites] = React.useState<ModelFavoriteKey[] | undefined>(() => {
+    const cached = queryClient.getQueryData<ModelFavoriteKey[]>(MODEL_FAVORITES_QUERY_KEY);
+    const initial = cached ?? initialFavoriteKeys;
+    if (initial) {
+      prevFavoritesRef.current = JSON.stringify(initial);
+    }
+    return initial;
+  });
 
   const { data: favorites = [] } = useQuery({
     queryKey: MODEL_FAVORITES_QUERY_KEY,
     queryFn: getModelFavorites,
     staleTime: Infinity,
-    enabled: !initialFavoriteKeys && hasSelection,
+    enabled: hasSelection,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
   });
-
-  React.useEffect(() => {
-    const existing = queryClient.getQueryData<ModelFavoriteKey[]>(MODEL_FAVORITES_QUERY_KEY);
-    if (!existing && initialFavoriteKeys) {
-      queryClient.setQueryData(MODEL_FAVORITES_QUERY_KEY, initialFavoriteKeys);
-    }
-  }, [initialFavoriteKeys, queryClient]);
-
-  const [localFavorites, setLocalFavorites] = React.useState<ModelFavoriteKey[] | undefined>(initialFavoriteKeys);
-  const prevFavoritesRef = React.useRef<string>("");
   React.useEffect(() => {
     if (Array.isArray(favorites)) {
       const favoritesArray = favorites as ModelFavoriteKey[];
@@ -85,6 +108,7 @@ export function ModelsCheckedActionsIsland({ initialFavoriteKeys }: { initialFav
     }
   }, [favorites]);
 
+
   React.useEffect(() => {
     if (authPending) return;
     if (!session) {
@@ -95,14 +119,33 @@ export function ModelsCheckedActionsIsland({ initialFavoriteKeys }: { initialFav
   }, [authPending, queryClient, session]);
 
   React.useEffect(() => {
+    if (typeof window === "undefined" || typeof BroadcastChannel === "undefined") {
+      return;
+    }
     const bc = new BroadcastChannel(MODEL_FAVORITES_BROADCAST_CHANNEL);
     bcRef.current = bc;
 
     bc.onmessage = (event) => {
       if (event.data?.type === "updated" && Array.isArray(event.data?.favorites)) {
+        if (event.data?.source === broadcastId) {
+          return;
+        }
         const newFavorites = event.data.favorites as ModelFavoriteKey[];
         queryClient.setQueryData(MODEL_FAVORITES_QUERY_KEY, newFavorites);
         setLocalFavorites(newFavorites);
+        if (newFavorites.length === 0) {
+          // Clear all favorites queries using partial key match
+          queryClient.setQueriesData(
+            { queryKey: ["model-favorites", "rows"], exact: false },
+            () => ({
+              pages: [],
+              pageParams: [],
+            })
+          );
+        } else {
+          // Invalidate to refetch with updated favorites
+          void queryClient.invalidateQueries({ queryKey: ["model-favorites", "rows"], exact: false });
+        }
       }
     };
 
@@ -110,7 +153,7 @@ export function ModelsCheckedActionsIsland({ initialFavoriteKeys }: { initialFav
       bc.close();
       bcRef.current = null;
     };
-  }, [queryClient]);
+  }, [broadcastId, queryClient]);
 
   const favoriteKeys = React.useMemo(() => {
     const list = (localFavorites && localFavorites.length > 0)
@@ -155,6 +198,40 @@ export function ModelsCheckedActionsIsland({ initialFavoriteKeys }: { initialFav
 
   const [isMutating, setIsMutating] = React.useState(false);
 
+  const FAVORITES_CHUNK_SIZE = 200;
+
+  const fetchFavoriteRowsByKeys = React.useCallback(async (keys: ModelFavoriteKey[]) => {
+    if (!keys.length) return [] as ModelsColumnSchema[];
+
+    const uniqueKeys = Array.from(new Set(keys));
+    const rowsByKey = new Map<string, ModelsColumnSchema>();
+
+    for (let index = 0; index < uniqueKeys.length; index += FAVORITES_CHUNK_SIZE) {
+      const chunk = uniqueKeys.slice(index, index + FAVORITES_CHUNK_SIZE);
+      const response = await fetch("/api/models/favorites/rows", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ keys: chunk }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to load favorite rows");
+      }
+
+      const json = (await response.json()) as { rows: ModelsColumnSchema[] };
+      for (const row of json.rows ?? []) {
+        rowsByKey.set(row.id, row);
+        rowsByKey.set(stableModelKey(row), row);
+      }
+    }
+
+    return keys
+      .map((key) => rowsByKey.get(key))
+      .filter((row): row is ModelsColumnSchema => Boolean(row));
+  }, []);
+
   const handleFavorite = async () => {
     if (!hasSelection) return;
     if (!session) {
@@ -185,15 +262,153 @@ export function ModelsCheckedActionsIsland({ initialFavoriteKeys }: { initialFav
     queryClient.setQueryData(MODEL_FAVORITES_QUERY_KEY, optimisticFavorites);
     setLocalFavorites(optimisticFavorites);
 
+    if (toRemove.length > 0) {
+      const removalSet = new Set(toRemove);
+      // Update all favorites queries (with any search params) using partial key match
+      queryClient.setQueriesData<{ pages: ModelsInfiniteQueryResponse<ModelsColumnSchema[], ModelsLogsMeta>[], pageParams: unknown[] } | undefined>(
+        { queryKey: ["model-favorites", "rows"], exact: false },
+        (previous) => {
+          if (!previous || !previous.pages || previous.pages.length === 0) {
+            return previous;
+          }
+
+          // Filter rows from all pages but keep page structure intact to preserve pagination
+          const filteredPages = previous.pages.map((page) => {
+            const filteredData = page.data.filter(
+              (row) => !removalSet.has(stableModelKey(row))
+            );
+            return {
+              ...page,
+              data: filteredData,
+              meta: {
+                ...page.meta,
+                totalRowCount: optimisticFavorites.length,
+                filterRowCount: optimisticFavorites.length,
+              },
+              // Keep original cursors intact to preserve pagination
+              // Only set nextCursor to null if this was the last page and we removed all remaining items
+            };
+          });
+
+          // Only set nextCursor to null on the last page if all favorites are removed
+          if (optimisticFavorites.length === 0) {
+            const lastPage = filteredPages[filteredPages.length - 1];
+            if (lastPage) {
+              filteredPages[filteredPages.length - 1] = {
+                ...lastPage,
+                nextCursor: null,
+              };
+            }
+          }
+
+          return {
+            ...previous,
+            pages: filteredPages,
+          };
+        },
+      );
+    }
+
     try {
       await Promise.all([
         toAdd.length > 0 ? addModelFavorites(toAdd) : Promise.resolve(),
         toRemove.length > 0 ? removeModelFavorites(toRemove) : Promise.resolve(),
       ]);
 
+      if (toAdd.length > 0) {
+        try {
+          const newRows = await fetchFavoriteRowsByKeys(toAdd as ModelFavoriteKey[]);
+          if (newRows.length) {
+            // Update all favorites queries (with any search params) using partial key match
+            queryClient.setQueriesData<{ pages: ModelsInfiniteQueryResponse<ModelsColumnSchema[], ModelsLogsMeta>[], pageParams: unknown[] } | undefined>(
+              { queryKey: ["model-favorites", "rows"], exact: false },
+              (previous) => {
+                if (!previous || !previous.pages || previous.pages.length === 0) {
+                  // If no previous data, create first page with new rows
+                  const firstPage: ModelsInfiniteQueryResponse<ModelsColumnSchema[], ModelsLogsMeta> = {
+                    data: newRows,
+                    meta: {
+                      totalRowCount: optimisticFavorites.length,
+                      filterRowCount: optimisticFavorites.length,
+                      facets: {},
+                    },
+                    prevCursor: null,
+                    nextCursor: null,
+                  };
+                  return {
+                    pages: [firstPage],
+                    pageParams: [{ cursor: null, size: 50 }],
+                  };
+                }
+
+                // Get existing rows from all pages
+                const existingRows = previous.pages.flatMap((page) => page.data ?? []);
+                const existingKeys = new Set(existingRows.map((row) => stableModelKey(row)));
+                
+                // Filter out duplicates and merge
+                const rowsToAdd = newRows.filter((row) => !existingKeys.has(stableModelKey(row)));
+                if (rowsToAdd.length === 0) return previous;
+
+                // Add to last page if there's space, otherwise create new page
+                const lastPage = previous.pages[previous.pages.length - 1];
+                const pageSize = lastPage?.data?.length ?? 50;
+                
+                if (lastPage && lastPage.data.length + rowsToAdd.length <= pageSize) {
+                  // Add to last page
+                  const updatedPages = [...previous.pages];
+                  updatedPages[updatedPages.length - 1] = {
+                    ...lastPage,
+                    data: [...lastPage.data, ...rowsToAdd],
+                    meta: {
+                      ...lastPage.meta,
+                      totalRowCount: optimisticFavorites.length,
+                      filterRowCount: optimisticFavorites.length,
+                    },
+                  };
+                  return {
+                    ...previous,
+                    pages: updatedPages,
+                  };
+                } else {
+                  // Create new page
+                  const newPage: ModelsInfiniteQueryResponse<ModelsColumnSchema[], ModelsLogsMeta> = {
+                    data: rowsToAdd,
+                    meta: {
+                      totalRowCount: optimisticFavorites.length,
+                      filterRowCount: optimisticFavorites.length,
+                      facets: {},
+                    },
+                    prevCursor: lastPage?.nextCursor ?? null,
+                    nextCursor: null,
+                  };
+                  return {
+                    ...previous,
+                    pages: [...previous.pages, newPage],
+                    pageParams: [...(previous.pageParams ?? []), { cursor: lastPage?.nextCursor ?? null, size: 50 }],
+                  };
+                }
+              },
+            );
+          }
+        } catch (error) {
+          console.warn("[models favorites] failed to append rows after mutation", {
+            error: error instanceof Error ? error.message : String(error),
+          });
+          void queryClient.invalidateQueries({ queryKey: ["model-favorites", "rows"], exact: false });
+        }
+      }
       try {
-        bcRef.current?.postMessage({ type: "updated", favorites: optimisticFavorites });
+        bcRef.current?.postMessage({
+          type: "updated",
+          favorites: optimisticFavorites,
+          source: broadcastId,
+        });
       } catch {}
+
+      // After successful mutation, invalidate to refetch with correct pagination
+      // This ensures pagination works correctly after favorites are added/removed
+      // The optimistic update provides instant UI feedback, then we refetch for correctness
+      void queryClient.invalidateQueries({ queryKey: ["model-favorites", "rows"], exact: false });
 
       if (isMountedRef.current) {
         setIsMutating(false);
@@ -214,6 +429,7 @@ export function ModelsCheckedActionsIsland({ initialFavoriteKeys }: { initialFav
 
       queryClient.setQueryData(MODEL_FAVORITES_QUERY_KEY, originalFavorites);
       setLocalFavorites(originalFavorites);
+      void queryClient.invalidateQueries({ queryKey: ["model-favorites", "rows"], exact: false });
 
       if (isMountedRef.current) {
         setIsMutating(false);

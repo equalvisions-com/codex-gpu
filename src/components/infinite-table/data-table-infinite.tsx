@@ -125,6 +125,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
 }: DataTableInfiniteProps<TData, TValue, TMeta>) {
   // Independent checkbox-only state (does not control the details pane)
   const [checkedRows, setCheckedRows] = React.useState<Record<string, boolean>>({});
+  const missingRowIdWarningRef = React.useRef(false);
   const toggleCheckedRow = React.useCallback((rowId: string, next?: boolean) => {
     setCheckedRows((prev) => {
       const shouldCheck = typeof next === "boolean" ? next : !prev[rowId];
@@ -267,6 +268,35 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   );
 
 
+  const resolvedGetRowId = React.useMemo(() => {
+    if (getRowId) {
+      return getRowId;
+    }
+
+    return (originalRow: TData, index: number, _parent?: Row<TData>) => {
+      if (
+        originalRow &&
+        typeof originalRow === "object" &&
+        "id" in (originalRow as Record<string, unknown>)
+      ) {
+        const rawId = (originalRow as Record<string, unknown>).id;
+        if (typeof rawId === "string" || typeof rawId === "number") {
+          return String(rawId);
+        }
+      }
+
+      if (process.env.NODE_ENV !== "production" && !missingRowIdWarningRef.current) {
+        missingRowIdWarningRef.current = true;
+        console.warn(
+          "[DataTableInfinite] Falling back to index-based row ids. " +
+            "Pass `getRowId` or ensure each row has a stable `id` to keep favorites in sync.",
+        );
+      }
+
+      return String(index);
+    };
+  }, [getRowId]);
+
   const table = useReactTable({
     data,
     columns,
@@ -305,7 +335,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     enableColumnResizing: true,
     enableMultiSort: false,
     columnResizeMode: "onChange",
-    getRowId,
+    getRowId: resolvedGetRowId,
     onColumnFiltersChange,
     onRowSelectionChange,
     onSortingChange,
@@ -325,6 +355,38 @@ export function DataTableInfinite<TData, TValue, TMeta>({
 
   // Table rows for rendering order
   const rows = table.getRowModel().rows;
+
+  React.useEffect(() => {
+    if (!rows.length) {
+      setCheckedRows((previous) => {
+        if (Object.keys(previous).length === 0) {
+          return previous;
+        }
+        return {};
+      });
+      return;
+    }
+
+    const visibleRowIds = new Set(rows.map((row) => row.id));
+    setCheckedRows((previous) => {
+      let didChange = false;
+      const next: Record<string, boolean> = {};
+
+      for (const key in previous) {
+        if (visibleRowIds.has(key)) {
+          next[key] = true;
+        } else {
+          didChange = true;
+        }
+      }
+
+      if (!didChange && Object.keys(previous).length === visibleRowIds.size) {
+        return previous;
+      }
+
+      return didChange ? next : previous;
+    });
+  }, [rows, setCheckedRows]);
 
   // Virtual scrolling setup - properly configured to reduce DOM size
   const rowVirtualizer = useVirtualizer({

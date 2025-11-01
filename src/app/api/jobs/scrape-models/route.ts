@@ -24,9 +24,16 @@ export async function POST(request: NextRequest) {
     const modelsStored = await modelsCache.storeModels(result);
 
     // Invalidate data/tagged caches and route caches
+    // This ensures all cached queries are refreshed with the new scraped data:
+    // - 'models' tag: invalidates getCachedFacets and getCachedModelsFiltered (main table)
+    // - 'model-favorites' tag: invalidates getCachedFavoriteModelsFiltered (favorites table)
+    //   (favorites cache includes model data via JOIN, so it must be invalidated too)
     revalidateTag('models');
+    revalidateTag('model-favorites');
     revalidatePath('/api');
     revalidatePath('/api/models');
+    
+    logger.info(`[ModelsScraper] Cache invalidated (tags: 'models', 'model-favorites', paths: '/api', '/api/models')`);
 
     const duration = Date.now() - startTime;
 
@@ -66,9 +73,16 @@ export async function GET(request: NextRequest) {
       const modelsStored = await modelsCache.storeModels(result);
 
       // Invalidate caches
+      // This ensures all cached queries are refreshed with the new scraped data:
+      // - 'models' tag: invalidates getCachedFacets and getCachedModelsFiltered (main table)
+      // - 'model-favorites' tag: invalidates getCachedFavoriteModelsFiltered (favorites table)
+      //   (favorites cache includes model data via JOIN, so it must be invalidated too)
       revalidateTag('models');
+      revalidateTag('model-favorites');
       revalidatePath('/api');
       revalidatePath('/api/models');
+      
+      logger.info(`[ModelsScraper] [cron] Cache invalidated (tags: 'models', 'model-favorites', paths: '/api', '/api/models')`);
 
       const duration = Date.now() - startTime;
       logger.info(`[ModelsScraper] [cron] Scraping completed in ${duration}ms. Stored ${modelsStored} models.`);

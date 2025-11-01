@@ -1,5 +1,7 @@
 import type { FavoritesResponse, FavoritesRequest, FavoriteKey } from "@/types/favorites";
 import { FAVORITES_API_TIMEOUT } from "./constants";
+import type { InfiniteQueryResponse, LogsMeta } from "@/components/infinite-table/query-options";
+import type { ColumnSchema } from "@/components/infinite-table/schema";
 
 /**
  * Custom error class for favorites API operations
@@ -151,6 +153,75 @@ export async function addFavorites(gpuUuids: FavoriteKey[]): Promise<void> {
 
     throw new FavoritesAPIError(
       "Network error - failed to add favorites",
+      0,
+      "NETWORK_ERROR"
+    );
+  }
+}
+
+/**
+ * Fetches favorite GPU rows with pagination and sorting
+ * 
+ * @param pageParam - Cursor and size for pagination
+ * @param search - Sort and size parameters
+ * @returns Promise resolving to paginated favorite rows
+ * @throws FavoritesAPIError on failure
+ */
+export async function getFavoriteRows(
+  pageParam?: { cursor: number | null; size?: number },
+  search?: { sort?: { id: string; desc: boolean }; size?: number }
+): Promise<InfiniteQueryResponse<ColumnSchema[], LogsMeta>> {
+  try {
+    const cursor = pageParam?.cursor ?? null;
+    const size = search?.size ?? pageParam?.size ?? 50;
+    const sort = search?.sort;
+
+    // Build query params
+    const params = new URLSearchParams();
+    if (cursor !== null) {
+      params.set("cursor", String(cursor));
+    }
+    params.set("size", String(size));
+    if (sort) {
+      params.set("sort", `${sort.id}.${sort.desc ? "desc" : "asc"}`);
+    }
+
+    const response = await fetchWithTimeout(`/api/favorites/rows?${params.toString()}`);
+
+    if (response.status === 401) {
+      throw new FavoritesAPIError("Unauthorized", 401, "UNAUTHORIZED");
+    }
+
+    if (response.status === 429) {
+      throw new FavoritesAPIError(
+        "Rate limit exceeded, try again shortly",
+        429,
+        "RATE_LIMIT"
+      );
+    }
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      throw new FavoritesAPIError(
+        errorData?.error || "Failed to fetch favorite rows",
+        response.status,
+        "API_ERROR"
+      );
+    }
+
+    const data: InfiniteQueryResponse<ColumnSchema[], LogsMeta> = await response.json();
+    return data;
+  } catch (error) {
+    if (error instanceof FavoritesAPIError) {
+      throw error;
+    }
+
+    console.error("[getFavoriteRows] Unexpected error", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+
+    throw new FavoritesAPIError(
+      "Network error - failed to fetch favorite rows",
       0,
       "NETWORK_ERROR"
     );

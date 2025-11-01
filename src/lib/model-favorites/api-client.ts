@@ -1,4 +1,6 @@
 import type { ModelFavoriteKey, ModelFavoritesRequest, ModelFavoritesResponse } from "@/types/model-favorites";
+import type { ModelsColumnSchema } from "@/components/models-table/models-schema";
+import type { ModelsInfiniteQueryResponse, ModelsLogsMeta } from "@/components/models-table/models-query-options";
 import { MODEL_FAVORITES_API_TIMEOUT } from "./constants";
 
 export class ModelFavoritesAPIError extends Error {
@@ -78,6 +80,67 @@ export async function getModelFavorites(): Promise<ModelFavoriteKey[]> {
 
     throw new ModelFavoritesAPIError(
       "Network error - failed to fetch favorites",
+      0,
+      "NETWORK_ERROR"
+    );
+  }
+}
+
+export async function getModelFavoriteRows(
+  pageParam?: { cursor: number | null; size?: number },
+  search?: { sort?: { id: string; desc: boolean }; size?: number }
+): Promise<ModelsInfiniteQueryResponse<ModelsColumnSchema[], ModelsLogsMeta>> {
+  try {
+    const cursor = pageParam?.cursor ?? null;
+    const size = search?.size ?? pageParam?.size ?? 50;
+    const sort = search?.sort;
+
+    // Build query params
+    const params = new URLSearchParams();
+    if (cursor !== null) {
+      params.set("cursor", String(cursor));
+    }
+    params.set("size", String(size));
+    if (sort) {
+      params.set("sort", `${sort.id}.${sort.desc ? "desc" : "asc"}`);
+    }
+
+    const response = await fetchWithTimeout(`/api/models/favorites/rows?${params.toString()}`);
+
+    if (response.status === 401) {
+      throw new ModelFavoritesAPIError("Unauthorized", 401, "UNAUTHORIZED");
+    }
+
+    if (response.status === 429) {
+      throw new ModelFavoritesAPIError(
+        "Rate limit exceeded, try again shortly",
+        429,
+        "RATE_LIMIT"
+      );
+    }
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      throw new ModelFavoritesAPIError(
+        errorData?.error || "Failed to fetch favorite rows",
+        response.status,
+        "API_ERROR"
+      );
+    }
+
+    const data: ModelsInfiniteQueryResponse<ModelsColumnSchema[], ModelsLogsMeta> = await response.json();
+    return data;
+  } catch (error) {
+    if (error instanceof ModelFavoritesAPIError) {
+      throw error;
+    }
+
+    console.error("[getModelFavoriteRows] Unexpected error", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+
+    throw new ModelFavoritesAPIError(
+      "Network error - failed to fetch favorite rows",
       0,
       "NETWORK_ERROR"
     );

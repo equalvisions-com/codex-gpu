@@ -7,8 +7,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { writeLimiter } from "@/lib/redis/ratelimit";
 import { z } from "zod";
 import type { ModelFavoritesRequest, ModelFavoritesResponse, ModelFavoriteKey } from "@/types/model-favorites";
-import { revalidateTag } from "next/cache";
-import { getModelFavoritesCacheTag, getModelFavoritesRateLimitKey } from "@/lib/model-favorites/constants";
+import { revalidateTag, unstable_cache } from "next/cache";
+import { getModelFavoritesCacheTag, getModelFavoritesRateLimitKey, MODEL_FAVORITES_CACHE_TTL } from "@/lib/model-favorites/constants";
 
 type UserModelFavoriteRow = {
   id: string;
@@ -34,20 +34,35 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Use unstable_cache to leverage server-side cache
+    // Cache check happens here (in API route), not blocking SSR
+    // If cache exists: returns immediately
+    // If cache misses: queries DB and caches result (non-blocking for SSR since this is an API route)
+    const getCachedFavorites = unstable_cache(
+      async (userId: string) => {
     const rows = await db
       // @ts-ignore - Drizzle types conflict
       .select()
       // @ts-ignore
       .from(userModelFavorites)
       // @ts-ignore
-      .where(eq(userModelFavorites.userId, session.user.id));
+          .where(eq(userModelFavorites.userId, userId));
 
     const typedRows = rows as unknown as UserModelFavoriteRow[];
-    const favorites: ModelFavoriteKey[] = (typedRows || []).map((r) => r.modelId as ModelFavoriteKey);
+        return (typedRows || []).map((r) => r.modelId as ModelFavoriteKey);
+      },
+      ["model-favorites:api", session.user.id],
+      {
+        revalidate: MODEL_FAVORITES_CACHE_TTL,
+        tags: [getModelFavoritesCacheTag(session.user.id)],
+      }
+    );
+
+    const favorites = await getCachedFavorites(session.user.id);
 
     return NextResponse.json<ModelFavoritesResponse>({ favorites });
   } catch (error) {
-    console.error("[GET /api/models/favorites] Database query failed", {
+    console.error("[GET /api/models/favorites] Failed to fetch favorites", {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
     });

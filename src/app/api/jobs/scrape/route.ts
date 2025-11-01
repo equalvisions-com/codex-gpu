@@ -29,9 +29,15 @@ export async function POST(request: NextRequest) {
     const scrapeResult = await gpuPricingScraper.scrapeAll();
     const stored = await gpuPricingStore.replaceAll(scrapeResult.providerResults);
 
+    // Invalidate data/tagged caches and route caches
+    // This ensures all cached queries (getCachedFacets, getCachedGpusFiltered) 
+    // are refreshed with the new scraped data
+    // Also invalidates favorites cache since favorites JOIN with gpuPricing
     revalidateTag("pricing");
+    revalidateTag("favorites");
     revalidatePath("/api");
-    // `/api` already covers the main GPU data endpoint
+    
+    logger.info(`[GpuPricingJob] Cache invalidated (tags: 'pricing', 'favorites', path: '/api')`);
 
     const duration = Date.now() - startTime;
     const totalRows = scrapeResult.providerResults.reduce((acc, result) => acc + result.rows.length, 0);
@@ -86,9 +92,15 @@ export async function GET(request: NextRequest) {
       const scrapeResult = await gpuPricingScraper.scrapeAll();
       const stored = await gpuPricingStore.replaceAll(scrapeResult.providerResults);
 
+      // Invalidate caches
+      // This ensures all cached queries (getCachedFacets, getCachedGpusFiltered) 
+      // are refreshed with the new scraped data
+      // Also invalidates favorites cache since favorites JOIN with gpuPricing
       revalidateTag("pricing");
+      revalidateTag("favorites");
       revalidatePath("/api");
-      // `/api` already covers the main GPU data endpoint
+      
+      logger.info(`[GpuPricingJob] [cron] Cache invalidated (tags: 'pricing', 'favorites', path: '/api')`);
 
       const duration = Date.now() - startedAt;
       const totalRows = scrapeResult.providerResults.reduce((acc, result) => acc + result.rows.length, 0);

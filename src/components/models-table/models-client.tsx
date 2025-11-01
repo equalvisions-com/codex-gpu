@@ -15,30 +15,35 @@ import { useAuthDialog } from "@/providers/auth-dialog-provider";
 import { modelsColumns } from "./models-columns";
 import { modelsDataOptions } from "./models-query-options";
 import { modelsSearchParamsParser } from "./models-search-params";
-import { ModelsDataTableInfinite } from "./models-data-table-infinite";
+import { ModelsDataTableInfinite, type ModelsDataTableMeta } from "./models-data-table-infinite";
 import { filterFields as defaultFilterFields, sheetFields } from "./models-constants";
 import type { ModelsColumnSchema, ModelsFacetMetadataSchema } from "./models-schema";
-import { stableModelKey } from "./stable-key";
 import type { ModalitiesDirection } from "./modalities-filter";
 import type { ModelFavoriteKey } from "@/types/model-favorites";
 import { MODEL_FAVORITES_BROADCAST_CHANNEL, MODEL_FAVORITES_QUERY_KEY } from "@/lib/model-favorites/constants";
+import { favoritesDataOptions } from "./models-favorites-query-options";
 import { getModelFavorites } from "@/lib/model-favorites/api-client";
+import { stableModelKey } from "./stable-key";
 import { MobileTopNav, SidebarPanel, type AccountUser } from "../infinite-table/account-components";
+import { syncModelFavorites } from "@/lib/model-favorites/sync";
+import { getFavoritesBroadcastId } from "@/lib/model-favorites/broadcast";
 
 interface ModelsClientProps {
-  initialFavoritesData?: ModelsColumnSchema[];
   initialFavoriteKeys?: ModelFavoriteKey[];
+  isFavoritesMode?: boolean;
 }
 
-export function ModelsClient({ initialFavoritesData, initialFavoriteKeys }: ModelsClientProps = {}) {
+export function ModelsClient({ initialFavoriteKeys, isFavoritesMode = false }: ModelsClientProps = {}) {
   const contentRef = React.useRef<HTMLTableSectionElement>(null);
+  const broadcastChannelRef = React.useRef<BroadcastChannel | null>(null);
   const [search] = useQueryStates(modelsSearchParamsParser);
   const queryClient = useQueryClient();
   const router = useRouter();
-  const { session, signOut } = useAuth();
+  const { session, signOut, isPending: authPending } = useAuth();
   const { showSignIn, showSignUp } = useAuthDialog();
   const [isSigningOut, startSignOutTransition] = React.useTransition();
   const accountUser = (session?.user ?? null) as AccountUser | null;
+  const broadcastId = React.useMemo(() => getFavoritesBroadcastId(), []);
 
   const handleSignIn = React.useCallback(() => {
     if (!showSignIn) return;
@@ -70,50 +75,172 @@ export function ModelsClient({ initialFavoritesData, initialFavoriteKeys }: Mode
     });
   }, [queryClient, router, signOut]);
 
-  const isFavoritesMode = !!initialFavoritesData;
-
-  const initializedRef = React.useRef(false);
+  // Seed cache with initialFavoriteKeys if provided (from SSR)
+  // This is an optimization - the query will still run to ensure fresh data
+const initializedRef = React.useRef(false);
   React.useEffect(() => {
     if (!initializedRef.current && initialFavoriteKeys) {
-      queryClient.setQueryData(MODEL_FAVORITES_QUERY_KEY, initialFavoriteKeys);
+      syncModelFavorites({
+        queryClient,
+        favorites: initialFavoriteKeys,
+        invalidateRows: false,
+      });
       initializedRef.current = true;
     }
   }, [initialFavoriteKeys, queryClient]);
 
+  const FAVORITES_CHUNK_SIZE = 200;
+
+  const fetchFavoriteRowsByKeys = React.useCallback(
+    async (keys: ModelFavoriteKey[]): Promise<ModelsColumnSchema[]> => {
+      if (!keys.length) return [];
+
+      const uniqueKeys = Array.from(new Set(keys));
+      const rowsByKey = new Map<string, ModelsColumnSchema>();
+
+      for (let index = 0; index < uniqueKeys.length; index += FAVORITES_CHUNK_SIZE) {
+        const chunk = uniqueKeys.slice(index, index + FAVORITES_CHUNK_SIZE);
+        const response = await fetch("/api/models/favorites/rows", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ keys: chunk }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to load favorite rows");
+        }
+
+        const json = (await response.json()) as { rows: ModelsColumnSchema[] };
+        for (const row of json.rows ?? []) {
+          rowsByKey.set(row.id, row);
+          rowsByKey.set(stableModelKey(row), row);
+        }
+      }
+
+      return keys
+        .map((key) => rowsByKey.get(key))
+        .filter((row): row is ModelsColumnSchema => Boolean(row));
+    },
+    [],
+  );
+
+  // Fetch favorites when in favorites mode (for checkbox UI)
+  // Only needed for the checkbox/selection UI, not for favorites view data
   const { data: favorites = [] } = useQuery({
     queryKey: MODEL_FAVORITES_QUERY_KEY,
     queryFn: getModelFavorites,
     staleTime: Infinity,
-    enabled: false,
+    enabled: false, // Disabled - only used for checkbox UI, fetched lazily when needed
     refetchOnMount: false,
     refetchOnWindowFocus: false,
   });
 
   React.useEffect(() => {
-    if (!isFavoritesMode) return;
+    if (!isFavoritesMode) {
+      // Clean up if mode changes away from favorites
+      if (broadcastChannelRef.current) {
+        broadcastChannelRef.current.close();
+        broadcastChannelRef.current = null;
+      }
+      return;
+    }
+    if (typeof window === "undefined" || typeof BroadcastChannel === "undefined") {
+      return;
+    }
+    
+    // Guard: prevent multiple BroadcastChannel instances
+    if (broadcastChannelRef.current) {
+      return; // Already initialized
+    }
+    
     const bc = new BroadcastChannel(MODEL_FAVORITES_BROADCAST_CHANNEL);
-    bc.onmessage = (event) => {
-      if (event.data?.type === "updated" && Array.isArray(event.data?.favorites)) {
-        const newFavorites = event.data.favorites as ModelFavoriteKey[];
-        queryClient.setQueryData(MODEL_FAVORITES_QUERY_KEY, newFavorites);
+    broadcastChannelRef.current = bc;
+    
+    bc.onmessage = async (event) => {
+      if (event.data?.type !== "updated" || !Array.isArray(event.data?.favorites)) {
+        return;
+      }
+
+      if (event.data?.source === broadcastId) {
+        return;
+      }
+
+      const newFavorites = event.data.favorites as ModelFavoriteKey[];
+
+      syncModelFavorites({
+        queryClient,
+        favorites: newFavorites,
+      });
+
+      // Invalidate favorites query to refetch with new favorites
+      // This ensures pagination works correctly with updated favorites
+      void queryClient.invalidateQueries({
+        queryKey: ["model-favorites", "rows"],
+        exact: false,
+      });
+    };
+    
+    return () => {
+      if (broadcastChannelRef.current) {
+        broadcastChannelRef.current.close();
+        broadcastChannelRef.current = null;
       }
     };
-    return () => bc.close();
-  }, [isFavoritesMode, queryClient]);
+  }, [broadcastId, isFavoritesMode, queryClient]);
 
-  const favoriteKeys = React.useMemo(() => new Set(favorites as ModelFavoriteKey[]), [favorites]);
+  // Fetch favorite rows with pagination when in favorites mode
+  // Uses useInfiniteQuery for pagination (same as main table)
+  // API endpoint uses unstable_cache server-side for favorite keys
+  const {
+    data: favoriteData,
+    isFetching: isFetchingFavorites,
+    isLoading: isLoadingFavorites,
+    isFetchingNextPage: isFetchingNextPageFavorites,
+    fetchNextPage: fetchNextPageFavorites,
+    hasNextPage: hasNextPageFavorites,
+    status: favoritesStatus,
+  } = useInfiniteQuery({
+    ...favoritesDataOptions(search),
+    enabled: isFavoritesMode && !!session && !authPending,
+  });
 
-  const [favoritesData, setFavoritesData] = React.useState(initialFavoritesData);
-  React.useEffect(() => {
-    setFavoritesData(initialFavoritesData);
-  }, [initialFavoritesData]);
+  // Show loading state if:
+  // - Query is loading
+  // - Query is pending (not started yet, including when disabled)
+  // - Query is disabled but we're waiting for auth (session pending or not authenticated)
+  // When query is disabled, TanStack Query sets isLoading=false, so we need to check status and auth state
+  const isFavoritesLoading = isLoadingFavorites || 
+    favoritesStatus === 'pending' || 
+    (isFavoritesMode && (authPending || !session));
 
-  React.useEffect(() => {
-    if (isFavoritesMode && initialFavoritesData) {
-      const updated = initialFavoritesData.filter((row) => favoriteKeys.has(stableModelKey(row)));
-      setFavoritesData(updated);
+  // Extract favorite keys from all pages (for checkbox UI)
+  const favoriteKeysFromRows = React.useMemo(() => {
+    if (!isFavoritesMode || !favoriteData?.pages || favoriteData.pages.length === 0) {
+      return [];
     }
-  }, [favorites, favoriteKeys, isFavoritesMode, initialFavoritesData]);
+    // Get all favorite keys from all pages
+    const allKeys = new Set<ModelFavoriteKey>();
+    favoriteData.pages.forEach((page) => {
+      page.data.forEach((row) => {
+        allKeys.add(stableModelKey(row) as ModelFavoriteKey);
+      });
+    });
+    return Array.from(allKeys);
+  }, [favoriteData?.pages, isFavoritesMode]);
+
+  // Seed favorites cache with keys from favorites view
+  // This ensures checkboxes are pre-checked immediately (no flicker)
+  React.useEffect(() => {
+    if (isFavoritesMode && favoriteKeysFromRows.length > 0) {
+      const existing = queryClient.getQueryData<ModelFavoriteKey[]>(MODEL_FAVORITES_QUERY_KEY);
+      if (!existing || existing.length !== favoriteKeysFromRows.length) {
+        queryClient.setQueryData(MODEL_FAVORITES_QUERY_KEY, favoriteKeysFromRows);
+      }
+    }
+  }, [isFavoritesMode, favoriteKeysFromRows, queryClient]);
+
 
   const {
     data,
@@ -133,12 +260,14 @@ export function ModelsClient({ initialFavoritesData, initialFavoriteKeys }: Mode
 
   const flatData: ModelsColumnSchema[] = React.useMemo(() => {
     if (isFavoritesMode) {
-      return (favoritesData || initialFavoritesData || []) as ModelsColumnSchema[];
+      return (favoriteData?.pages?.flatMap((page) => page.data ?? []) as ModelsColumnSchema[]) ?? [] as ModelsColumnSchema[];
     }
     return (data?.pages?.flatMap((page) => page.data ?? []) as ModelsColumnSchema[]) ?? [] as ModelsColumnSchema[];
-  }, [data?.pages, isFavoritesMode, favoritesData, initialFavoritesData]);
+  }, [data?.pages, favoriteData?.pages, isFavoritesMode]);
 
-  const lastPage = data?.pages?.[data?.pages.length - 1];
+  const lastPage = isFavoritesMode 
+    ? favoriteData?.pages?.[favoriteData.pages.length - 1]
+    : data?.pages?.[data?.pages.length - 1];
   const rawFacets = isFavoritesMode ? {} : lastPage?.meta?.facets;
   const facetsRef = React.useRef<Record<string, ModelsFacetMetadataSchema> | undefined>(undefined);
   React.useEffect(() => {
@@ -155,10 +284,13 @@ export function ModelsClient({ initialFavoritesData, initialFavoriteKeys }: Mode
   const filterDBRowCount = isFavoritesMode ? flatData.length : lastPage?.meta?.filterRowCount;
   const totalFetched = flatData.length;
 
-  const metadata = {
+  // Use favorite keys from rows query if in favorites mode, otherwise use initialFavoriteKeys from SSR
+  const effectiveFavoriteKeys = isFavoritesMode ? favoriteKeysFromRows : initialFavoriteKeys;
+
+  const metadata: ModelsDataTableMeta<Record<string, unknown>> = {
     ...(lastPage?.meta?.metadata ?? {}),
-    initialFavoriteKeys,
-  } as Record<string, unknown>;
+    initialFavoriteKeys: effectiveFavoriteKeys,
+  };
 
   const { sort, uuid, search: globalSearch, ...filter } = search;
 
@@ -208,6 +340,7 @@ export function ModelsClient({ initialFavoritesData, initialFavoriteKeys }: Mode
 
   const [sorting, setSorting] = React.useState<SortingState>(derivedSorting);
   const derivedSortingRef = React.useRef<SortingState>(derivedSorting);
+  const previousSortingRef = React.useRef<SortingState>(derivedSorting);
 
   React.useEffect(() => {
     if (!isSortingStateEqual(derivedSortingRef.current, derivedSorting)) {
@@ -216,10 +349,14 @@ export function ModelsClient({ initialFavoritesData, initialFavoriteKeys }: Mode
     derivedSortingRef.current = derivedSorting;
   }, [derivedSorting]);
 
+  // Only scroll to top when sorting actually changes (user clicks column header)
+  // Not when pagination happens (which shouldn't change sorting)
   React.useEffect(() => {
-    if (sorting.length > 0) {
+    const didSortingChange = !isSortingStateEqual(previousSortingRef.current, sorting);
+    if (didSortingChange && sorting.length > 0) {
       window.scrollTo({ top: 0, behavior: "auto" });
     }
+    previousSortingRef.current = sorting;
   }, [sorting]);
 
   const derivedRowSelection = React.useMemo<RowSelectionState>(() => {
@@ -268,7 +405,7 @@ export function ModelsClient({ initialFavoritesData, initialFavoriteKeys }: Mode
 
   return (
     <ModelsDataTableInfinite
-      key={`models-table-${isFavoritesMode ? `favorites-${favorites?.length || 0}` : "all"}`}
+      key={`models-table-${isFavoritesMode ? "favorites" : "all"}`}
       columns={modelsColumns}
       data={flatData}
       skeletonRowCount={50}
@@ -285,11 +422,11 @@ export function ModelsClient({ initialFavoritesData, initialFavoriteKeys }: Mode
       meta={{ ...metadata, facets: castFacets }}
       filterFields={filterFields}
       sheetFields={sheetFields}
-      isFetching={isFavoritesMode ? false : isFetching}
-      isLoading={isFavoritesMode ? false : isLoading}
-      isFetchingNextPage={isFavoritesMode ? false : isFetchingNextPage}
-      fetchNextPage={isFavoritesMode ? () => Promise.resolve() : fetchNextPage}
-      hasNextPage={isFavoritesMode ? false : hasNextPage}
+      isFetching={isFavoritesMode ? isFetchingFavorites : isFetching}
+      isLoading={isFavoritesMode ? isFavoritesLoading : isLoading}
+      isFetchingNextPage={isFavoritesMode ? isFetchingNextPageFavorites : isFetchingNextPage}
+      fetchNextPage={isFavoritesMode ? fetchNextPageFavorites : fetchNextPage}
+      hasNextPage={isFavoritesMode ? hasNextPageFavorites : hasNextPage}
       renderSheetTitle={({ row }) => {
         if (!row) return "AI Model Details";
         const model = row.original as ModelsColumnSchema;

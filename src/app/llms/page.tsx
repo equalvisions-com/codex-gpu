@@ -7,11 +7,6 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { getCookieCache } from "better-auth/cookies";
 import type { Session } from "@/lib/auth-client";
-import { getUserModelFavoritesFromCache } from "@/lib/model-favorites/cache";
-import { modelsCache } from "@/lib/models-cache";
-import { stableModelKey } from "@/components/models-table/stable-key";
-import type { ModelsColumnSchema } from "@/components/models-table/models-schema";
-import { unstable_cache } from "next/cache";
 
 export default async function Models({
   searchParams,
@@ -24,59 +19,34 @@ export default async function Models({
   const queryClient = getQueryClient();
   const prefetchPromise = queryClient.prefetchInfiniteQuery(modelsDataOptions(search));
 
-  // Prehydrate favorites keys for authed users to avoid flicker on first selection
   const hdrs = await headers();
-  const sessionFromCookie = await getCookieCache(new Headers(hdrs), {
+  // Start cookie cache check in parallel with prefetch (both are fast, no DB hits)
+  const cookieCachePromise = getCookieCache(new Headers(hdrs), {
     secret: process.env.BETTER_AUTH_SECRET,
-  }) as Session | null;
+  }) as Promise<Session | null>;
+  
+  // Wait for cookie cache result first (it's very fast, ~1-5ms)
+  // This allows us to start DB hit immediately if cache misses, without waiting for prefetch
+  const sessionFromCookie = await cookieCachePromise;
+  
+  // If cookie cache missed, start DB hit immediately (in parallel with prefetch)
+  // If cookie cache hit, use it (no DB hit needed)
   const sessionPromise = sessionFromCookie
     ? Promise.resolve(sessionFromCookie)
     : auth.api.getSession({ headers: hdrs });
+  
+  // Wait for both prefetch and session in parallel
+  // This ensures DB hit (if needed) runs concurrently with prefetch, not sequentially
   const [, session] = await Promise.all([
     prefetchPromise,
-    sessionFromCookie ? Promise.resolve(sessionFromCookie) : auth.api.getSession({ headers: hdrs }),
+    sessionPromise,
   ]);
 
-  const getAllModelsCached = unstable_cache(
-    async () => {
-      return await modelsCache.getAllModels();
-    },
-    ["models:rows"],
-    { revalidate: 900, tags: ["models"] },
-  );
-
+  // Skip server-side cache check to avoid blocking SSR
+  // Cache check happens client-side via prefetch (non-blocking HTTP request)
+  // API endpoint uses unstable_cache server-side, so cache still benefits users
+  // This ensures fast, non-blocking page render for all users
   let initialFavoriteKeys: string[] | undefined;
-  let initialFavoritesData: ModelsColumnSchema[] | undefined;
-  if (session) {
-    initialFavoriteKeys = await getUserModelFavoritesFromCache(session.user.id);
-
-    if (isFavoritesMode && initialFavoriteKeys.length > 0) {
-      const allModels = await getAllModelsCached();
-      const favoriteSet = new Set(initialFavoriteKeys);
-      initialFavoritesData = allModels
-        .map((model) => ({
-          id: model.id,
-          slug: model.slug,
-          provider: model.provider,
-          name: model.name ?? null,
-          shortName: model.shortName ?? null,
-          author: model.author ?? null,
-          description: model.description ?? null,
-          modelVersionGroupId: model.modelVersionGroupId ?? null,
-          contextLength: model.contextLength ?? null,
-          inputModalities: model.inputModalities ?? [],
-          outputModalities: model.outputModalities ?? [],
-          hasTextOutput: model.hasTextOutput ?? "false",
-          group: model.group ?? null,
-          instructType: model.instructType ?? null,
-          permaslug: model.permaslug ?? null,
-          mmlu: model.mmlu ?? null,
-          pricing: model.pricing ?? {},
-          scrapedAt: model.scrapedAt,
-        }))
-        .filter((row) => favoriteSet.has(stableModelKey(row)));
-    }
-  }
 
   return (
     <div
@@ -87,8 +57,8 @@ export default async function Models({
       } as React.CSSProperties}
     >
       <ModelsClient
-        initialFavoritesData={initialFavoritesData}
         initialFavoriteKeys={initialFavoriteKeys}
+        isFavoritesMode={isFavoritesMode}
       />
     </div>
   );

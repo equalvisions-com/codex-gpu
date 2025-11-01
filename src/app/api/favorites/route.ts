@@ -7,8 +7,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { writeLimiter } from "@/lib/redis/ratelimit";
 import { z } from "zod";
 import type { FavoritesRequest, FavoritesResponse, FavoriteKey } from "@/types/favorites";
-import { revalidateTag } from "next/cache";
-import { getFavoritesCacheTag, getFavoritesRateLimitKey } from "@/lib/favorites/constants";
+import { revalidateTag, unstable_cache } from "next/cache";
+import { getFavoritesCacheTag, getFavoritesRateLimitKey, FAVORITES_CACHE_TTL } from "@/lib/favorites/constants";
 
 /**
  * Database row type for user_favorites table
@@ -36,6 +36,11 @@ function buildRateHeaders(limit?: number, remaining?: number, reset?: number) {
  * GET /api/favorites
  * Fetches the current user's favorited GPU UUIDs
  * 
+ * Uses unstable_cache to leverage server-side cache.
+ * Cache check happens here (in API route), not blocking SSR.
+ * If cache exists: returns immediately
+ * If cache misses: queries DB and caches result (non-blocking for SSR since this is an API route)
+ * 
  * @returns 200 with array of GPU UUIDs
  * @returns 401 if not authenticated
  * @returns 500 on server error
@@ -49,25 +54,37 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    /**
-     * Type suppression needed due to Drizzle ORM build artifact conflicts
-     * Issue: Multiple Drizzle versions in node_modules create incompatible type declarations
-     * Solution: Use type assertion after query execution - runtime behavior is correct
-     * TODO: Remove when Drizzle resolves upstream type conflicts
-     */
-    const rows = await db
-      .select()
-      // @ts-ignore - Drizzle ORM type conflict between build artifacts (see comment above)
-      .from(userFavorites)
-      // @ts-ignore - Drizzle ORM type conflict between build artifacts
-      .where(eq(userFavorites.userId, session.user.id));
-    
-    const typedRows = rows as unknown as UserFavoriteRow[];
-    const favorites: FavoriteKey[] = (typedRows || []).map((r) => r.gpuUuid as FavoriteKey);
+    // Use unstable_cache to leverage server-side cache
+    const getCachedFavorites = unstable_cache(
+      async (userId: string) => {
+        /**
+         * Type suppression needed due to Drizzle ORM build artifact conflicts
+         * Issue: Multiple Drizzle versions in node_modules create incompatible type declarations
+         * Solution: Use type assertion after query execution - runtime behavior is correct
+         * TODO: Remove when Drizzle resolves upstream type conflicts
+         */
+        const rows = await db
+          .select()
+          // @ts-ignore - Drizzle ORM type conflict between build artifacts (see comment above)
+          .from(userFavorites)
+          // @ts-ignore - Drizzle ORM type conflict between build artifacts
+          .where(eq(userFavorites.userId, userId));
+        
+        const typedRows = rows as unknown as UserFavoriteRow[];
+        return (typedRows || []).map((r) => r.gpuUuid as FavoriteKey);
+      },
+      ["favorites:api", session.user.id],
+      {
+        revalidate: FAVORITES_CACHE_TTL,
+        tags: [getFavoritesCacheTag(session.user.id)],
+      }
+    );
+
+    const favorites = await getCachedFavorites(session.user.id);
     
     return NextResponse.json<FavoritesResponse>({ favorites });
   } catch (error) {
-    console.error("[GET /api/favorites] Database query failed", {
+    console.error("[GET /api/favorites] Failed to fetch favorites", {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
     });
@@ -152,8 +169,10 @@ export async function POST(request: NextRequest) {
       .onConflictDoNothing();
 
     // Revalidate cached favorites for this user
+    // This invalidates both the favorites keys cache and the favorites rows cache
     try { 
       revalidateTag(getFavoritesCacheTag(session.user.id)); 
+      revalidateTag("favorites"); // Invalidate favorites rows cache
     } catch (revalidateError) {
       console.error("[POST /api/favorites] Cache revalidation failed", {
         userId: session.user.id,
@@ -249,8 +268,10 @@ export async function DELETE(request: NextRequest) {
       );
 
     // Revalidate cached favorites for this user
+    // This invalidates both the favorites keys cache and the favorites rows cache
     try { 
       revalidateTag(getFavoritesCacheTag(session.user.id)); 
+      revalidateTag("favorites"); // Invalidate favorites rows cache
     } catch (revalidateError) {
       console.error("[DELETE /api/favorites] Cache revalidation failed", {
         userId: session.user.id,

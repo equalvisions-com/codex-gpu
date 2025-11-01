@@ -43,12 +43,18 @@ import { UserMenu, type AccountUser } from "../infinite-table/account-components
 import { usePathname } from "next/navigation";
 import { Search } from "lucide-react";
 import { DesktopNavTabs, type DesktopNavItem } from "./nav-tabs";
+import type { ModelFavoriteKey } from "@/types/model-favorites";
 
 const noop = () => {};
 const gradientSurfaceClass =
   "border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-foreground";
 
 // Note: chart groupings could be added later if needed
+export type ModelsDataTableMeta<TMeta> = TMeta & {
+  facets?: Record<string, any>;
+  initialFavoriteKeys?: ModelFavoriteKey[];
+};
+
 export interface ModelsDataTableInfiniteProps<TData, TValue, TMeta> {
   columns: ColumnDef<TData, TValue>[];
   getRowClassName?: (row: Row<TData>) => string;
@@ -70,7 +76,7 @@ export interface ModelsDataTableInfiniteProps<TData, TValue, TMeta> {
   totalRows?: number;
   filterRows?: number;
   totalRowsFetched?: number;
-  meta: TMeta & { facets?: Record<string, any> };
+  meta: ModelsDataTableMeta<TMeta>;
   isFetching?: boolean;
   isLoading?: boolean;
   isFetchingNextPage?: boolean;
@@ -126,6 +132,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
 }: ModelsDataTableInfiniteProps<TData, TValue, TMeta>) {
   // Independent checkbox-only state (does not control the details pane)
   const [checkedRows, setCheckedRows] = React.useState<Record<string, boolean>>({});
+  const missingRowIdWarningRef = React.useRef(false);
   const toggleCheckedRow = React.useCallback((rowId: string, next?: boolean) => {
     setCheckedRows((prev) => {
       const shouldCheck = typeof next === "boolean" ? next : !prev[rowId];
@@ -266,6 +273,35 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
   );
 
 
+  const resolvedGetRowId = React.useMemo(() => {
+    if (getRowId) {
+      return getRowId;
+    }
+
+    return (originalRow: TData, index: number, _parent?: Row<TData>) => {
+      if (
+        originalRow &&
+        typeof originalRow === "object" &&
+        "id" in (originalRow as Record<string, unknown>)
+      ) {
+        const rawId = (originalRow as Record<string, unknown>).id;
+        if (typeof rawId === "string" || typeof rawId === "number") {
+          return String(rawId);
+        }
+      }
+
+      if (process.env.NODE_ENV !== "production" && !missingRowIdWarningRef.current) {
+        missingRowIdWarningRef.current = true;
+        console.warn(
+          "[ModelsDataTableInfinite] Falling back to index-based row ids. " +
+            "Pass `getRowId` or ensure each row has a stable `id` to keep favorites in sync.",
+        );
+      }
+
+      return String(index);
+    };
+  }, [getRowId]);
+
   const table = useReactTable({
     data,
     columns,
@@ -303,7 +339,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
     enableColumnResizing: true,
     enableMultiSort: false,
     columnResizeMode: "onChange",
-    getRowId,
+    getRowId: resolvedGetRowId,
     onColumnFiltersChange,
     onRowSelectionChange,
     onSortingChange,
@@ -323,6 +359,38 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
 
   // Table rows for rendering order
   const rows = table.getRowModel().rows;
+
+  React.useEffect(() => {
+    if (!rows.length) {
+      setCheckedRows((previous) => {
+        if (Object.keys(previous).length === 0) {
+          return previous;
+        }
+        return {};
+      });
+      return;
+    }
+
+    const visibleRowIds = new Set(rows.map((row) => row.id));
+    setCheckedRows((previous) => {
+      let didChange = false;
+      const next: Record<string, boolean> = {};
+
+      for (const key in previous) {
+        if (visibleRowIds.has(key)) {
+          next[key] = true;
+        } else {
+          didChange = true;
+        }
+      }
+
+      if (!didChange && Object.keys(previous).length === visibleRowIds.size) {
+        return previous;
+      }
+
+      return didChange ? next : previous;
+    });
+  }, [rows, setCheckedRows]);
 
   // Virtual scrolling setup - properly configured to reduce DOM size
   const rowVirtualizer = useVirtualizer({
