@@ -258,8 +258,12 @@ export function Client({ initialFavoriteKeys, isFavoritesMode = false }: ClientP
   // Use favorite keys from rows query if in favorites mode, otherwise use initialFavoriteKeys from SSR
   const effectiveFavoriteKeys = isFavoritesMode ? favoriteKeysFromRows : initialFavoriteKeys;
   
-  const metadata: DataTableMeta<Record<string, unknown>> = {
+  const totalFetched = flatData?.length;
+  const metadata: DataTableMeta<{ totalRows: number; filterRows: number; totalRowsFetched: number; }> = {
     ...(lastPage?.meta?.metadata ?? {}),
+    totalRows: totalDBRowCount ?? 0,
+    filterRows: filterDBRowCount ?? 0,
+    totalRowsFetched: totalFetched ?? 0,
     initialFavoriteKeys: effectiveFavoriteKeys,
   };
   const facets = isFavoritesMode ? {} : lastPage?.meta?.facets;
@@ -274,7 +278,6 @@ export function Client({ initialFavoriteKeys, isFavoritesMode = false }: ClientP
     return facets && Object.keys(facets).length ? facets : facetsRef.current ?? {};
   }, [facets, isFavoritesMode]);
   const castFacets = stableFacets as Record<string, FacetMetadataSchema> | undefined;
-  const totalFetched = flatData?.length;
 
   const { sort, start, size, uuid, cursor, direction, observed_at, search: globalSearch, ...filter } =
     search;
