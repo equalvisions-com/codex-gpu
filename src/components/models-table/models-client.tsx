@@ -76,8 +76,7 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode = false }: M
   }, [queryClient, router, signOut]);
 
   // Seed cache with initialFavoriteKeys if provided (from SSR)
-  // This is an optimization - the query will still run to ensure fresh data
-const initializedRef = React.useRef(false);
+  const initializedRef = React.useRef(false);
   React.useEffect(() => {
     if (!initializedRef.current && initialFavoriteKeys) {
       syncModelFavorites({
@@ -88,43 +87,6 @@ const initializedRef = React.useRef(false);
       initializedRef.current = true;
     }
   }, [initialFavoriteKeys, queryClient]);
-
-  const FAVORITES_CHUNK_SIZE = 200;
-
-  const fetchFavoriteRowsByKeys = React.useCallback(
-    async (keys: ModelFavoriteKey[]): Promise<ModelsColumnSchema[]> => {
-      if (!keys.length) return [];
-
-      const uniqueKeys = Array.from(new Set(keys));
-      const rowsByKey = new Map<string, ModelsColumnSchema>();
-
-      for (let index = 0; index < uniqueKeys.length; index += FAVORITES_CHUNK_SIZE) {
-        const chunk = uniqueKeys.slice(index, index + FAVORITES_CHUNK_SIZE);
-        const response = await fetch("/api/models/favorites/rows", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ keys: chunk }),
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to load favorite rows");
-        }
-
-        const json = (await response.json()) as { rows: ModelsColumnSchema[] };
-        for (const row of json.rows ?? []) {
-          rowsByKey.set(row.id, row);
-          rowsByKey.set(stableModelKey(row), row);
-        }
-      }
-
-      return keys
-        .map((key) => rowsByKey.get(key))
-        .filter((row): row is ModelsColumnSchema => Boolean(row));
-    },
-    [],
-  );
 
   // Fetch favorites when in favorites mode (for checkbox UI)
   // Only needed for the checkbox/selection UI, not for favorites view data
@@ -137,22 +99,20 @@ const initializedRef = React.useRef(false);
     refetchOnWindowFocus: false,
   });
 
-  // BroadcastChannel setup - always active to sync favorites across tabs
-  // This ensures favorites sync works whether viewing main table or favorites view
+  // BroadcastChannel setup for cross-tab favorites sync
   React.useEffect(() => {
     if (typeof window === "undefined" || typeof BroadcastChannel === "undefined") {
       return;
     }
-    
-    // Guard: prevent multiple BroadcastChannel instances
-    if (broadcastChannelRef.current) {
-      return; // Already initialized
+
+    if (!broadcastChannelRef.current) {
+      broadcastChannelRef.current = new BroadcastChannel(MODEL_FAVORITES_BROADCAST_CHANNEL);
     }
-    
-    const bc = new BroadcastChannel(MODEL_FAVORITES_BROADCAST_CHANNEL);
-    broadcastChannelRef.current = bc;
-    
-    bc.onmessage = async (event) => {
+
+    const bc = broadcastChannelRef.current;
+    const timeoutIds: NodeJS.Timeout[] = [];
+
+    const handleMessage = async (event: MessageEvent<any>) => {
       if (event.data?.type !== "updated" || !Array.isArray(event.data?.favorites)) {
         return;
       }
@@ -168,23 +128,44 @@ const initializedRef = React.useRef(false);
         favorites: newFavorites,
       });
 
-      // Only invalidate favorites rows query if in favorites mode
-      // Main table doesn't need to refetch rows, just update favorites cache
+      // Refetch favorites rows query if in favorites mode
       if (isFavoritesMode) {
+        // Invalidate first to mark as stale
         void queryClient.invalidateQueries({
           queryKey: ["model-favorites", "rows"],
           exact: false,
         });
+        
+        // Delay refetch to allow server cache invalidation to propagate
+        const timeoutId = setTimeout(() => {
+          void queryClient.refetchQueries({
+            queryKey: ["model-favorites", "rows"],
+            exact: false,
+            type: "active",
+          });
+        }, 100);
+        timeoutIds.push(timeoutId);
       }
     };
-    
+
+    bc.onmessage = handleMessage;
+
+    return () => {
+      if (bc) {
+        bc.onmessage = null;
+      }
+      timeoutIds.forEach(clearTimeout);
+    };
+  }, [broadcastId, isFavoritesMode, queryClient]);
+
+  React.useEffect(() => {
     return () => {
       if (broadcastChannelRef.current) {
         broadcastChannelRef.current.close();
         broadcastChannelRef.current = null;
       }
     };
-  }, [broadcastId, isFavoritesMode, queryClient]);
+  }, []);
 
   // Fetch favorite rows with pagination when in favorites mode
   // Uses useInfiniteQuery for pagination (same as main table)

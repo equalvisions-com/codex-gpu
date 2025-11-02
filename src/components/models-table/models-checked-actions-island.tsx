@@ -124,6 +124,7 @@ export function ModelsCheckedActionsIsland({ initialFavoriteKeys }: { initialFav
     }
     const bc = new BroadcastChannel(MODEL_FAVORITES_BROADCAST_CHANNEL);
     bcRef.current = bc;
+    const timeoutIds: NodeJS.Timeout[] = [];
 
     bc.onmessage = (event) => {
       if (event.data?.type === "updated" && Array.isArray(event.data?.favorites)) {
@@ -133,25 +134,29 @@ export function ModelsCheckedActionsIsland({ initialFavoriteKeys }: { initialFav
         const newFavorites = event.data.favorites as ModelFavoriteKey[];
         queryClient.setQueryData(MODEL_FAVORITES_QUERY_KEY, newFavorites);
         setLocalFavorites(newFavorites);
-        if (newFavorites.length === 0) {
-          // Clear all favorites queries using partial key match
-          queryClient.setQueriesData(
-            { queryKey: ["model-favorites", "rows"], exact: false },
-            () => ({
-              pages: [],
-              pageParams: [],
-            })
-          );
-        } else {
-          // Invalidate to refetch with updated favorites
-          void queryClient.invalidateQueries({ queryKey: ["model-favorites", "rows"], exact: false });
-        }
+        
+        // Invalidate favorites rows query
+        void queryClient.invalidateQueries({ 
+          queryKey: ["model-favorites", "rows"], 
+          exact: false 
+        });
+        
+        // Delay refetch to allow server cache invalidation to propagate
+        const timeoutId = setTimeout(() => {
+          void queryClient.refetchQueries({
+            queryKey: ["model-favorites", "rows"],
+            exact: false,
+            type: "active",
+          });
+        }, 100);
+        timeoutIds.push(timeoutId);
       }
     };
 
     return () => {
       bc.close();
       bcRef.current = null;
+      timeoutIds.forEach(clearTimeout);
     };
   }, [broadcastId, queryClient]);
 
@@ -397,6 +402,7 @@ export function ModelsCheckedActionsIsland({ initialFavoriteKeys }: { initialFav
           void queryClient.invalidateQueries({ queryKey: ["model-favorites", "rows"], exact: false });
         }
       }
+      // Broadcast to other tabs (they will handle delayed refetch)
       try {
         bcRef.current?.postMessage({
           type: "updated",
@@ -404,10 +410,6 @@ export function ModelsCheckedActionsIsland({ initialFavoriteKeys }: { initialFav
           source: broadcastId,
         });
       } catch {}
-
-      // Don't invalidate immediately after successful mutation - the optimistic update already shows correct state
-      // Server-side cache invalidation happens in the API route, so next natural refetch will get fresh data
-      // Immediate invalidation causes race condition where refetch gets stale cache before tag invalidation propagates
 
       if (isMountedRef.current) {
         setIsMutating(false);
@@ -479,7 +481,7 @@ export function ModelsCheckedActionsIsland({ initialFavoriteKeys }: { initialFav
           variant="secondary"
           className="gap-2"
           onClick={handleFavorite}
-          aria-disabled={isMutating}
+          disabled={isMutating}
           aria-label="Toggle favorite status"
         >
           <Star

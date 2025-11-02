@@ -23,6 +23,7 @@ export const favoritesDataOptions = (search: SearchParamsType) => {
       ? { cursor: lastPage.nextCursor, size: search.size ?? 50 }
       : null,
     refetchOnWindowFocus: false,
+    refetchOnMount: "always", // Always refetch when mounting favorites view
   });
 };
 
