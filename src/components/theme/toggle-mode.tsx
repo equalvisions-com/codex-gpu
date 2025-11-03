@@ -61,7 +61,7 @@ export function ModeToggle({
     [handleToggle, onClick],
   );
 
-  const ariaLabel = React.useMemo(() => `Switch mode (currently ${modeLabel})`, [modeLabel]);
+  const ariaLabel = React.useMemo(() => `Switch theme (currently ${modeLabel})`, [modeLabel]);
 
   if (appearance === "menu") {
     return (
@@ -75,12 +75,12 @@ export function ModeToggle({
           className,
         )}
         onClick={handleClick}
-        title={`Mode: ${modeLabel}`}
-        aria-label={`Switch mode (currently ${modeLabel})`}
+        title={`Theme: ${modeLabel}`}
+        aria-label={`Switch theme (currently ${modeLabel})`}
         {...props}
       >
         <Icon className="h-4 w-4 transition-colors" />
-        <span className="flex-1 text-left">Mode</span>
+        <span className="flex-1 text-left">Theme</span>
         <span className="sr-only">(current: {modeLabel})</span>
       </Button>
     );
@@ -93,12 +93,12 @@ export function ModeToggle({
       size="sm"
       className={cn("w-9 px-0", className)}
       onClick={handleClick}
-      title={`Mode: ${modeLabel}`}
+      title={`Theme: ${modeLabel}`}
       aria-label={ariaLabel}
       {...props}
     >
       <Icon className="h-4 w-4" />
-      <span className="sr-only">Toggle mode (current: {modeLabel})</span>
+      <span className="sr-only">Toggle theme (current: {modeLabel})</span>
     </Button>
   );
 }

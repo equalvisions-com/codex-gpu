@@ -115,7 +115,7 @@ export function UserMenu({
 
   if (shouldForceSignInButton) {
     const buttonClassName = cn(
-      "flex items-center gap-2 rounded-md p-2 h-auto text-left text-sm font-medium text-foreground hover:text-accent-foreground focus-visible:ring-0 focus-visible:ring-offset-0",
+      "flex items-center gap-2 rounded-md p-2 h-auto text-left text-sm font-medium text-foreground hover:text-accent-foreground",
       showDetails
         ? "bg-transparent hover:bg-transparent"
         : gradientSurfaceClass,
@@ -181,7 +181,7 @@ export function UserMenu({
             type="button"
             variant="ghost"
             className={cn(
-              "h-9 min-w-[76px] flex-1 rounded-none rounded-l-full px-3 text-xs font-bold focus-visible:ring-0 focus-visible:ring-offset-0",
+              "h-9 min-w-[76px] flex-1 rounded-none rounded-l-full px-3 text-xs font-bold",
               "border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground shadow-[0_1px_0_0_hsl(var(--foreground)_/_6%),0_4px_8px_-10px_hsl(var(--foreground)_/_28%)]",
               "border-r-0",
             )}
@@ -195,7 +195,7 @@ export function UserMenu({
                 type="button"
                 variant="ghost"
                 className={cn(
-                  "h-9 w-9 rounded-none rounded-r-full px-0 focus-visible:ring-0 focus-visible:ring-offset-0",
+                  "h-9 w-9 rounded-none rounded-r-full px-0",
                   "border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground shadow-[0_1px_0_0_hsl(var(--foreground)_/_6%),0_4px_8px_-10px_hsl(var(--foreground)_/_28%)]",
                 )}
                 aria-label="Open account menu"
@@ -215,7 +215,7 @@ export function UserMenu({
               type="button"
               variant="ghost"
               className={cn(
-                "flex items-center gap-4 rounded-md p-2 h-auto text-left text-sm font-medium text-foreground hover:text-accent-foreground focus-visible:ring-0 focus-visible:ring-offset-0",
+                "flex items-center gap-4 rounded-md p-2 h-auto text-left text-sm font-medium text-foreground hover:text-accent-foreground",
                 showDetails
                   ? "bg-transparent hover:bg-transparent"
                   : cn(
@@ -307,7 +307,10 @@ export function UserMenu({
             className="-mx-2 w-[calc(100%+16px)] px-2"
           >
             <AccordionItem value="favorites" className="border-none">
-              <AccordionTrigger className="px-2 py-2 text-left text-sm font-medium text-foreground hover:no-underline">
+              <AccordionTrigger
+                className="flex w-full cursor-pointer select-none items-center justify-between gap-2 rounded-sm px-2 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted hover:no-underline focus-visible:bg-muted focus-visible:text-accent-foreground"
+                hideChevron
+              >
                 <span className="flex items-center gap-2">
                   <Star className="h-4 w-4" />
                   Favorites

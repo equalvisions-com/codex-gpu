@@ -66,7 +66,7 @@ export function DataTableFilterControls({
                 <div
                   className={cn(
                     "p-0",
-                    field.type === "slider" ? "px-1 pt-1 pb-0" : null,
+                    field.type === "slider" ? "pl-2 pr-0 pt-3 pb-0" : null,
                   )}
                 >
                   {(() => {

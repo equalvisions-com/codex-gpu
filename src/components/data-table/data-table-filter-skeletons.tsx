@@ -21,7 +21,7 @@ export function CheckboxListSkeleton({
   return (
     <div className={cn("grid gap-2", className)}>
       <ScrollArea className="max-h-[168px] rounded-lg">
-        <div className="space-y-1 pr-0">
+        <div className="space-y-2 pr-0">
           {Array.from({ length: rows }).map((_, index) => (
             <div
               key={index}
@@ -33,7 +33,7 @@ export function CheckboxListSkeleton({
               <div className="flex w-full items-center truncate text-foreground group-hover:text-accent-foreground">
                 <Skeleton
                   className={cn(
-                    "h-4 w-3/4 rounded-full",
+                    "h-4 w-1/2 rounded-full",
                     labelClassName,
                   )}
                 />

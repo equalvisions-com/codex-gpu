@@ -57,7 +57,7 @@ export default function RootLayout({
       className={`${GeistSans.variable} ${GeistMono.variable}`}
       suppressHydrationWarning
     >
-      <body className="min-h-[100dvh] bg-muted/40 antialiased overscroll-x-none">
+      <body className="min-h-[100dvh] bg-background sm:bg-muted/40 dark:sm:bg-background antialiased overscroll-x-none">
         <PlausibleProvider domain="data-table.openstatus.dev">
           <AuthProvider>
             <ReactQueryProvider>
@@ -66,6 +66,7 @@ export default function RootLayout({
                   attribute="class"
                   defaultTheme="system"
                   enableSystem
+                  disableTransitionOnChange
                 >
                   <AuthDialogProvider>
                     {children}
