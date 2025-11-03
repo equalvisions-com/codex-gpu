@@ -1,6 +1,7 @@
 import type { ModelFavoriteKey, ModelFavoritesRequest, ModelFavoritesResponse } from "@/types/model-favorites";
 import type { ModelsColumnSchema } from "@/components/models-table/models-schema";
 import type { ModelsInfiniteQueryResponse, ModelsLogsMeta } from "@/components/models-table/models-query-options";
+import { modelsSearchParamsSerializer } from "@/components/models-table/models-search-params";
 import { MODEL_FAVORITES_API_TIMEOUT } from "./constants";
 
 export class ModelFavoritesAPIError extends Error {
@@ -87,25 +88,19 @@ export async function getModelFavorites(): Promise<ModelFavoriteKey[]> {
 }
 
 export async function getModelFavoriteRows(
-  pageParam?: { cursor: number | null; size?: number },
-  search?: { sort?: { id: string; desc: boolean }; size?: number }
+  serializedSearch: string | { [key: string]: unknown }
 ): Promise<ModelsInfiniteQueryResponse<ModelsColumnSchema[], ModelsLogsMeta>> {
   try {
-    const cursor = pageParam?.cursor ?? null;
-    const size = search?.size ?? pageParam?.size ?? 50;
-    const sort = search?.sort;
+    const query =
+      typeof serializedSearch === "string"
+        ? serializedSearch
+        : modelsSearchParamsSerializer(serializedSearch);
 
-    // Build query params
-    const params = new URLSearchParams();
-    if (cursor !== null) {
-      params.set("cursor", String(cursor));
-    }
-    params.set("size", String(size));
-    if (sort) {
-      params.set("sort", `${sort.id}.${sort.desc ? "desc" : "asc"}`);
-    }
+    const url = query.startsWith("?")
+      ? `/api/models/favorites/rows${query}`
+      : `/api/models/favorites/rows?${query}`;
 
-    const response = await fetchWithTimeout(`/api/models/favorites/rows?${params.toString()}`);
+    const response = await fetchWithTimeout(url);
 
     if (response.status === 401) {
       throw new ModelFavoritesAPIError("Unauthorized", 401, "UNAUTHORIZED");

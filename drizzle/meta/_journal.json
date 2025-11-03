@@ -48,6 +48,20 @@
       "when": 1762023772121,
       "tag": "0006_lyrical_exiles",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1762187350367,
+      "tag": "0007_enable_trgm_and_indexes",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1762188308844,
+      "tag": "0008_nosy_smiling_tiger",
+      "breakpoints": true
     }
   ]
 }

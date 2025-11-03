@@ -252,8 +252,9 @@ export function Client({ initialFavoriteKeys, isFavoritesMode = false }: ClientP
   const lastPage = isFavoritesMode 
     ? favoriteData?.pages?.[favoriteData.pages.length - 1]
     : data?.pages?.[data?.pages.length - 1];
-  const totalDBRowCount = isFavoritesMode ? flatData.length : lastPage?.meta?.totalRowCount;
-  const filterDBRowCount = isFavoritesMode ? flatData.length : lastPage?.meta?.filterRowCount;
+  const facetsFromPage = lastPage?.meta?.facets;
+  const totalDBRowCount = lastPage?.meta?.totalRowCount ?? flatData.length;
+  const filterDBRowCount = lastPage?.meta?.filterRowCount ?? flatData.length;
   
   // Use favorite keys from rows query if in favorites mode, otherwise use initialFavoriteKeys from SSR
   const effectiveFavoriteKeys = isFavoritesMode ? favoriteKeysFromRows : initialFavoriteKeys;
@@ -266,17 +267,18 @@ export function Client({ initialFavoriteKeys, isFavoritesMode = false }: ClientP
     totalRowsFetched: totalFetched ?? 0,
     initialFavoriteKeys: effectiveFavoriteKeys,
   };
-  const facets = isFavoritesMode ? {} : lastPage?.meta?.facets;
   const facetsRef = React.useRef<Record<string, FacetMetadataSchema> | undefined>(undefined);
   React.useEffect(() => {
-    if (facets && Object.keys(facets).length) {
-      facetsRef.current = facets;
+    if (facetsFromPage && Object.keys(facetsFromPage).length) {
+      facetsRef.current = facetsFromPage;
     }
-  }, [facets]);
+  }, [facetsFromPage]);
   const stableFacets = React.useMemo(() => {
-    if (isFavoritesMode) return {};
-    return facets && Object.keys(facets).length ? facets : facetsRef.current ?? {};
-  }, [facets, isFavoritesMode]);
+    if (facetsFromPage && Object.keys(facetsFromPage).length) {
+      return facetsFromPage;
+    }
+    return facetsRef.current ?? {};
+  }, [facetsFromPage]);
   const castFacets = stableFacets as Record<string, FacetMetadataSchema> | undefined;
 
   const { sort, start, size, uuid, cursor, direction, observed_at, search: globalSearch, ...filter } =

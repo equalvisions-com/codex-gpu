@@ -4,6 +4,7 @@ import { gpuPricing } from "@/db/schema";
 import type { ProviderResult, PriceRow, ProviderSnapshot, Provider } from "@/types/pricing";
 import type { RowWithId } from "@/types/api";
 import { and, eq, sql } from "drizzle-orm";
+import { stableGpuKey } from "@/components/infinite-table/stable-key";
 
 type GpuPricingRow = typeof gpuPricing.$inferSelect;
 
@@ -54,6 +55,15 @@ export class GpuPricingStore {
 
       for (const row of result.rows) {
         const id = computeRowId(result.provider, observedAtIso, row);
+        const stableKey = stableGpuKey({
+          provider: result.provider,
+          gpu_model: (row as any).gpu_model,
+          item: (row as any).item,
+          sku: (row as any).sku,
+          gpu_count: (row as any).gpu_count,
+          vram_gb: (row as any).vram_gb,
+          type: (row as any).type,
+        } as any);
         try {
           await db.insert(gpuPricing).values({
             id,
@@ -62,6 +72,7 @@ export class GpuPricingStore {
             version,
             sourceHash: result.sourceHash,
             data: row,
+            stableKey,
           });
           stored += 1;
         } catch (error) {

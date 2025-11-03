@@ -48,6 +48,141 @@ function toRowWithId(record: GpuPricingRow): RowWithId {
   } as RowWithId;
 }
 
+function buildGpuFilterConditions(search: SearchParamsType) {
+  const conditions: any[] = [];
+
+  // Provider filter (array or string)
+  if (search.provider) {
+    if (Array.isArray(search.provider) && search.provider.length > 0) {
+      conditions.push(inArray(gpuPricing.provider, search.provider));
+    } else if (typeof search.provider === "string") {
+      conditions.push(ilike(gpuPricing.provider, `%${search.provider}%`));
+    }
+  }
+
+  // Type filter (JSONB field)
+  if (search.type) {
+    if (Array.isArray(search.type) && search.type.length > 0) {
+      const typeConditions = search.type.map(
+        (type) => sql`${gpuPricing.data}->>'type' = ${type}`,
+      );
+      conditions.push(or(...typeConditions)!);
+    } else if (typeof search.type === "string") {
+      conditions.push(sql`${gpuPricing.data}->>'type' ILIKE ${`%${search.type}%`}`);
+    }
+  }
+
+  // GPU model filter (JSONB field: gpu_model || item)
+  if (search.gpu_model) {
+    if (Array.isArray(search.gpu_model) && search.gpu_model.length > 0) {
+      const modelConditions = search.gpu_model.map(
+        (model) =>
+          sql`(COALESCE(${gpuPricing.data}->>'gpu_model', ${gpuPricing.data}->>'item') ILIKE ${`%${model}%`})`,
+      );
+      conditions.push(or(...modelConditions)!);
+    } else if (typeof search.gpu_model === "string") {
+      conditions.push(
+        sql`(COALESCE(${gpuPricing.data}->>'gpu_model', ${gpuPricing.data}->>'item') ILIKE ${`%${search.gpu_model}%`})`,
+      );
+    }
+  }
+
+  // VRAM filter (JSONB field, range)
+  if (search.vram_gb && Array.isArray(search.vram_gb) && search.vram_gb.length > 0) {
+    const [min, max] =
+      search.vram_gb.length === 2 ? search.vram_gb : [search.vram_gb[0], search.vram_gb[0]];
+
+    if (max >= 1000000) {
+      // "1M or higher" - use >= min
+      conditions.push(sql`CAST(${gpuPricing.data}->>'vram_gb' AS NUMERIC) >= ${min}`);
+    } else {
+      conditions.push(
+        sql`CAST(${gpuPricing.data}->>'vram_gb' AS NUMERIC) BETWEEN ${min} AND ${max}`,
+      );
+    }
+  }
+
+  // Price filter (JSONB field: price_hour_usd || price_usd, range)
+  if (
+    search.price_hour_usd &&
+    Array.isArray(search.price_hour_usd) &&
+    search.price_hour_usd.length > 0
+  ) {
+    const [min, max] =
+      search.price_hour_usd.length === 2
+        ? search.price_hour_usd
+        : [search.price_hour_usd[0], search.price_hour_usd[0]];
+
+    // Use COALESCE to check both price_hour_usd and price_usd
+    conditions.push(
+      sql`COALESCE(
+          CAST(${gpuPricing.data}->>'price_hour_usd' AS NUMERIC),
+          CAST(${gpuPricing.data}->>'price_usd' AS NUMERIC)
+        ) BETWEEN ${min} AND ${max}`,
+    );
+  }
+
+  // Observed_at date filter
+  if (search.observed_at && isArrayOfDates(search.observed_at)) {
+    if (search.observed_at.length === 1) {
+      // Single date: match same day
+      const date = search.observed_at[0];
+      const startOfDay = new Date(date);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
+      conditions.push(sql`${gpuPricing.observedAt} BETWEEN ${startOfDay} AND ${endOfDay}`);
+    } else if (search.observed_at.length === 2) {
+      // Date range
+      conditions.push(
+        sql`${gpuPricing.observedAt} BETWEEN ${search.observed_at[0]} AND ${search.observed_at[1]}`,
+      );
+    }
+  }
+
+  // Global search filter (across multiple JSONB fields)
+  if (search.search && typeof search.search === "string") {
+    const searchTerm = `%${search.search.toLowerCase()}%`;
+    const searchFields = [
+      "gpu_model",
+      "item",
+      "provider",
+      "region",
+      "zone",
+      "sku",
+      "billing_notes",
+      "price_unit",
+      "type",
+      "network",
+    ];
+
+    const searchConditions = searchFields.map(
+      (field) => sql`${gpuPricing.data}->>${field} ILIKE ${searchTerm}`,
+    );
+
+    // Also search numeric fields as strings
+    const numericFields = [
+      "gpu_count",
+      "vram_gb",
+      "system_ram_gb",
+      "local_storage_tb",
+      "vcpus",
+      "price_hour_usd",
+      "price_month_usd",
+      "price_usd",
+      "raw_cost",
+    ];
+
+    numericFields.forEach((field) => {
+      searchConditions.push(sql`CAST(${gpuPricing.data}->>${field} AS TEXT) ILIKE ${searchTerm}`);
+    });
+
+    conditions.push(or(...searchConditions)!);
+  }
+
+  return conditions;
+}
+
 export class GpuPricingCache {
   /**
    * Get GPUs with database-level filtering, sorting, and pagination
@@ -59,136 +194,7 @@ export class GpuPricingCache {
   async getGpusFiltered(
     search: SearchParamsType
   ): Promise<{ data: RowWithId[]; totalCount: number; filterCount: number }> {
-    // Build WHERE conditions
-    const conditions = [];
-
-    // Provider filter (array or string)
-    if (search.provider) {
-      if (Array.isArray(search.provider) && search.provider.length > 0) {
-        conditions.push(inArray(gpuPricing.provider, search.provider));
-      } else if (typeof search.provider === 'string') {
-        conditions.push(ilike(gpuPricing.provider, `%${search.provider}%`));
-      }
-    }
-
-    // Type filter (JSONB field)
-    if (search.type) {
-      if (Array.isArray(search.type) && search.type.length > 0) {
-        const typeConditions = search.type.map(type =>
-          sql`${gpuPricing.data}->>'type' = ${type}`
-        );
-        conditions.push(or(...typeConditions)!);
-      } else if (typeof search.type === 'string') {
-        conditions.push(sql`${gpuPricing.data}->>'type' ILIKE ${`%${search.type}%`}`);
-      }
-    }
-
-    // GPU model filter (JSONB field: gpu_model || item)
-    if (search.gpu_model) {
-      if (Array.isArray(search.gpu_model) && search.gpu_model.length > 0) {
-        const modelConditions = search.gpu_model.map(model =>
-          sql`(COALESCE(${gpuPricing.data}->>'gpu_model', ${gpuPricing.data}->>'item') ILIKE ${`%${model}%`})`
-        );
-        conditions.push(or(...modelConditions)!);
-      } else if (typeof search.gpu_model === 'string') {
-        conditions.push(sql`(COALESCE(${gpuPricing.data}->>'gpu_model', ${gpuPricing.data}->>'item') ILIKE ${`%${search.gpu_model}%`})`);
-      }
-    }
-
-    // VRAM filter (JSONB field, range)
-    if (search.vram_gb && Array.isArray(search.vram_gb) && search.vram_gb.length > 0) {
-      const [min, max] = search.vram_gb.length === 2 
-        ? search.vram_gb 
-        : [search.vram_gb[0], search.vram_gb[0]];
-      
-      if (max >= 1000000) {
-        // "1M or higher" - use >= min
-        conditions.push(sql`CAST(${gpuPricing.data}->>'vram_gb' AS NUMERIC) >= ${min}`);
-      } else {
-        conditions.push(
-          sql`CAST(${gpuPricing.data}->>'vram_gb' AS NUMERIC) BETWEEN ${min} AND ${max}`
-        );
-      }
-    }
-
-    // Price filter (JSONB field: price_hour_usd || price_usd, range)
-    if (search.price_hour_usd && Array.isArray(search.price_hour_usd) && search.price_hour_usd.length > 0) {
-      const [min, max] = search.price_hour_usd.length === 2 
-        ? search.price_hour_usd 
-        : [search.price_hour_usd[0], search.price_hour_usd[0]];
-      
-      // Use COALESCE to check both price_hour_usd and price_usd
-      conditions.push(
-        sql`COALESCE(
-          CAST(${gpuPricing.data}->>'price_hour_usd' AS NUMERIC),
-          CAST(${gpuPricing.data}->>'price_usd' AS NUMERIC)
-        ) BETWEEN ${min} AND ${max}`
-      );
-    }
-
-    // Observed_at date filter
-    if (search.observed_at && isArrayOfDates(search.observed_at)) {
-      if (search.observed_at.length === 1) {
-        // Single date: match same day
-        const date = search.observed_at[0];
-        const startOfDay = new Date(date);
-        startOfDay.setHours(0, 0, 0, 0);
-        const endOfDay = new Date(date);
-        endOfDay.setHours(23, 59, 59, 999);
-        conditions.push(
-          sql`${gpuPricing.observedAt} BETWEEN ${startOfDay} AND ${endOfDay}`
-        );
-      } else if (search.observed_at.length === 2) {
-        // Date range
-        conditions.push(
-          sql`${gpuPricing.observedAt} BETWEEN ${search.observed_at[0]} AND ${search.observed_at[1]}`
-        );
-      }
-    }
-
-    // Global search filter (across multiple JSONB fields)
-    if (search.search && typeof search.search === 'string') {
-      const searchTerm = `%${search.search.toLowerCase()}%`;
-      const searchFields = [
-        'gpu_model',
-        'item',
-        'provider',
-        'region',
-        'zone',
-        'sku',
-        'billing_notes',
-        'price_unit',
-        'type',
-        'network',
-      ];
-      
-      const searchConditions = searchFields.map(field =>
-        sql`${gpuPricing.data}->>${field} ILIKE ${searchTerm}`
-      );
-      
-      // Also search numeric fields as strings
-      const numericFields = [
-        'gpu_count',
-        'vram_gb',
-        'system_ram_gb',
-        'local_storage_tb',
-        'vcpus',
-        'price_hour_usd',
-        'price_month_usd',
-        'price_usd',
-        'raw_cost',
-      ];
-      
-      numericFields.forEach(field => {
-        searchConditions.push(
-          sql`CAST(${gpuPricing.data}->>${field} AS TEXT) ILIKE ${searchTerm}`
-        );
-      });
-      
-      conditions.push(or(...searchConditions)!);
-    }
-
-    // Build WHERE clause
+    const conditions = buildGpuFilterConditions(search);
     const whereClause = conditions.length > 0 ? and(...conditions)! : undefined;
 
     // Get total count (for pagination)
@@ -469,6 +475,8 @@ export class GpuPricingCache {
     userId: string,
     search: SearchParamsType
   ): Promise<{ data: RowWithId[]; totalCount: number; filterCount: number }> {
+    const filterConditions = buildGpuFilterConditions(search);
+
     // Build ORDER BY clause (same logic as getGpusFiltered)
     let orderByClause;
     if (search.sort) {
@@ -521,18 +529,31 @@ export class GpuPricingCache {
     const cursor = typeof search.cursor === 'number' && search.cursor >= 0 ? search.cursor : 0;
     const size = Math.min(Math.max(1, search.size ?? 50), 200); // Clamp size between 1 and 200
 
-    // Get total count of favorites for this user
+    // Get total count of favorites for this user (without filters)
     const [countResult] = await db
       .select({ count: sql<number>`count(*)` })
       .from(userFavorites)
       .where(eq(userFavorites.userId, userId));
 
-    const filterCount = Number(countResult?.count || 0);
+    const totalCount = Number(countResult?.count || 0);
+
+    const whereClause =
+      filterConditions.length > 0
+        ? and(eq(userFavorites.userId, userId), ...filterConditions)!
+        : eq(userFavorites.userId, userId);
+
+    const [filteredCountResult] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(userFavorites)
+      .innerJoin(gpuPricing, eq(userFavorites.gpuUuid, gpuPricing.stableKey))
+      .where(whereClause);
+
+    const filterCount = Number(filteredCountResult?.count || 0);
 
     if (filterCount === 0) {
       return {
         data: [],
-        totalCount: 0,
+        totalCount,
         filterCount: 0,
       };
     }
@@ -549,24 +570,12 @@ export class GpuPricingCache {
         version: gpuPricing.version,
         sourceHash: gpuPricing.sourceHash,
         data: gpuPricing.data,
+        stableKey: gpuPricing.stableKey,
         createdAt: gpuPricing.createdAt,
       })
       .from(userFavorites)
-      .innerJoin(
-        gpuPricing,
-        sql`${userFavorites.gpuUuid} = LOWER(TRIM(${gpuPricing.provider})) || ':' || 
-          LOWER(TRIM(COALESCE(${gpuPricing.data}->>'gpu_model', ${gpuPricing.data}->>'item', ${gpuPricing.data}->>'sku', ''))) || ':' ||
-          CASE WHEN CAST(${gpuPricing.data}->>'gpu_count' AS NUMERIC) IS NOT NULL 
-            THEN CAST(${gpuPricing.data}->>'gpu_count' AS NUMERIC)::text || 'x' 
-            ELSE '' 
-          END || ':' ||
-          CASE WHEN CAST(${gpuPricing.data}->>'vram_gb' AS NUMERIC) IS NOT NULL 
-            THEN CAST(${gpuPricing.data}->>'vram_gb' AS NUMERIC)::text || 'gb' 
-            ELSE '' 
-          END || ':' ||
-          LOWER(TRIM(COALESCE(${gpuPricing.data}->>'type', '')))`
-      )
-      .where(eq(userFavorites.userId, userId))
+      .innerJoin(gpuPricing, eq(userFavorites.gpuUuid, gpuPricing.stableKey))
+      .where(whereClause)
       .orderBy(orderByClause)
       .limit(size)
       .offset(cursor);
@@ -583,8 +592,8 @@ export class GpuPricingCache {
 
     return {
       data: rowsWithPercentiles,
-      totalCount: filterCount,
-      filterCount: filterCount,
+      totalCount,
+      filterCount,
     };
   }
 
@@ -617,20 +626,6 @@ export class GpuPricingCache {
     // Use SQL to match stable keys at database level
     // This avoids loading all GPUs into memory
     // Build OR conditions for each stable key (more reliable than ANY with array parameter)
-    const stableKeyConditions = uniqueStableKeys.map((stableKey) =>
-      sql`LOWER(TRIM(${gpuPricing.provider})) || ':' || 
-        LOWER(TRIM(COALESCE(${gpuPricing.data}->>'gpu_model', ${gpuPricing.data}->>'item', ${gpuPricing.data}->>'sku', ''))) || ':' ||
-        CASE WHEN CAST(${gpuPricing.data}->>'gpu_count' AS NUMERIC) IS NOT NULL 
-          THEN CAST(${gpuPricing.data}->>'gpu_count' AS NUMERIC)::text || 'x' 
-          ELSE '' 
-        END || ':' ||
-        CASE WHEN CAST(${gpuPricing.data}->>'vram_gb' AS NUMERIC) IS NOT NULL 
-          THEN CAST(${gpuPricing.data}->>'vram_gb' AS NUMERIC)::text || 'gb' 
-          ELSE '' 
-        END || ':' ||
-        LOWER(TRIM(COALESCE(${gpuPricing.data}->>'type', ''))) = ${stableKey}`
-    );
-
     const rows = await db
       .select({
         id: gpuPricing.id,
@@ -639,10 +634,11 @@ export class GpuPricingCache {
         version: gpuPricing.version,
         sourceHash: gpuPricing.sourceHash,
         data: gpuPricing.data,
+        stableKey: gpuPricing.stableKey,
         createdAt: gpuPricing.createdAt,
       })
       .from(gpuPricing)
-      .where(or(...stableKeyConditions)!);
+      .where(inArray(gpuPricing.stableKey, uniqueStableKeys));
 
     return rows.map(toRowWithId);
   }
@@ -662,4 +658,3 @@ export class GpuPricingCache {
 
 // Export singleton instance
 export const gpuPricingCache = new GpuPricingCache();
-

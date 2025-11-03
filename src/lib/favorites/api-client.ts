@@ -2,6 +2,7 @@ import type { FavoritesResponse, FavoritesRequest, FavoriteKey } from "@/types/f
 import { FAVORITES_API_TIMEOUT } from "./constants";
 import type { InfiniteQueryResponse, LogsMeta } from "@/components/infinite-table/query-options";
 import type { ColumnSchema } from "@/components/infinite-table/schema";
+import { searchParamsSerializer } from "@/components/infinite-table/search-params";
 
 /**
  * Custom error class for favorites API operations
@@ -168,25 +169,19 @@ export async function addFavorites(gpuUuids: FavoriteKey[]): Promise<void> {
  * @throws FavoritesAPIError on failure
  */
 export async function getFavoriteRows(
-  pageParam?: { cursor: number | null; size?: number },
-  search?: { sort?: { id: string; desc: boolean }; size?: number }
+  serializedSearch: string | { [key: string]: unknown }
 ): Promise<InfiniteQueryResponse<ColumnSchema[], LogsMeta>> {
   try {
-    const cursor = pageParam?.cursor ?? null;
-    const size = search?.size ?? pageParam?.size ?? 50;
-    const sort = search?.sort;
+    const query =
+      typeof serializedSearch === "string"
+        ? serializedSearch
+        : searchParamsSerializer(serializedSearch);
 
-    // Build query params
-    const params = new URLSearchParams();
-    if (cursor !== null) {
-      params.set("cursor", String(cursor));
-    }
-    params.set("size", String(size));
-    if (sort) {
-      params.set("sort", `${sort.id}.${sort.desc ? "desc" : "asc"}`);
-    }
+    const url = query.startsWith("?")
+      ? `/api/favorites/rows${query}`
+      : `/api/favorites/rows?${query}`;
 
-    const response = await fetchWithTimeout(`/api/favorites/rows?${params.toString()}`);
+    const response = await fetchWithTimeout(url);
 
     if (response.status === 401) {
       throw new FavoritesAPIError("Unauthorized", 401, "UNAUTHORIZED");
@@ -270,4 +265,3 @@ export async function removeFavorites(gpuUuids: FavoriteKey[]): Promise<void> {
     );
   }
 }
-

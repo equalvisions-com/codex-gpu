@@ -152,6 +152,102 @@ const mapRowToAIModel = (row: AIModelRow): AIModel => ({
   scrapedAt: row.scrapedAt.toISOString(),
 });
 
+function buildModelFilterConditions(search: ModelsSearchParamsType) {
+  const conditions: any[] = [];
+
+  if (search.provider && search.provider.length > 0) {
+    conditions.push(inArray(aiModels.provider, search.provider));
+  }
+
+  if (search.author && search.author.length > 0) {
+    conditions.push(inArray(aiModels.author, search.author));
+  }
+
+  if (
+    search.contextLength &&
+    Array.isArray(search.contextLength) &&
+    search.contextLength.length === 2
+  ) {
+    const [min, max] = search.contextLength;
+    if (max >= 1000000) {
+      conditions.push(sql`${aiModels.contextLength} >= ${min}`);
+    } else {
+      conditions.push(
+        and(sql`${aiModels.contextLength} >= ${min}`, sql`${aiModels.contextLength} <= ${max}`)!,
+      );
+    }
+  }
+
+  if (search.inputPrice && Array.isArray(search.inputPrice) && search.inputPrice.length === 2) {
+    const [min, max] = search.inputPrice;
+    const minPerToken = (min ?? 0) / 1_000_000;
+    const maxPerToken = (max ?? 0) / 1_000_000;
+    conditions.push(
+      sql`CAST(${aiModels.pricing}->>'prompt' AS NUMERIC) BETWEEN ${minPerToken} AND ${maxPerToken}`,
+    );
+  }
+
+  if (search.outputPrice && Array.isArray(search.outputPrice) && search.outputPrice.length === 2) {
+    const [min, max] = search.outputPrice;
+    conditions.push(
+      sql`CAST(${aiModels.pricing}->>'completion' AS NUMERIC) BETWEEN ${min} AND ${max}`,
+    );
+  }
+
+  if (search.name) {
+    conditions.push(ilike(aiModels.name, `%${search.name}%`));
+  }
+
+  if (search.description) {
+    conditions.push(ilike(aiModels.description, `%${search.description}%`));
+  }
+
+  if (search.modalities && search.modalities.length > 0) {
+    const directionEntries = new Map<string, "input" | "output" | "both">();
+    (search.modalityDirections ?? []).forEach((entry) => {
+      const [modality, direction] = entry.split(":");
+      if (!modality) return;
+      if (direction === "input" || direction === "output") {
+        directionEntries.set(modality, direction);
+      }
+    });
+
+    const modalityConditions = search.modalities.map((modality) => {
+      const direction = directionEntries.get(modality) ?? "input";
+      if (direction === "input") {
+        return sql`${modality} = ANY(${aiModels.inputModalities})`;
+      }
+      if (direction === "output") {
+        return sql`${modality} = ANY(${aiModels.outputModalities})`;
+      }
+      return or(
+        sql`${modality} = ANY(${aiModels.inputModalities})`,
+        sql`${modality} = ANY(${aiModels.outputModalities})`,
+      )!;
+    });
+
+    if (modalityConditions.length === 1) {
+      conditions.push(modalityConditions[0]);
+    } else if (modalityConditions.length > 1) {
+      conditions.push(and(...modalityConditions)!);
+    }
+  }
+
+  if (search.search) {
+    const searchTerm = `%${search.search}%`;
+    conditions.push(
+      or(
+        ilike(aiModels.name, searchTerm),
+        ilike(aiModels.description, searchTerm),
+        ilike(aiModels.provider, searchTerm),
+        ilike(aiModels.author, searchTerm),
+      )!,
+    );
+  }
+
+  return conditions;
+}
+
 export class ModelsCache {
   /**
    * Store AI models data by wiping the table and inserting fresh data
@@ -316,111 +412,7 @@ export class ModelsCache {
   async getModelsFiltered(
     search: ModelsSearchParamsType
   ): Promise<{ data: AIModel[]; totalCount: number; filterCount: number }> {
-    // Build WHERE conditions
-    const conditions = [];
-
-    // Provider filter
-    if (search.provider && search.provider.length > 0) {
-      conditions.push(inArray(aiModels.provider, search.provider));
-    }
-
-    // Author filter
-    if (search.author && search.author.length > 0) {
-      conditions.push(inArray(aiModels.author, search.author));
-    }
-
-    // Context length filter (range)
-    if (search.contextLength && Array.isArray(search.contextLength) && search.contextLength.length === 2) {
-      const [min, max] = search.contextLength;
-      if (max >= 1000000) {
-        // "1M or higher" - use >= min
-        conditions.push(sql`${aiModels.contextLength} >= ${min}`);
-      } else {
-        conditions.push(
-          and(
-            sql`${aiModels.contextLength} >= ${min}`,
-            sql`${aiModels.contextLength} <= ${max}`
-          )!
-        );
-      }
-    }
-
-    // Input price filter (JSONB field)
-    if (search.inputPrice && Array.isArray(search.inputPrice) && search.inputPrice.length === 2) {
-      const [min, max] = search.inputPrice;
-      const minPerToken = (min ?? 0) / 1_000_000;
-      const maxPerToken = (max ?? 0) / 1_000_000;
-      conditions.push(
-        sql`CAST(${aiModels.pricing}->>'prompt' AS NUMERIC) BETWEEN ${minPerToken} AND ${maxPerToken}`
-      );
-    }
-
-    // Output price filter (JSONB field)
-    if (search.outputPrice && Array.isArray(search.outputPrice) && search.outputPrice.length === 2) {
-      const [min, max] = search.outputPrice;
-      conditions.push(
-        sql`CAST(${aiModels.pricing}->>'completion' AS NUMERIC) BETWEEN ${min} AND ${max}`
-      );
-    }
-
-    // Name filter (partial match)
-    if (search.name) {
-      conditions.push(ilike(aiModels.name, `%${search.name}%`));
-    }
-
-    // Description filter (partial match)
-    if (search.description) {
-      conditions.push(ilike(aiModels.description, `%${search.description}%`));
-    }
-
-    // Modalities filter (array containment)
-    if (search.modalities && search.modalities.length > 0) {
-      const directionEntries = new Map<string, "input" | "output" | "both">();
-      (search.modalityDirections ?? []).forEach((entry) => {
-        const [modality, direction] = entry.split(":");
-        if (!modality) return;
-        if (direction === "input" || direction === "output") {
-          directionEntries.set(modality, direction);
-        }
-      });
-
-      const modalityConditions = search.modalities.map((modality) => {
-        const direction = directionEntries.get(modality) ?? "input";
-        if (direction === "input") {
-          return sql`${modality} = ANY(${aiModels.inputModalities})`;
-        } else if (direction === "output") {
-          return sql`${modality} = ANY(${aiModels.outputModalities})`;
-        } else {
-          // Both - check either array
-          return or(
-            sql`${modality} = ANY(${aiModels.inputModalities})`,
-            sql`${modality} = ANY(${aiModels.outputModalities})`
-          )!;
-        }
-      });
-
-      // All modalities must match (AND)
-      if (modalityConditions.length === 1) {
-        conditions.push(modalityConditions[0]);
-      } else if (modalityConditions.length > 1) {
-        conditions.push(and(...modalityConditions)!);
-      }
-    }
-
-    // Global search filter (across name, description, provider, author)
-    if (search.search) {
-      const searchTerm = `%${search.search}%`;
-      conditions.push(
-        or(
-          ilike(aiModels.name, searchTerm),
-          ilike(aiModels.description, searchTerm),
-          ilike(aiModels.provider, searchTerm),
-          ilike(aiModels.author, searchTerm)
-        )!
-      );
-    }
-
-    // Build WHERE clause
+    const conditions = buildModelFilterConditions(search);
     const whereClause = conditions.length > 0 ? and(...conditions)! : undefined;
 
     // Get total count (for pagination)
@@ -500,6 +492,8 @@ export class ModelsCache {
     userId: string,
     search: ModelsSearchParamsType
   ): Promise<{ data: AIModel[]; totalCount: number; filterCount: number }> {
+    const filterConditions = buildModelFilterConditions(search);
+
     // Build ORDER BY clause (same logic as getModelsFiltered)
     let orderByClause;
     if (search.sort) {
@@ -540,18 +534,30 @@ export class ModelsCache {
     const cursor = typeof search.cursor === 'number' && search.cursor >= 0 ? search.cursor : 0;
     const size = Math.min(Math.max(1, search.size ?? 50), 200); // Clamp size between 1 and 200
 
-    // Get total count of favorites for this user
+    // Get total count of favorites for this user (without filters)
     const [countResult] = await db
       .select({ count: sql<number>`count(*)` })
       .from(userModelFavorites)
       .where(eq(userModelFavorites.userId, userId));
 
-    const filterCount = Number(countResult?.count || 0);
+    const totalCount = Number(countResult?.count || 0);
+
+    const baseCondition = eq(userModelFavorites.userId, userId);
+    const whereClause =
+      filterConditions.length > 0 ? and(baseCondition, ...filterConditions)! : baseCondition;
+
+    const [filteredCountResult] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(userModelFavorites)
+      .innerJoin(aiModels, eq(userModelFavorites.modelId, aiModels.id))
+      .where(whereClause);
+
+    const filterCount = Number(filteredCountResult?.count || 0);
 
     if (filterCount === 0) {
       return {
         data: [],
-        totalCount: 0,
+        totalCount,
         filterCount: 0,
       };
     }
@@ -583,15 +589,15 @@ export class ModelsCache {
       })
       .from(userModelFavorites)
       .innerJoin(aiModels, eq(userModelFavorites.modelId, aiModels.id))
-      .where(eq(userModelFavorites.userId, userId))
+      .where(whereClause)
       .orderBy(orderByClause)
       .limit(size)
       .offset(cursor);
 
     return {
       data: rows.map(mapRowToAIModel),
-      totalCount: filterCount,
-      filterCount: filterCount,
+      totalCount,
+      filterCount,
     };
   }
 

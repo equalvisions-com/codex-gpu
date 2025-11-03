@@ -3,13 +3,62 @@ import { z } from "zod";
 import { gpuPricingCache } from "@/lib/gpu-pricing-cache";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import type { ColumnSchema } from "@/components/infinite-table/schema";
+import type { ColumnSchema, FacetMetadataSchema } from "@/components/infinite-table/schema";
 import type { InfiniteQueryResponse, LogsMeta } from "@/components/infinite-table/query-options";
 import { searchParamsCache } from "@/components/infinite-table/search-params";
 import type { SearchParamsType } from "@/components/infinite-table/search-params";
 import { unstable_cache } from "next/cache";
 
 const CACHE_SIZE_LIMIT_BYTES = 2 * 1024 * 1024; // 2MB
+
+const PROVIDER_SORT_PRIORITY: Record<string, number> = {
+  coreweave: 1,
+  lambda: 2,
+  runpod: 3,
+  digitalocean: 4,
+  oracle: 5,
+  nebius: 6,
+  hyperstack: 7,
+  crusoe: 8,
+};
+
+function sortProviderFacet(facets?: Record<string, FacetMetadataSchema>) {
+  if (!facets?.provider?.rows?.length) return;
+
+  facets.provider.rows.sort((a, b) => {
+    const aKey = String(a.value).toLowerCase();
+    const bKey = String(b.value).toLowerCase();
+    const aPriority = PROVIDER_SORT_PRIORITY[aKey] ?? Number.MAX_SAFE_INTEGER;
+    const bPriority = PROVIDER_SORT_PRIORITY[bKey] ?? Number.MAX_SAFE_INTEGER;
+
+    if (aPriority !== bPriority) {
+      return aPriority - bPriority;
+    }
+
+    return aKey.localeCompare(bKey);
+  });
+}
+
+function sortModelFacet(facets?: Record<string, FacetMetadataSchema>) {
+  if (!facets?.gpu_model?.rows?.length) return;
+
+  facets.gpu_model.rows.sort((a, b) =>
+    String(a.value).localeCompare(String(b.value), undefined, {
+      sensitivity: "base",
+    }),
+  );
+}
+
+const getCachedFacets = unstable_cache(
+  async () => {
+    return await gpuPricingCache.getGpusFacets();
+  },
+  ["pricing:facets"],
+  {
+    revalidate: 43200,
+    tags: ["pricing"],
+  },
+);
 
 // Cache favorite GPUs query (with userId and search params in cache key)
 // This reduces DB load for frequently accessed favorites
@@ -49,18 +98,8 @@ const getCachedFavoriteGpusFiltered = unstable_cache(
 // Get favorite rows with database-level sorting and pagination (TanStack Table best practice)
 async function getFavoriteRowsDirect(
   userId: string,
-  cursor: number | null = null,
-  size: number = 50,
-  sort?: { id: string; desc: boolean }
+  search: SearchParamsType
 ): Promise<InfiniteQueryResponse<ColumnSchema[], LogsMeta>> {
-  // Use database-level filtering, sorting, and pagination
-  // This follows TanStack Table's recommended pattern: only loads the rows needed for the current page
-  const searchParams = {
-    cursor: cursor ?? undefined,
-    size,
-    sort,
-  } as SearchParamsType;
-
   // Use cached query to reduce DB load
   // If cache fails (e.g., > 2MB), falls back to DB query gracefully
   let filteredGpus: Awaited<ReturnType<typeof gpuPricingCache.getFavoriteGpusFiltered>>['data'];
@@ -68,7 +107,7 @@ async function getFavoriteRowsDirect(
   let filterCount: number;
   
   try {
-    const result = await getCachedFavoriteGpusFiltered(userId, searchParams);
+    const result = await getCachedFavoriteGpusFiltered(userId, search);
     filteredGpus = result.data;
     totalCount = result.totalCount;
     filterCount = result.filterCount;
@@ -80,41 +119,54 @@ async function getFavoriteRowsDirect(
     if (isSizeError) {
       console.warn("[getFavoriteRowsDirect] Cache size limit exceeded, using direct DB query", {
         userId,
-        searchParams: { cursor, size, sort },
+        searchParams: { cursor: search.cursor, size: search.size, sort: search.sort },
         error: errorMessage,
       });
     }
     
     // Fallback to direct DB query
-    const result = await gpuPricingCache.getFavoriteGpusFiltered(userId, searchParams);
+    const result = await gpuPricingCache.getFavoriteGpusFiltered(userId, search);
     filteredGpus = result.data;
     totalCount = result.totalCount;
     filterCount = result.filterCount;
   }
 
+  const facetsData = await getCachedFacets();
+  const facets = {
+    provider: facetsData.provider,
+    type: facetsData.type,
+    gpu_model: facetsData.gpu_model,
+    vram_gb: facetsData.vram_gb,
+    price_hour_usd: facetsData.price_hour_usd,
+  };
+
+  sortProviderFacet(facets);
+  sortModelFacet(facets);
+
   if (filteredGpus.length === 0) {
     return {
       data: [],
       meta: {
-        totalRowCount: 0,
-        filterRowCount: 0,
-        facets: {},
+        totalRowCount: totalCount,
+        filterRowCount: filterCount,
+        facets,
       },
       prevCursor: null,
       nextCursor: null,
     };
   }
 
-  const start = cursor ?? 0;
+  const start = typeof search.cursor === "number" && search.cursor >= 0 ? search.cursor : 0;
+  const pageSize = Math.min(Math.max(1, search.size ?? 50), 200);
   return {
     data: filteredGpus,
     meta: {
       totalRowCount: totalCount,
       filterRowCount: filterCount,
-      facets: {},
+      facets,
     },
-    prevCursor: start > 0 ? start - size : null,
-    nextCursor: start + size < totalCount ? start + size : null,
+    prevCursor: start > 0 ? Math.max(0, start - pageSize) : null,
+    nextCursor: start + filteredGpus.length < filterCount ? start + filteredGpus.length : null,
   };
 }
 
@@ -155,12 +207,16 @@ export async function GET(req: NextRequest) {
     // Validate and clamp size parameter to prevent memory abuse
     // Min: 1, Max: 200, Default: 50
     const size = Math.min(Math.max(1, search.size ?? 50), 200);
-    const sort = search.sort || undefined;
+    const normalizedSearch: SearchParamsType = {
+      ...search,
+      cursor,
+      size,
+    };
 
     // Get paginated rows with database-level sorting and pagination
     // This only loads the rows needed for the current page, not all favorites
     // Cached server-side with 12 hour TTL to reduce DB load
-    const result = await getFavoriteRowsDirect(session.user.id, cursor, size, sort);
+    const result = await getFavoriteRowsDirect(session.user.id, normalizedSearch);
     return NextResponse.json(result, {
       headers: {
         // Use private cache since this is user-specific data
@@ -199,4 +255,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
-

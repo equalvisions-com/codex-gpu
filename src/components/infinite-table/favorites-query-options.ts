@@ -12,11 +12,13 @@ export const favoritesDataOptions = (search: SearchParamsType) => {
       searchParamsSerializer({ ...search, uuid: null }),
     ],
     queryFn: async ({ pageParam }) => {
-      const result = await getFavoriteRows(
-        pageParam?.cursor ? { cursor: pageParam.cursor, size: pageParam.size } : undefined,
-        { sort: search.sort ?? undefined, size: search.size }
-      );
-      return result as InfiniteQueryResponse<ColumnSchema[], LogsMeta>;
+      const serializedSearch = searchParamsSerializer({
+        ...search,
+        cursor: pageParam?.cursor ?? null,
+        size: pageParam?.size ?? search.size,
+        uuid: null,
+      });
+      return getFavoriteRows(serializedSearch) as Promise<InfiniteQueryResponse<ColumnSchema[], LogsMeta>>;
     },
     initialPageParam: { cursor: null as number | null, size: search.size ?? 50 },
     getNextPageParam: (lastPage) => lastPage.nextCursor
@@ -26,4 +28,3 @@ export const favoritesDataOptions = (search: SearchParamsType) => {
     refetchOnMount: "always", // Always refetch when mounting favorites view
   });
 };
-

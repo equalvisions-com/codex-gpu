@@ -245,7 +245,7 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode = false }: M
   const lastPage = isFavoritesMode 
     ? favoriteData?.pages?.[favoriteData.pages.length - 1]
     : data?.pages?.[data?.pages.length - 1];
-  const rawFacets = isFavoritesMode ? {} : lastPage?.meta?.facets;
+  const rawFacets = lastPage?.meta?.facets;
   const facetsRef = React.useRef<Record<string, ModelsFacetMetadataSchema> | undefined>(undefined);
   React.useEffect(() => {
     if (rawFacets && Object.keys(rawFacets).length) {
@@ -253,12 +253,14 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode = false }: M
     }
   }, [rawFacets]);
   const stableFacets = React.useMemo(() => {
-    if (isFavoritesMode) return {};
-    return rawFacets && Object.keys(rawFacets).length ? rawFacets : facetsRef.current ?? {};
-  }, [rawFacets, isFavoritesMode]);
+    if (rawFacets && Object.keys(rawFacets).length) {
+      return rawFacets;
+    }
+    return facetsRef.current ?? {};
+  }, [rawFacets]);
   const castFacets = stableFacets as Record<string, ModelsFacetMetadataSchema> | undefined;
-  const totalDBRowCount = isFavoritesMode ? flatData.length : lastPage?.meta?.totalRowCount;
-  const filterDBRowCount = isFavoritesMode ? flatData.length : lastPage?.meta?.filterRowCount;
+  const totalDBRowCount = lastPage?.meta?.totalRowCount ?? flatData.length;
+  const filterDBRowCount = lastPage?.meta?.filterRowCount ?? flatData.length;
   const totalFetched = flatData.length;
 
   // Use favorite keys from rows query if in favorites mode, otherwise use initialFavoriteKeys from SSR
