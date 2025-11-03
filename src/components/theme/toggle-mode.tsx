@@ -4,46 +4,101 @@ import * as React from "react";
 import { useTheme } from "next-themes";
 
 import { Button, ButtonProps } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Laptop, Moon, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export function ModeToggle({ className, ...props }: ButtonProps) {
-  const { setTheme } = useTheme();
+type ThemeMode = "light" | "dark" | "system";
+
+interface ModeToggleProps extends ButtonProps {
+  appearance?: "icon" | "menu";
+}
+
+export function ModeToggle({
+  className,
+  appearance = "icon",
+  onClick,
+  ...props
+}: ModeToggleProps) {
+  const { theme, setTheme } = useTheme();
+  const currentTheme = (theme ?? "system") as ThemeMode;
+
+  const modeLabel = React.useMemo(() => {
+    switch (currentTheme) {
+      case "light":
+        return "Light";
+      case "dark":
+        return "Dark";
+      case "system":
+      default:
+        return "System";
+    }
+  }, [currentTheme]);
+
+  const Icon = React.useMemo(() => {
+    switch (currentTheme) {
+      case "light":
+        return Sun;
+      case "dark":
+        return Moon;
+      case "system":
+      default:
+        return Laptop;
+    }
+  }, [currentTheme]);
+
+  const handleToggle = React.useCallback(() => {
+    const order: ThemeMode[] = ["light", "dark", "system"];
+    const index = order.indexOf(currentTheme);
+    const nextTheme = order[(index + 1) % order.length];
+    setTheme(nextTheme);
+  }, [currentTheme, setTheme]);
+
+  const handleClick = React.useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>) => {
+      handleToggle();
+      onClick?.(event);
+    },
+    [handleToggle, onClick],
+  );
+
+  const ariaLabel = React.useMemo(() => `Switch mode (currently ${modeLabel})`, [modeLabel]);
+
+  if (appearance === "menu") {
+    return (
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className={cn(
+          "relative flex h-auto w-full items-center justify-start gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-muted focus:bg-muted focus:text-accent-foreground",
+          "text-foreground",
+          className,
+        )}
+        onClick={handleClick}
+        title={`Mode: ${modeLabel}`}
+        aria-label={`Switch mode (currently ${modeLabel})`}
+        {...props}
+      >
+        <Icon className="h-4 w-4 transition-colors" />
+        <span className="flex-1 text-left">Mode</span>
+        <span className="sr-only">(current: {modeLabel})</span>
+      </Button>
+    );
+  }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className={cn("w-9 px-0", className)}
-          {...props}
-        >
-          <Sun className="rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-          <Moon className="absolute rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-          <span className="sr-only">Toggle theme</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setTheme("light")}>
-          <Sun className="mr-2 h-4 w-4" />
-          <span>Light</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("dark")}>
-          <Moon className="mr-2 h-4 w-4" />
-          <span>Dark</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("system")}>
-          <Laptop className="mr-2 h-4 w-4" />
-          <span>System</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <Button
+      type="button"
+      variant="ghost"
+      size="sm"
+      className={cn("w-9 px-0", className)}
+      onClick={handleClick}
+      title={`Mode: ${modeLabel}`}
+      aria-label={ariaLabel}
+      {...props}
+    >
+      <Icon className="h-4 w-4" />
+      <span className="sr-only">Toggle mode (current: {modeLabel})</span>
+    </Button>
   );
 }

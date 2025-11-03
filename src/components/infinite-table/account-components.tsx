@@ -19,11 +19,11 @@ import { DataTableFilterControls } from "@/components/data-table/data-table-filt
 import {
   LogOut,
   LogIn,
-  Sun,
   Settings as SettingsIcon,
   Search,
   X,
   Star,
+  Send,
 } from "lucide-react";
 import {
   NavigationMenu,
@@ -300,6 +300,7 @@ export function UserMenu({
               </div>
             </DropdownMenuLabel>
           ) : null}
+          <DropdownMenuSeparator className="-mx-2" />
           <Accordion
             type="single"
             collapsible
@@ -334,7 +335,24 @@ export function UserMenu({
               </AccordionContent>
             </AccordionItem>
           </Accordion>
-                  {!isAuthenticated ? (
+          {isAuthenticated ? (
+            <DropdownMenuItem asChild>
+              <Link href="/settings" className="flex w-full items-center gap-2">
+                <SettingsIcon className="h-4 w-4" />
+                <span>Settings</span>
+              </Link>
+            </DropdownMenuItem>
+          ) : null}
+          <DropdownMenuItem asChild>
+            <Link
+              href="https://openstatus.dev/submit"
+              className="flex w-full items-center gap-2"
+            >
+              <Send className="h-4 w-4" />
+              <span>Submit</span>
+            </Link>
+          </DropdownMenuItem>
+          {!isAuthenticated ? (
             <DropdownMenuItem
               onSelect={() => {
                 onSignIn?.();
@@ -345,25 +363,13 @@ export function UserMenu({
             </DropdownMenuItem>
           ) : null}
           <DropdownMenuSeparator />
-          {isAuthenticated ? (
-            <DropdownMenuItem asChild>
-              <Link href="/settings" className="flex w-full items-center gap-2">
-                <SettingsIcon className="h-4 w-4" />
-                <span>Settings</span>
-              </Link>
-            </DropdownMenuItem>
-          ) : null}
           <DropdownMenuItem
-            className="cursor-default focus:bg-transparent focus:text-foreground"
-            onSelect={(event) => event.preventDefault()}
+            asChild
+            onSelect={(event) => {
+              event.preventDefault();
+            }}
           >
-            <div className="flex w-full items-center justify-between gap-2">
-              <div className="flex items-center gap-2 text-sm">
-                <Sun className="h-4 w-4" />
-                <span>Theme</span>
-              </div>
-              <ModeToggle className="h-8 w-8 [&>svg]:h-4 [&>svg]:w-4" />
-            </div>
+            <ModeToggle appearance="menu" />
           </DropdownMenuItem>
           {isAuthenticated ? (
             <>
