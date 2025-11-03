@@ -23,6 +23,7 @@ import {
   Settings as SettingsIcon,
   Search,
   X,
+  Star,
 } from "lucide-react";
 import {
   NavigationMenu,
@@ -39,6 +40,12 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/custom/sheet";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/custom/accordion";
 
 const gradientSurfaceClass =
   "border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground hover:bg-gradient-to-b hover:from-muted/70 hover:via-muted/40 hover:to-background hover:text-accent-foreground";
@@ -292,31 +299,43 @@ export function UserMenu({
                 ) : null}
               </div>
             </DropdownMenuLabel>
-          ) : (
-            <DropdownMenuLabel className="flex flex-col gap-1">
-              <span className="text-sm font-semibold text-foreground">OpenStatus</span>
-              <span className="text-xs text-muted-foreground">
-                Sign in to save favorites and manage your account
-              </span>
-            </DropdownMenuLabel>
-          )}
-          <DropdownMenuSeparator />
-          <DropdownMenuLabel className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Navigate
-          </DropdownMenuLabel>
-          <DropdownMenuItem asChild>
-            <Link href="/llms" className="cursor-pointer flex w-full items-center gap-2">
-              <span>LLMs</span>
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href="/gpus" className="cursor-pointer flex w-full items-center gap-2">
-              <span>GPUs</span>
-            </Link>
-          </DropdownMenuItem>
-          {!isAuthenticated ? (
+          ) : null}
+          <Accordion
+            type="single"
+            collapsible
+            className="-mx-2 w-[calc(100%+16px)] px-2"
+          >
+            <AccordionItem value="favorites" className="border-none">
+              <AccordionTrigger className="px-2 py-2 text-left text-sm font-medium text-foreground hover:no-underline">
+                <span className="flex items-center gap-2">
+                  <Star className="h-4 w-4" />
+                  Favorites
+                </span>
+              </AccordionTrigger>
+              <AccordionContent className="px-0 pt-0 [&>div]:pb-0">
+                <div className="flex flex-col gap-1">
+                  <DropdownMenuItem asChild>
+                    <Link
+                      href="/llms?favorites=true"
+                      className="flex w-full items-center gap-2"
+                    >
+                      <span>LLMs</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link
+                      href="/gpus?favorites=true"
+                      className="flex w-full items-center gap-2"
+                    >
+                      <span>GPUs</span>
+                    </Link>
+                  </DropdownMenuItem>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+                  {!isAuthenticated ? (
             <DropdownMenuItem
-              className="cursor-pointer"
               onSelect={() => {
                 onSignIn?.();
               }}
@@ -328,7 +347,7 @@ export function UserMenu({
           <DropdownMenuSeparator />
           {isAuthenticated ? (
             <DropdownMenuItem asChild>
-              <Link href="/settings" className="cursor-pointer flex w-full items-center gap-2">
+              <Link href="/settings" className="flex w-full items-center gap-2">
                 <SettingsIcon className="h-4 w-4" />
                 <span>Settings</span>
               </Link>
@@ -350,7 +369,6 @@ export function UserMenu({
             <>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                className="cursor-pointer"
                 onSelect={() => {
                   if (!isSigningOut) {
                     onSignOut();
