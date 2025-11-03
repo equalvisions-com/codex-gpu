@@ -163,7 +163,9 @@ export async function GET(req: NextRequest) {
     const result = await getFavoriteRowsDirect(session.user.id, cursor, size, sort);
     return NextResponse.json(result, {
       headers: {
-        "Cache-Control": "public, s-maxage=43200, stale-while-revalidate=3600",
+        // Use private cache since this is user-specific data
+        // This prevents Vercel edge/CDN from caching responses
+        "Cache-Control": "private, no-cache, no-store, must-revalidate",
       },
     });
   } catch (error) {

@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { writeLimiter } from "@/lib/redis/ratelimit";
 import { z } from "zod";
 import type { ModelFavoritesRequest, ModelFavoritesResponse, ModelFavoriteKey } from "@/types/model-favorites";
-import { revalidateTag, unstable_cache } from "next/cache";
+import { revalidateTag, revalidatePath, unstable_cache } from "next/cache";
 import { getModelFavoritesCacheTag, getModelFavoritesRateLimitKey, MODEL_FAVORITES_CACHE_TTL } from "@/lib/model-favorites/constants";
 
 type UserModelFavoriteRow = {
@@ -127,6 +127,7 @@ export async function POST(request: NextRequest) {
     try {
       revalidateTag(getModelFavoritesCacheTag(session.user.id));
       revalidateTag("model-favorites"); // Invalidate favorites rows cache
+      revalidatePath("/api/models/favorites/rows"); // Invalidate route cache for Vercel edge/CDN
     } catch (revalidateError) {
       console.error("[POST /api/models/favorites] Cache revalidation failed", {
         userId: session.user.id,
@@ -203,6 +204,7 @@ export async function DELETE(request: NextRequest) {
     try {
       revalidateTag(getModelFavoritesCacheTag(session.user.id));
       revalidateTag("model-favorites"); // Invalidate favorites rows cache
+      revalidatePath("/api/models/favorites/rows"); // Invalidate route cache for Vercel edge/CDN
     } catch (revalidateError) {
       console.error("[DELETE /api/models/favorites] Cache revalidation failed", {
         userId: session.user.id,
