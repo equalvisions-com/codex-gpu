@@ -52,7 +52,11 @@ const getCachedFavoriteModelsFiltered = unstable_cache(
     
     return result;
   },
-  ["model-favorites:filtered"],
+  (userId: string, search: ModelsSearchParamsType) => [
+    "model-favorites:filtered",
+    userId,
+    JSON.stringify(search ?? {}),
+  ],
   {
     revalidate: 43200, // 12 hours (data only changes when scraper runs, cache invalidated on scrape)
     tags: ["model-favorites"],

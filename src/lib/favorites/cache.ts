@@ -97,7 +97,7 @@ export async function getUserFavoritesFromCache(userId: string): Promise<Favorit
         return [];
       }
     },
-    ["favorites:keys"],
+    (uid: string) => ["favorites:keys", uid],
     { 
       revalidate: FAVORITES_CACHE_TTL, 
       tags: [getFavoritesCacheTag(userId)] 
@@ -134,4 +134,3 @@ export async function getUserFavoritesDirect(userId: string): Promise<FavoriteKe
   const typedRows = rows as unknown as UserFavoriteRow[];
   return (typedRows || []).map((r) => r.gpuUuid as FavoriteKey);
 }
-

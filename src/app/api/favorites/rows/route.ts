@@ -88,7 +88,11 @@ const getCachedFavoriteGpusFiltered = unstable_cache(
     
     return result;
   },
-  ["favorites:filtered"],
+  (userId: string, search: SearchParamsType) => [
+    "favorites:filtered",
+    userId,
+    JSON.stringify(search ?? {}),
+  ],
   {
     revalidate: 43200, // 12 hours (data only changes when scraper runs, cache invalidated on scrape)
     tags: ["favorites"],

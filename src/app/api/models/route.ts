@@ -416,7 +416,10 @@ const getCachedModelsFiltered = unstable_cache(
     
     return result;
   },
-  ["models:filtered"],
+  (search: ModelsSearchParamsType) => [
+    "models:filtered",
+    JSON.stringify(search ?? {}),
+  ],
   {
     revalidate: 43200, // 12 hours (data only changes when scraper runs, cache invalidated on scrape)
     tags: ["models"],

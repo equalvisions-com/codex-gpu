@@ -90,7 +90,10 @@ const getCachedGpusFiltered = unstable_cache(
     
     return result;
   },
-  ["pricing:filtered"],
+  (search: SearchParamsType) => [
+    "pricing:filtered",
+    JSON.stringify(search ?? {}),
+  ],
   {
     revalidate: 43200, // 12 hours (data only changes when scraper runs, cache invalidated on scrape)
     tags: ["pricing"],
