@@ -462,7 +462,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   }, [columnFilters]);
 
   const minimumModelColumnWidth = React.useMemo(
-    () => table.getColumn("gpu_model")?.columnDef.minSize ?? 250,
+    () => table.getColumn("gpu_model")?.columnDef.minSize ?? 240,
     [table]
   );
   const fixedColumnsWidth = React.useMemo(
@@ -926,7 +926,7 @@ function Row<TData>({
       : undefined;
 
   const minimumModelColumnWidth =
-    table.getColumn("gpu_model")?.columnDef.minSize ?? 250;
+    table.getColumn("gpu_model")?.columnDef.minSize ?? 240;
 
   return (
     <TableRow

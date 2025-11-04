@@ -195,8 +195,8 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
         </div>
       );
     },
-    size: 250,
-    minSize: 250,
+    size: 240,
+    minSize: 240,
     maxSize: 500,
   },
   {
