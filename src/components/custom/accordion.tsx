@@ -1,10 +1,9 @@
 "use client";
 
-import * as React from "react";
+import { cn } from "@/lib/utils";
 import * as AccordionPrimitive from "@radix-ui/react-accordion";
 import { ChevronDown } from "lucide-react";
-
-import { cn } from "@/lib/utils";
+import * as React from "react";
 
 const Accordion = AccordionPrimitive.Root;
 
@@ -22,24 +21,20 @@ AccordionItem.displayName = "AccordionItem";
 
 const AccordionTrigger = React.forwardRef<
   React.ElementRef<typeof AccordionPrimitive.Trigger>,
-  React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Trigger> & {
-    hideChevron?: boolean;
-  }
->(({ className, children, hideChevron, ...props }, ref) => (
+  React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Trigger>
+>(({ className, children, ...props }, ref) => (
   <AccordionPrimitive.Header className="flex">
     <AccordionPrimitive.Trigger
       ref={ref}
       className={cn(
         "flex flex-1 items-center justify-between py-4 transition-transform hover:underline [&[data-state=open]>svg]:rotate-180",
         "rounded-md ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-        className
+        className,
       )}
       {...props}
     >
       {children}
-      {hideChevron ? null : (
-        <ChevronDown className="h-4 w-4 transition-transform duration-200" />
-      )}
+      <ChevronDown className="h-4 w-4 transition-transform duration-200" />
     </AccordionPrimitive.Trigger>
   </AccordionPrimitive.Header>
 ));
@@ -53,7 +48,7 @@ const AccordionContent = React.forwardRef<
     ref={ref}
     className={cn(
       "overflow-hidden text-sm data-[state=closed]:animate-accordion-up",
-      className
+      className,
     )}
     {...props}
   >

@@ -463,7 +463,7 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
 
   const content = (
     <div
-      className="fixed inset-x-0 flex items-center justify-center px-4"
+      className="pointer-events-none fixed inset-x-0 flex items-center justify-center px-4"
       style={{ bottom: `calc(24px + env(safe-area-inset-bottom))` }}
       aria-live="polite"
       role="region"
@@ -472,7 +472,7 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
       <FavoritesNotice message={favoritesNotice} open={isFavoritesOpen} variant={noticeVariant} />
       <div
         className={cn(
-          "z-[var(--z-island)] flex w-auto items-center gap-2 rounded-xl border border-border bg-background/95 p-2 shadow-lg backdrop-blur transition-all duration-200 motion-reduce:transition-none",
+          "pointer-events-auto z-[var(--z-island)] flex w-auto items-center gap-2 rounded-xl border border-border bg-background/95 p-2 shadow-lg backdrop-blur transition-all duration-200 motion-reduce:transition-none",
           "supports-[backdrop-filter]:bg-background/60",
         )}
       >
@@ -542,4 +542,3 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
   if (typeof document === "undefined") return content;
   return createPortal(content, document.body);
 }
-
