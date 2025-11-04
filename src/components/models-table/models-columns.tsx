@@ -195,8 +195,8 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
         </div>
       );
     },
-    size: 240,
-    minSize: 240,
+    size: 270,
+    minSize: 270,
     maxSize: 500,
   },
   {
@@ -226,11 +226,11 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
       );
     },
     filterFn: "inNumberRange",
-    size: 155,
-    minSize: 155,
+    size: 153.34,
+    minSize: 153.34,
     meta: {
-      cellClassName: "text-right min-w-[155px]",
-      headerClassName: "text-right min-w-[155px]",
+      cellClassName: "text-right min-w-[153.34px]",
+      headerClassName: "text-right min-w-[153.34px]",
     },
   },
   {
@@ -260,11 +260,11 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
     },
     enableSorting: true,
     sortingFn: "auto",
-    size: 155,
-    minSize: 155,
+    size: 153.34,
+    minSize: 153.34,
     meta: {
-      cellClassName: "text-right min-w-[155px] tabular-nums",
-      headerClassName: "text-right min-w-[155px] tabular-nums",
+      cellClassName: "text-right min-w-[153.34px] tabular-nums",
+      headerClassName: "text-right min-w-[153.34px] tabular-nums",
     },
   },
   {
@@ -311,11 +311,11 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
         </HoverCard>
       );
     },
-    size: 155,
-    minSize: 155,
+    size: 153.34,
+    minSize: 153.34,
     meta: {
-      cellClassName: "text-right min-w-[155px]",
-      headerClassName: "text-right min-w-[155px]",
+      cellClassName: "text-right min-w-[153.34px]",
+      headerClassName: "text-right min-w-[153.34px]",
     },
   },
   {
@@ -344,11 +344,11 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
       );
     },
     filterFn: "inNumberRange",
-    size: 155,
-    minSize: 155,
+    size: 153.34,
+    minSize: 153.34,
     meta: {
-      cellClassName: "text-right min-w-[155px]",
-      headerClassName: "text-right min-w-[155px]",
+      cellClassName: "text-right min-w-[153.34px]",
+      headerClassName: "text-right min-w-[153.34px]",
     },
   },
   {
@@ -377,11 +377,11 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
       );
     },
     filterFn: "inNumberRange",
-    size: 155,
-    minSize: 155,
+    size: 153.34,
+    minSize: 153.34,
     meta: {
-      cellClassName: "text-right min-w-[155px]",
-      headerClassName: "text-right min-w-[155px]",
+      cellClassName: "text-right min-w-[153.34px]",
+      headerClassName: "text-right min-w-[153.34px]",
     },
   },
 ];

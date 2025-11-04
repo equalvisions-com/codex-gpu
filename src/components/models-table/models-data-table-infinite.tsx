@@ -461,7 +461,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
   }, [columnFilters]);
 
   const minimumModelColumnWidth = React.useMemo(
-    () => table.getColumn("name")?.columnDef.minSize ?? 240,
+    () => table.getColumn("name")?.columnDef.minSize ?? 270,
     [table]
   );
   const fixedColumnsWidth = React.useMemo(
@@ -943,7 +943,7 @@ function Row<TData>({
       : undefined;
 
   const minimumModelColumnWidth =
-    table.getColumn("name")?.columnDef.minSize ?? 240;
+    table.getColumn("name")?.columnDef.minSize ?? 270;
 
   return (
     <TableRow
