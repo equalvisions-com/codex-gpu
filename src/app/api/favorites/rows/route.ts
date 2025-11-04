@@ -119,19 +119,25 @@ async function getFavoriteRowsDirect(
     totalCount = result.totalCount;
     filterCount = result.filterCount;
   } catch (error) {
-    // Fallback to direct DB query if cache fails (e.g., > 2MB or cache error)
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    const isSizeError = errorMessage.includes("2MB") || errorMessage.includes("size") || errorMessage.includes("cache");
-    
-    if (isSizeError) {
-      console.warn("[getFavoriteRowsDirect] Cache size limit exceeded, using direct DB query", {
-        userId,
-        searchParams: { cursor: search.cursor, size: search.size, sort: search.sort },
-        error: errorMessage,
-      });
-    }
-    
-    // Fallback to direct DB query
+      // Fallback to direct DB query if cache fails (e.g., > 2MB or cache error)
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const isSizeError = errorMessage.includes("2MB") || errorMessage.includes("size") || errorMessage.includes("cache");
+      
+      if (isSizeError) {
+        console.warn("[getFavoriteRowsDirect] Cache size limit exceeded, using direct DB query", {
+          userId,
+          searchParams: { cursor: search.cursor, size: search.size, sort: search.sort },
+          error: errorMessage,
+        });
+      } else {
+        console.warn("[getFavoriteRowsDirect] Cache lookup failed, falling back to DB", {
+          userId,
+          searchParams: { cursor: search.cursor, size: search.size, sort: search.sort },
+          error: errorMessage,
+        });
+      }
+      
+      // Fallback to direct DB query
     const result = await gpuPricingCache.getFavoriteGpusFiltered(userId, search);
     filteredGpus = result.data;
     totalCount = result.totalCount;

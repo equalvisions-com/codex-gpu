@@ -256,8 +256,10 @@ export function DataTableInfinite<TData, TValue, TMeta>({
       return;
     }
     setIsPrefetching(true);
-    void fetchNextPage();
-  }, [fetchNextPage, hasNextPage, isFetching, isFetchingNextPage, isPrefetching]);
+    void fetchNextPage().finally(() => {
+      setIsPrefetching(false);
+    });
+  }, [data.length, fetchNextPage, hasNextPage, isFetching, isFetchingNextPage, isPrefetching]);
 
   const onScroll = React.useCallback(
     (e: React.UIEvent<HTMLElement>) => {

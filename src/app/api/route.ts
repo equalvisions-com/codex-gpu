@@ -135,6 +135,11 @@ export async function GET(req: NextRequest): Promise<Response> {
           searchParams: { cursor: search.cursor, size: search.size, sort: search.sort },
           error: errorMessage,
         });
+      } else {
+        console.warn("[GET /api] Cache lookup failed, falling back to DB", {
+          searchParams: { cursor: search.cursor, size: search.size, sort: search.sort },
+          error: errorMessage,
+        });
       }
       
       // Fallback to direct DB query
@@ -182,7 +187,15 @@ export async function GET(req: NextRequest): Promise<Response> {
         'Cache-Control': 'public, s-maxage=43200, stale-while-revalidate=3600',
       },
     });
-    logger.info(JSON.stringify({ event: 'api.page', rowsReturned: filteredGpus.length, latencyMs: Date.now() - t1 }));
+    logger.info(JSON.stringify({
+      event: 'api.page',
+      cursor: search.cursor ?? 0,
+      size: search.size ?? 50,
+      rowsReturned: filteredGpus.length,
+      nextCursor,
+      filterCount,
+      latencyMs: Date.now() - t1,
+    }));
     return res;
   } catch (error) {
     console.error('Error in pricing API:', error);

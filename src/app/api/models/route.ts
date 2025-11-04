@@ -4,6 +4,7 @@ import type { ModelsColumnSchema } from "@/components/models-table/models-schema
 import { modelsSearchParamsCache } from "@/components/models-table/models-search-params";
 import type { ModelsSearchParamsType } from "@/components/models-table/models-search-params";
 import { modelsCache } from "@/lib/models-cache";
+import { logger } from "@/lib/logger";
 import type { AIModel } from "@/types/models";
 import { unstable_cache } from "next/cache";
 import { createHash } from "crypto";
@@ -436,6 +437,7 @@ export async function GET(req: NextRequest): Promise<Response> {
     req.nextUrl.searchParams.forEach((value, key) => _search.set(key, value));
 
     const search: ModelsSearchParamsType = modelsSearchParamsCache.parse(Object.fromEntries(_search));
+    const t1 = Date.now();
 
     // Fetch filtered, sorted, paginated data from database (TanStack Table best practice)
     // Cached server-side with 2min TTL to reduce DB load
@@ -457,6 +459,11 @@ export async function GET(req: NextRequest): Promise<Response> {
       
       if (isSizeError) {
         console.warn("[GET /api/models] Cache size limit exceeded, using direct DB query", {
+          searchParams: { cursor: search.cursor, size: search.size, sort: search.sort },
+          error: errorMessage,
+        });
+      } else {
+        console.warn("[GET /api/models] Cache lookup failed, falling back to DB", {
           searchParams: { cursor: search.cursor, size: search.size, sort: search.sort },
           error: errorMessage,
         });
@@ -523,11 +530,23 @@ export async function GET(req: NextRequest): Promise<Response> {
       nextCursor: cursor + size < totalCount ? cursor + size : null,
     };
 
-    return Response.json(response, {
+    const res = Response.json(response, {
       headers: {
         "Cache-Control": "public, s-maxage=43200, stale-while-revalidate=3600",
       },
     });
+    logger.info(
+      JSON.stringify({
+        event: "api.models.page",
+        cursor,
+        size,
+        rowsReturned: data.length,
+        nextCursor: response.nextCursor,
+        filterCount,
+        latencyMs: Date.now() - t1,
+      }),
+    );
+    return res;
   } catch (error) {
     console.error("Models API error:", error);
     return Response.json(
