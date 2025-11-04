@@ -116,11 +116,11 @@ export const columns: ColumnDef<ColumnSchema>[] = [
         <span className="block truncate">{displayName}</span>
       );
     },
-    size: 261,
-    minSize: 261,
+    size: 250,
+    minSize: 250,
     meta: {
-      cellClassName: "text-left overflow-hidden min-w-[261px]",
-      headerClassName: "text-left overflow-hidden min-w-[261px]",
+      cellClassName: "text-left overflow-hidden min-w-[250px]",
+      headerClassName: "text-left overflow-hidden min-w-[250px]",
     },
   },
   {

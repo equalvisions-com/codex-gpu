@@ -460,25 +460,17 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
     container.scrollTop = 0;
   }, [columnFilters]);
 
-  const minimumModelColumnWidth =
-    table.getColumn("name")?.columnDef.minSize ?? 250;
-  const fixedColumnsWidth = table
-    .getVisibleLeafColumns()
-    .filter((column) => column.id !== "name")
-    .reduce((acc, column) => acc + column.getSize(), 0);
-
-  const modelColumnWidth = React.useMemo(() => {
-    return `max(${minimumModelColumnWidth}px, calc(100% - ${fixedColumnsWidth}px))`;
-  }, [minimumModelColumnWidth, fixedColumnsWidth]);
-
-  const tableWidthStyle = React.useMemo(
+  const minimumModelColumnWidth = React.useMemo(
+    () => table.getColumn("name")?.columnDef.minSize ?? 250,
+    [table]
+  );
+  const fixedColumnsWidth = React.useMemo(
     () =>
-      ({
-        width: "100%",
-        minWidth: `${fixedColumnsWidth + minimumModelColumnWidth}px`,
-        "--model-column-width": modelColumnWidth,
-      }) as React.CSSProperties,
-    [fixedColumnsWidth, minimumModelColumnWidth, modelColumnWidth],
+      table
+        .getVisibleLeafColumns()
+        .filter((column) => column.id !== "name")
+        .reduce((acc, column) => acc + column.getSize(), 0),
+    [table]
   );
 
   const previousSearchPayloadRef = React.useRef<string>("");
@@ -697,8 +689,11 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
                   containerRef={containerRef}
                   containerOverflowVisible={false}
                   // REMINDER: https://stackoverflow.com/questions/questions/50361698/border-style-do-not-work-with-sticky-position-element
-                  className="border-separate border-spacing-0 w-auto min-w-full table-fixed"
-                  style={tableWidthStyle}
+                  className="border-separate border-spacing-0 w-full table-fixed"
+                  style={{
+                    width: "100%",
+                    minWidth: `${fixedColumnsWidth + minimumModelColumnWidth}px`,
+                  }}
                   containerClassName={cn(
                     "h-full overscroll-x-none scrollbar-hide flex-1 min-h-0"
                   )}
@@ -726,16 +721,12 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
                           style={{
                             width:
                               header.id === "name"
-                                ? "var(--model-column-width)"
-                                : header.getSize(),
+                                ? "auto"
+                                : `${header.getSize()}px`,
                             minWidth:
                               header.id === "name"
-                                ? "var(--model-column-width)"
+                                ? `${minimumModelColumnWidth}px`
                                 : header.column.columnDef.minSize,
-                            maxWidth:
-                              header.id === "name"
-                                ? "var(--model-column-width)"
-                                : undefined,
                           }}
                           aria-sort={
                             header.column.getIsSorted() === "asc"
@@ -784,7 +775,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
                   <RowSkeletons
                     table={table}
                     rows={skeletonRowCount}
-                    modelColumnWidth={modelColumnWidth}
+                    modelColumnWidth={`${minimumModelColumnWidth}px`}
                   />
                 ) : rows.length ? (
                   <>
@@ -804,7 +795,6 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
                                 table={table}
                                 selected={row.getIsSelected()}
                                 checked={checkedRows[row.id] ?? false}
-                                modelColumnWidth={modelColumnWidth}
                                 data-index={index}
                               />
                               {shouldAttachSentinel ? (
@@ -842,7 +832,6 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
                                 table={table}
                                 selected={row.getIsSelected()}
                                 checked={checkedRows[row.id] ?? false}
-                                modelColumnWidth={modelColumnWidth}
                                 data-index={virtualItem.index}
                                 ref={rowVirtualizer.measureElement}
                               />
@@ -875,7 +864,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
                               ? 15
                               : 50
                         }
-                        modelColumnWidth={modelColumnWidth}
+                        modelColumnWidth={`${minimumModelColumnWidth}px`}
                       />
                     )}
                   </>
@@ -934,7 +923,6 @@ function Row<TData>({
   table,
   selected,
   checked,
-  modelColumnWidth,
   "data-index": dataIndex,
   ref: measureRef,
 }: {
@@ -944,7 +932,6 @@ function Row<TData>({
   selected?: boolean;
   // Memoize checked highlight without forcing full row rerender otherwise
   checked?: boolean;
-  modelColumnWidth: string;
   "data-index"?: number;
   ref?: React.Ref<HTMLTableRowElement>;
 }) {
@@ -954,6 +941,9 @@ function Row<TData>({
     window.matchMedia("(hover: hover) and (pointer: fine)").matches
       ? true
       : undefined;
+
+  const minimumModelColumnWidth =
+    table.getColumn("name")?.columnDef.minSize ?? 250;
 
   return (
     <TableRow
@@ -1009,16 +999,12 @@ function Row<TData>({
             style={{
               width:
                 cell.column.id === "name"
-                  ? modelColumnWidth
-                  : cell.column.getSize(),
+                  ? "auto"
+                  : `${cell.column.getSize()}px`,
               minWidth:
                 cell.column.id === "name"
-                  ? modelColumnWidth
+                  ? `${minimumModelColumnWidth}px`
                   : cell.column.columnDef.minSize,
-              maxWidth:
-                cell.column.id === "name"
-                  ? modelColumnWidth
-                  : undefined,
             }}
           >
             {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -1036,6 +1022,5 @@ const MemoizedRow = React.memo(
     Object.is(prev.row.original, next.row.original) &&
     prev.selected === next.selected &&
     prev.checked === next.checked &&
-    prev.modelColumnWidth === next.modelColumnWidth &&
     prev["data-index"] === next["data-index"],
 ) as typeof Row;
