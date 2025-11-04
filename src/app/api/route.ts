@@ -6,6 +6,7 @@ import type { SearchParamsType } from "@/components/infinite-table/search-params
 import { logger } from "@/lib/logger";
 import { gpuPricingCache } from "@/lib/gpu-pricing-cache";
 import { unstable_cache } from "next/cache";
+import { createHash } from "crypto";
 
 export const dynamic = 'force-dynamic';
 
@@ -63,42 +64,45 @@ const getCachedFacets = unstable_cache(
   }
 );
 
-// Cache paginated query results (with search params in cache key)
-// This reduces DB load while maintaining data freshness
-// Includes explicit 2MB size check to handle large JSONB fields gracefully
-const getCachedGpusFiltered = unstable_cache(
-  async (search: SearchParamsType) => {
-    const result = await gpuPricingCache.getGpusFiltered(search);
-    
-    // Check size before caching (conservative estimate using JSON.stringify)
-    // If > 2MB, Next.js unstable_cache will fail to cache, so we throw here
-    // to trigger fallback to direct DB query in the caller
-    const estimatedSize = JSON.stringify(result).length;
-    
-    if (estimatedSize > CACHE_SIZE_LIMIT_BYTES) {
-      console.warn("[getCachedGpusFiltered] Cache size limit exceeded, will fall back to direct DB query", {
-        estimatedSizeBytes: estimatedSize,
-        limitBytes: CACHE_SIZE_LIMIT_BYTES,
-        rowCount: result.data.length,
-        searchParams: { cursor: search.cursor, size: search.size, sort: search.sort },
-      });
-      
-      // Throw error to prevent caching and trigger fallback
-      // Next.js unstable_cache will fail anyway, but this ensures we handle it gracefully
-      throw new Error(`Cache size (${estimatedSize} bytes) exceeds limit (${CACHE_SIZE_LIMIT_BYTES} bytes)`);
-    }
-    
-    return result;
-  },
-  (search: SearchParamsType) => [
-    "pricing:filtered",
-    JSON.stringify(search ?? {}),
-  ],
-  {
-    revalidate: 43200, // 12 hours (data only changes when scraper runs, cache invalidated on scrape)
-    tags: ["pricing"],
-  }
-);
+const cryptoHash = (value: string) =>
+  createHash("sha256").update(value).digest("hex");
+
+function hashSearchParams(search: SearchParamsType): string {
+  const sortedEntries = Object.entries(search ?? {})
+    .map(([key, value]) => [key, value] as const)
+    .sort(([a], [b]) => a.localeCompare(b));
+  return cryptoHash(JSON.stringify(sortedEntries));
+}
+
+async function getCachedGpusFiltered(search: SearchParamsType) {
+  const cacheFn = unstable_cache(
+    async () => {
+      const result = await gpuPricingCache.getGpusFiltered(search);
+
+      const estimatedSize = JSON.stringify(result).length;
+
+      if (estimatedSize > CACHE_SIZE_LIMIT_BYTES) {
+        console.warn("[getCachedGpusFiltered] Cache size limit exceeded, will fall back to direct DB query", {
+          estimatedSizeBytes: estimatedSize,
+          limitBytes: CACHE_SIZE_LIMIT_BYTES,
+          rowCount: result.data.length,
+          searchParams: { cursor: search.cursor, size: search.size, sort: search.sort },
+        });
+
+        throw new Error(`Cache size (${estimatedSize} bytes) exceeds limit (${CACHE_SIZE_LIMIT_BYTES} bytes)`);
+      }
+
+      return result;
+    },
+    ["pricing:filtered", hashSearchParams(search)],
+    {
+      revalidate: 43200,
+      tags: ["pricing"],
+    },
+  );
+
+  return cacheFn();
+}
 
 export async function GET(req: NextRequest): Promise<Response> {
   try {

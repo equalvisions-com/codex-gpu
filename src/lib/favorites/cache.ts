@@ -46,7 +46,7 @@ export class CacheSizeLimitError extends Error {
  */
 export async function getUserFavoritesFromCache(userId: string): Promise<FavoriteKey[]> {
   const getCached = unstable_cache(
-    async (uid: string) => {
+    async () => {
       try {
         /**
          * Type suppression needed due to Drizzle ORM build artifact conflicts
@@ -59,7 +59,7 @@ export async function getUserFavoritesFromCache(userId: string): Promise<Favorit
           // @ts-ignore - Drizzle ORM type conflict between build artifacts (see comment above)
           .from(userFavorites)
           // @ts-ignore - Drizzle ORM type conflict between build artifacts
-          .where(eq(userFavorites.userId, uid));
+          .where(eq(userFavorites.userId, userId));
         
         const typedRows = rows as unknown as UserFavoriteRow[];
         const keys = (typedRows || []).map((r) => r.gpuUuid as FavoriteKey);
@@ -70,7 +70,7 @@ export async function getUserFavoritesFromCache(userId: string): Promise<Favorit
         
         if (estimatedSize > CACHE_SIZE_LIMIT_BYTES) {
           console.warn("[getUserFavoritesFromCache] Cache size limit exceeded, skipping cache", {
-            userId: uid,
+            userId,
             estimatedSizeBytes: estimatedSize,
             limitBytes: CACHE_SIZE_LIMIT_BYTES,
             favoriteCount: keys.length,
@@ -91,13 +91,13 @@ export async function getUserFavoritesFromCache(userId: string): Promise<Favorit
         }
         
         console.error('[getUserFavoritesFromCache] Database query failed', {
-          userId: uid,
+          userId,
           error: error instanceof Error ? error.message : String(error),
         });
         return [];
       }
     },
-    (uid: string) => ["favorites:keys", uid],
+    ["favorites:keys", userId],
     { 
       revalidate: FAVORITES_CACHE_TTL, 
       tags: [getFavoritesCacheTag(userId)] 
@@ -105,7 +105,7 @@ export async function getUserFavoritesFromCache(userId: string): Promise<Favorit
   );
 
   try {
-    return await getCached(userId);
+    return await getCached();
   } catch (error) {
     // Re-throw cache size errors to trigger fallback in caller
     if (error instanceof CacheSizeLimitError) {

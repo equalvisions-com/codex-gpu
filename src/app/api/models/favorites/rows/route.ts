@@ -9,6 +9,7 @@ import { modelsSearchParamsCache } from "@/components/models-table/models-search
 import type { ModelsSearchParamsType } from "@/components/models-table/models-search-params";
 import { toModelsColumnRow } from "@/lib/models/transformers";
 import { unstable_cache } from "next/cache";
+import { createHash } from "crypto";
 import type { AIModel } from "@/types/models";
 
 const CACHE_SIZE_LIMIT_BYTES = 2 * 1024 * 1024; // 2MB
@@ -24,44 +25,46 @@ const getCachedFacets = unstable_cache(
   },
 );
 
-// Cache favorite models query (with userId and search params in cache key)
-// This reduces DB load for frequently accessed favorites
-// Includes explicit 2MB size check to handle large JSONB fields gracefully
-const getCachedFavoriteModelsFiltered = unstable_cache(
-  async (userId: string, search: ModelsSearchParamsType) => {
-    const result = await modelsCache.getFavoriteModelsFiltered(userId, search);
-    
-    // Check size before caching (conservative estimate using JSON.stringify)
-    // If > 2MB, Next.js unstable_cache will fail to cache, so we throw here
-    // to trigger fallback to direct DB query in the caller
-    const estimatedSize = JSON.stringify(result).length;
-    
-    if (estimatedSize > CACHE_SIZE_LIMIT_BYTES) {
-      console.warn("[getCachedFavoriteModelsFiltered] Cache size limit exceeded, will fall back to direct DB query", {
-        userId,
-        estimatedSizeBytes: estimatedSize,
-        limitBytes: CACHE_SIZE_LIMIT_BYTES,
-        rowCount: result.data.length,
-        searchParams: { cursor: search.cursor, size: search.size, sort: search.sort },
-      });
-      
-      // Throw error to prevent caching and trigger fallback
-      // Next.js unstable_cache will fail anyway, but this ensures we handle it gracefully
-      throw new Error(`Cache size (${estimatedSize} bytes) exceeds limit (${CACHE_SIZE_LIMIT_BYTES} bytes)`);
-    }
-    
-    return result;
-  },
-  (userId: string, search: ModelsSearchParamsType) => [
-    "model-favorites:filtered",
-    userId,
-    JSON.stringify(search ?? {}),
-  ],
-  {
-    revalidate: 43200, // 12 hours (data only changes when scraper runs, cache invalidated on scrape)
-    tags: ["model-favorites"],
-  }
-);
+const hashObject = (value: unknown) =>
+  createHash("sha256").update(JSON.stringify(value)).digest("hex");
+
+function buildModelFavoritesCacheKey(userId: string, search: ModelsSearchParamsType) {
+  const sortedEntries = Object.entries(search ?? {})
+    .map(([key, value]) => [key, value] as const)
+    .sort(([a], [b]) => a.localeCompare(b));
+  return ["model-favorites:filtered", userId, hashObject(sortedEntries)];
+}
+
+async function getCachedFavoriteModelsFiltered(userId: string, search: ModelsSearchParamsType) {
+  const cacheFn = unstable_cache(
+    async () => {
+      const result = await modelsCache.getFavoriteModelsFiltered(userId, search);
+
+      const estimatedSize = JSON.stringify(result).length;
+
+      if (estimatedSize > CACHE_SIZE_LIMIT_BYTES) {
+        console.warn("[getCachedFavoriteModelsFiltered] Cache size limit exceeded, will fall back to direct DB query", {
+          userId,
+          estimatedSizeBytes: estimatedSize,
+          limitBytes: CACHE_SIZE_LIMIT_BYTES,
+          rowCount: result.data.length,
+          searchParams: { cursor: search.cursor, size: search.size, sort: search.sort },
+        });
+
+        throw new Error(`Cache size (${estimatedSize} bytes) exceeds limit (${CACHE_SIZE_LIMIT_BYTES} bytes)`);
+      }
+
+      return result;
+    },
+    buildModelFavoritesCacheKey(userId, search),
+    {
+      revalidate: 43200,
+      tags: ["model-favorites"],
+    },
+  );
+
+  return cacheFn();
+}
 
 // Get favorite rows with database-level sorting and pagination (TanStack Table best practice)
 async function getFavoriteRowsDirect(
