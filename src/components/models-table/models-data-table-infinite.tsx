@@ -774,7 +774,9 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
                       // Custom resize handler that captures the actual rendered width when using "auto"
                       // Following React best practices: refs accessed only in event handlers, not during render
                       // Production-ready: includes null checks, proper cleanup, and browser compatibility
-                      const handleResizeStart = React.useCallback((e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
+                      // Note: Regular function (not useCallback) because we're inside a map callback
+                      // This is fine - function is recreated per header but only executes on user interaction
+                      const handleResizeStart = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
                         // Safety check: ensure resize handler exists before calling
                         const resizeHandler = header.getResizeHandler();
                         if (!resizeHandler) {
@@ -879,7 +881,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
                         
                         // Standard resize handler (column already resized or measurement not needed)
                         resizeHandler(e);
-                      }, [isModelColumn, header, modelColumnDefaultSize, table, headerRef, minimumModelColumnWidth]);
+                      };
                       
                       return (
                         <TableHead
