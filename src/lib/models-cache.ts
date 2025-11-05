@@ -237,7 +237,7 @@ function buildModelFilterConditions(search: ModelsSearchParamsType) {
     const searchTerm = `%${search.search}%`;
     conditions.push(
       or(
-        ilike(aiModels.name, searchTerm),
+        ilike(aiModels.shortName, searchTerm),
         ilike(aiModels.description, searchTerm),
         ilike(aiModels.provider, searchTerm),
         ilike(aiModels.author, searchTerm),
@@ -437,9 +437,13 @@ export class ModelsCache {
           orderByClause = direction(aiModels.provider);
           break;
         case 'name':
+          // Match client-side normalization: trim whitespace, lowercase, handle NULL as empty string
+          // This ensures consistent sorting behavior - entries like "R1 " and "R1" sort the same
+          // NULL values normalize to empty string '', which sorts first alphabetically
+          // This matches TanStack Table's manual sorting expectations for consistent behavior
           orderByClause = isDesc
-            ? sql`lower(${aiModels.shortName}) DESC`
-            : sql`lower(${aiModels.shortName}) ASC`;
+            ? sql`COALESCE(lower(trim(${aiModels.shortName})), '') DESC`
+            : sql`COALESCE(lower(trim(${aiModels.shortName})), '') ASC`;
           break;
         case 'contextLength':
           orderByClause = direction(aiModels.contextLength);
@@ -510,9 +514,13 @@ export class ModelsCache {
           orderByClause = direction(aiModels.provider);
           break;
         case 'name':
+          // Match client-side normalization: trim whitespace, lowercase, handle NULL as empty string
+          // This ensures consistent sorting behavior - entries like "R1 " and "R1" sort the same
+          // NULL values normalize to empty string '', which sorts first alphabetically
+          // This matches TanStack Table's manual sorting expectations for consistent behavior
           orderByClause = isDesc
-            ? sql`lower(${aiModels.shortName}) DESC`
-            : sql`lower(${aiModels.shortName}) ASC`;
+            ? sql`COALESCE(lower(trim(${aiModels.shortName})), '') DESC`
+            : sql`COALESCE(lower(trim(${aiModels.shortName})), '') ASC`;
           break;
         case 'contextLength':
           orderByClause = direction(aiModels.contextLength);
