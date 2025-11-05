@@ -140,7 +140,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
   {
     accessorKey: "provider",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Provider" />
+      <DataTableColumnHeader column={column} title="Inference" />
     ),
     cell: ({ row }) => {
       const providerRaw = row.getValue<ModelsColumnSchema["provider"]>("provider") ?? "";
@@ -180,20 +180,23 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
     },
   },
   {
-    accessorKey: "name",
+    id: "name",
+    accessorFn: (row) => (typeof row.shortName === "string" ? row.shortName : ""),
+    sortingFn: "alphanumeric",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Model" />
     ),
     cell: ({ row }) => {
-      const name = row.getValue<ModelsColumnSchema["name"]>("name");
+      const { shortName, name } = row.original;
+      const primaryLabel = typeof shortName === "string" && shortName.trim().length
+        ? shortName
+        : name;
 
-      if (!name) return <span className="text-muted-foreground">Unknown</span>;
+      if (!primaryLabel) {
+        return <span className="text-muted-foreground">Unknown</span>;
+      }
 
-      return (
-        <div className="max-w-[500px] truncate">
-          {name}
-        </div>
-      );
+      return <div className="max-w-[500px] truncate">{primaryLabel}</div>;
     },
     size: 270,
     minSize: 270,
@@ -226,11 +229,11 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
       );
     },
     filterFn: "inNumberRange",
-    size: 153.34,
-    minSize: 153.34,
+    size: 125,
+    minSize: 125,
     meta: {
-      cellClassName: "text-right min-w-[153.34px]",
-      headerClassName: "text-right min-w-[153.34px]",
+      cellClassName: "text-right min-w-[125px]",
+      headerClassName: "text-right min-w-[125px]",
     },
   },
   {
@@ -260,11 +263,11 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
     },
     enableSorting: true,
     sortingFn: "auto",
-    size: 153.34,
-    minSize: 153.34,
+    size: 125,
+    minSize: 125,
     meta: {
-      cellClassName: "text-right min-w-[153.34px] tabular-nums",
-      headerClassName: "text-right min-w-[153.34px] tabular-nums",
+      cellClassName: "text-right min-w-[125px] tabular-nums",
+      headerClassName: "text-right min-w-[125px] tabular-nums",
     },
   },
   {
@@ -311,11 +314,11 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
         </HoverCard>
       );
     },
-    size: 153.34,
-    minSize: 153.34,
+    size: 125,
+    minSize: 125,
     meta: {
-      cellClassName: "text-right min-w-[153.34px]",
-      headerClassName: "text-right min-w-[153.34px]",
+      cellClassName: "text-right min-w-[125px]",
+      headerClassName: "text-right min-w-[125px]",
     },
   },
   {
@@ -344,11 +347,11 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
       );
     },
     filterFn: "inNumberRange",
-    size: 153.34,
-    minSize: 153.34,
+    size: 125,
+    minSize: 125,
     meta: {
-      cellClassName: "text-right min-w-[153.34px]",
-      headerClassName: "text-right min-w-[153.34px]",
+      cellClassName: "text-right min-w-[125px]",
+      headerClassName: "text-right min-w-[125px]",
     },
   },
   {
@@ -377,11 +380,11 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
       );
     },
     filterFn: "inNumberRange",
-    size: 153.34,
-    minSize: 153.34,
+    size: 125,
+    minSize: 125,
     meta: {
-      cellClassName: "text-right min-w-[153.34px]",
-      headerClassName: "text-right min-w-[153.34px]",
+      cellClassName: "text-right min-w-[125px]",
+      headerClassName: "text-right min-w-[125px]",
     },
   },
 ];

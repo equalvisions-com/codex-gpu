@@ -59,8 +59,8 @@ export const aiModels = pgTable("ai_models", {
     "gin",
     sql`to_tsvector('english', coalesce(${table.name}, '') || ' ' || coalesce(${table.description}, ''))`
   ),
-  // Composite index for default sorting (provider, name)
-  providerNameIndex: index("ai_models_provider_name_idx").on(table.provider, table.name),
+  // Composite index for default sorting (provider, short_name)
+  providerNameIndex: index("ai_models_provider_name_idx").on(table.provider, table.shortName),
   // GIN index for pricing queries
   pricingIndex: index("ai_models_pricing_idx").using("gin", table.pricing),
 }));

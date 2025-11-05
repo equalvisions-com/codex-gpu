@@ -219,7 +219,7 @@ function filterModelsData(data: ModelsRowWithId[], search: ModelsSearchParamsTyp
     if (search.search) {
       const searchTerm = search.search.toLowerCase();
       const searchableText = [
-        row.name,
+        row.shortName,
         row.description,
         row.provider,
         row.author
@@ -251,10 +251,12 @@ function sortModelsData(data: ModelsRowWithId[], sortParam?: { id: string; desc:
         aValue = a.provider || '';
         bValue = b.provider || '';
         break;
-      case 'name':
-        aValue = a.name || '';
-        bValue = b.name || '';
+      case 'name': {
+        const normalize = (value?: string | null) => (value ? value.trim().toLocaleLowerCase() : '');
+        aValue = normalize(a.shortName);
+        bValue = normalize(b.shortName);
         break;
+      }
       case 'contextLength':
         aValue = a.contextLength || 0;
         bValue = b.contextLength || 0;

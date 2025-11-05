@@ -195,7 +195,7 @@ function buildModelFilterConditions(search: ModelsSearchParamsType) {
   }
 
   if (search.name) {
-    conditions.push(ilike(aiModels.name, `%${search.name}%`));
+    conditions.push(ilike(aiModels.shortName, `%${search.name}%`));
   }
 
   if (search.description) {
@@ -309,7 +309,10 @@ export class ModelsCache {
    * Get all AI models
    */
   async getAllModels(): Promise<AIModel[]> {
-    const rows = await db.select().from(aiModels).orderBy(aiModels.name);
+    const rows = await db
+      .select()
+      .from(aiModels)
+      .orderBy(sql`lower(${aiModels.shortName})`);
     return rows.map(mapRowToAIModel);
   }
 
@@ -321,7 +324,7 @@ export class ModelsCache {
       .select()
       .from(aiModels)
       .where(eq(aiModels.provider, provider))
-      .orderBy(aiModels.name);
+      .orderBy(sql`lower(${aiModels.shortName})`);
 
     return rows.map(mapRowToAIModel);
   }
@@ -434,7 +437,9 @@ export class ModelsCache {
           orderByClause = direction(aiModels.provider);
           break;
         case 'name':
-          orderByClause = direction(aiModels.name);
+          orderByClause = isDesc
+            ? sql`lower(${aiModels.shortName}) DESC`
+            : sql`lower(${aiModels.shortName}) ASC`;
           break;
         case 'contextLength':
           orderByClause = direction(aiModels.contextLength);
@@ -505,7 +510,9 @@ export class ModelsCache {
           orderByClause = direction(aiModels.provider);
           break;
         case 'name':
-          orderByClause = direction(aiModels.name);
+          orderByClause = isDesc
+            ? sql`lower(${aiModels.shortName}) DESC`
+            : sql`lower(${aiModels.shortName}) ASC`;
           break;
         case 'contextLength':
           orderByClause = direction(aiModels.contextLength);
@@ -685,12 +692,12 @@ export class ModelsCache {
     // Name facet (top 20 most common names)
     const nameRows = await db
       .select({
-        name: aiModels.name,
+        name: aiModels.shortName,
         count: sql<number>`count(*)`,
       })
       .from(aiModels)
-      .where(sql`${aiModels.name} IS NOT NULL`)
-      .groupBy(aiModels.name)
+      .where(sql`${aiModels.shortName} IS NOT NULL`)
+      .groupBy(aiModels.shortName)
       .orderBy(sql`count(*) DESC`)
       .limit(20);
 
