@@ -7,7 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { cn } from "@/lib/utils";
 import { HoverCardPortal } from "@radix-ui/react-hover-card";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef, SortingFn } from "@tanstack/react-table";
 import Image from "next/image";
 import type { ModelsColumnSchema } from "./models-schema";
 
@@ -104,6 +104,36 @@ function formatMmluScore(score: number | null | undefined): string {
   return `${(score * 100).toFixed(1)}%`;
 }
 
+/**
+ * Custom sorting function for model names that matches server-side normalization
+ * Server uses: COALESCE(lower(trim(shortName)), '')
+ * This ensures consistent sorting behavior between client and server
+ */
+const modelNameSortingFn: SortingFn<ModelsColumnSchema> = (rowA, rowB, columnId) => {
+  // Get the normalized value (shortName or name, trimmed and lowercased)
+  const getNormalizedValue = (row: typeof rowA) => {
+    const shortName = row.original.shortName;
+    const name = row.original.name;
+    const value = typeof shortName === "string" && shortName.trim().length > 0
+      ? shortName
+      : name || "";
+    // Normalize: trim whitespace, lowercase, handle null/undefined as empty string
+    return (value || "").trim().toLowerCase();
+  };
+
+  const aValue = getNormalizedValue(rowA);
+  const bValue = getNormalizedValue(rowB);
+
+  // Empty strings sort first in ASC order (matches SQL COALESCE behavior)
+  // In SQL: empty strings come before non-empty in ASC, after in DESC
+  if (aValue === "" && bValue === "") return 0;
+  if (aValue === "") return -1; // Empty comes first in ASC order
+  if (bValue === "") return 1;  // Empty comes first in ASC order
+
+  // Standard string comparison
+  return aValue.localeCompare(bValue);
+};
+
 export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
   {
     id: "blank",
@@ -140,7 +170,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
   {
     accessorKey: "provider",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Inference" />
+      <DataTableColumnHeader column={column} title="Provider" />
     ),
     cell: ({ row }) => {
       const providerRaw = row.getValue<ModelsColumnSchema["provider"]>("provider") ?? "";
@@ -182,7 +212,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
   {
     id: "name",
     accessorFn: (row) => (typeof row.shortName === "string" ? row.shortName : ""),
-    sortingFn: "alphanumeric",
+    sortingFn: modelNameSortingFn,
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Model" />
     ),
@@ -196,11 +226,10 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
         return <span className="text-muted-foreground">Unknown</span>;
       }
 
-      return <div className="max-w-[500px] truncate">{primaryLabel}</div>;
+      return <div className="truncate">{primaryLabel}</div>;
     },
-    size: 270,
-    minSize: 270,
-    maxSize: 500,
+    size: 305,
+    minSize: 305,
   },
   {
     accessorKey: "contextLength",
@@ -229,11 +258,11 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
       );
     },
     filterFn: "inNumberRange",
-    size: 125,
-    minSize: 125,
+    size: 129,
+    minSize: 129,
     meta: {
-      cellClassName: "text-right min-w-[125px]",
-      headerClassName: "text-right min-w-[125px]",
+      cellClassName: "text-right min-w-[129px]",
+      headerClassName: "text-right min-w-[129px]",
     },
   },
   {
@@ -263,11 +292,49 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
     },
     enableSorting: true,
     sortingFn: "auto",
-    size: 125,
-    minSize: 125,
+    size: 129,
+    minSize: 129,
     meta: {
-      cellClassName: "text-right min-w-[125px] tabular-nums",
-      headerClassName: "text-right min-w-[125px] tabular-nums",
+      cellClassName: "text-right min-w-[129px] tabular-nums",
+      headerClassName: "text-right min-w-[129px] tabular-nums",
+    },
+  },
+  {
+    accessorKey: "maxCompletionTokens",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Max Output" titleClassName="ml-auto text-right" />
+    ),
+    cell: ({ row }) => {
+      const maxTokens = row.original.maxCompletionTokens;
+
+      if (!maxTokens) {
+        return <span className="text-foreground/70">N/A</span>;
+      }
+
+      // Format large numbers (e.g., 96000 -> 96K, 1000000 -> 1M)
+      const formatMaxTokens = (tokens: number): string => {
+        if (tokens >= 1_000_000) {
+          return `${(tokens / 1_000_000).toFixed(1)}M`;
+        } else if (tokens >= 1000) {
+          return `${(tokens / 1000).toFixed(0)}K`;
+        }
+        return tokens.toString();
+      };
+
+      return (
+        <div className="font-mono text-sm text-right">
+          {formatMaxTokens(maxTokens)} <span className="text-foreground/70">TOK</span>
+        </div>
+      );
+    },
+    filterFn: "inNumberRange",
+    enableSorting: true,
+    sortingFn: "auto",
+    size: 129,
+    minSize: 129,
+    meta: {
+      cellClassName: "text-right min-w-[129px]",
+      headerClassName: "text-right min-w-[129px]",
     },
   },
   {
@@ -314,11 +381,11 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
         </HoverCard>
       );
     },
-    size: 125,
-    minSize: 125,
+    size: 129,
+    minSize: 129,
     meta: {
-      cellClassName: "text-right min-w-[125px]",
-      headerClassName: "text-right min-w-[125px]",
+      cellClassName: "text-right min-w-[129px]",
+      headerClassName: "text-right min-w-[129px]",
     },
   },
   {
@@ -336,7 +403,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
       return (
         <div className="text-right">
           {formattedPrice === 'Free' ? (
-            <span className="font-mono text-foreground/70">Free</span>
+            <span className="font-mono text-foreground">Free</span>
           ) : (
             <>
               <span className="font-mono">{formattedPrice}</span>{" "}
@@ -347,11 +414,11 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
       );
     },
     filterFn: "inNumberRange",
-    size: 125,
-    minSize: 125,
+    size: 129,
+    minSize: 129,
     meta: {
-      cellClassName: "text-right min-w-[125px]",
-      headerClassName: "text-right min-w-[125px]",
+      cellClassName: "text-right min-w-[129px]",
+      headerClassName: "text-right min-w-[129px]",
     },
   },
   {
@@ -369,7 +436,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
       return (
         <div className="text-right">
           {formattedPrice === 'Free' ? (
-            <span className="font-mono text-foreground/70">Free</span>
+            <span className="font-mono text-foreground">Free</span>
           ) : (
             <>
               <span className="font-mono">{formattedPrice}</span>{" "}
@@ -380,11 +447,11 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
       );
     },
     filterFn: "inNumberRange",
-    size: 125,
-    minSize: 125,
+    size: 129,
+    minSize: 129,
     meta: {
-      cellClassName: "text-right min-w-[125px]",
-      headerClassName: "text-right min-w-[125px]",
+      cellClassName: "text-right min-w-[129px]",
+      headerClassName: "text-right min-w-[129px]",
     },
   },
 ];

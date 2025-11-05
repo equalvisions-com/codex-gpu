@@ -273,6 +273,10 @@ function sortModelsData(data: ModelsRowWithId[], sortParam?: { id: string; desc:
         aValue = typeof a.mmlu === 'number' ? a.mmlu : -Infinity;
         bValue = typeof b.mmlu === 'number' ? b.mmlu : -Infinity;
         break;
+      case 'maxCompletionTokens':
+        aValue = typeof a.maxCompletionTokens === 'number' ? a.maxCompletionTokens : -Infinity;
+        bValue = typeof b.maxCompletionTokens === 'number' ? b.maxCompletionTokens : -Infinity;
+        break;
       default:
         aValue = a[id as keyof AIModel] || '';
         bValue = b[id as keyof AIModel] || '';
@@ -515,6 +519,7 @@ export async function GET(req: NextRequest): Promise<Response> {
       features: row.features,
       endpoint: row.endpoint,
       mmlu: row.mmlu ?? null,
+      maxCompletionTokens: row.maxCompletionTokens ?? null,
       scrapedAt: row.scrapedAt,
     }));
 

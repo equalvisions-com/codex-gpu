@@ -22,6 +22,7 @@ export function toModelsColumnRow(model: AIModel): ModelsColumnSchema {
     features: model.features ?? {},
     endpoint: model.endpoint ?? {},
     mmlu: model.mmlu ?? null,
+    maxCompletionTokens: model.maxCompletionTokens ?? null,
     scrapedAt: model.scrapedAt,
   };
 }

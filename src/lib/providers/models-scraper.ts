@@ -307,6 +307,27 @@ export class ModelsScraper {
             globalSequence++; // Increment for each model processed
             const mmluScore = this.findMmluScore(model, benchmarkLookup);
 
+            // Extract max_completion_tokens from endpoint
+            const extractMaxCompletionTokens = (endpoint: any): number | null => {
+              if (!endpoint || typeof endpoint !== "object") return null;
+              
+              // Try top-level first
+              if (typeof endpoint.max_completion_tokens === "number") {
+                return endpoint.max_completion_tokens;
+              }
+              
+              // Try nested in model object
+              if (endpoint.model && typeof endpoint.model === "object") {
+                const modelValue = endpoint.model.max_completion_tokens;
+                if (typeof modelValue === "number") {
+                  return modelValue;
+                }
+              }
+              
+              return null;
+            };
+            const maxCompletionTokens = extractMaxCompletionTokens(model.endpoint);
+
             const rawProvider = model.endpoint?.provider_name || 'unknown';
             const modelProvider = this.transformProviderName(rawProvider);
             const originalSlug = model.slug || `unknown_${Date.now()}_${index}`;
@@ -350,6 +371,7 @@ export class ModelsScraper {
               endpoint: model.endpoint || {},
               provider: modelProvider,
               mmlu: mmluScore ?? null,
+              maxCompletionTokens: maxCompletionTokens ?? null,
               scrapedAt: new Date().toISOString(),
             };
           });

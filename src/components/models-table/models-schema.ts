@@ -28,6 +28,7 @@ export const modelsColumnSchema = z.object({
   instructType: z.string().nullable(),
   permaslug: z.string().nullable(),
   mmlu: z.number().nullable(),
+  maxCompletionTokens: z.number().nullable(),
 
   // Pricing data
   pricing: z.record(z.any()),

@@ -32,6 +32,7 @@ export const aiModels = pgTable("ai_models", {
   instructType: text("instruct_type"),
   permaslug: text("permaslug"),
   mmlu: doublePrecision("mmlu"),
+  maxCompletionTokens: integer("max_completion_tokens"),
 
   // Complex nested data stored as JSONB
   pricing: jsonb("pricing"),
@@ -50,6 +51,8 @@ export const aiModels = pgTable("ai_models", {
   contextLengthIndex: index("ai_models_context_length_idx").on(table.contextLength),
   // Optimize queries by MMLU score (for sorting)
   mmluIndex: index("ai_models_mmlu_idx").on(table.mmlu),
+  // Optimize queries by max completion tokens (for sorting)
+  maxCompletionTokensIndex: index("ai_models_max_completion_tokens_idx").on(table.maxCompletionTokens),
   // Optimize queries by input modalities
   inputModalitiesIndex: index("ai_models_input_modalities_idx").using("gin", table.inputModalities),
   // Optimize queries by output modalities (complement to inputModalities)

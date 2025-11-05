@@ -149,6 +149,7 @@ const mapRowToAIModel = (row: AIModelRow): AIModel => ({
   endpoint: row.endpoint as Record<string, any>,
   provider: row.provider,
   mmlu: parseNullableNumber(row.mmlu),
+  maxCompletionTokens: row.maxCompletionTokens ?? null,
   scrapedAt: row.scrapedAt.toISOString(),
 });
 
@@ -287,6 +288,7 @@ export class ModelsCache {
           endpoint: model.endpoint,
           provider: model.provider,
           mmlu: model.mmlu ?? null,
+          maxCompletionTokens: model.maxCompletionTokens ?? null,
           scrapedAt: new Date(model.scrapedAt),
         }));
 
@@ -459,6 +461,10 @@ export class ModelsCache {
         case 'mmlu':
           orderByClause = direction(aiModels.mmlu);
           break;
+        case 'maxCompletionTokens':
+          // Direct column sorting (much more efficient than JSONB extraction)
+          orderByClause = direction(aiModels.maxCompletionTokens);
+          break;
         default:
           // Default: sort by provider
           orderByClause = asc(aiModels.provider);
@@ -536,6 +542,10 @@ export class ModelsCache {
         case 'mmlu':
           orderByClause = direction(aiModels.mmlu);
           break;
+        case 'maxCompletionTokens':
+          // Direct column sorting (much more efficient than JSONB extraction)
+          orderByClause = direction(aiModels.maxCompletionTokens);
+          break;
         default:
           // Default: sort by provider
           orderByClause = asc(aiModels.provider);
@@ -600,6 +610,7 @@ export class ModelsCache {
         endpoint: aiModels.endpoint,
         provider: aiModels.provider,
         mmlu: aiModels.mmlu,
+        maxCompletionTokens: aiModels.maxCompletionTokens,
         scrapedAt: aiModels.scrapedAt,
       })
       .from(userModelFavorites)

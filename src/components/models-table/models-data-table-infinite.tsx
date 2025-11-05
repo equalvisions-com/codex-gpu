@@ -44,6 +44,7 @@ import { usePathname } from "next/navigation";
 import { Search } from "lucide-react";
 import { DesktopNavTabs, type DesktopNavItem } from "./nav-tabs";
 import type { ModelFavoriteKey } from "@/types/model-favorites";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 const noop = () => {};
 const gradientSurfaceClass =
@@ -153,19 +154,8 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
   const accountOnSignUp = account?.onSignUp;
   const pathname = usePathname() ?? "";
   const [isDesktopSearchOpen, setIsDesktopSearchOpen] = React.useState(false);
-  // Detect mobile once and reuse
-  const [isMobile, setIsMobile] = React.useState(() => {
-    if (typeof window === "undefined") return false;
-    return window.innerWidth < 640;
-  });
-  
-  React.useEffect(() => {
-    if (typeof window === "undefined") return;
-    const checkMobile = () => setIsMobile(window.innerWidth < 640);
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
+  // Use proper media query hook for SSR-safe mobile detection
+  const isMobile = useMediaQuery("(max-width: 639px)");
   const searchFilterField = React.useMemo(
     () =>
       filterFields.find(
@@ -281,26 +271,50 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
     }
 
     return (originalRow: TData, index: number, _parent?: Row<TData>) => {
+      // Try to extract ID from row object
       if (
         originalRow &&
         typeof originalRow === "object" &&
         "id" in (originalRow as Record<string, unknown>)
       ) {
         const rawId = (originalRow as Record<string, unknown>).id;
-        if (typeof rawId === "string" || typeof rawId === "number") {
+        if (typeof rawId === "string" && rawId.trim().length > 0) {
+          return rawId;
+        }
+        if (typeof rawId === "number" && !isNaN(rawId)) {
           return String(rawId);
         }
       }
 
+      // Try to extract slug or uuid as fallback (common in models data)
+      if (originalRow && typeof originalRow === "object") {
+        const rowRecord = originalRow as Record<string, unknown>;
+        if ("slug" in rowRecord && typeof rowRecord.slug === "string" && rowRecord.slug.trim().length > 0) {
+          return rowRecord.slug;
+        }
+        if ("uuid" in rowRecord) {
+          const uuid = rowRecord.uuid;
+          if (typeof uuid === "string" && uuid.trim().length > 0) {
+            return uuid;
+          }
+          if (typeof uuid === "number" && !isNaN(uuid)) {
+            return String(uuid);
+          }
+        }
+      }
+
+      // Only warn in development, and only once
       if (process.env.NODE_ENV !== "production" && !missingRowIdWarningRef.current) {
         missingRowIdWarningRef.current = true;
         console.warn(
           "[ModelsDataTableInfinite] Falling back to index-based row ids. " +
-            "Pass `getRowId` or ensure each row has a stable `id` to keep favorites in sync.",
+            "This may cause favorites to break. Pass `getRowId` or ensure each row has a stable `id`, `slug`, or `uuid` field.",
+          { row: originalRow, index },
         );
       }
 
-      return String(index);
+      // Last resort: use index (not ideal but prevents crashes)
+      return `__index_${index}`;
     };
   }, [getRowId]);
 
@@ -321,6 +335,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
         "inputPrice",
         "outputPrice",
         "contextLength",
+        "maxCompletionTokens",
         "mmlu",
         "inputModalities",
       ],
@@ -395,12 +410,14 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
   }, [rows, setCheckedRows]);
 
   // Virtual scrolling setup - properly configured to reduce DOM size
+  // Keep virtualization enabled even during loading to prevent layout shifts
+  // When disabled, it will fall back to rendering all rows, which is fine for empty/loading states
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => containerRef.current,
     estimateSize: () => 45, // Row height in pixels
     overscan: isMobile ? 25 : 50, // Mobile: 25, Desktop: 50 extra rows above/below viewport
-    enabled: !isLoading && !(isFetching && !data.length) && rows.length > 0,
+    enabled: rows.length > 0, // Only disable when there are no rows to render
   });
 
   // Get virtual items (cached to avoid multiple calls)

@@ -15,6 +15,7 @@ export interface AIModel {
   instructType?: string | null;
   permaslug?: string;
   mmlu?: number | null;
+  maxCompletionTokens?: number | null;
 
   // Complex nested data
   pricing: Record<string, any>;
