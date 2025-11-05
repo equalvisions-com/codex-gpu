@@ -116,6 +116,28 @@ export class ModelsScraper {
     return cleaned.length > 0 ? cleaned : null;
   }
 
+  private cleanShortName(value?: string | null): string | null {
+    if (!value) {
+      return null;
+    }
+
+    let cleaned = value.trim();
+
+    // Convert "ChatGPT-" to "GPT-" (case-insensitive)
+    cleaned = cleaned.replace(/ChatGPT-/gi, 'GPT-');
+
+    // Strip only " (free)" pattern (case-insensitive)
+    cleaned = cleaned.replace(/\s*\(free\)/gi, '').trim();
+
+    // Strip only " (exacto)" pattern (case-insensitive)
+    cleaned = cleaned.replace(/\s*\(exacto\)/gi, '').trim();
+
+    // Convert only " (thinking)" to " Thinking" (case-insensitive, capitalize result)
+    cleaned = cleaned.replace(/\s*\(thinking\)/gi, ' Thinking').trim();
+
+    return cleaned.length > 0 ? cleaned : null;
+  }
+
   private generatePermutations(words: string[]): string[] {
     if (words.length < 3 || words.length > 4) {
       return [];
@@ -312,7 +334,7 @@ export class ModelsScraper {
               id: uniqueId,
               slug: uniqueSlug, // Now includes provider prefix for uniqueness
               name: model.name || null,
-              shortName: model.short_name || null,
+              shortName: this.cleanShortName(model.short_name),
               author: model.author ? this.transformAuthorName(model.author) : null,
               description: model.description || null,
               modelVersionGroupId: model.model_version_group_id || null,
