@@ -133,7 +133,7 @@ export function UserMenu({
         : gradientSurfaceClass,
       fullWidth ? "w-full" : "w-auto",
       !showDetails
-        ? "!gap-1.5 rounded-md !px-2 !py-1.5 md:h-9 md:rounded-md"
+        ? "!gap-1.5 !rounded-md !px-2 !py-1.5 md:h-9 md:rounded-md"
         : null,
     );
     const ariaLabel = showDetails ? undefined : (triggerAriaLabel ?? "Sign in");
@@ -212,7 +212,7 @@ export function UserMenu({
           type="button"
           variant="ghost"
           className={cn(
-            "h-9 min-w-[76px] flex-1 rounded-none rounded-l-sm px-3 text-sm font-medium",
+            "flex h-[38px] min-w-[76px] flex-1 items-center justify-center rounded-none rounded-l-md px-3 text-sm font-medium",
             "border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground shadow-[0_1px_0_0_hsl(var(--foreground)_/_6%),0_4px_8px_-10px_hsl(var(--foreground)_/_28%)]",
             "border-r-0",
           )}
@@ -226,7 +226,7 @@ export function UserMenu({
             type="button"
             variant="ghost"
             className={cn(
-              "h-9 w-9 rounded-none rounded-r-sm px-0",
+              "flex h-[38px] w-9 items-center justify-center rounded-none rounded-r-md px-0",
               "border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground shadow-[0_1px_0_0_hsl(var(--foreground)_/_6%),0_4px_8px_-10px_hsl(var(--foreground)_/_28%)]",
             )}
             aria-label="Open account menu"
@@ -244,11 +244,11 @@ export function UserMenu({
   } else {
     triggerElement = (
       <DropdownMenuTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          className={cn(
-            "flex h-auto items-center gap-4 rounded-md p-2 text-left text-sm font-medium text-foreground hover:text-accent-foreground",
+          <Button
+            type="button"
+            variant="ghost"
+            className={cn(
+            "flex h-[38px] items-center gap-2 rounded-md px-2 text-left text-sm font-medium text-foreground hover:text-accent-foreground",
             showDetails
               ? "bg-transparent hover:bg-transparent"
               : cn(
@@ -257,7 +257,7 @@ export function UserMenu({
                 ),
             fullWidth ? "w-full justify-start" : "w-auto justify-center",
             !showDetails
-              ? "!gap-1.5 rounded-md !px-2 !py-1.5 md:h-9 md:rounded-md"
+              ? "!gap-2 !rounded-md !px-2 !h-[38px] md:rounded-md"
               : null,
             triggerClassName,
           )}
