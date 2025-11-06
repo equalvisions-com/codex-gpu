@@ -100,7 +100,7 @@ export async function GET() {
  * POST /api/favorites
  * Adds one or more GPUs to the user's favorites
  * 
- * @body { gpuUuids: string[] } - Array of 1-100 GPU UUIDs to favorite
+ * @body { gpuUuids: string[] } - Array of 1-50 GPU UUIDs to favorite
  * @returns 200 on success with rate limit headers
  * @returns 400 if request body is invalid
  * @returns 401 if not authenticated
@@ -133,7 +133,7 @@ export async function POST(request: NextRequest) {
 
     // Validate request body
     const BodySchema = z.object({ 
-      gpuUuids: z.array(z.string().min(1).max(256)).min(1).max(100) 
+      gpuUuids: z.array(z.string().min(1).max(256)).min(1).max(50) 
     });
     
     const parsed = BodySchema.safeParse(await request.json());
@@ -202,7 +202,7 @@ export async function POST(request: NextRequest) {
  * DELETE /api/favorites
  * Removes one or more GPUs from the user's favorites
  * 
- * @body { gpuUuids: string[] } - Array of 1-100 GPU UUIDs to unfavorite
+ * @body { gpuUuids: string[] } - Array of 1-50 GPU UUIDs to unfavorite
  * @returns 200 on success with rate limit headers
  * @returns 400 if request body is invalid
  * @returns 401 if not authenticated
@@ -235,7 +235,7 @@ export async function DELETE(request: NextRequest) {
 
     // Validate request body
     const BodySchema = z.object({ 
-      gpuUuids: z.array(z.string().min(1).max(256)).min(1).max(100) 
+      gpuUuids: z.array(z.string().min(1).max(256)).min(1).max(50) 
     });
     
     const parsed = BodySchema.safeParse(await request.json());

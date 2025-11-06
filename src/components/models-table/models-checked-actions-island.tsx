@@ -204,6 +204,7 @@ export function ModelsCheckedActionsIsland({ initialFavoriteKeys }: { initialFav
   const [isMutating, setIsMutating] = React.useState(false);
 
   const FAVORITES_CHUNK_SIZE = 200;
+  const MAX_FAVORITES_PER_REQUEST = 50;
 
   const fetchFavoriteRowsByKeys = React.useCallback(async (keys: ModelFavoriteKey[]) => {
     if (!keys.length) return [] as ModelsColumnSchema[];
@@ -244,9 +245,15 @@ export function ModelsCheckedActionsIsland({ initialFavoriteKeys }: { initialFav
       return;
     }
     if (isMutating) return;
-    setIsMutating(true);
 
     const { toAdd, toRemove } = favoriteStatus;
+
+    if (toAdd.length > MAX_FAVORITES_PER_REQUEST || toRemove.length > MAX_FAVORITES_PER_REQUEST) {
+      setNoticeVariant("error");
+      showFavoritesNotice(`Error: Max ${MAX_FAVORITES_PER_REQUEST} rows per request`);
+      return;
+    }
+    setIsMutating(true);
 
     const snapshot = (queryClient.getQueryData(MODEL_FAVORITES_QUERY_KEY) as ModelFavoriteKey[] | undefined)
       ?? (Array.isArray(favorites) ? (favorites as ModelFavoriteKey[]) : undefined)
@@ -254,6 +261,7 @@ export function ModelsCheckedActionsIsland({ initialFavoriteKeys }: { initialFav
     const originalFavorites = [...snapshot];
 
     const current = (localFavorites ?? (Array.isArray(favorites) ? (favorites as ModelFavoriteKey[]) : []) ?? []);
+    const shouldForceInvalidate = current.length === 0 && toAdd.length > 0;
 
     try {
       await queryClient.cancelQueries({ queryKey: MODEL_FAVORITES_QUERY_KEY });
@@ -402,6 +410,9 @@ export function ModelsCheckedActionsIsland({ initialFavoriteKeys }: { initialFav
           void queryClient.invalidateQueries({ queryKey: ["model-favorites", "rows"], exact: false });
         }
       }
+      if (shouldForceInvalidate) {
+        void queryClient.invalidateQueries({ queryKey: ["model-favorites", "rows"], exact: false });
+      }
       // Broadcast to other tabs (they will handle delayed refetch)
       try {
         bcRef.current?.postMessage({
@@ -443,6 +454,11 @@ export function ModelsCheckedActionsIsland({ initialFavoriteKeys }: { initialFav
 
           if (error.status === 429) {
             showFavoritesNotice("Rate limit exceeded. Try again later");
+            return;
+          }
+
+          if (error.status === 400) {
+            showFavoritesNotice(`Error: Max ${MAX_FAVORITES_PER_REQUEST} rows per request`);
             return;
           }
 

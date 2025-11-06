@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
     }
 
     const BodySchema = z.object({
-      modelIds: z.array(z.string().min(1)).min(1).max(100),
+      modelIds: z.array(z.string().min(1)).min(1).max(50),
     });
     const parsed = BodySchema.safeParse(await request.json());
     if (!parsed.success) {
@@ -176,7 +176,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     const BodySchema = z.object({
-      modelIds: z.array(z.string().min(1)).min(1).max(100),
+      modelIds: z.array(z.string().min(1)).min(1).max(50),
     });
     const parsed = BodySchema.safeParse(await request.json());
     if (!parsed.success) {

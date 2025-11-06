@@ -38,7 +38,7 @@ export function DataTableFilterControls({
   return (
     <>
       {showSearch && searchFilter && searchFilter.type === "input" ? (
-        <div className="mb-0">
+        <div className="mb-6">
           <DataTableFilterInput {...searchFilter} />
         </div>
       ) : null}

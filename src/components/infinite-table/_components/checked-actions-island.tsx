@@ -204,6 +204,7 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
   const [isMutating, setIsMutating] = React.useState(false);
 
   const FAVORITES_CHUNK_SIZE = 200;
+  const MAX_FAVORITES_PER_REQUEST = 50;
 
   const fetchFavoriteRowsByKeys = React.useCallback(async (keys: FavoriteKey[]) => {
     if (!keys.length) return [] as ColumnSchema[];
@@ -244,9 +245,15 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
       return;
     }
     if (isMutating) return;
-    setIsMutating(true);
 
     const { toAdd, toRemove } = favoriteStatus;
+
+    if (toAdd.length > MAX_FAVORITES_PER_REQUEST || toRemove.length > MAX_FAVORITES_PER_REQUEST) {
+      setNoticeVariant("error");
+      showFavoritesNotice(`Error: Max ${MAX_FAVORITES_PER_REQUEST} rows per request`);
+      return;
+    }
+    setIsMutating(true);
 
     const snapshot = (queryClient.getQueryData(FAVORITES_QUERY_KEY) as FavoriteKey[] | undefined)
       ?? (Array.isArray(favorites) ? (favorites as FavoriteKey[]) : undefined)
@@ -254,6 +261,7 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
     const originalFavorites = [...snapshot];
 
     const current = (localFavorites ?? (Array.isArray(favorites) ? (favorites as FavoriteKey[]) : []) ?? []);
+    const shouldForceInvalidate = current.length === 0 && toAdd.length > 0;
 
     try {
       await queryClient.cancelQueries({ queryKey: FAVORITES_QUERY_KEY });
@@ -402,6 +410,9 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
           void queryClient.invalidateQueries({ queryKey: ["favorites", "rows"], exact: false });
         }
       }
+      if (shouldForceInvalidate) {
+        void queryClient.invalidateQueries({ queryKey: ["favorites", "rows"], exact: false });
+      }
       // Broadcast to other tabs (they will handle delayed refetch)
       try {
         bcRef.current?.postMessage({
@@ -443,6 +454,11 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
 
           if (error.status === 429) {
             showFavoritesNotice("Rate limit exceeded. Try again later");
+            return;
+          }
+
+          if (error.status === 400) {
+            showFavoritesNotice(`Error: Max ${MAX_FAVORITES_PER_REQUEST} rows per request`);
             return;
           }
 
