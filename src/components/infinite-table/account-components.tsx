@@ -47,7 +47,6 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import * as React from "react";
 
 const gradientSurfaceClass =
@@ -104,14 +103,6 @@ export function UserMenu({
   const isSplitTrigger =
     !showDetails && !isAuthenticated && !shouldForceSignInButton;
   const secondaryText = isAuthenticated ? (email ?? "") : "Sign up or Sign in";
-  const router = useRouter();
-  const navigateWithRefresh = React.useCallback(
-    (pathname: string) => {
-      router.push(pathname);
-      router.refresh();
-    },
-    [router],
-  );
 
   const handleSignInClick = React.useCallback(() => {
     onSignIn?.();
@@ -333,18 +324,22 @@ export function UserMenu({
         >
           <div className="flex flex-col space-y-1">
             <DropdownMenuItem
-              onSelect={() => navigateWithRefresh("/llms")}
+              asChild
               className={cn(dropdownMenuItemClassName, "sm:hidden")}
             >
-              <Bot className="h-4 w-4" />
-              <span>LLMs</span>
+              <Link href="/llms" className="flex w-full items-center gap-2">
+                <Bot className="h-4 w-4" />
+                <span>LLMs</span>
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuItem
-              onSelect={() => navigateWithRefresh("/gpus")}
+              asChild
               className={cn(dropdownMenuItemClassName, "sm:hidden")}
             >
-              <Server className="h-4 w-4" />
-              <span>GPUs</span>
+              <Link href="/gpus" className="flex w-full items-center gap-2">
+                <Server className="h-4 w-4" />
+                <span>GPUs</span>
+              </Link>
             </DropdownMenuItem>
             {isAuthenticated ? (
               <Accordion
@@ -361,17 +356,15 @@ export function UserMenu({
                   </AccordionTrigger>
                   <AccordionContent className="px-0 pt-0 [&>div]:pb-0">
                     <div className="flex flex-col gap-1">
-                      <DropdownMenuItem
-                        onSelect={() => navigateWithRefresh("/llms?favorites=true")}
-                        className={dropdownMenuItemClassName}
-                      >
-                        <span>LLMs</span>
+                      <DropdownMenuItem asChild className={dropdownMenuItemClassName}>
+                        <Link href="/llms?favorites=true">
+                          <span>LLMs</span>
+                        </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onSelect={() => navigateWithRefresh("/gpus?favorites=true")}
-                        className={dropdownMenuItemClassName}
-                      >
-                        <span>GPUs</span>
+                      <DropdownMenuItem asChild className={dropdownMenuItemClassName}>
+                        <Link href="/gpus?favorites=true">
+                          <span>GPUs</span>
+                        </Link>
                       </DropdownMenuItem>
                     </div>
                   </AccordionContent>

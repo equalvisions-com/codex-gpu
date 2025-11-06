@@ -128,15 +128,14 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode = false }: M
         favorites: newFavorites,
       });
 
-      // Refetch favorites rows query if in favorites mode
+      // Always invalidate rows so next favorites view gets fresh data
+      void queryClient.invalidateQueries({
+        queryKey: ["model-favorites", "rows"],
+        exact: false,
+      });
+
+      // If we're currently in favorites mode, refetch immediately after invalidation
       if (isFavoritesMode) {
-        // Invalidate first to mark as stale
-        void queryClient.invalidateQueries({
-          queryKey: ["model-favorites", "rows"],
-          exact: false,
-        });
-        
-        // Delay refetch to allow server cache invalidation to propagate
         const timeoutId = setTimeout(() => {
           void queryClient.refetchQueries({
             queryKey: ["model-favorites", "rows"],
@@ -166,6 +165,17 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode = false }: M
       }
     };
   }, []);
+  const prevFavoritesModeRef = React.useRef<boolean>(isFavoritesMode);
+  React.useEffect(() => {
+    const wasFavorites = prevFavoritesModeRef.current;
+    prevFavoritesModeRef.current = isFavoritesMode;
+    if (isFavoritesMode && !wasFavorites) {
+      void queryClient.invalidateQueries({
+        queryKey: ["model-favorites", "rows"],
+        exact: false,
+      });
+    }
+  }, [isFavoritesMode, queryClient]);
 
   // Fetch favorite rows with pagination when in favorites mode
   // Uses useInfiniteQuery for pagination (same as main table)
