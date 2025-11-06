@@ -262,6 +262,8 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
 
     const current = (localFavorites ?? (Array.isArray(favorites) ? (favorites as FavoriteKey[]) : []) ?? []);
     const shouldForceInvalidate = current.length === 0 && toAdd.length > 0;
+    const hasFavoritesRowsCache =
+      queryClient.getQueriesData({ queryKey: ["favorites", "rows"], exact: false }).length > 0;
 
     try {
       await queryClient.cancelQueries({ queryKey: FAVORITES_QUERY_KEY });
@@ -275,7 +277,7 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
     queryClient.setQueryData(FAVORITES_QUERY_KEY, optimisticFavorites);
     setLocalFavorites(optimisticFavorites);
 
-    if (toRemove.length > 0) {
+    if (hasFavoritesRowsCache && toRemove.length > 0) {
       const removalSet = new Set(toRemove);
       // Update all favorites queries (with any search params) using partial key match
       queryClient.setQueriesData<{ pages: InfiniteQueryResponse<ColumnSchema[], LogsMeta>[], pageParams: unknown[] } | undefined>(
@@ -328,7 +330,7 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
         toRemove.length > 0 ? removeFavorites(toRemove) : Promise.resolve(),
       ]);
 
-      if (toAdd.length > 0) {
+      if (hasFavoritesRowsCache && toAdd.length > 0) {
         try {
           const newRows = await fetchFavoriteRowsByKeys(toAdd as FavoriteKey[]);
           if (newRows.length) {
@@ -336,23 +338,9 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
             queryClient.setQueriesData<{ pages: InfiniteQueryResponse<ColumnSchema[], LogsMeta>[], pageParams: unknown[] } | undefined>(
               { queryKey: ["favorites", "rows"], exact: false },
               (previous) => {
-                if (!previous || !previous.pages || previous.pages.length === 0) {
-                  // If no previous data, create first page with new rows
-                  const firstPage: InfiniteQueryResponse<ColumnSchema[], LogsMeta> = {
-                    data: newRows,
-                    meta: {
-                      totalRowCount: optimisticFavorites.length,
-                      filterRowCount: optimisticFavorites.length,
-                      facets: {},
-                    },
-                    prevCursor: null,
-                    nextCursor: null,
-                  };
-                  return {
-                    pages: [firstPage],
-                    pageParams: [{ cursor: null, size: 50 }],
-                  };
-                }
+          if (!previous || !previous.pages || previous.pages.length === 0) {
+            return previous;
+          }
 
                 // Get existing rows from all pages
                 const existingRows = previous.pages.flatMap((page) => page.data ?? []);

@@ -262,6 +262,8 @@ export function ModelsCheckedActionsIsland({ initialFavoriteKeys }: { initialFav
 
     const current = (localFavorites ?? (Array.isArray(favorites) ? (favorites as ModelFavoriteKey[]) : []) ?? []);
     const shouldForceInvalidate = current.length === 0 && toAdd.length > 0;
+    const hasFavoritesRowsCache =
+      queryClient.getQueriesData({ queryKey: ["model-favorites", "rows"], exact: false }).length > 0;
 
     try {
       await queryClient.cancelQueries({ queryKey: MODEL_FAVORITES_QUERY_KEY });
@@ -275,7 +277,7 @@ export function ModelsCheckedActionsIsland({ initialFavoriteKeys }: { initialFav
     queryClient.setQueryData(MODEL_FAVORITES_QUERY_KEY, optimisticFavorites);
     setLocalFavorites(optimisticFavorites);
 
-    if (toRemove.length > 0) {
+    if (hasFavoritesRowsCache && toRemove.length > 0) {
       const removalSet = new Set(toRemove);
       // Update all favorites queries (with any search params) using partial key match
       queryClient.setQueriesData<{ pages: ModelsInfiniteQueryResponse<ModelsColumnSchema[], ModelsLogsMeta>[], pageParams: unknown[] } | undefined>(
@@ -328,7 +330,7 @@ export function ModelsCheckedActionsIsland({ initialFavoriteKeys }: { initialFav
         toRemove.length > 0 ? removeModelFavorites(toRemove) : Promise.resolve(),
       ]);
 
-      if (toAdd.length > 0) {
+      if (hasFavoritesRowsCache && toAdd.length > 0) {
         try {
           const newRows = await fetchFavoriteRowsByKeys(toAdd as ModelFavoriteKey[]);
           if (newRows.length) {
@@ -336,23 +338,9 @@ export function ModelsCheckedActionsIsland({ initialFavoriteKeys }: { initialFav
             queryClient.setQueriesData<{ pages: ModelsInfiniteQueryResponse<ModelsColumnSchema[], ModelsLogsMeta>[], pageParams: unknown[] } | undefined>(
               { queryKey: ["model-favorites", "rows"], exact: false },
               (previous) => {
-                if (!previous || !previous.pages || previous.pages.length === 0) {
-                  // If no previous data, create first page with new rows
-                  const firstPage: ModelsInfiniteQueryResponse<ModelsColumnSchema[], ModelsLogsMeta> = {
-                    data: newRows,
-                    meta: {
-                      totalRowCount: optimisticFavorites.length,
-                      filterRowCount: optimisticFavorites.length,
-                      facets: {},
-                    },
-                    prevCursor: null,
-                    nextCursor: null,
-                  };
-                  return {
-                    pages: [firstPage],
-                    pageParams: [{ cursor: null, size: 50 }],
-                  };
-                }
+          if (!previous || !previous.pages || previous.pages.length === 0) {
+            return previous;
+          }
 
                 // Get existing rows from all pages
                 const existingRows = previous.pages.flatMap((page) => page.data ?? []);
