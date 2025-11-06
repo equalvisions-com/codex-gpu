@@ -265,13 +265,6 @@ export function UserMenu({
           disabled={isSigningOut}
           aria-label={triggerAriaLabel}
         >
-          {!showDetails ? (
-            <span className="relative flex w-[18px] items-center justify-center text-foreground/70">
-              <span className="absolute h-px w-3 -translate-y-1 rounded-full bg-current" />
-              <span className="absolute h-px w-3 rounded-full bg-current" />
-              <span className="absolute h-px w-3 translate-y-1 rounded-full bg-current" />
-            </span>
-          ) : null}
           {shouldRenderAvatar ? (
             <div className={cn("relative", avatarSizeClass)}>
               {hasImage && !imageLoaded ? (
@@ -289,9 +282,9 @@ export function UserMenu({
                     alt={displayName}
                     onLoad={() => setImageLoaded(true)}
                     onError={() => setImageLoaded(true)}
-                    className={avatarImageClass}
-                  />
-                ) : null}
+                   className={avatarImageClass}
+                 />
+               ) : null}
               </Avatar>
             </div>
           ) : null}
@@ -317,6 +310,13 @@ export function UserMenu({
           ) : null}
           {showDetails ? (
             <EllipsisVertical className="h-4 w-4 text-foreground/60" />
+          ) : null}
+          {!showDetails ? (
+            <span className="relative flex w-[18px] items-center justify-center text-foreground/70">
+              <span className="absolute h-px w-3 -translate-y-1 rounded-full bg-current" />
+              <span className="absolute h-px w-3 rounded-full bg-current" />
+              <span className="absolute h-px w-3 translate-y-1 rounded-full bg-current" />
+            </span>
           ) : null}
         </Button>
       </DropdownMenuTrigger>
