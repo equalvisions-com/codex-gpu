@@ -116,11 +116,11 @@ export const columns: ColumnDef<ColumnSchema>[] = [
         <span className="block truncate">{displayName}</span>
       );
     },
-    size: 250,
-    minSize: 250,
+    size: 275,
+    minSize: 275,
     meta: {
-      cellClassName: "text-left overflow-hidden min-w-[250px]",
-      headerClassName: "text-left overflow-hidden min-w-[250px]",
+      cellClassName: "text-left overflow-hidden min-w-[275px]",
+      headerClassName: "text-left overflow-hidden min-w-[275px]",
     },
   },
   {
@@ -169,11 +169,11 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       );
     },
     filterFn: "inNumberRange",
-    size: 153.34,
-    minSize: 153.34,
+    size: 129,
+    minSize: 129,
     meta: {
-      headerClassName: "text-right min-w-[153.34px]",
-      cellClassName: "text-right min-w-[153.34px]",
+      headerClassName: "text-right min-w-[129px]",
+      cellClassName: "text-right min-w-[129px]",
     },
   },
   {
@@ -193,11 +193,11 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       );
     },
     filterFn: "inNumberRange",
-    size: 153.34,
-    minSize: 153.34,
+    size: 129,
+    minSize: 129,
     meta: {
-      cellClassName: "text-right min-w-[153.34px]",
-      headerClassName: "text-right min-w-[153.34px]",
+      cellClassName: "text-right min-w-[129px]",
+      headerClassName: "text-right min-w-[129px]",
     },
   },
   {
@@ -215,11 +215,11 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       ) : <span className="text-muted-foreground">N/A</span>;
     },
     filterFn: "inNumberRange",
-    size: 153.34,
-    minSize: 153.34,
+    size: 129,
+    minSize: 129,
     meta: {
-      cellClassName: "text-right min-w-[153.34px]",
-      headerClassName: "text-right min-w-[153.34px]",
+      cellClassName: "text-right min-w-[129px]",
+      headerClassName: "text-right min-w-[129px]",
     },
   },
   {
@@ -239,11 +239,11 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       );
     },
     filterFn: "inNumberRange",
-    size: 153.34,
-    minSize: 153.34,
+    size: 129,
+    minSize: 129,
     meta: {
-      cellClassName: "text-right min-w-[153.34px]",
-      headerClassName: "text-right min-w-[153.34px]",
+      cellClassName: "text-right min-w-[129px]",
+      headerClassName: "text-right min-w-[129px]",
     },
   },
   {
@@ -262,11 +262,11 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       ) : <span className="text-muted-foreground">N/A</span>;
     },
     filterFn: "inNumberRange",
-    size: 153.34,
-    minSize: 153.34,
+    size: 129,
+    minSize: 129,
     meta: {
-      cellClassName: "text-right min-w-[153.34px]",
-      headerClassName: "text-right min-w-[153.34px]",
+      cellClassName: "text-right min-w-[129px]",
+      headerClassName: "text-right min-w-[129px]",
     },
   },
   {
@@ -278,11 +278,11 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       const type = row.getValue<ColumnSchema["type"]>("type");
       return type ? <span className="block text-right">{type}</span> : <span className="text-muted-foreground">N/A</span>;
     },
-    size: 153.34,
-    minSize: 153.34,
+    size: 150.5,
+    minSize: 150.5,
     meta: {
-      cellClassName: "text-right min-w-[153.34px]",
-      headerClassName: "text-right min-w-[153.34px]",
+      cellClassName: "text-right min-w-[150.5px]",
+      headerClassName: "text-right min-w-[150.5px]",
     },
   },
 ];

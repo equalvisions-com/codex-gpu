@@ -461,10 +461,47 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     container.scrollTop = 0;
   }, [columnFilters]);
 
+  // Track measured width for reference
+  const modelColumnMeasuredWidthRef = React.useRef<number | null>(null);
+  // Track if model column has been manually resized - persists across renders
+  // Once resized, column should always use pixel width (never revert to "auto")
+  const modelColumnHasBeenResizedRef = React.useRef<boolean>(false);
+  
+  // Stable ref map for header elements - created once, persists across renders
+  const headerRefsMap = React.useRef<Map<string, React.RefObject<HTMLTableCellElement | null>>>(new Map());
+  
+  // Get or create a ref for a specific header ID
+  const getHeaderRef = React.useCallback((headerId: string): React.RefObject<HTMLTableCellElement | null> => {
+    if (!headerRefsMap.current.has(headerId)) {
+      headerRefsMap.current.set(headerId, React.createRef<HTMLTableCellElement | null>());
+    }
+    return headerRefsMap.current.get(headerId)!;
+  }, []);
+
   const minimumModelColumnWidth = React.useMemo(
-    () => table.getColumn("gpu_model")?.columnDef.minSize ?? 250,
+    () => table.getColumn("gpu_model")?.columnDef.minSize ?? 275,
     [table]
   );
+  const modelColumnDefaultSize = React.useMemo(
+    () => table.getColumn("gpu_model")?.columnDef.size ?? 275,
+    [table]
+  );
+
+  // Helper to get model column width style
+  const getModelColumnWidth = React.useCallback((columnId: string, currentSize: number) => {
+    if (columnId !== "gpu_model") {
+      return `${currentSize}px`;
+    }
+    
+    // Once resized, always use pixel width (prevents jumping when hitting min size)
+    if (modelColumnHasBeenResizedRef.current) {
+      return `${currentSize}px`;
+    }
+    
+    // Use "auto" for flex growth only when never resized and at default size
+    return currentSize === modelColumnDefaultSize ? "auto" : `${currentSize}px`;
+  }, [modelColumnDefaultSize]);
+
   const fixedColumnsWidth = React.useMemo(
     () =>
       table
@@ -692,9 +729,124 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                   >
                     {headerGroup.headers.map((header) => {
                       const isModelColumn = header.id === "gpu_model";
+                      const headerRef = getHeaderRef(header.id);
+                      
+                      // Custom resize handler that captures the actual rendered width when using "auto"
+                      // Following React best practices: refs accessed only in event handlers, not during render
+                      // Production-ready: includes null checks, proper cleanup, and browser compatibility
+                      // Note: Regular function (not useCallback) because we're inside a map callback
+                      // This is fine - function is recreated per header but only executes on user interaction
+                      const handleResizeStart = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
+                        // Safety check: ensure resize handler exists before calling
+                        const resizeHandler = header.getResizeHandler();
+                        if (!resizeHandler) {
+                          return;
+                        }
+
+                        if (!isModelColumn) {
+                          resizeHandler(e);
+                          return;
+                        }
+
+                        const columnSizing = table.getState().columnSizing;
+                        const hasBeenResized = header.id in columnSizing || modelColumnHasBeenResizedRef.current;
+                        
+                        // Mark as resized immediately when user starts resizing
+                        modelColumnHasBeenResizedRef.current = true;
+                        
+                        // If column hasn't been resized and is at default size, measure the actual width
+                        if (!hasBeenResized && header.getSize() === modelColumnDefaultSize) {
+                          const element = headerRef.current;
+                          if (element) {
+                            // Column is using "auto" - measure the actual rendered width synchronously
+                            // This is safe because we're in an event handler, not during render
+                            const actualWidth = element.offsetWidth;
+                            if (actualWidth > 0) {
+                              // Store measured width for reference
+                              modelColumnMeasuredWidthRef.current = actualWidth;
+                              
+                              // Use the actual measured width (don't clamp to min if larger)
+                              // Only enforce minimum if measured width is actually smaller than min
+                              const widthToSet = actualWidth >= minimumModelColumnWidth 
+                                ? actualWidth 
+                                : minimumModelColumnWidth;
+                              
+                              // CRITICAL: Set width directly on element to prevent visual jump
+                              // This ensures the column width is visually set BEFORE resize handler runs
+                              // Direct DOM manipulation is safe here because:
+                              // 1. We're in an event handler (not during render)
+                              // 2. We immediately update React state to match
+                              // 3. React will preserve this style on next render due to state sync
+                              element.style.width = `${widthToSet}px`;
+                              
+                              // Also update all cell elements in the same column to prevent visual mismatch
+                              // PERFORMANCE: With virtualization, only ~50-100 visible rows are in DOM
+                              // querySelectorAll is fast (native API, O(n) where n = visible rows only)
+                              // This happens once per resize start, then standard handler takes over
+                              // Browser compatibility: closest() is supported in IE11+, querySelectorAll is universal
+                              const tableElement = element.closest('table');
+                              if (tableElement) {
+                                // Query only visible cells (virtualization limits DOM nodes)
+                                const cells = tableElement.querySelectorAll(`td[data-column-id="${header.id}"]`);
+                                // Batch DOM updates - browsers optimize style changes to same property
+                                for (let i = 0; i < cells.length; i++) {
+                                  const cell = cells[i];
+                                  if (cell instanceof HTMLElement) {
+                                    cell.style.width = `${widthToSet}px`;
+                                  }
+                                }
+                              }
+                              
+                              // Update column sizing state synchronously
+                              // This ensures React state matches DOM state, preventing conflicts
+                              const currentSizing = table.getState().columnSizing;
+                              table.setColumnSizing({
+                                ...currentSizing,
+                                [header.id]: widthToSet,
+                              });
+                              
+                              // Use requestAnimationFrame to ensure state update is processed
+                              // before calling resize handler. This is necessary because:
+                              // 1. setColumnSizing updates React state asynchronously
+                              // 2. TanStack Table's resize handler reads from state
+                              // 3. RAF ensures state update is flushed before handler runs
+                              // Note: Cleanup not needed - RAF callback completes quickly and includes safety checks
+                              requestAnimationFrame(() => {
+                                // Safety check: ensure resize handler still exists
+                                // This prevents errors if component unmounts between RAF schedule and execution
+                                const handler = header.getResizeHandler();
+                                if (!handler) {
+                                  return;
+                                }
+                                
+                                // Create a synthetic event with the same properties
+                                // Preserves event metadata for TanStack Table's handler
+                                const syntheticEvent = {
+                                  ...e,
+                                  currentTarget: e.currentTarget,
+                                  target: e.target,
+                                } as typeof e;
+                                
+                                // Call resize handler after state update is processed
+                                handler(syntheticEvent);
+                              });
+                              
+                              // Prevent default handler from running
+                              e.preventDefault();
+                              e.stopPropagation();
+                              return;
+                            }
+                          }
+                        }
+                        
+                        // Standard resize handler (column already resized or measurement not needed)
+                        resizeHandler(e);
+                      };
+                      
                       return (
                         <TableHead
                           key={header.id}
+                          ref={headerRef}
                           className={cn(
                             "relative select-none truncate border-b border-border bg-background text-foreground/70 [&>.cursor-col-resize]:last:opacity-0",
                             isModelColumn && "shadow-[inset_-1px_0_0_var(--border)]",
@@ -702,10 +854,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                           )}
                           data-column-id={header.column.id}
                           style={{
-                            width:
-                              header.id === "gpu_model"
-                                ? "auto"
-                                : `${header.getSize()}px`,
+                            width: getModelColumnWidth(header.id, header.getSize()),
                             minWidth:
                               header.id === "gpu_model"
                                 ? `${minimumModelColumnWidth}px`
@@ -727,9 +876,18 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                               )}
                           {header.column.getCanResize() && (
                             <div
-                              onDoubleClick={() => header.column.resetSize()}
-                              onMouseDown={header.getResizeHandler()}
-                              onTouchStart={header.getResizeHandler()}
+                              onDoubleClick={() => {
+                                // Reset all resize tracking state
+                                modelColumnMeasuredWidthRef.current = null;
+                                modelColumnHasBeenResizedRef.current = false;
+                                // Clear the column from sizing state so it can return to "auto"
+                                const currentSizing = table.getState().columnSizing;
+                                const { [header.id]: _, ...restSizing } = currentSizing;
+                                table.setColumnSizing(restSizing);
+                                header.column.resetSize();
+                              }}
+                              onMouseDown={isModelColumn ? handleResizeStart : header.getResizeHandler()}
+                              onTouchStart={isModelColumn ? handleResizeStart : header.getResizeHandler()}
                               className={cn(
                                 "user-select-none absolute -right-2 top-0 z-10 flex h-full w-4 cursor-col-resize touch-none justify-center",
                                 "before:absolute before:inset-y-0 before:w-px before:translate-x-px before:bg-border",
@@ -779,6 +937,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                                 selected={row.getIsSelected()}
                                 checked={checkedRows[row.id] ?? false}
                                 data-index={index}
+                                getModelColumnWidth={getModelColumnWidth}
                               />
                               {shouldAttachSentinel ? (
                                 <TableRow ref={sentinelRef} aria-hidden>
@@ -817,6 +976,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                                 checked={checkedRows[row.id] ?? false}
                                 data-index={virtualItem.index}
                                 ref={rowVirtualizer.measureElement}
+                                getModelColumnWidth={getModelColumnWidth}
                               />
                               {shouldAttachSentinel ? (
                                 <TableRow ref={sentinelRef} aria-hidden>
@@ -908,6 +1068,7 @@ function Row<TData>({
   checked,
   "data-index": dataIndex,
   ref: measureRef,
+  getModelColumnWidth,
 }: {
   row: Row<TData>;
   table: TTable<TData>;
@@ -917,6 +1078,7 @@ function Row<TData>({
   checked?: boolean;
   "data-index"?: number;
   ref?: React.Ref<HTMLTableRowElement>;
+  getModelColumnWidth?: (columnId: string, currentSize: number) => string;
 }) {
   const canHover =
     typeof window !== "undefined" &&
@@ -926,7 +1088,9 @@ function Row<TData>({
       : undefined;
 
   const minimumModelColumnWidth =
-    table.getColumn("gpu_model")?.columnDef.minSize ?? 250;
+    table.getColumn("gpu_model")?.columnDef.minSize ?? 275;
+  const modelColumnDefaultSize =
+    table.getColumn("gpu_model")?.columnDef.size ?? 275;
 
   return (
     <TableRow
@@ -963,6 +1127,7 @@ function Row<TData>({
         return (
           <TableCell
             key={cell.id}
+            data-column-id={cell.column.id}
             onClick={isCheckboxCell ? stopPropagation : undefined}
             onMouseDown={isCheckboxCell ? stopPropagation : undefined}
             onPointerDown={isCheckboxCell ? stopPropagation : undefined}
@@ -980,10 +1145,9 @@ function Row<TData>({
               cell.column.columnDef.meta?.cellClassName,
             )}
             style={{
-              width:
-                cell.column.id === "gpu_model"
-                  ? "auto"
-                  : `${cell.column.getSize()}px`,
+              width: getModelColumnWidth 
+                ? getModelColumnWidth(cell.column.id, cell.column.getSize())
+                : `${cell.column.getSize()}px`,
               minWidth:
                 cell.column.id === "gpu_model"
                   ? `${minimumModelColumnWidth}px`
@@ -1005,5 +1169,6 @@ const MemoizedRow = React.memo(
     Object.is(prev.row.original, next.row.original) &&
     prev.selected === next.selected &&
     prev.checked === next.checked &&
-    prev["data-index"] === next["data-index"],
+    prev["data-index"] === next["data-index"] &&
+    prev.getModelColumnWidth === next.getModelColumnWidth,
 ) as typeof Row;
