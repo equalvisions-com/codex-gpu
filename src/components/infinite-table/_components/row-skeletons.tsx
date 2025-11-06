@@ -37,7 +37,7 @@ export function RowSkeletons<TData>({
               <TableCell
                 key={`${id}-${rowIndex}`}
                 className={cn(
-                  "truncate border-b border-border p-[12px]",
+                  "truncate border-b border-border px-[12px] py-[8px]",
                   isModelColumn && "bg-background shadow-[inset_-1px_0_0_var(--border)]",
                   cellClassName,
                 )}

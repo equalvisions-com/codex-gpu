@@ -888,7 +888,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
                           key={header.id}
                           ref={headerRef}
                           className={cn(
-                            "relative select-none truncate border-b border-border bg-background text-foreground/70 [&>.cursor-col-resize]:last:opacity-0",
+                            "relative select-none truncate border-b border-border bg-background text-foreground [&>.cursor-col-resize]:last:opacity-0",
                             isModelColumn && "shadow-[inset_-1px_0_0_var(--border)]",
                             header.column.columnDef.meta?.headerClassName,
                           )}
@@ -1172,7 +1172,7 @@ function Row<TData>({
             onPointerDown={isCheckboxCell ? stopPropagation : undefined}
             onKeyDown={isCheckboxCell ? stopPropagation : undefined}
             className={cn(
-              "truncate border-b border-border p-[12px] transition-colors",
+              "truncate border-b border-border px-[12px] py-[8px] transition-colors",
               isCheckboxCell && "cursor-default hover:cursor-default",
               isModelColumn &&
                 cn(
