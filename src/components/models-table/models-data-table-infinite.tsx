@@ -415,7 +415,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => containerRef.current,
-    estimateSize: () => 45, // Row height in pixels
+    estimateSize: () => 37, // Row height in pixels
     overscan: isMobile ? 25 : 50, // Mobile: 25, Desktop: 50 extra rows above/below viewport
     enabled: rows.length > 0, // Only disable when there are no rows to render
   });
@@ -889,7 +889,6 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
                           ref={headerRef}
                           className={cn(
                             "relative select-none truncate border-b border-border bg-background text-foreground [&>.cursor-col-resize]:last:opacity-0",
-                            isModelColumn && "shadow-[inset_-1px_0_0_var(--border)]",
                             header.column.columnDef.meta?.headerClassName,
                           )}
                           data-column-id={header.column.id}
@@ -1174,13 +1173,6 @@ function Row<TData>({
             className={cn(
               "truncate border-b border-border px-[12px] py-[8px] transition-colors",
               isCheckboxCell && "cursor-default hover:cursor-default",
-              isModelColumn &&
-                cn(
-                  "bg-background shadow-[inset_-1px_0_0_var(--border)]",
-                  canHover && "group-hover/model-row:bg-muted group-focus-visible/model-row:bg-muted group-data-[state=selected]/model-row:bg-muted group-data-[checked=checked]/model-row:bg-muted",
-                  !canHover && selected && "bg-muted",
-                  !canHover && checked && "bg-muted",
-                ),
               cell.column.columnDef.meta?.cellClassName,
             )}
             style={{

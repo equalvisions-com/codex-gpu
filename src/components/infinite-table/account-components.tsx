@@ -36,11 +36,12 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import {
+  Bot,
   EllipsisVertical,
   LogIn,
   LogOut,
   Search,
-  Send,
+  Server,
   Settings as SettingsIcon,
   Star,
   X,
@@ -51,6 +52,9 @@ import * as React from "react";
 
 const gradientSurfaceClass =
   "border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground hover:bg-gradient-to-b hover:from-muted/70 hover:via-muted/40 hover:to-background hover:text-accent-foreground";
+
+const dropdownMenuItemClassName =
+  "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted hover:no-underline focus-visible:bg-muted focus-visible:text-accent-foreground";
 
 export interface AccountUser {
   name?: string | null;
@@ -89,13 +93,8 @@ export function UserMenu({
   const [imageLoaded, setImageLoaded] = React.useState(false);
   const hasImage = Boolean(user?.image);
   const avatarSizeClass = showDetails ? "h-8 w-8" : "h-6 w-6";
-  const avatarWrapperClass = showDetails
-    ? avatarSizeClass
-    : cn(avatarSizeClass, "border border-border");
-  const avatarImageClass = cn(
-    "h-full w-full rounded-full object-cover",
-    !showDetails && "border border-border",
-  );
+  const avatarWrapperClass = avatarSizeClass;
+  const avatarImageClass = "h-full w-full rounded-full object-cover";
   const inferredAuthenticated = Boolean(normalizedName || email || user?.image);
   const isAuthenticated = isAuthenticatedProp ?? inferredAuthenticated;
   const shouldRenderAvatar = (showDetails || hasImage) && user;
@@ -134,7 +133,7 @@ export function UserMenu({
         : gradientSurfaceClass,
       fullWidth ? "w-full" : "w-auto",
       !showDetails
-        ? "!gap-1.5 rounded-full !px-2 !py-1.5 md:h-9 md:rounded-md"
+        ? "!gap-1.5 rounded-md !px-2 !py-1.5 md:h-9 md:rounded-md"
         : null,
     );
     const ariaLabel = showDetails ? undefined : (triggerAriaLabel ?? "Sign in");
@@ -254,11 +253,11 @@ export function UserMenu({
               ? "bg-transparent hover:bg-transparent"
               : cn(
                   gradientSurfaceClass,
-                  "shadow-[0_1px_0_0_hsl(var(--foreground)_/_6%),0_4px_8px_-10px_hsl(var(--foreground)_/_28%)] hover:bg-transparent",
+                  "hover:bg-transparent",
                 ),
             fullWidth ? "w-full justify-start" : "w-auto justify-center",
             !showDetails
-              ? "!gap-1.5 rounded-full !px-2 !py-1.5 md:h-9 md:rounded-md"
+              ? "!gap-1.5 rounded-md !px-2 !py-1.5 md:h-9 md:rounded-md"
               : null,
             triggerClassName,
           )}
@@ -327,8 +326,25 @@ export function UserMenu({
     <div>
       <DropdownMenu>
         {triggerElement}
-        <DropdownMenuContent align="center" className="w-60">
+        <DropdownMenuContent
+          align="center"
+          className="w-60 mr-2 sm:mr-0"
+        >
           <div className="flex flex-col space-y-1">
+            <DropdownMenuItem
+              onSelect={() => navigateWithRefresh("/llms")}
+              className={cn(dropdownMenuItemClassName, "sm:hidden")}
+            >
+              <Bot className="h-4 w-4" />
+              <span>LLMs</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() => navigateWithRefresh("/gpus")}
+              className={cn(dropdownMenuItemClassName, "sm:hidden")}
+            >
+              <Server className="h-4 w-4" />
+              <span>GPUs</span>
+            </DropdownMenuItem>
             {isAuthenticated ? (
               <Accordion
                 type="single"
@@ -336,7 +352,7 @@ export function UserMenu({
                 className="-mx-2 w-[calc(100%+16px)] px-2"
               >
                 <AccordionItem value="favorites" className="border-none">
-                  <AccordionTrigger className="flex w-full cursor-pointer select-none items-center justify-between gap-2 rounded-sm px-2 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted hover:no-underline focus-visible:bg-muted focus-visible:text-accent-foreground">
+                  <AccordionTrigger className="flex w-full cursor-pointer select-none items-center justify-between gap-2 rounded-sm px-2 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted hover:no-underline focus-visible:bg-muted focus-visible:text-accent-foreground [&>svg]:hidden">
                     <span className="flex items-center gap-2">
                       <Star className="h-4 w-4" />
                       Favorites
@@ -346,13 +362,13 @@ export function UserMenu({
                     <div className="flex flex-col gap-1">
                       <DropdownMenuItem
                         onSelect={() => navigateWithRefresh("/llms?favorites=true")}
-                        className="flex w-full items-center gap-2"
+                        className={dropdownMenuItemClassName}
                       >
                         <span>LLMs</span>
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onSelect={() => navigateWithRefresh("/gpus?favorites=true")}
-                        className="flex w-full items-center gap-2"
+                        className={dropdownMenuItemClassName}
                       >
                         <span>GPUs</span>
                       </DropdownMenuItem>
@@ -365,22 +381,13 @@ export function UserMenu({
               <DropdownMenuItem asChild>
                 <Link
                   href="/settings"
-                  className="flex w-full items-center gap-2"
+                  className={dropdownMenuItemClassName}
                 >
                   <SettingsIcon className="h-4 w-4" />
                   <span>Settings</span>
                 </Link>
               </DropdownMenuItem>
             ) : null}
-            <DropdownMenuItem asChild>
-              <Link
-                href="https://openstatus.dev/submit"
-                className="flex w-full items-center gap-2"
-              >
-                <Send className="h-4 w-4" />
-                <span>Submit</span>
-              </Link>
-            </DropdownMenuItem>
           </div>
           <DropdownMenuSeparator />
           <DropdownMenuItem
@@ -388,11 +395,13 @@ export function UserMenu({
             onSelect={(event) => {
               event.preventDefault();
             }}
+            className={dropdownMenuItemClassName}
           >
             <ModeToggle appearance="menu" />
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
+            className={dropdownMenuItemClassName}
             onSelect={() => {
               if (isAuthenticated) {
                 if (!isSigningOut) {

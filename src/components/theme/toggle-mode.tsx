@@ -34,6 +34,10 @@ export function ModeToggle({
     }
   }, [currentTheme]);
 
+  const iconProps = React.useMemo(() => {
+    return currentTheme === "light" ? { strokeWidth: 2.25 } : {};
+  }, [currentTheme]);
+
   const Icon = React.useMemo(() => {
     switch (currentTheme) {
       case "light":
@@ -79,7 +83,7 @@ export function ModeToggle({
         aria-label={`Switch theme (currently ${modeLabel})`}
         {...props}
       >
-        <Icon className="h-4 w-4 transition-colors" />
+        <Icon className="h-4 w-4 transition-colors" {...iconProps} />
         <span className="flex-1 text-left">Theme</span>
         <span className="sr-only">(current: {modeLabel})</span>
       </Button>
@@ -97,7 +101,7 @@ export function ModeToggle({
       aria-label={ariaLabel}
       {...props}
     >
-      <Icon className="h-4 w-4" />
+      <Icon className="h-4 w-4" {...iconProps} />
       <span className="sr-only">Toggle theme (current: {modeLabel})</span>
     </Button>
   );

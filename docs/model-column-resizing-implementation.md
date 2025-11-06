@@ -210,8 +210,7 @@ return (
     key={header.id}
     ref={headerRef}  // Assign stable ref
     className={cn(
-      "relative select-none truncate border-b border-border bg-background text-foreground/70 [&>.cursor-col-resize]:last:opacity-0",
-      isModelColumn && "shadow-[inset_-1px_0_0_var(--border)]",
+      "relative select-none truncate border-b border-border bg-background text-foreground [&>.cursor-col-resize]:last:opacity-0",
       header.column.columnDef.meta?.headerClassName,
     )}
     data-column-id={header.column.id}
