@@ -134,7 +134,7 @@ export function ModalitiesFilter() {
 
   return (
     <div className="grid gap-2">
-      <ScrollArea className="max-h-[168px]">
+      <ScrollArea className="max-h-[149px]">
         <div className="pr-0 space-y-1">
           {optionsWithSelections.map((option) => {
             const checked = selectedValues.includes(option.value);
@@ -145,10 +145,10 @@ export function ModalitiesFilter() {
               <div
                 key={option.value}
                 className={cn(
-                  "group relative flex w-full items-center gap-2 px-2 py-2 rounded-md border border-transparent transition-all",
+                  "group relative flex w-full items-center gap-2 px-2 py-1.5 cursor-pointer rounded-md",
                   checked
-                    ? "border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground shadow-[0_1px_0_0_hsl(var(--foreground)_/_6%),0_4px_8px_-10px_hsl(var(--foreground)_/_28%)]"
-                    : "hover:border-border hover:bg-gradient-to-b hover:from-muted/70 hover:via-muted/40 hover:to-background hover:shadow-[0_1px_0_0_hsl(var(--foreground)_/_4%),0_4px_8px_-12px_hsl(var(--foreground)_/_20%)]",
+                    ? "border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground"
+                    : "border border-transparent hover:border-border hover:bg-gradient-to-b hover:from-muted/70 hover:via-muted/40 hover:to-background hover:text-accent-foreground",
                 )}
               >
                 <button

@@ -20,13 +20,13 @@ export function CheckboxListSkeleton({
 }: CheckboxListSkeletonProps) {
   return (
     <div className={cn("grid gap-2", className)}>
-      <ScrollArea className="max-h-[168px] rounded-lg">
+      <ScrollArea className="max-h-[149px]">
         <div className="space-y-2 pr-0">
           {Array.from({ length: rows }).map((_, index) => (
             <div
               key={index}
               className={cn(
-                "group relative flex items-center gap-2 px-2 py-2.5",
+                "group relative flex items-center gap-2 px-2 py-2",
                 itemClassName,
               )}
             >

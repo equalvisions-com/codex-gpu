@@ -92,7 +92,7 @@ export function UserMenu({
   const displayName = normalizedName || email || "Account";
   const [imageLoaded, setImageLoaded] = React.useState(false);
   const hasImage = Boolean(user?.image);
-  const avatarSizeClass = showDetails ? "h-8 w-8" : "h-6 w-6";
+  const avatarSizeClass = showDetails ? "h-9 w-9" : "h-6 w-6";
   const avatarWrapperClass = avatarSizeClass;
   const avatarImageClass = "h-full w-full rounded-full object-cover";
   const inferredAuthenticated = Boolean(normalizedName || email || user?.image);
@@ -127,7 +127,7 @@ export function UserMenu({
 
   if (shouldForceSignInButton) {
     const buttonClassName = cn(
-      "flex h-auto items-center gap-2 rounded-md p-2 text-left text-sm font-medium text-foreground hover:text-accent-foreground",
+      "flex h-auto items-center gap-3 rounded-md pl-4 py-4 text-left text-sm font-medium text-foreground hover:text-accent-foreground",
       showDetails
         ? "bg-transparent hover:bg-transparent"
         : gradientSurfaceClass,
@@ -162,16 +162,17 @@ export function UserMenu({
             <>
               <div
                 className={cn(
-                  "flex items-center justify-center rounded-full border border-border text-muted-foreground",
-                  avatarSizeClass,
-                )}
-              >
+                  "flex items-center justify-center rounded-full border border-border text-foreground/70",
+                  gradientSurfaceClass,
+                avatarSizeClass,
+              )}
+            >
                 <LogIn className="h-4 w-4" />
               </div>
               <div className="flex min-w-0 flex-1 flex-col text-left">
-                <span className="truncate font-semibold">{displayName}</span>
+                <span className="truncate text-sm font-semibold">{displayName}</span>
                 {secondaryText ? (
-                  <span className="truncate text-xs text-muted-foreground">
+                  <span className="truncate text-xs text-foreground/70">
                     {secondaryText}
                   </span>
                 ) : null}
@@ -192,7 +193,7 @@ export function UserMenu({
             aria-label="Open account menu"
             disabled={isSigningOut}
           >
-            <EllipsisVertical className="h-4 w-4 text-foreground" />
+            <EllipsisVertical className="h-4 w-4 text-foreground/70" />
             <span className="sr-only">Open account menu</span>
           </Button>
         </DropdownMenuTrigger>
@@ -248,7 +249,7 @@ export function UserMenu({
             type="button"
             variant="ghost"
             className={cn(
-            "flex h-[38px] items-center gap-2 rounded-md px-2 text-left text-sm font-medium text-foreground hover:text-accent-foreground",
+            "flex h-auto items-center gap-3 rounded-md pl-4 py-4 pr-0 text-left text-sm font-medium text-foreground hover:text-accent-foreground",
             showDetails
               ? "bg-transparent hover:bg-transparent"
               : cn(
@@ -290,7 +291,7 @@ export function UserMenu({
           {!shouldRenderAvatar && showDetails && !isAuthenticated ? (
             <div
               className={cn(
-                "flex items-center justify-center rounded-full border border-border text-muted-foreground",
+                "flex items-center justify-center rounded-full border border-border text-foreground/70",
                 avatarSizeClass,
               )}
             >
@@ -299,16 +300,16 @@ export function UserMenu({
           ) : null}
           {showDetails ? (
             <div className="flex min-w-0 flex-1 flex-col text-left">
-              <span className="truncate">{displayName}</span>
+              <span className="truncate text-sm font-semibold">{displayName}</span>
               {secondaryText ? (
-                <span className="truncate text-xs text-muted-foreground">
+                <span className="truncate text-xs text-foreground/70">
                   {secondaryText}
                 </span>
               ) : null}
             </div>
           ) : null}
           {showDetails ? (
-            <EllipsisVertical className="h-4 w-4 text-foreground/60" />
+            <EllipsisVertical className="h-4 w-4 text-foreground/70" />
           ) : null}
           {!showDetails ? (
             <span className="relative flex w-[18px] items-center justify-center text-foreground">
@@ -389,7 +390,7 @@ export function UserMenu({
               </DropdownMenuItem>
             ) : null}
           </div>
-          <DropdownMenuSeparator />
+          <DropdownMenuSeparator className={cn(!isAuthenticated && "sm:hidden")} />
           <DropdownMenuItem
             asChild
             onSelect={(event) => {
@@ -440,7 +441,7 @@ export function UserMenu({
                     {displayName}
                   </span>
                   {email ? (
-                    <span className="truncate text-xs text-muted-foreground">
+                    <span className="truncate text-xs text-foreground/70">
                       {email}
                     </span>
                   ) : null}
@@ -521,7 +522,7 @@ export function MobileTopNav({
 }: MobileTopNavProps) {
   return (
     <NavigationMenu className="flex w-full max-w-none justify-between px-2 sm:hidden">
-      <NavigationMenuList className="flex w-full items-center gap-3">
+      <NavigationMenuList className="flex w-full items-center gap-2">
         <NavigationMenuItem className="mr-auto">
           <NavigationMenuLink asChild>
             <span className="select-none text-sm font-medium text-background">
@@ -536,9 +537,9 @@ export function MobileTopNav({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 rounded-full"
+                className="h-9 w-9 !bg-transparent hover:!bg-transparent focus:!bg-transparent focus-visible:!bg-transparent active:!bg-transparent"
               >
-                <Search className="h-5 w-5 text-foreground/70" />
+                <Search className="h-5 w-5 text-foreground" />
                 <span className="sr-only">Toggle filters</span>
               </Button>
             </SheetTrigger>

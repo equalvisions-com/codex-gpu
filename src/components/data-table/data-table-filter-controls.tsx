@@ -38,7 +38,7 @@ export function DataTableFilterControls({
   return (
     <>
       {showSearch && searchFilter && searchFilter.type === "input" ? (
-        <div className="mb-6">
+        <div className="mb-0">
           <DataTableFilterInput {...searchFilter} />
         </div>
       ) : null}
@@ -55,7 +55,7 @@ export function DataTableFilterControls({
               <AccordionTrigger className="w-full py-0 hover:no-underline data-[state=closed]:text-muted-foreground data-[state=open]:text-foreground focus-within:data-[state=closed]:text-foreground hover:data-[state=closed]:text-foreground [&>svg]:text-foreground/70">
                 <div className="flex w-full items-center justify-between gap-2 truncate pb-2 pr-2">
                   <div className="flex items-center gap-2 truncate">
-                    <p className="text-sm font-medium text-foreground">{field.label}</p>
+                    <p className="text-sm font-semibold text-foreground">{field.label}</p>
                   </div>
                   <DataTableFilterResetButton {...field} />
                 </div>

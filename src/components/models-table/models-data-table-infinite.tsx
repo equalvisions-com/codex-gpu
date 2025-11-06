@@ -691,7 +691,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
             )}
           >
             <div className="flex h-full w-full flex-col">
-              <div className="mx-auto w-full max-w-full pl-4 pr-0 pt-4 mb-6 space-y-4">
+              <div className="mx-auto w-full max-w-full pl-4 pr-0 pt-4 mb-4 space-y-4">
                 <DesktopNavTabs
                   items={navigationItems}
                   className={gradientSurfaceClass}
@@ -714,11 +714,11 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
                 ) : null}
               </div>
               <div className="flex-1 overflow-y-auto scrollbar-hide">
-                <div className="mx-auto w-full max-w-full pl-4 pr-0 pb-4">
+                <div className="mx-auto w-full max-w-full pl-4 pr-0 py-0">
                   <DataTableFilterControls showSearch={false} />
                 </div>
               </div>
-              <div className="flex-shrink-0 pl-2 pb-2 pt-0 pr-0">
+              <div className="flex-shrink-0 p-0">
                 <UserMenu
                   user={accountUser}
                   onSignOut={accountOnSignOut}

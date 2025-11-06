@@ -82,7 +82,7 @@ export const columns: ColumnDef<ColumnSchema>[] = [
                 loading="eager"
               />
             ) : fallbackInitial ? (
-              <span className="text-[10px] font-semibold uppercase text-muted-foreground">
+              <span className="text-[10px] font-semibold uppercase text-foreground/70">
                 {fallbackInitial}
               </span>
             ) : null}
@@ -93,11 +93,11 @@ export const columns: ColumnDef<ColumnSchema>[] = [
         </div>
       );
     },
-    size: 155,
-    minSize: 155,
+    size: 156,
+    minSize: 156,
     meta: {
-      cellClassName: "text-left min-w-[155px]",
-      headerClassName: "text-left min-w-[155px]",
+      cellClassName: "text-left min-w-[156px]",
+      headerClassName: "text-left min-w-[156px]",
     },
   },
   {
@@ -110,7 +110,7 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       const original = row.original;
       const displayName = original.gpu_model || original.item;
 
-      if (!displayName) return <span className="text-muted-foreground">N/A</span>;
+      if (!displayName) return <span className="text-foreground/70">N/A</span>;
 
       return (
         <span className="block truncate">{displayName}</span>
@@ -159,21 +159,21 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       const price = original.price_hour_usd || original.price_usd;
       const unit = original.price_unit || "hour";
 
-      if (!price) return <span className="text-muted-foreground">N/A</span>;
+      if (!price) return <span className="text-foreground/70">N/A</span>;
 
       return (
         <div className="text-right">
           <span className="font-mono">${price.toFixed(2)}</span>{" "}
-          <span className="font-mono text-muted-foreground">/hr</span>
+          <span className="font-mono text-foreground/70">/hr</span>
         </div>
       );
     },
     filterFn: "inNumberRange",
-    size: 129,
-    minSize: 129,
+    size: 150,
+    minSize: 150,
     meta: {
-      headerClassName: "text-right min-w-[129px]",
-      cellClassName: "text-right min-w-[129px]",
+      headerClassName: "text-right min-w-[150px]",
+      cellClassName: "text-right min-w-[150px]",
     },
   },
   {
@@ -183,21 +183,21 @@ export const columns: ColumnDef<ColumnSchema>[] = [
     ),
     cell: ({ row }) => {
       const gpuCount = row.getValue<ColumnSchema["gpu_count"]>("gpu_count");
-      if (!gpuCount) return <span className="text-muted-foreground">N/A</span>;
+      if (!gpuCount) return <span className="text-foreground/70">N/A</span>;
 
       return (
         <div className="text-right">
           <span className="font-mono">{gpuCount}</span>{" "}
-          <span className="text-muted-foreground">{gpuCount === 1 ? 'GPU' : 'GPUs'}</span>
+          <span className="text-foreground/70">{gpuCount === 1 ? 'GPU' : 'GPUs'}</span>
         </div>
       );
     },
     filterFn: "inNumberRange",
-    size: 129,
-    minSize: 129,
+    size: 150,
+    minSize: 150,
     meta: {
-      cellClassName: "text-right min-w-[129px]",
-      headerClassName: "text-right min-w-[129px]",
+      cellClassName: "text-right min-w-[150px]",
+      headerClassName: "text-right min-w-[150px]",
     },
   },
   {
@@ -210,16 +210,16 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       return vramGb ? (
         <div className="text-right">
           <span className="font-mono">{vramGb}</span>{" "}
-          <span className="text-muted-foreground">GB</span>
+          <span className="text-foreground/70">GB</span>
         </div>
-      ) : <span className="text-muted-foreground">N/A</span>;
+      ) : <span className="text-foreground/70">N/A</span>;
     },
     filterFn: "inNumberRange",
-    size: 129,
-    minSize: 129,
+    size: 150,
+    minSize: 150,
     meta: {
-      cellClassName: "text-right min-w-[129px]",
-      headerClassName: "text-right min-w-[129px]",
+      cellClassName: "text-right min-w-[150px]",
+      headerClassName: "text-right min-w-[150px]",
     },
   },
   {
@@ -229,21 +229,21 @@ export const columns: ColumnDef<ColumnSchema>[] = [
     ),
     cell: ({ row }) => {
       const vcpus = row.getValue<ColumnSchema["vcpus"]>("vcpus");
-      if (!vcpus) return <span className="text-muted-foreground">N/A</span>;
+      if (!vcpus) return <span className="text-foreground/70">N/A</span>;
 
       return (
         <div className="text-right">
           <span className="font-mono">{vcpus}</span>{" "}
-          <span className="text-muted-foreground">vCPUs</span>
+          <span className="text-foreground/70">vCPUs</span>
         </div>
       );
     },
     filterFn: "inNumberRange",
-    size: 129,
-    minSize: 129,
+    size: 150,
+    minSize: 150,
     meta: {
-      cellClassName: "text-right min-w-[129px]",
-      headerClassName: "text-right min-w-[129px]",
+      cellClassName: "text-right min-w-[150px]",
+      headerClassName: "text-right min-w-[150px]",
     },
   },
   {
@@ -257,16 +257,16 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       return ramGb ? (
         <div className="text-right">
           <span className="font-mono">{ramGb}</span>{" "}
-          <span className="text-muted-foreground">GB</span>
+          <span className="text-foreground/70">GB</span>
         </div>
-      ) : <span className="text-muted-foreground">N/A</span>;
+      ) : <span className="text-foreground/70">N/A</span>;
     },
     filterFn: "inNumberRange",
-    size: 129,
-    minSize: 129,
+    size: 150,
+    minSize: 150,
     meta: {
-      cellClassName: "text-right min-w-[129px]",
-      headerClassName: "text-right min-w-[129px]",
+      cellClassName: "text-right min-w-[150px]",
+      headerClassName: "text-right min-w-[150px]",
     },
   },
   {
@@ -276,13 +276,13 @@ export const columns: ColumnDef<ColumnSchema>[] = [
     ),
     cell: ({ row }) => {
       const type = row.getValue<ColumnSchema["type"]>("type");
-      return type ? <span className="block text-right">{type}</span> : <span className="text-muted-foreground">N/A</span>;
+      return type ? <span className="block text-right">{type}</span> : <span className="text-foreground/70">N/A</span>;
     },
-    size: 150.5,
-    minSize: 150.5,
+    size: 150,
+    minSize: 150,
     meta: {
-      cellClassName: "text-right min-w-[150.5px]",
-      headerClassName: "text-right min-w-[150.5px]",
+      cellClassName: "text-right min-w-[150px]",
+      headerClassName: "text-right min-w-[150px]",
     },
   },
 ];
