@@ -179,7 +179,7 @@ export function UserMenu({
             </>
           ) : (
             <>
-              <LogIn className="h-4 w-4 text-foreground/70" />
+              <LogIn className="h-4 w-4 text-foreground" />
               <span className="sr-only">Sign in</span>
             </>
           )}
@@ -192,7 +192,7 @@ export function UserMenu({
             aria-label="Open account menu"
             disabled={isSigningOut}
           >
-            <EllipsisVertical className="h-4 w-4 text-foreground/70" />
+            <EllipsisVertical className="h-4 w-4 text-foreground" />
             <span className="sr-only">Open account menu</span>
           </Button>
         </DropdownMenuTrigger>
@@ -204,7 +204,7 @@ export function UserMenu({
         role="group"
         aria-label="Account actions"
         className={cn(
-          "flex items-center overflow-hidden rounded-full",
+          "flex items-center overflow-hidden",
           triggerClassName,
         )}
       >
@@ -212,7 +212,7 @@ export function UserMenu({
           type="button"
           variant="ghost"
           className={cn(
-            "h-9 min-w-[76px] flex-1 rounded-none rounded-l-full px-3 text-xs font-bold",
+            "h-9 min-w-[76px] flex-1 rounded-none rounded-l-sm px-3 text-sm font-medium",
             "border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground shadow-[0_1px_0_0_hsl(var(--foreground)_/_6%),0_4px_8px_-10px_hsl(var(--foreground)_/_28%)]",
             "border-r-0",
           )}
@@ -226,13 +226,13 @@ export function UserMenu({
             type="button"
             variant="ghost"
             className={cn(
-              "h-9 w-9 rounded-none rounded-r-full px-0",
+              "h-9 w-9 rounded-none rounded-r-sm px-0",
               "border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground shadow-[0_1px_0_0_hsl(var(--foreground)_/_6%),0_4px_8px_-10px_hsl(var(--foreground)_/_28%)]",
             )}
             aria-label="Open account menu"
             disabled={isSigningOut}
           >
-            <span className="relative flex w-[18px] items-center justify-center text-foreground/70">
+            <span className="relative flex w-[18px] items-center justify-center text-foreground">
               <span className="absolute h-px w-3 -translate-y-1 rounded-full bg-current" />
               <span className="absolute h-px w-3 rounded-full bg-current" />
               <span className="absolute h-px w-3 translate-y-1 rounded-full bg-current" />
@@ -311,7 +311,7 @@ export function UserMenu({
             <EllipsisVertical className="h-4 w-4 text-foreground/60" />
           ) : null}
           {!showDetails ? (
-            <span className="relative flex w-[18px] items-center justify-center text-foreground/70">
+            <span className="relative flex w-[18px] items-center justify-center text-foreground">
               <span className="absolute h-px w-3 -translate-y-1 rounded-full bg-current" />
               <span className="absolute h-px w-3 rounded-full bg-current" />
               <span className="absolute h-px w-3 translate-y-1 rounded-full bg-current" />
