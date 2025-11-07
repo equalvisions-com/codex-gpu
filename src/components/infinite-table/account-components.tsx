@@ -98,8 +98,11 @@ export function UserMenu({
   const isAuthenticated = isAuthenticatedProp ?? inferredAuthenticated;
   const shouldRenderAvatar = (showDetails || hasImage) && user;
   const hasSignInHandler = typeof onSignIn === "function";
+  const hasSignUpHandler = typeof onSignUp === "function";
   const shouldForceSignInButton =
-    forceUnauthSignInButton && !isAuthenticated && hasSignInHandler;
+    forceUnauthSignInButton &&
+    !isAuthenticated &&
+    (hasSignUpHandler || hasSignInHandler);
   const isSplitTrigger =
     !showDetails && !isAuthenticated && !shouldForceSignInButton;
   const secondaryText = isAuthenticated ? (email ?? "") : "Sign up or Sign in";
@@ -127,7 +130,13 @@ export function UserMenu({
         ? "!gap-1.5 !rounded-md !px-2 !py-1.5 md:h-9 md:rounded-md"
         : null,
     );
-    const ariaLabel = showDetails ? undefined : (triggerAriaLabel ?? "Sign in");
+    const preferredActionLabel = hasSignUpHandler ? "Sign up" : "Sign in";
+    const ariaLabel = showDetails
+      ? undefined
+      : triggerAriaLabel ?? preferredActionLabel;
+    const primaryClickHandler = hasSignUpHandler
+      ? handleSignUpClick
+      : handleSignInClick;
 
     triggerElement = (
       <div
@@ -145,7 +154,7 @@ export function UserMenu({
             showDetails ? "justify-between" : "justify-start",
             fullWidth && "flex-1",
           )}
-          onClick={handleSignInClick}
+          onClick={primaryClickHandler}
           disabled={isSigningOut}
           aria-label={ariaLabel}
         >
@@ -172,7 +181,7 @@ export function UserMenu({
           ) : (
             <>
               <LogIn className="h-4 w-4 text-foreground" />
-              <span className="sr-only">Sign in</span>
+              <span className="sr-only">{preferredActionLabel}</span>
             </>
           )}
         </Button>

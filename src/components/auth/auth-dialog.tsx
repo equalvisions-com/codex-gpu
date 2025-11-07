@@ -107,8 +107,8 @@ export function AuthDialog({
     if (view === "signIn") {
       return {
         title: "Sign in",
-        description: "Please sign in to continue.",
-        cta: pending ? "Signing in…" : "Continue",
+        description: "Please sign in to continue",
+        cta: pending ? "Signing in…" : "Sign in",
         alternateLabel: "Don't have an account?",
         alternateAction: "Sign up",
       };
@@ -117,7 +117,7 @@ export function AuthDialog({
     if (view === "forgotPassword") {
       return {
         title: "Reset your password",
-        description: "Enter your email address and we'll send you a link to reset your password.",
+        description: "Enter your email address and we'll send you a link to reset your password",
         cta: pending ? "Sending…" : "Send reset link",
         alternateLabel: "Remember your password?",
         alternateAction: "Sign in",
@@ -126,7 +126,7 @@ export function AuthDialog({
 
     return {
       title: "Create account",
-      description: "Please fill in the details to get started.",
+      description: "Please fill in the details to get started",
       cta: pending ? "Creating…" : "Create account",
       alternateLabel: "Already have an account?",
       alternateAction: "Sign in",
@@ -308,39 +308,41 @@ export function AuthDialog({
             <DialogDescription className="text-foreground/70">{copy.description}</DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-6">
-            <div className="flex items-center justify-center gap-6">
-              <SocialButton
-                provider="google"
-                icon={Google}
-                pending={socialPending === "google"}
-                disabled={socialPending !== null}
-                onClick={handleGoogle}
-                label="Continue with Google"
-              />
-              <SocialButton
-                provider="github"
-                icon={Github}
-                pending={socialPending === "github"}
-                disabled={socialPending !== null}
-                onClick={handleGithub}
-                label="Continue with GitHub"
-              />
-              <SocialButton
-                provider="huggingface"
-                icon={HuggingFace}
-                pending={socialPending === "huggingface"}
-                disabled={socialPending !== null}
-                onClick={handleHuggingFace}
-                label="Continue with Hugging Face"
-              />
+          {view !== "forgotPassword" ? (
+            <div className="grid gap-6">
+              <div className="flex items-center justify-center gap-6">
+                <SocialButton
+                  provider="google"
+                  icon={Google}
+                  pending={socialPending === "google"}
+                  disabled={socialPending !== null}
+                  onClick={handleGoogle}
+                  label="Continue with Google"
+                />
+                <SocialButton
+                  provider="github"
+                  icon={Github}
+                  pending={socialPending === "github"}
+                  disabled={socialPending !== null}
+                  onClick={handleGithub}
+                  label="Continue with GitHub"
+                />
+                <SocialButton
+                  provider="huggingface"
+                  icon={HuggingFace}
+                  pending={socialPending === "huggingface"}
+                  disabled={socialPending !== null}
+                  onClick={handleHuggingFace}
+                  label="Continue with Hugging Face"
+                />
+              </div>
+              <div className="flex items-center gap-6 text-xs uppercase tracking-wide text-foreground/70">
+                <Separator className="flex-1" />
+                <span>or continue with</span>
+                <Separator className="flex-1" />
+              </div>
             </div>
-            <div className="flex items-center gap-6 text-xs uppercase tracking-wide text-foreground/70">
-              <Separator className="flex-1" />
-              <span>or continue with</span>
-              <Separator className="flex-1" />
-            </div>
-          </div>
+          ) : null}
 
           {error ? (
             <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
