@@ -135,12 +135,14 @@ export class NebiusScraper implements ProviderScraper {
       if (row.length !== 4) continue; // Skip malformed rows
 
       const [item, vcpus, ramGb, priceText] = row;
+      const normalizedModel = cleanGpuModelName(item);
 
       const priceRow: NebiusPriceRow = {
         provider: 'nebius',
         source_url: PRICING_URL,
         observed_at: observedAt,
-        item: cleanGpuModelName(item),
+        item: normalizedModel,
+        gpu_model: normalizedModel,
         class: 'GPU',
         gpu_count: 1,
         vcpus,

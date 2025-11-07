@@ -106,9 +106,7 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       <DataTableColumnHeader column={column} title="Model" />
     ),
     cell: ({ row }) => {
-      // Handle both CoreWeave (gpu_model) and Nebius (item) data
-      const original = row.original;
-      const displayName = original.gpu_model || original.item;
+      const displayName = row.original.gpu_model;
 
       if (!displayName) return <span className="text-foreground/70">N/A</span>;
 

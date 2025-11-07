@@ -41,6 +41,7 @@ export type NebiusPriceRow = {
 
   // Compute identifiers
   item: string;                 // e.g. "NVIDIA HGX H100"
+  gpu_model?: string;           // normalized copy of item for downstream consumers
   class: "GPU";                 // GPU table only
 
   // Hardware

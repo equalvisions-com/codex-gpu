@@ -9,7 +9,7 @@ import type { ColumnSchema } from "./schema";
  * 
  * **Key Components:**
  * - Provider (e.g., "coreweave", "lambda")
- * - GPU Model (gpu_model | item | sku - provider-specific field names)
+ * - GPU Model (normalized `gpu_model`)
  * - GPU Count (e.g., "1x", "8x")
  * - VRAM in GB (e.g., "80gb", "141gb")
  * - Type (e.g., "virtual machine", "bare metal")
@@ -37,12 +37,10 @@ export function stableGpuKey(
   row: Pick<ColumnSchema, "provider" | "gpu_model" | "item" | "sku" | "gpu_count" | "vram_gb" | "type">
 ): string {
   const provider = row.provider?.toLowerCase().trim();
-  const model = (row.gpu_model || row.item || row.sku || "").toLowerCase().trim();
+  const model = (row.gpu_model || "").toLowerCase().trim();
   const count = typeof row.gpu_count === "number" ? `${row.gpu_count}x` : "";
   const vram = typeof row.vram_gb === "number" ? `${row.vram_gb}gb` : "";
   const type = (row.type || "").toLowerCase().trim();
 
   return [provider, model, count, vram, type].filter(Boolean).join(":");
 }
-
-

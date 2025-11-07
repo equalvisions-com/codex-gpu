@@ -122,8 +122,7 @@ export function filterData(
       }
 
       if (key === "gpu_model") {
-        const rawValue = row.gpu_model ?? row.item;
-        const value = typeof rawValue === "string" ? rawValue : undefined;
+        const value = typeof row.gpu_model === "string" ? row.gpu_model : undefined;
         if (Array.isArray(filter)) {
           if (filter.length) {
             const normalized = value?.toLowerCase().trim() ?? "";
@@ -219,9 +218,9 @@ export function sortData(data: ColumnSchema[], sort: SearchParamsType["sort"]) {
             ? row.price_usd
             : undefined;
       }
-      // Canonical model used in UI: gpu_model || item
+      // Canonical model used in UI: gpu_model
       case "gpu_model": {
-        return row.gpu_model ?? row.item ?? undefined;
+        return row.gpu_model ?? undefined;
       }
       // Canonical RAM used in UI: system_ram_gb || parseFloat(ram_gb)
       case "system_ram_gb": {
@@ -299,7 +298,7 @@ export function getFacetsFromData(data: ColumnSchema[]) {
     const entries: Array<[string, any]> = [];
     if (filterValues.includes('provider' as any)) entries.push(['provider', curr.provider]);
     if (filterValues.includes('type' as any)) entries.push(['type', curr.type]);
-    if (filterValues.includes('gpu_model' as any)) entries.push(['gpu_model', curr.gpu_model ?? curr.item]);
+    if (filterValues.includes('gpu_model' as any)) entries.push(['gpu_model', curr.gpu_model]);
     if (filterValues.includes('gpu_count' as any)) entries.push(['gpu_count', curr.gpu_count]);
     if (filterValues.includes('vram_gb' as any)) entries.push(['vram_gb', curr.vram_gb]);
     if (filterValues.includes('price_hour_usd' as any)) {

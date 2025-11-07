@@ -50,7 +50,9 @@ export type ColumnSchema = z.infer<typeof columnSchema>;
 
 // GPU pricing filter schema
 export const columnFilterSchema = z.object({
-  provider: z.enum(["coreweave", "nebius", "hyperstack"]).optional(),
+  provider: z
+    .enum(["coreweave", "nebius", "hyperstack", "runpod", "lambda", "digitalocean", "oracle", "crusoe"])
+    .optional(),
   gpu_model: z.string().optional(),
   instance_id: z.string().optional(),
   gpu_count: z
