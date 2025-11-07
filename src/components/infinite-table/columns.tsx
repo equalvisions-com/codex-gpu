@@ -162,7 +162,7 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       return (
         <div className="text-right">
           <span className="font-mono">${price.toFixed(2)}</span>{" "}
-          <span className="font-mono text-foreground/70">/hr</span>
+          <span className="font-mono text-foreground/70">/HR</span>
         </div>
       );
     },

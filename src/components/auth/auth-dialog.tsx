@@ -31,6 +31,8 @@ interface AuthDialogProps {
   callbackUrl?: string;
   errorCallbackUrl?: string;
   defaultEmail?: string;
+  contentClassName?: string;
+  bodyClassName?: string;
 }
 
 export function AuthDialog({
@@ -42,6 +44,8 @@ export function AuthDialog({
   callbackUrl = "/",
   errorCallbackUrl,
   defaultEmail,
+  contentClassName,
+  bodyClassName,
 }: AuthDialogProps) {
   const seededEmail = React.useRef(false);
   const [view, setView] = React.useState<AuthView>(initialView);
@@ -102,8 +106,8 @@ export function AuthDialog({
   const copy = React.useMemo(() => {
     if (view === "signIn") {
       return {
-        title: "Sign in to OpenStatus",
-        description: "Welcome back! Please sign in to continue.",
+        title: "Sign in",
+        description: "Please sign in to continue.",
         cta: pending ? "Signing in…" : "Continue",
         alternateLabel: "Don't have an account?",
         alternateAction: "Sign up",
@@ -121,8 +125,8 @@ export function AuthDialog({
     }
 
     return {
-      title: "Create your OpenStatus account",
-      description: "Start building with OpenStatus in just a couple of steps.",
+      title: "Create account",
+      description: "Please fill in the details to get started.",
       cta: pending ? "Creating…" : "Create account",
       alternateLabel: "Already have an account?",
       alternateAction: "Sign in",
@@ -291,15 +295,21 @@ export function AuthDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={cn("max-w-md gap-0 p-0 sm:rounded-2xl", "border-border bg-background")}>
-        <div className="grid gap-4 p-4">
+      <DialogContent
+        className={cn(
+          "max-w-md gap-0 p-6 sm:rounded-2xl",
+          "border-border bg-background",
+          contentClassName
+        )}
+      >
+        <div className={cn("grid gap-6", bodyClassName)}>
           <DialogHeader className="text-left">
             <DialogTitle>{copy.title}</DialogTitle>
-            <DialogDescription>{copy.description}</DialogDescription>
+            <DialogDescription className="text-foreground/70">{copy.description}</DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-4">
-            <div className="flex items-center justify-center gap-3">
+          <div className="grid gap-6">
+            <div className="flex items-center justify-center gap-6">
               <SocialButton
                 provider="google"
                 icon={Google}
@@ -325,7 +335,7 @@ export function AuthDialog({
                 label="Continue with Hugging Face"
               />
             </div>
-            <div className="flex items-center gap-3 text-xs uppercase tracking-wide text-muted-foreground">
+            <div className="flex items-center gap-6 text-xs uppercase tracking-wide text-foreground/70">
               <Separator className="flex-1" />
               <span>or continue with</span>
               <Separator className="flex-1" />
@@ -366,7 +376,7 @@ export function AuthDialog({
                     <Button
                       type="button"
                       variant="link"
-                      className="absolute right-0 -top-[11px] px-0 text-sm text-muted-foreground hover:text-foreground h-auto"
+                      className="absolute right-0 -top-[11px] px-0 text-sm text-foreground/70 hover:text-foreground h-auto"
                       onClick={() => switchView("forgotPassword")}
                     >
                       Forgot password?
@@ -454,13 +464,13 @@ export function AuthDialog({
             </form>
           )}
 
-          <div className="grid gap-3">
-            <div className="text-center text-sm text-muted-foreground">
+          <div>
+            <div className="text-center text-sm text-foreground/70">
               {copy.alternateLabel}{" "}
               <Button
                 type="button"
                 variant="link"
-                className="px-0 text-sm"
+                className="h-auto px-0 py-0 text-sm"
                 onClick={() => {
                   if (view === "signIn") {
                     switchView("signUp");
@@ -490,6 +500,9 @@ interface SocialButtonProps {
   label: string;
 }
 
+const socialButtonClassName =
+  "flex w-full items-center justify-center rounded-lg border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-foreground transition hover:bg-gradient-to-b hover:from-muted hover:via-muted/40 hover:to-background disabled:cursor-not-allowed disabled:opacity-70";
+
 function SocialButton({
   icon: Icon,
   onClick,
@@ -504,10 +517,10 @@ function SocialButton({
       onClick={onClick}
       disabled={disabled}
       title={label}
-      className="flex py-2 w-full items-center justify-center rounded-lg border border-border bg-background transition hover:bg-accent disabled:cursor-not-allowed disabled:opacity-70"
+      className={cn(socialButtonClassName, "py-2")}
     >
       {pending ? (
-        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+        <Loader2 className="h-4 w-4 animate-spin text-foreground/70" />
       ) : (
         <Icon className="h-5 w-5" />
       )}
