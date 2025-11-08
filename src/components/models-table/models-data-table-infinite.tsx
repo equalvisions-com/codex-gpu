@@ -1073,7 +1073,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
         title={renderSheetTitle({ row: selectedRow })}
         titleClassName="font-mono"
       >
-        <div className="space-y-4">
+        <div className="space-y-0">
           <MemoizedDataTableSheetContent
             table={table}
             data={selectedRow?.original}

@@ -12,23 +12,23 @@ const formatPricePerMillion = (price: number | string | null | undefined) => {
 };
 
 const formatContextLength = (value: number | null | undefined) => {
-  if (value === null || value === undefined) return "Unknown";
+  if (value === null || value === undefined) return "N/A";
   return value.toLocaleString();
 };
 
 const formatModalities = (modalities?: string[]) => {
-  if (!Array.isArray(modalities) || modalities.length === 0) return "Unknown";
+  if (!Array.isArray(modalities) || modalities.length === 0) return "N/A";
   const validModalities = modalities.filter(
     (modality): modality is string => typeof modality === "string" && modality.trim().length > 0,
   );
-  if (validModalities.length === 0) return "Unknown";
+  if (validModalities.length === 0) return "N/A";
   return validModalities
     .map((modality) => modality.replace(/\b\w/g, (char) => char.toUpperCase()))
     .join(", ");
 };
 
 const formatParameterList = (parameters?: string | string[] | null) => {
-  if (!parameters) return "Unknown";
+  if (!parameters) return "N/A";
   const normalized =
     typeof parameters === "string"
       ? parameters
@@ -36,7 +36,7 @@ const formatParameterList = (parameters?: string | string[] | null) => {
         ? parameters.join(",")
         : "";
   const trimmed = normalized.trim();
-  if (!trimmed) return "Unknown";
+  if (!trimmed) return "N/A";
   const withoutBraces =
     trimmed.startsWith("{") && trimmed.endsWith("}")
       ? trimmed.slice(1, -1)
@@ -45,7 +45,7 @@ const formatParameterList = (parameters?: string | string[] | null) => {
     .split(",")
     .map((part) => part.trim())
     .filter(Boolean);
-  if (parts.length === 0) return "Unknown";
+  if (parts.length === 0) return "N/A";
   return parts.join(", ");
 };
 
@@ -104,7 +104,7 @@ export const sheetFields: SheetField<ModelsColumnSchema>[] = [
     fullRowValue: true,
     noPadding: true,
     component: (row) => {
-      const fallback = row.name ?? "Unknown";
+      const fallback = row.name ?? "N/A";
       const value = row.shortName ?? fallback;
       return <h2 className="text-xl font-semibold">{value || fallback}</h2>;
     },
@@ -117,13 +117,23 @@ export const sheetFields: SheetField<ModelsColumnSchema>[] = [
     fullRowValue: true,
     noPadding: true,
     component: (row) => (
-      <p className="pb-2 text-sm text-foreground/70">{row.author ?? "Unknown"}</p>
+      <p className="pb-4 text-sm text-foreground/70">{row.author ?? "N/A"}</p>
     ),
   },
   {
     id: "provider",
     label: "Provider",
     type: "readonly",
+  },
+  {
+    id: "mmlu",
+    label: "MMLU-Pro",
+    type: "readonly",
+    component: (row) => {
+      const score = row.mmlu;
+      if (score === null || score === undefined) return "N/A";
+      return `${(score * 100).toFixed(1)}%`;
+    },
   },
   {
     id: "inputPrice" as keyof ModelsColumnSchema,
@@ -148,16 +158,6 @@ export const sheetFields: SheetField<ModelsColumnSchema>[] = [
     label: "Max Output Tokens",
     type: "readonly",
     component: (row) => formatContextLength(row.maxCompletionTokens),
-  },
-  {
-    id: "mmlu",
-    label: "MMLU-Pro",
-    type: "readonly",
-    component: (row) => {
-      const score = row.mmlu;
-      if (score === null || score === undefined) return "Not available";
-      return `${(score * 100).toFixed(1)}%`;
-    },
   },
   {
     id: "inputModalities",

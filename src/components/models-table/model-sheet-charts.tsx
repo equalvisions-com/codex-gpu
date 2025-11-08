@@ -57,7 +57,7 @@ function SheetLineChart({
           {title}
         </CardTitle>
         {description ? (
-          <CardDescription className="text-xs uppercase tracking-wide text-muted-foreground/80">
+          <CardDescription className="text-xs text-foreground/70">
             {description}
           </CardDescription>
         ) : null}
@@ -106,17 +106,17 @@ function SheetLineChart({
 
 export function ModelSheetCharts() {
   return (
-    <div className="grid gap-4 md:grid-cols-2">
-      <SheetLineChart
-        title="Latency trend"
-        description="ms (placeholder data)"
-        data={latencyPlaceholderData}
+    <div className="grid gap-4 border-t border-border/70 pt-4">
+            <SheetLineChart
+        title="Throughput"
+        description="TOKENS"
+        data={usagePlaceholderData}
         stroke="hsl(var(--chart-1))"
       />
       <SheetLineChart
-        title="Usage share"
-        description="% (placeholder data)"
-        data={usagePlaceholderData}
+        title="Latency"
+        description="SECONDS"
+        data={latencyPlaceholderData}
         stroke="hsl(var(--chart-2))"
       />
     </div>
