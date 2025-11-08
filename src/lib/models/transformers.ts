@@ -22,7 +22,9 @@ export function toModelsColumnRow(model: AIModel): ModelsColumnSchema {
     features: model.features ?? {},
     mmlu: model.mmlu ?? null,
     maxCompletionTokens: model.maxCompletionTokens ?? null,
-    supportedParameters: model.supportedParameters ?? [],
+    supportedParameters: Array.isArray(model.supportedParameters)
+      ? model.supportedParameters.join(",")
+      : model.supportedParameters ?? null,
     scrapedAt: model.scrapedAt,
   };
 }
