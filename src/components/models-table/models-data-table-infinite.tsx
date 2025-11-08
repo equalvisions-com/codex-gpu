@@ -45,6 +45,7 @@ import { Search } from "lucide-react";
 import { DesktopNavTabs, type DesktopNavItem } from "./nav-tabs";
 import type { ModelFavoriteKey } from "@/types/model-favorites";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { ModelSheetCharts } from "./model-sheet-charts";
 
 const noop = () => {};
 const gradientSurfaceClass =
@@ -1072,21 +1073,24 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
         title={renderSheetTitle({ row: selectedRow })}
         titleClassName="font-mono"
       >
-        <MemoizedDataTableSheetContent
-          table={table}
-          data={selectedRow?.original}
-          filterFields={filterFields}
-          fields={sheetFields}
-          // Memoization can be added later if needed
-          // REMINDER: this is used to pass additional data like the `InfiniteQueryMeta`
-          metadata={{
-            totalRows,
-            filterRows,
-            totalRowsFetched,
-            // REMINDER: includes `currentPercentiles`
-            ...meta,
-          }}
-        />
+        <div className="space-y-4">
+          <ModelSheetCharts />
+          <MemoizedDataTableSheetContent
+            table={table}
+            data={selectedRow?.original}
+            filterFields={filterFields}
+            fields={sheetFields}
+            // Memoization can be added later if needed
+            // REMINDER: this is used to pass additional data like the `InfiniteQueryMeta`
+            metadata={{
+              totalRows,
+              filterRows,
+              totalRowsFetched,
+              // REMINDER: includes `currentPercentiles`
+              ...meta,
+            }}
+          />
+        </div>
       </DataTableSheetDetails>
       <ModelsCheckedActionsIsland initialFavoriteKeys={(meta as any)?.initialFavoriteKeys} />
     </DataTableProvider>

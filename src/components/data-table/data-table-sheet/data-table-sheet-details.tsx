@@ -7,6 +7,7 @@ import {
   SheetClose,
   SheetContent,
   SheetDescription,
+  SheetFooter,
   SheetHeader,
   SheetTitle,
 } from "@/components/custom/sheet";
@@ -110,7 +111,7 @@ export function DataTableSheetDetails({
     >
       <SheetContent
         // onCloseAutoFocus={(e) => e.preventDefault()}
-        className="overflow-y-auto p-0 sm:max-w-md"
+        className="flex h-full flex-col overflow-hidden p-0 sm:max-w-md"
         hideClose
       >
         <SheetHeader className="sticky top-0 z-10 border-b bg-background p-4">
@@ -160,7 +161,12 @@ export function DataTableSheetDetails({
         <SheetDescription className="sr-only">
           Selected row details
         </SheetDescription>
-        <div className="p-4">{children}</div>
+        <div className="flex-1 overflow-y-auto px-4 pb-4 pt-0">{children}</div>
+        <SheetFooter className="border-t bg-background p-4">
+          <Button className="w-full" type="button" disabled={!selectedRowKey}>
+            Deploy
+          </Button>
+        </SheetFooter>
       </SheetContent>
     </Sheet>
   );
