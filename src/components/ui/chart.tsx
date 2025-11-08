@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
 import type { TooltipProps } from "recharts";
 import { Tooltip as RechartsTooltip } from "recharts";
 
+type CSSVarProperties = React.CSSProperties & Record<string, string | number>;
+
 type ChartConfigEntry = {
   label?: React.ReactNode;
   color?: string;
@@ -27,11 +29,11 @@ export function ChartContainer({
 }: ChartContainerProps) {
   const cssVars = React.useMemo(() => {
     const entries = Object.entries(config);
-    const baseStyle: React.CSSProperties = {};
+    const baseStyle: CSSVarProperties = {};
     entries.forEach(([key, value], index) => {
       const colorVar = `--color-${key}`;
       const fallback = `hsl(var(--chart-${(index % 5) + 1}))`;
-      baseStyle[colorVar as keyof React.CSSProperties] = value.color ?? fallback;
+      baseStyle[colorVar] = value.color ?? fallback;
     });
     return baseStyle;
   }, [config]);
