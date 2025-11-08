@@ -88,4 +88,7 @@ export type SheetField<TData, TMeta = Record<string, unknown>> = {
   condition?: (props: TData) => boolean;
   className?: string;
   skeletonClassName?: string;
+  hideLabel?: boolean;
+  fullRowValue?: boolean;
+  noPadding?: boolean;
 };

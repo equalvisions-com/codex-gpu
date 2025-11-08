@@ -20,9 +20,9 @@ export function toModelsColumnRow(model: AIModel): ModelsColumnSchema {
     permaslug: model.permaslug ?? null,
     pricing: model.pricing ?? {},
     features: model.features ?? {},
-    endpoint: model.endpoint ?? {},
     mmlu: model.mmlu ?? null,
     maxCompletionTokens: model.maxCompletionTokens ?? null,
+    supportedParameters: model.supportedParameters ?? [],
     scrapedAt: model.scrapedAt,
   };
 }

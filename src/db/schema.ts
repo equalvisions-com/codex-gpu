@@ -33,11 +33,11 @@ export const aiModels = pgTable("ai_models", {
   permaslug: text("permaslug"),
   mmlu: doublePrecision("mmlu"),
   maxCompletionTokens: integer("max_completion_tokens"),
+  supportedParameters: textType("supported_parameters").array(),
 
   // Complex nested data stored as JSONB
   pricing: jsonb("pricing"),
   features: jsonb("features"),
-  endpoint: jsonb("endpoint"),
 
   // Metadata
   provider: text("provider").notNull(),

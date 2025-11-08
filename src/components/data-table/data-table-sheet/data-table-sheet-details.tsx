@@ -13,10 +13,10 @@ import {
 } from "@/components/custom/sheet";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Kbd } from "@/components/custom/kbd";
 import { cn } from "@/lib/utils";
 import { useDataTable } from "@/components/data-table/data-table-provider";
 import { Skeleton } from "@/components/ui/skeleton";
+import { VisuallyHidden } from "@/components/ui/visually-hidden";
 
 export interface DataTableSheetDetailsProps {
   title?: React.ReactNode;
@@ -114,48 +114,48 @@ export function DataTableSheetDetails({
         className="flex h-full flex-col overflow-hidden p-0 sm:max-w-md"
         hideClose
       >
-        <SheetHeader className="sticky top-0 z-10 border-b bg-background p-4">
-          <div className="flex items-center justify-between gap-2">
-            <SheetTitle className={cn(titleClassName, "truncate text-left")}>
+        <SheetHeader className="sticky top-0 z-10 bg-background px-4 pt-4 pb-0 space-y-0">
+          <VisuallyHidden>
+            <SheetTitle className={cn(titleClassName)}>
               {isLoading && !selectedRowKey ? (
-                <Skeleton className="h-7 w-36" />
+                <Skeleton className="h-6 w-32" />
               ) : (
                 title
               )}
             </SheetTitle>
-            <div className="flex h-7 items-center gap-1">
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-7 w-7"
-                disabled={!prevId}
-                onClick={onPrev}
-                aria-label="Previous (↑)"
-                title="Previous (↑)"
-              >
-                <ChevronUp className="h-5 w-5" />
-                <span className="sr-only">Previous</span>
+          </VisuallyHidden>
+          <div className="flex h-7 items-center justify-end gap-1">
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-7 w-7"
+              disabled={!prevId}
+              onClick={onPrev}
+              aria-label="Previous (↑)"
+              title="Previous (↑)"
+            >
+              <ChevronUp className="h-5 w-5" />
+              <span className="sr-only">Previous</span>
+            </Button>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-7 w-7"
+              disabled={!nextId}
+              onClick={onNext}
+              aria-label="Next (↓)"
+              title="Next (↓)"
+            >
+              <ChevronDown className="h-5 w-5" />
+              <span className="sr-only">Next</span>
+            </Button>
+            <Separator orientation="vertical" className="mx-1" />
+            <SheetClose autoFocus={true} asChild>
+              <Button size="icon" variant="ghost" className="h-7 w-7">
+                <X className="h-5 w-5" />
+                <span className="sr-only">Close</span>
               </Button>
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-7 w-7"
-                disabled={!nextId}
-                onClick={onNext}
-                aria-label="Next (↓)"
-                title="Next (↓)"
-              >
-                <ChevronDown className="h-5 w-5" />
-                <span className="sr-only">Next</span>
-              </Button>
-              <Separator orientation="vertical" className="mx-1" />
-              <SheetClose autoFocus={true} asChild>
-                <Button size="icon" variant="ghost" className="h-7 w-7">
-                  <X className="h-5 w-5" />
-                  <span className="sr-only">Close</span>
-                </Button>
-              </SheetClose>
-            </div>
+            </SheetClose>
           </div>
         </SheetHeader>
         <SheetDescription className="sr-only">

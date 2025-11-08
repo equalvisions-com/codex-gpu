@@ -27,6 +27,28 @@ const formatModalities = (modalities?: string[]) => {
     .join(", ");
 };
 
+const formatParameterList = (parameters?: string | string[] | null) => {
+  if (!parameters) return "Unknown";
+  const normalized =
+    typeof parameters === "string"
+      ? parameters
+      : Array.isArray(parameters)
+        ? parameters.join(",")
+        : "";
+  const trimmed = normalized.trim();
+  if (!trimmed) return "Unknown";
+  const withoutBraces =
+    trimmed.startsWith("{") && trimmed.endsWith("}")
+      ? trimmed.slice(1, -1)
+      : trimmed;
+  const parts = withoutBraces
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+  if (parts.length === 0) return "Unknown";
+  return parts.join(", ");
+};
+
 // Models filter fields
 export const filterFields: DataTableFilterField<ModelsColumnSchema>[] = [
   {
@@ -78,17 +100,25 @@ export const sheetFields: SheetField<ModelsColumnSchema>[] = [
     id: "shortName",
     label: "Model Name",
     type: "readonly",
+    hideLabel: true,
+    fullRowValue: true,
+    noPadding: true,
     component: (row) => {
       const fallback = row.name ?? "Unknown";
       const value = row.shortName ?? fallback;
-      return value || fallback;
+      return <h2 className="text-xl font-semibold">{value || fallback}</h2>;
     },
   },
   {
     id: "author",
     label: "Author",
     type: "readonly",
-    component: (row) => row.author ?? "Unknown",
+    hideLabel: true,
+    fullRowValue: true,
+    noPadding: true,
+    component: (row) => (
+      <p className="pb-2 text-sm text-foreground/70">{row.author ?? "Unknown"}</p>
+    ),
   },
   {
     id: "provider",
@@ -140,5 +170,11 @@ export const sheetFields: SheetField<ModelsColumnSchema>[] = [
     label: "Output Modalities",
     type: "readonly",
     component: (row) => formatModalities(row.outputModalities),
+  },
+  {
+    id: "supportedParameters",
+    label: "Parameters",
+    type: "readonly",
+    component: (row) => formatParameterList(row.supportedParameters ?? undefined),
   },
 ];

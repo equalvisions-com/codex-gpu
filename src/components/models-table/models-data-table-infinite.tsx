@@ -1074,7 +1074,6 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
         titleClassName="font-mono"
       >
         <div className="space-y-4">
-          <ModelSheetCharts />
           <MemoizedDataTableSheetContent
             table={table}
             data={selectedRow?.original}
@@ -1090,6 +1089,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
               ...meta,
             }}
           />
+          <ModelSheetCharts />
         </div>
       </DataTableSheetDetails>
       <ModelsCheckedActionsIsland initialFavoriteKeys={(meta as any)?.initialFavoriteKeys} />

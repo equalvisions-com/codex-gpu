@@ -29,11 +29,11 @@ export const modelsColumnSchema = z.object({
   permaslug: z.string().nullable(),
   mmlu: z.number().nullable(),
   maxCompletionTokens: z.number().nullable(),
+  supportedParameters: z.string().nullable(),
 
   // Pricing data
   pricing: z.record(z.any()),
   features: z.record(z.any()).optional(),
-  endpoint: z.record(z.any()).optional(),
 
   // Metadata
   scrapedAt: z.string(),

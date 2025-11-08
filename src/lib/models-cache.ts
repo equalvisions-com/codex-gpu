@@ -146,10 +146,10 @@ const mapRowToAIModel = (row: AIModelRow): AIModel => ({
   permaslug: row.permaslug || undefined,
   pricing: row.pricing as Record<string, any>,
   features: row.features as Record<string, any>,
-  endpoint: row.endpoint as Record<string, any>,
   provider: row.provider,
   mmlu: parseNullableNumber(row.mmlu),
   maxCompletionTokens: row.maxCompletionTokens ?? null,
+  supportedParameters: row.supportedParameters || [],
   scrapedAt: row.scrapedAt.toISOString(),
 });
 
@@ -285,10 +285,10 @@ export class ModelsCache {
           permaslug: model.permaslug,
           pricing: model.pricing,
           features: model.features,
-          endpoint: model.endpoint,
           provider: model.provider,
           mmlu: model.mmlu ?? null,
           maxCompletionTokens: model.maxCompletionTokens ?? null,
+          supportedParameters: model.supportedParameters,
           scrapedAt: new Date(model.scrapedAt),
         }));
 
@@ -607,10 +607,10 @@ export class ModelsCache {
         permaslug: aiModels.permaslug,
         pricing: aiModels.pricing,
         features: aiModels.features,
-        endpoint: aiModels.endpoint,
         provider: aiModels.provider,
         mmlu: aiModels.mmlu,
         maxCompletionTokens: aiModels.maxCompletionTokens,
+        supportedParameters: aiModels.supportedParameters,
         scrapedAt: aiModels.scrapedAt,
       })
       .from(userModelFavorites)

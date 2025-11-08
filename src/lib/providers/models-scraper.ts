@@ -306,6 +306,11 @@ export class ModelsScraper {
           const processedModels: AIModel[] = modelsData.map((model: any, index: number) => {
             globalSequence++; // Increment for each model processed
             const mmluScore = this.findMmluScore(model, benchmarkLookup);
+            const supportedParameters = Array.isArray(model.endpoint?.supported_parameters)
+              ? model.endpoint.supported_parameters.filter(
+                  (parameter: unknown): parameter is string => typeof parameter === 'string',
+                )
+              : [];
 
             // Extract max_completion_tokens from endpoint
             const extractMaxCompletionTokens = (endpoint: any): number | null => {
@@ -368,10 +373,10 @@ export class ModelsScraper {
               permaslug: model.permaslug || null,
               pricing: model.endpoint?.pricing || {},
               features: model.features || {},
-              endpoint: model.endpoint || {},
               provider: modelProvider,
               mmlu: mmluScore ?? null,
               maxCompletionTokens: maxCompletionTokens ?? null,
+              supportedParameters,
               scrapedAt: new Date().toISOString(),
             };
           });

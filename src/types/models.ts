@@ -16,11 +16,11 @@ export interface AIModel {
   permaslug?: string;
   mmlu?: number | null;
   maxCompletionTokens?: number | null;
+  supportedParameters: string[];
 
   // Complex nested data
   pricing: Record<string, any>;
   features: Record<string, any>;
-  endpoint: Record<string, any>;
 
   // Metadata
   provider: string;

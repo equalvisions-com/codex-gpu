@@ -517,9 +517,9 @@ export async function GET(req: NextRequest): Promise<Response> {
       permaslug: row.permaslug || null,
       pricing: row.pricing,
       features: row.features,
-      endpoint: row.endpoint,
       mmlu: row.mmlu ?? null,
       maxCompletionTokens: row.maxCompletionTokens ?? null,
+      supportedParameters: row.supportedParameters ?? [],
       scrapedAt: row.scrapedAt,
     }));
 

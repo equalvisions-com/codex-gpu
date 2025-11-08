@@ -34,27 +34,51 @@ export function DataTableSheetContent<TData, TMeta>({
 }: DataTableSheetContentProps<TData, TMeta>) {
   if (!data) return <SheetDetailsContentSkeleton fields={fields} />;
 
+  let previousVisibleField: (typeof fields)[number] | null = null;
+
   return (
-    <dl className={cn("divide-y", className)} {...props}>
+    <dl className={cn(className)} {...props}>
       {fields.map((field) => {
         if (field.condition && !field.condition(data)) return null;
 
         const Component = field.component;
         const value = String(data[field.id]);
+        const shouldAddDivider =
+          previousVisibleField !== null &&
+          !(
+            previousVisibleField.hideLabel &&
+            field.hideLabel &&
+            previousVisibleField.fullRowValue &&
+            field.fullRowValue
+          );
+
+        const showLabel = !field.hideLabel;
+        const containerClasses = cn(
+          "flex items-start gap-4 text-sm w-full",
+          field.noPadding ? "py-0" : "py-2",
+          field.fullRowValue || !showLabel ? "justify-start" : "justify-between",
+          shouldAddDivider && "border-t border-border/60",
+          field.className,
+        );
+        const valueClasses = cn(
+          "flex w-full items-center font-mono",
+          field.fullRowValue || !showLabel
+            ? "justify-start text-left"
+            : "justify-end text-right",
+        );
+
+        previousVisibleField = field;
 
         return (
           <div key={field.id.toString()}>
             {field.type === "readonly" ? (
-              <div
-                className={cn(
-                  "flex items-center gap-4 py-2 text-sm justify-between w-full",
-                  field.className
-                )}
-              >
-                <dt className="flex shrink-0 items-center text-foreground/70">
-                  {field.label}
-                </dt>
-                <dd className="flex w-full items-center justify-end text-right font-mono">
+              <div className={containerClasses}>
+                {showLabel ? (
+                  <dt className="flex shrink-0 items-start text-foreground/70">
+                    {field.label}
+                  </dt>
+                ) : null}
+                <dd className={valueClasses}>
                   {Component ? (
                     <Component {...data} metadata={metadata} />
                   ) : (
@@ -68,15 +92,14 @@ export function DataTableSheetContent<TData, TMeta>({
                 filterFields={filterFields}
                 value={value}
                 table={table}
-                className={cn(
-                  "flex items-center gap-4 py-2 text-sm justify-between w-full",
-                  field.className
-                )}
+                className={containerClasses}
               >
-                <dt className="flex shrink-0 items-center text-foreground/70">
-                  {field.label}
-                </dt>
-                <dd className="flex w-full items-center justify-end text-right font-mono">
+                {showLabel ? (
+                  <dt className="flex shrink-0 items-start text-foreground/70">
+                    {field.label}
+                  </dt>
+                ) : null}
+                <dd className={valueClasses}>
                   {Component ? (
                     <Component {...data} metadata={metadata} />
                   ) : (
