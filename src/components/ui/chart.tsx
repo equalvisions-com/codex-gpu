@@ -73,7 +73,6 @@ export function ChartTooltipContent({
   payload,
   label,
   hideLabel,
-  className,
 }: ChartTooltipContentProps) {
   const config = React.useContext(ChartConfigContext);
 
@@ -82,12 +81,7 @@ export function ChartTooltipContent({
   }
 
   return (
-    <div
-      className={cn(
-        "rounded-md border bg-background/95 p-3 text-xs shadow-lg",
-        className,
-      )}
-    >
+    <div className="rounded-md border bg-background/95 p-3 text-xs shadow-lg">
       {!hideLabel ? (
         <div className="mb-2 font-semibold text-foreground">{label}</div>
       ) : null}
