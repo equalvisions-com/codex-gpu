@@ -519,7 +519,9 @@ export async function GET(req: NextRequest): Promise<Response> {
       features: row.features,
       mmlu: row.mmlu ?? null,
       maxCompletionTokens: row.maxCompletionTokens ?? null,
-      supportedParameters: row.supportedParameters ?? null,
+      supportedParameters: Array.isArray(row.supportedParameters)
+        ? row.supportedParameters.join(",")
+        : row.supportedParameters ?? null,
       scrapedAt: row.scrapedAt,
     }));
 
