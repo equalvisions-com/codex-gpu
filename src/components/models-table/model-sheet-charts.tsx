@@ -128,7 +128,7 @@ function SheetLineChart({
             </div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={data} margin={{ top: 4, right: 8, bottom: 4, left: 0 }}>
+              <LineChart data={data} margin={{ top: 4, right: 0, bottom: 4, left: 0 }}>
                 <YAxis hide domain={linearDomain} tickCount={5} />
                 <CartesianGrid
                   strokeDasharray="3 3"
@@ -297,13 +297,13 @@ export function ModelSheetCharts({ permaslug, endpointId, provider }: ModelSheet
   const throughputDescription = throughputAverage != null
     ? `${throughputAverage.toLocaleString(undefined, {
         maximumFractionDigits: 2,
-      })} tok/s avg`
-    : "tok/s avg";
+      })} TOK/S AVG`
+    : "TOK/S AVG";
   const latencyDescription = latencyAverage != null
     ? `${latencyAverage.toLocaleString(undefined, {
         maximumFractionDigits: 2,
-      })} secs avg`
-    : "secs avg";
+      })} SEC AVG`
+    : "SEC AVG";
   const missingSelection = !permaslug || !endpointId;
   const emptyMessage = missingSelection
     ? "Select a provider variant to load throughput."
