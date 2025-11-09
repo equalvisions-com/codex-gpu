@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, integer, jsonb, text as textType, uniqueIndex, index, doublePrecision } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, integer, jsonb, text as textType, uniqueIndex, index, doublePrecision, primaryKey } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { user } from "./auth-schema";
 
@@ -31,6 +31,7 @@ export const aiModels = pgTable("ai_models", {
   group: text("group"),
   instructType: text("instruct_type"),
   permaslug: text("permaslug"),
+  endpointId: text("endpoint_id"),
   mmlu: doublePrecision("mmlu"),
   maxCompletionTokens: integer("max_completion_tokens"),
   supportedParameters: textType("supported_parameters").array(),
@@ -66,6 +67,19 @@ export const aiModels = pgTable("ai_models", {
   providerNameIndex: index("ai_models_provider_name_idx").on(table.provider, table.shortName),
   // GIN index for pricing queries
   pricingIndex: index("ai_models_pricing_idx").using("gin", table.pricing),
+}));
+
+export const modelThroughputSamples = pgTable("model_throughput_samples", {
+  permaslug: text("permaslug").notNull(),
+  endpointId: text("endpoint_id").notNull(),
+  observedAt: timestamp("observed_at").notNull(),
+  throughput: doublePrecision("throughput").notNull(),
+  scrapedAt: timestamp("scraped_at").defaultNow().notNull(),
+}, (table) => ({
+  pk: primaryKey({ columns: [table.permaslug, table.endpointId, table.observedAt] }),
+  permaslugIdx: index("model_throughput_permaslug_idx").on(table.permaslug),
+  endpointIdx: index("model_throughput_endpoint_idx").on(table.endpointId),
+  observedIdx: index("model_throughput_observed_idx").on(table.observedAt),
 }));
 
 // GPU Pricing table - stores scraped GPU pricing data (wiped on each scrape)

@@ -46,6 +46,7 @@ import { DesktopNavTabs, type DesktopNavItem } from "./nav-tabs";
 import type { ModelFavoriteKey } from "@/types/model-favorites";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { ModelSheetCharts } from "./model-sheet-charts";
+import type { ModelsColumnSchema } from "./models-schema";
 
 const noop = () => {};
 const gradientSurfaceClass =
@@ -593,6 +594,8 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
       .flatRows.find((row) => row.id === selectedRowKey);
   }, [rowSelection, table, isLoading, isFetching, data]);
 
+  const selectedModel = selectedRow?.original as Partial<ModelsColumnSchema> | undefined;
+
   // Selection sync limited to the current batch
   const previousUuidRef = React.useRef<string>("__init__");
   React.useEffect(() => {
@@ -1069,6 +1072,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
           </div>
         </div>
       </div>
+      {/** Selected row metadata for sheet charts */}
       <DataTableSheetDetails
         title={renderSheetTitle({ row: selectedRow })}
         titleClassName="font-mono"
@@ -1089,7 +1093,11 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
               ...meta,
             }}
           />
-          <ModelSheetCharts />
+          <ModelSheetCharts
+            permaslug={selectedModel?.permaslug}
+            endpointId={selectedModel?.endpointId}
+            provider={selectedModel?.provider}
+          />
         </div>
       </DataTableSheetDetails>
       <ModelsCheckedActionsIsland initialFavoriteKeys={(meta as any)?.initialFavoriteKeys} />

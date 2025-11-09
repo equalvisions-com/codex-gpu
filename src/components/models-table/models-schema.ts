@@ -27,9 +27,10 @@ export const modelsColumnSchema = z.object({
   group: z.string().nullable(),
   instructType: z.string().nullable(),
   permaslug: z.string().nullable(),
+  endpointId: z.string().nullable(),
   mmlu: z.number().nullable(),
   maxCompletionTokens: z.number().nullable(),
-  supportedParameters: z.string().nullable(),
+  supportedParameters: z.array(z.string()),
 
   // Pricing data
   pricing: z.record(z.any()),

@@ -90,6 +90,13 @@
       "when": 1762381028876,
       "tag": "0012_remove_ai_models_endpoint",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1762644958577,
+      "tag": "0013_add_endpoint_throughput",
+      "breakpoints": true
     }
   ]
 }

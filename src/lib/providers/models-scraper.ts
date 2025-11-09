@@ -129,9 +129,6 @@ export class ModelsScraper {
     // Strip only " (free)" pattern (case-insensitive)
     cleaned = cleaned.replace(/\s*\(free\)/gi, '').trim();
 
-    // Strip only " (exacto)" pattern (case-insensitive)
-    cleaned = cleaned.replace(/\s*\(exacto\)/gi, '').trim();
-
     // Convert only " (thinking)" to " Thinking" (case-insensitive, capitalize result)
     cleaned = cleaned.replace(/\s*\(thinking\)/gi, ' Thinking').trim();
 
@@ -371,6 +368,7 @@ export class ModelsScraper {
               group: model.group || null,
               instructType: model.instruct_type || null,
               permaslug: model.permaslug || null,
+              endpointId: typeof model.endpoint?.id === 'string' ? model.endpoint.id : null,
               pricing: model.endpoint?.pricing || {},
               features: model.features || {},
               provider: modelProvider,

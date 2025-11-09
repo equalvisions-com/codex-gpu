@@ -18,13 +18,14 @@ export function toModelsColumnRow(model: AIModel): ModelsColumnSchema {
     group: model.group ?? null,
     instructType: model.instructType ?? null,
     permaslug: model.permaslug ?? null,
+    endpointId: model.endpointId ?? null,
     pricing: model.pricing ?? {},
     features: model.features ?? {},
     mmlu: model.mmlu ?? null,
     maxCompletionTokens: model.maxCompletionTokens ?? null,
     supportedParameters: Array.isArray(model.supportedParameters)
-      ? model.supportedParameters.join(",")
-      : model.supportedParameters ?? null,
+      ? model.supportedParameters
+      : [],
     scrapedAt: model.scrapedAt,
   };
 }

@@ -14,6 +14,7 @@ export interface AIModel {
   group?: string;
   instructType?: string | null;
   permaslug?: string;
+  endpointId?: string | null;
   mmlu?: number | null;
   maxCompletionTokens?: number | null;
   supportedParameters: string[];

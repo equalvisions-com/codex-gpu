@@ -515,13 +515,14 @@ export async function GET(req: NextRequest): Promise<Response> {
       group: row.group || null,
       instructType: row.instructType || null,
       permaslug: row.permaslug || null,
+      endpointId: row.endpointId || null,
       pricing: row.pricing,
       features: row.features,
       mmlu: row.mmlu ?? null,
       maxCompletionTokens: row.maxCompletionTokens ?? null,
       supportedParameters: Array.isArray(row.supportedParameters)
-        ? row.supportedParameters.join(",")
-        : row.supportedParameters ?? null,
+        ? row.supportedParameters
+        : [],
       scrapedAt: row.scrapedAt,
     }));
 
