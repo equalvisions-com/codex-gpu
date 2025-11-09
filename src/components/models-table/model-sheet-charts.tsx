@@ -135,23 +135,60 @@ function SheetLineChart({
                   vertical={false}
                   stroke="hsl(var(--border))"
                 />
-                  <Tooltip
-                    contentStyle={{
-                      background: "hsl(var(--background))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "0.5rem",
-                      fontSize: "0.75rem",
-                    }}
-                    labelClassName="font-medium"
-                    formatter={(value: number) =>
-                      [
-                        valueFormatter
-                          ? valueFormatter(value)
-                          : value.toLocaleString(undefined, { maximumFractionDigits: 2 }),
-                        valueLabel ?? "value",
-                      ]}
-                    labelFormatter={(label, payload) => formatLabel(payload, label)}
-                  />
+                <Tooltip
+                  contentStyle={{
+                    background: "hsl(var(--background))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "0.5rem",
+                    fontSize: "0.75rem",
+                  }}
+                  labelClassName="font-medium"
+                  formatter={(value: number) =>
+                    [
+                      valueFormatter
+                        ? valueFormatter(value)
+                        : value.toLocaleString(undefined, { maximumFractionDigits: 2 }),
+                      valueLabel ?? "value",
+                    ]}
+                  labelFormatter={(label, payload) => formatLabel(payload, label)}
+                  content={({ payload, label }) => {
+                    if (!payload?.length) return null;
+                    return (
+                      <div
+                        className="recharts-default-tooltip"
+                        style={{
+                          background: "hsl(var(--background))",
+                          border: "1px solid hsl(var(--border))",
+                          borderRadius: "0.5rem",
+                          fontSize: "0.75rem",
+                          padding: "0.5rem 0.75rem",
+                          color: stroke,
+                        }}
+                      >
+                        <div className="font-medium" style={{ color: "hsl(var(--foreground))" }}>
+                          {formatLabel(payload as any, label as any)}
+                        </div>
+                        <div
+                          className="recharts-tooltip-item-list flex"
+                          style={{ height: "18px", alignItems: "center", gap: "0.5rem" }}
+                        >
+                          {payload.map((entry, index) => (
+                            <div key={index} className="flex items-center gap-2 text-xs">
+                              <span>
+                                {valueFormatter
+                                  ? valueFormatter(entry.value as number)
+                                  : (entry.value as number).toLocaleString(undefined, {
+                                      maximumFractionDigits: 2,
+                                    })}
+                              </span>
+                              <span>{valueLabel ?? entry.name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  }}
+                />
                 <Line
                   type="natural"
                   dot={false}
@@ -288,7 +325,7 @@ export function ModelSheetCharts({ permaslug, endpointId, provider }: ModelSheet
         stroke="hsl(var(--chart-1))"
         isLoading={throughputQuery.isPending || throughputQuery.isFetching}
         emptyMessage={emptyMessage}
-        valueLabel="Tokens"
+        valueLabel="TOK/S"
       />
       <SheetLineChart
         title="Latency"
