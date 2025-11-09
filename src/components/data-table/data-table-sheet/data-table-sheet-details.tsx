@@ -7,7 +7,6 @@ import {
   SheetClose,
   SheetContent,
   SheetDescription,
-  SheetFooter,
   SheetHeader,
   SheetTitle,
 } from "@/components/custom/sheet";
@@ -159,13 +158,15 @@ export function DataTableSheetDetails({
               </Button>
             </SheetClose>
           </div>
-          {children}
+          <div className="space-y-4">
+            {children}
+            <div className="border-t border-border/70 pt-4">
+              <Button className="w-full font-semibold" type="button" disabled={!selectedRowKey}>
+                Deploy
+              </Button>
+            </div>
+          </div>
         </div>
-        <SheetFooter className="border-t bg-background border-border/70 p-4">
-          <Button className="w-full font-semibold" type="button" disabled={!selectedRowKey}>
-            Deploy
-          </Button>
-        </SheetFooter>
       </SheetContent>
     </Sheet>
   );

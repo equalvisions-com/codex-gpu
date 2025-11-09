@@ -106,7 +106,7 @@ export const sheetFields: SheetField<ModelsColumnSchema>[] = [
     component: (row) => {
       const fallback = row.name ?? "N/A";
       const value = row.shortName ?? fallback;
-      return <h2 className="text-xl font-semibold">{value || fallback}</h2>;
+      return <h2 className="text-lg font-semibold">{value || fallback}</h2>;
     },
   },
   {

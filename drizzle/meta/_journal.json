@@ -97,6 +97,13 @@
       "when": 1762644958577,
       "tag": "0013_add_endpoint_throughput",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1762698952120,
+      "tag": "0014_add_latency_samples",
+      "breakpoints": true
     }
   ]
 }
