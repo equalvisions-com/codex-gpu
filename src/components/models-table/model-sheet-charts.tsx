@@ -142,7 +142,7 @@ export function ModelSheetCharts({ permaslug, endpointId, provider }: ModelSheet
       : "No latency samples yet.";
 
   return (
-    <div className="grid gap-4 border-t border-border/70 pt-4">
+    <div className="grid gap-4 border-t border-border/60 pt-4">
       <SheetLineChart
         title="Throughput"
         description={throughputDescription}

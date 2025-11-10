@@ -161,7 +161,6 @@ export function filterData(
           row.billing_notes,
           row.price_unit,
           row.type,
-          row.network,
         ];
 
         const numericFields: Array<unknown> = [

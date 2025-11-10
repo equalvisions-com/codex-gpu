@@ -11,6 +11,10 @@ export interface GpuPriceSampleInput {
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
+function startOfUtcDay(date: Date): Date {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+}
+
 class GpuPriceHistoryStore {
   async appendSamples(samples: GpuPriceSampleInput[]): Promise<string[]> {
     if (!samples.length) {
@@ -19,11 +23,12 @@ class GpuPriceHistoryStore {
 
     const touched = new Set<string>();
     const values = samples.map((sample) => {
+      const normalizedObservedAt = startOfUtcDay(sample.observedAt);
       touched.add(sample.stableKey);
       return {
         stableKey: sample.stableKey,
         provider: sample.provider,
-        observedAt: sample.observedAt,
+        observedAt: normalizedObservedAt,
         priceUsd: sample.priceUsd,
         scrapedAt: new Date(),
       };

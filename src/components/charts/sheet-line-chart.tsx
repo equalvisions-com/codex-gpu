@@ -76,7 +76,7 @@ export function SheetLineChart({
   }, [data]);
 
   return (
-    <Card className="border-border/70 bg-muted/30">
+    <Card className="border-border/60 bg-muted/30">
       <CardHeader className="space-y-1.5 p-4 pb-1">
         <CardTitle className="text-sm font-medium text-foreground">
           {title}

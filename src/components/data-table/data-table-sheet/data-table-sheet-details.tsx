@@ -51,6 +51,37 @@ export function DataTableSheetDetails({
     () => table.getCoreRowModel().flatRows[index - 1]?.id,
     [index, isLoading],
   );
+  const selectedRowData = selectedRow?.original as Record<string, any> | undefined;
+  const deployHref = React.useMemo(() => {
+    if (!selectedRowData) return null;
+
+    const sourceUrl =
+      typeof selectedRowData.source_url === "string"
+        ? selectedRowData.source_url
+        : typeof selectedRowData.sourceUrl === "string"
+          ? selectedRowData.sourceUrl
+          : null;
+    if (sourceUrl) return sourceUrl;
+
+    const permaslug =
+      typeof selectedRowData.permaslug === "string"
+        ? selectedRowData.permaslug
+        : typeof selectedRowData.slug === "string"
+          ? selectedRowData.slug
+          : null;
+    if (permaslug) {
+      if (/^https?:\/\//i.test(permaslug)) return permaslug;
+      return `https://openrouter.ai/models/${permaslug}`;
+    }
+
+    const fallback =
+      typeof selectedRowData.deploy_url === "string"
+        ? selectedRowData.deploy_url
+        : typeof selectedRowData.deployUrl === "string"
+          ? selectedRowData.deployUrl
+          : null;
+    return fallback ?? null;
+  }, [selectedRowData]);
 
   const onPrev = React.useCallback(() => {
     if (prevId) table.setRowSelection({ [prevId]: true });
@@ -160,10 +191,18 @@ export function DataTableSheetDetails({
           </div>
           <div className="space-y-4">
             {children}
-            <div className="border-t border-border/70 pt-4">
-              <Button className="w-full font-semibold" type="button" disabled={!selectedRowKey}>
-                Deploy
-              </Button>
+            <div className="border-t border-border/60 pt-4">
+              {deployHref ? (
+                <Button asChild className="w-full font-semibold">
+                  <a href={deployHref} target="_blank" rel="noopener noreferrer">
+                    Deploy
+                  </a>
+                </Button>
+              ) : (
+                <Button className="w-full font-semibold" type="button" disabled={!selectedRowKey}>
+                  Deploy
+                </Button>
+              )}
             </div>
           </div>
         </div>

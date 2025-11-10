@@ -1034,23 +1034,25 @@ export function DataTableInfinite<TData, TValue, TMeta>({
         title={renderSheetTitle({ row: selectedRow })}
         titleClassName="font-mono"
       >
-        <MemoizedDataTableSheetContent
-          table={table}
-          data={selectedRow?.original}
-          filterFields={filterFields}
-          fields={sheetFields}
-          // Memoization can be added later if needed
-          // REMINDER: this is used to pass additional data like the `InfiniteQueryMeta`
-          metadata={{
-            totalRows,
-            filterRows,
-            totalRowsFetched,
-            // REMINDER: includes `currentPercentiles`
-            ...meta,
-          }}
-        />
-        <div className="mt-4">
-          <GpuSheetCharts stableKey={(selectedRow?.original as any)?.stable_key} />
+        <div className="space-y-0">
+          <MemoizedDataTableSheetContent
+            table={table}
+            data={selectedRow?.original}
+            filterFields={filterFields}
+            fields={sheetFields}
+            // Memoization can be added later if needed
+            // REMINDER: this is used to pass additional data like the `InfiniteQueryMeta`
+            metadata={{
+              totalRows,
+              filterRows,
+              totalRowsFetched,
+              // REMINDER: includes `currentPercentiles`
+              ...meta,
+            }}
+          />
+          <div className="border-t border-border/60 pt-4">
+            <GpuSheetCharts stableKey={(selectedRow?.original as any)?.stable_key} />
+          </div>
         </div>
       </DataTableSheetDetails>
       <CheckedActionsIsland initialFavoriteKeys={(meta as any)?.initialFavoriteKeys} />

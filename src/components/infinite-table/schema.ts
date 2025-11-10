@@ -40,7 +40,6 @@ export const columnSchema = z.object({
   // Flags
   spot: z.boolean().optional(),
   class: z.literal("GPU").optional(),
-  network: z.enum(["InfiniBand", "Ethernet", "Unknown"]).optional(),
   type: z.enum(["VM", "Bare Metal"]).optional(),
 
   // Computed fields
