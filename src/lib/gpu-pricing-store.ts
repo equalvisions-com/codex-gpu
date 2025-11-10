@@ -5,6 +5,7 @@ import type { ProviderResult, PriceRow, ProviderSnapshot, Provider } from "@/typ
 import type { RowWithId } from "@/types/api";
 import { and, eq, sql } from "drizzle-orm";
 import { stableGpuKey } from "@/components/infinite-table/stable-key";
+import { gpuPriceHistoryStore, type GpuPriceSampleInput } from "@/lib/gpu-price-history-store";
 
 type GpuPricingRow = typeof gpuPricing.$inferSelect;
 
@@ -29,7 +30,29 @@ function toRowWithId(record: GpuPricingRow): RowWithId {
     ...(data as any),
     provider: record.provider,
     observed_at: observedAtIso,
+    stable_key: record.stableKey,
   } as RowWithId;
+}
+
+function getPriceUsd(row: PriceRow): number | null {
+  const priceCandidates = [
+    (row as any).price_hour_usd,
+    (row as any).price_usd,
+    (row as any).price_month_usd,
+  ];
+
+  for (const candidate of priceCandidates) {
+    if (typeof candidate === "number" && !Number.isNaN(candidate)) {
+      return candidate;
+    }
+    if (typeof candidate === "string") {
+      const parsed = Number(candidate);
+      if (Number.isFinite(parsed)) {
+        return parsed;
+      }
+    }
+  }
+  return null;
 }
 
 export class GpuPricingStore {
@@ -37,15 +60,16 @@ export class GpuPricingStore {
    * Replace all GPU pricing data with the latest scrape results.
    * The table is cleared before new rows are inserted to ensure parity with the models workflow.
    */
-  async replaceAll(providerResults: ProviderResult[]): Promise<number> {
+  async replaceAll(providerResults: ProviderResult[]): Promise<{ stored: number; touchedStableKeys: string[] }> {
     if (!providerResults.length) {
-      return 0;
+      return { stored: 0, touchedStableKeys: [] };
     }
 
     console.log(`[GpuPricingStore] Replacing GPU pricing data for ${providerResults.length} providers...`);
     await db.delete(gpuPricing);
 
     let stored = 0;
+    const historySamples: GpuPriceSampleInput[] = [];
     for (const result of providerResults) {
       const observedAtIso = normalizeObservedAt(result.observedAt);
       const version = typeof result.version === "number" ? result.version : 1;
@@ -75,6 +99,16 @@ export class GpuPricingStore {
             stableKey,
           });
           stored += 1;
+
+          const priceUsd = getPriceUsd(row);
+          if (priceUsd != null) {
+            historySamples.push({
+              stableKey,
+              provider: result.provider,
+              observedAt: new Date(observedAtIso),
+              priceUsd,
+            });
+          }
         } catch (error) {
           console.error("[GpuPricingStore] Failed to store row", {
             provider: result.provider,
@@ -85,8 +119,11 @@ export class GpuPricingStore {
       }
     }
 
+    const touchedStableKeys = await gpuPriceHistoryStore.appendSamples(historySamples);
+    await gpuPriceHistoryStore.pruneThirtyDaysWindow();
+
     console.log(`[GpuPricingStore] Stored ${stored} GPU pricing rows`);
-    return stored;
+    return { stored, touchedStableKeys };
   }
 
   async getAllRows(): Promise<RowWithId[]> {

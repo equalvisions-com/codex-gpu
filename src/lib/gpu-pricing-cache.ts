@@ -45,6 +45,7 @@ function toRowWithId(record: GpuPricingRow): RowWithId {
     provider: record.provider,
     observed_at: observedAtIso,
     price_hour_usd: priceHourUsd,
+    stable_key: record.stableKey,
   } as RowWithId;
 }
 

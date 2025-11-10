@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     logger.info("[GpuPricingJob] Starting full GPU pricing scrape...");
 
     const scrapeResult = await gpuPricingScraper.scrapeAll();
-    const stored = await gpuPricingStore.replaceAll(scrapeResult.providerResults);
+    const { stored, touchedStableKeys } = await gpuPricingStore.replaceAll(scrapeResult.providerResults);
 
     // Invalidate data/tagged caches and route caches
     // This ensures all cached queries (getCachedFacets, getCachedGpusFiltered) 
@@ -36,6 +36,11 @@ export async function POST(request: NextRequest) {
     revalidateTag("pricing");
     revalidateTag("favorites");
     revalidatePath("/api");
+    await Promise.all(
+      touchedStableKeys.map((stableKey) =>
+        revalidateTag(`gpu-price-history:${stableKey}`),
+      ),
+    );
     
     logger.info(`[GpuPricingJob] Cache invalidated (tags: 'pricing', 'favorites', path: '/api')`);
 
@@ -90,7 +95,7 @@ export async function GET(request: NextRequest) {
       logger.info("[GpuPricingJob][cron] Starting scheduled GPU pricing scrape...");
 
       const scrapeResult = await gpuPricingScraper.scrapeAll();
-      const stored = await gpuPricingStore.replaceAll(scrapeResult.providerResults);
+      const { stored, touchedStableKeys } = await gpuPricingStore.replaceAll(scrapeResult.providerResults);
 
       // Invalidate caches
       // This ensures all cached queries (getCachedFacets, getCachedGpusFiltered) 
@@ -99,6 +104,11 @@ export async function GET(request: NextRequest) {
       revalidateTag("pricing");
       revalidateTag("favorites");
       revalidatePath("/api");
+      await Promise.all(
+        touchedStableKeys.map((stableKey) =>
+          revalidateTag(`gpu-price-history:${stableKey}`),
+        ),
+      );
       
       logger.info(`[GpuPricingJob] [cron] Cache invalidated (tags: 'pricing', 'favorites', path: '/api')`);
 

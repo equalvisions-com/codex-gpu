@@ -37,6 +37,7 @@ import { useQueryStates, type ParserBuilder } from "nuqs";
 import { searchParamsParser } from "./search-params";
 import { RowSkeletons } from "./_components/row-skeletons";
 import { CheckedActionsIsland } from "./_components/checked-actions-island";
+import { GpuSheetCharts } from "./gpu-sheet-charts";
 import { filterFields, sheetFields } from "./constants";
 import { UserMenu, type AccountUser } from "./account-components";
 import { usePathname } from "next/navigation";
@@ -1048,6 +1049,9 @@ export function DataTableInfinite<TData, TValue, TMeta>({
             ...meta,
           }}
         />
+        <div className="mt-4">
+          <GpuSheetCharts stableKey={(selectedRow?.original as any)?.stable_key} />
+        </div>
       </DataTableSheetDetails>
       <CheckedActionsIsland initialFavoriteKeys={(meta as any)?.initialFavoriteKeys} />
     </DataTableProvider>

@@ -95,6 +95,19 @@ export const modelLatencySamples = pgTable("model_latency_samples", {
   observedIdx: index("model_latency_observed_idx").on(table.observedAt),
 }));
 
+export const gpuPriceSamples = pgTable("gpu_price_samples", {
+  stableKey: text("stable_key").notNull(),
+  provider: text("provider").notNull(),
+  observedAt: timestamp("observed_at").notNull(),
+  priceUsd: doublePrecision("price_usd").notNull(),
+  scrapedAt: timestamp("scraped_at").defaultNow().notNull(),
+}, (table) => ({
+  pk: primaryKey({ columns: [table.stableKey, table.observedAt] }),
+  stableKeyIdx: index("gpu_price_samples_stable_key_idx").on(table.stableKey),
+  providerIdx: index("gpu_price_samples_provider_idx").on(table.provider),
+  observedIdx: index("gpu_price_samples_observed_idx").on(table.observedAt),
+}));
+
 // GPU Pricing table - stores scraped GPU pricing data (wiped on each scrape)
 export const gpuPricing = pgTable("gpu_pricing", {
   id: text("id").primaryKey(),

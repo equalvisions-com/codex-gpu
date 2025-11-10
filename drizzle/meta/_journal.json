@@ -104,6 +104,13 @@
       "when": 1762698952120,
       "tag": "0014_add_latency_samples",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1762700000000,
+      "tag": "0015_add_gpu_price_samples",
+      "breakpoints": true
     }
   ]
 }

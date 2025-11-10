@@ -9,6 +9,7 @@ import { z } from "zod";
 export const columnSchema = z.object({
   // Unique identifier for table operations
   uuid: z.string(),
+  stable_key: z.string().optional(),
 
   // Core identification (from PriceRow)
   provider: z.enum(["coreweave", "nebius", "hyperstack", "runpod", "lambda", "digitalocean", "oracle", "crusoe"]),
