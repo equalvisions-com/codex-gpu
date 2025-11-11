@@ -53,7 +53,7 @@ export const MODEL_PROVIDER_LOGOS: Record<
   Nebius: { src: "/logos/nebius.png", alt: "Nebius" },
   Novita: { src: "/logos/novita.jpeg", alt: "Novita" },
   InferenceNet: { src: "/logos/inferencenet.png", alt: "InferenceNet" },
-  Nvidia: { src: "/logos/nvidia.png", alt: "NVIDIA" },
+  NVIDIA: { src: "/logos/nvidia.png", alt: "NVIDIA" },
   Infermatic: { src: "/logos/infermatic.png", alt: "Infermatic" },
   Inflection: { src: "/logos/inflection.png", alt: "Inflection" },
   Liquid: { src: "/logos/liquid.png", alt: "Liquid" },

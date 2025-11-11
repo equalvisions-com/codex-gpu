@@ -35,7 +35,7 @@ export type SheetLineSeries = {
 
 export type SheetLineChartProps = {
   title: string;
-  description?: string;
+  description?: React.ReactNode;
   stroke?: string;
   data?: { value: number; observedAt?: string }[];
   series?: SheetLineSeries[];
@@ -56,6 +56,18 @@ export function SheetLineChart({
   valueFormatter,
   valueLabel,
 }: SheetLineChartProps) {
+  const descriptionContent = React.useMemo(() => {
+    if (!description) return null;
+    if (typeof description === "string") {
+      return (
+        <CardDescription className="text-xs text-foreground/70">
+          {description}
+        </CardDescription>
+      );
+    }
+    return <div className="text-xs text-foreground/70">{description}</div>;
+  }, [description]);
+
   const resolvedSeries = React.useMemo<SheetLineSeries[]>(() => {
     if (series && series.length > 0) {
       return series.map((item, index) => ({
@@ -147,16 +159,12 @@ export function SheetLineChart({
   }, [resolvedSeries]);
 
   return (
-    <Card className="border-border/60 bg-muted/30">
+    <Card className="border-border/60 bg-background shadow-none">
       <CardHeader className="space-y-1.5 p-4 pb-1">
         <CardTitle className="text-sm font-medium text-foreground">
           {title}
         </CardTitle>
-        {description ? (
-          <CardDescription className="text-xs text-foreground/70">
-            {description}
-          </CardDescription>
-        ) : null}
+        {descriptionContent}
       </CardHeader>
       <CardContent className="p-4">
         <div className="h-36 w-full">
@@ -196,10 +204,10 @@ export function SheetLineChart({
                           padding: "0.5rem 0.75rem",
                         }}
                       >
-                        <div className="font-medium" style={{ color: "hsl(var(--foreground))" }}>
+                        <div className="font-semibold" style={{ color: "hsl(var(--foreground))" }}>
                           {formatLabel(payload as any, label as any)}
                         </div>
-                        <div className="recharts-tooltip-item-list mt-2 flex flex-col gap-1">
+                        <div className="recharts-tooltip-item-list mt-1 flex flex-col gap-1">
                           {payload.map((entry, index) => (
                             <div key={index} className="flex items-center gap-2 text-xs">
                               <span
@@ -213,11 +221,8 @@ export function SheetLineChart({
                                       maximumFractionDigits: 2,
                                     })}
                               </span>
-                              <span className="text-foreground/70">
-                                {entry.name ?? valueLabel ?? "value"}
-                              </span>
-                            </div>
-                          ))}
+                        </div>
+                      ))}
                         </div>
                       </div>
                     );
@@ -233,7 +238,6 @@ export function SheetLineChart({
                     strokeWidth={2}
                     activeDot={{ r: 4 }}
                     isAnimationActive={false}
-                    name={series.label}
                   />
                 ))}
               </LineChart>

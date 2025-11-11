@@ -13,6 +13,7 @@ import type { Table as TanStackTable, Row } from "@tanstack/react-table";
 import type { ColumnSchema } from "@/components/infinite-table/schema";
 import { filterFields, sheetFields } from "@/components/infinite-table/constants";
 import { SheetLineChart } from "@/components/charts/sheet-line-chart";
+import { ChartLegend } from "@/components/charts/chart-legend";
 import { useQueries } from "@tanstack/react-query";
 
 interface CompareDialogProps {
@@ -32,12 +33,9 @@ export function CompareDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl bg-background p-4 sm:p-4">
+      <DialogContent className="max-w-3xl bg-background p-4 sm:p-4 border border-border/60 [&>button:last-of-type]:right-4 [&>button:last-of-type]:top-4">
         <DialogHeader>
-          <DialogTitle>Compare configurations</DialogTitle>
-          <DialogDescription>
-            Side-by-side details for the selected rows.
-          </DialogDescription>
+          <DialogTitle>Compare GPUs</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 md:grid-cols-2">
           {rows.map((row, index) => {
@@ -50,7 +48,7 @@ export function CompareDialog({
             return (
               <div
                 key={row.id ?? `compare-${index}`}
-                className="rounded-xl border border-border/60 bg-background/60 p-4 space-y-4"
+                className="rounded-xl border border-border/60 bg-background/60 px-4 pt-4 pb-2 space-y-4"
               >
                 <MemoizedDataTableSheetContent
                   table={table}
@@ -129,7 +127,8 @@ function GpuCompareChart({
           `Configuration ${index + 1}`;
         return {
           stableKey,
-          label: providerName ? `${baseLabel} (${providerName})` : baseLabel,
+          label: baseLabel,
+          provider: providerName ?? undefined,
           color: `hsl(var(--chart-${(index % 5) + 1}))`,
         };
       })
@@ -176,15 +175,23 @@ function GpuCompareChart({
     <SheetLineChart
       title="Pricing"
       description={
-        targets.length
-          ? `Comparing ${targets.length} ${targets.length === 1 ? "configuration" : "configurations"}`
-          : undefined
+        targets.length ? (
+          <ChartLegend
+            layout="stacked"
+            items={targets.map((target) => ({
+              id: target.stableKey,
+              label: target.label,
+              provider: target.provider,
+              color: target.color,
+            }))}
+          />
+        ) : undefined
       }
       series={series}
       isLoading={isLoading}
       emptyMessage={emptyMessage}
       valueLabel="USD"
-      valueFormatter={(value) => `$${value.toFixed(2)}`}
+      valueFormatter={(value) => `$${value.toFixed(2)} hr`}
     />
   );
 }

@@ -14,6 +14,7 @@ import { filterFields, sheetFields } from "./models-constants";
 import type { ModelsColumnSchema } from "./models-schema";
 import { useQueries } from "@tanstack/react-query";
 import { SheetLineChart } from "@/components/charts/sheet-line-chart";
+import { ChartLegend } from "@/components/charts/chart-legend";
 
 interface ModelCompareDialogProps {
   open: boolean;
@@ -32,7 +33,7 @@ export function ModelCompareDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl bg-background p-4 sm:p-4">
+      <DialogContent className="max-w-3xl bg-background p-4 sm:p-4 border border-border/60 [&>button:last-of-type]:right-4 [&>button:last-of-type]:top-4">
         <DialogHeader>
           <DialogTitle>Model Comparison</DialogTitle>
         </DialogHeader>
@@ -42,7 +43,7 @@ export function ModelCompareDialog({
             return (
               <div
                 key={row.id ?? `model-compare-${index}`}
-                className="rounded-xl border border-border/60 bg-background/60 p-4 space-y-4"
+                className="rounded-xl border border-border/60 bg-background/60 px-4 pt-4 pb-2 space-y-4"
               >
                 <MemoizedDataTableSheetContent
                   table={table}
@@ -154,7 +155,7 @@ function ModelComparisonCharts({
       const points = series?.data ?? [];
       return {
         id: `throughput-${target.key}`,
-        label: target.provider ? `${target.label} (${target.provider})` : target.label,
+        label: target.label,
         color: target.color,
         data: points.map((point) => ({
           value: point.throughput,
@@ -171,7 +172,7 @@ function ModelComparisonCharts({
       const points = series?.data ?? [];
       return {
         id: `latency-${target.key}`,
-        label: target.provider ? `${target.label} (${target.provider})` : target.label,
+        label: target.label,
         color: target.color,
         data: points.map((point) => ({
           value: point.latency / 1000,
@@ -202,8 +203,17 @@ function ModelComparisonCharts({
       ? "Unable to load latency data."
       : "No latency samples yet.";
 
+  const throughputValueFormatter = React.useCallback((value: number) => {
+    const formatted = value.toLocaleString(undefined, {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
+    });
+    return `${formatted} tps`;
+  }, []);
+
   const latencyValueFormatter = React.useCallback((value: number) => {
-    return value >= 1 ? value.toFixed(2) : value.toFixed(3);
+    const formatted = value.toFixed(2);
+    return `${formatted}s`;
   }, []);
 
   const hasTargets = targets.length > 0;
@@ -213,17 +223,36 @@ function ModelComparisonCharts({
       <SheetLineChart
         title="Throughput"
         description={
-          hasTargets ? `Comparing ${targets.length} ${targets.length === 1 ? "model" : "models"}` : undefined
+          hasTargets ? (
+            <ChartLegend
+              items={targets.map((target) => ({
+                id: target.key,
+                label: target.label,
+                provider: target.provider,
+                color: target.color,
+              }))}
+            />
+          ) : undefined
         }
         series={throughputSeries}
         isLoading={throughputLoading}
         emptyMessage={throughputEmptyMessage}
         valueLabel="tok/s"
+        valueFormatter={throughputValueFormatter}
       />
       <SheetLineChart
         title="Latency"
         description={
-          hasTargets ? `Comparing ${targets.length} ${targets.length === 1 ? "model" : "models"}` : undefined
+          hasTargets ? (
+            <ChartLegend
+              items={targets.map((target) => ({
+                id: target.key,
+                label: target.label,
+                provider: target.provider,
+                color: target.color,
+              }))}
+            />
+          ) : undefined
         }
         series={latencySeries}
         isLoading={latencyLoading}

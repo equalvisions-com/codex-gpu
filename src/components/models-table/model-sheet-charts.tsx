@@ -116,19 +116,28 @@ export function ModelSheetCharts({ permaslug, endpointId, provider }: ModelSheet
   }, [latencyData]);
 
   const latencyValueFormatter = React.useCallback((value: number) => {
-    return value >= 1 ? value.toFixed(2) : value.toFixed(3);
+    const formatted = value.toFixed(2);
+    return `${formatted}s`;
+  }, []);
+
+  const throughputValueFormatter = React.useCallback((value: number) => {
+    const formatted = value.toLocaleString(undefined, {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
+    });
+    return `${formatted} tps`;
   }, []);
 
   const throughputDescription = throughputAverage != null
     ? `${throughputAverage.toLocaleString(undefined, {
-        maximumFractionDigits: 2,
-      })} tok/s avg`
-    : "tok/s";
+        maximumFractionDigits: 1,
+      })} TPS`
+    : "";
   const latencyDescription = latencyAverage != null
     ? `${latencyAverage.toLocaleString(undefined, {
         maximumFractionDigits: 2,
-      })} secs avg`
-    : "secs";
+      })}s`
+    : "";
   const missingSelection = !permaslug || !endpointId;
   const emptyMessage = missingSelection
     ? "Select a provider variant to load throughput."
@@ -151,6 +160,7 @@ export function ModelSheetCharts({ permaslug, endpointId, provider }: ModelSheet
         isLoading={throughputQuery.isPending || throughputQuery.isFetching}
         emptyMessage={emptyMessage}
         valueLabel="tok/s"
+        valueFormatter={throughputValueFormatter}
       />
       <SheetLineChart
         title="Latency"
