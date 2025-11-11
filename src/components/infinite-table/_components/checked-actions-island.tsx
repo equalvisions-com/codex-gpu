@@ -4,10 +4,9 @@ import * as React from "react";
 import { createPortal } from "react-dom";
 import { useDataTable } from "@/components/data-table/data-table-provider";
 import { Button } from "@/components/ui/button";
-import { Star, GitCompare, Rocket } from "lucide-react";
+import { Star, GitCompare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { logger } from "@/lib/logger";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { useEphemeralNotice } from "@/hooks/use-ephemeral-notice";
 import { FavoritesNotice } from "./favorites-notice";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -52,6 +51,7 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
   }, [showSignIn]);
 
   React.useEffect(() => {
+    isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
     };
@@ -65,6 +65,7 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
       .flatRows.filter((row) => checkedRows[row.id]) as Row<ColumnSchema>[];
   }, [table, checkedRows]);
   const compareRows = React.useMemo(() => selectedRows.slice(0, 2), [selectedRows]);
+  const selectedRowCount = selectedRows.length;
 
   const hasSelection = React.useMemo(() => {
     for (const key in checkedRows) {
@@ -98,11 +99,16 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
     return initial;
   });
 
+  const shouldFetchFavorites = React.useMemo(() => {
+    if (authPending) return false;
+    return Boolean(session) && hasSelection;
+  }, [authPending, hasSelection, session]);
+
   const { data: favorites = [] } = useQuery({
     queryKey: FAVORITES_QUERY_KEY,
     queryFn: getFavorites,
     staleTime: Infinity,
-    enabled: hasSelection,
+    enabled: shouldFetchFavorites,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
   });
@@ -176,20 +182,27 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
     return new Set(list);
   }, [localFavorites, initialFavoriteKeys]);
 
-  const canCompare = React.useMemo(() => {
-    let count = 0;
-    for (const _ in checkedRows) {
-      count++;
-      if (count >= 2) return true;
-    }
-    return false;
-  }, [checkedRows]);
-
   React.useEffect(() => {
-    if (!canCompare && isCompareOpen) {
+    if (selectedRowCount < 2 && isCompareOpen) {
       setIsCompareOpen(false);
     }
-  }, [canCompare, isCompareOpen]);
+  }, [selectedRowCount, isCompareOpen]);
+
+  const handleCompareClick = React.useCallback(() => {
+    if (selectedRowCount > 2) {
+      setNoticeVariant("error");
+      showFavoritesNotice("Error: You can only compare 2 GPUs");
+      return;
+    }
+
+    if (selectedRowCount < 2) {
+      setNoticeVariant("error");
+      showFavoritesNotice("Select another GPU to compare");
+      return;
+    }
+
+    setIsCompareOpen(true);
+  }, [selectedRowCount, setIsCompareOpen, showFavoritesNotice]);
 
   const favoriteStatus = React.useMemo(() => {
     const selectedRowIds = Object.keys(checkedRows);
@@ -491,24 +504,35 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
       <FavoritesNotice message={favoritesNotice} open={isFavoritesOpen} variant={noticeVariant} />
       <div
         className={cn(
-          "pointer-events-auto z-[var(--z-island)] flex w-auto items-center gap-2 rounded-xl border border-border bg-background/95 p-2 shadow-lg backdrop-blur transition-all duration-200 motion-reduce:transition-none",
-          "supports-[backdrop-filter]:bg-background/60",
+          "pointer-events-auto z-[var(--z-island)] flex w-auto items-center gap-2 rounded-xl border border-border bg-background/70 p-2 shadow-lg backdrop-blur transition-all duration-200 motion-reduce:transition-none",
+          "supports-[backdrop-filter]:bg-background/70",
         )}
       >
-          <Button
-            size="sm"
-            variant="secondary"
-            className="gap-2"
-            onClick={handleFavorite}
-            disabled={isMutating}
-            aria-label="Toggle favorite status"
+        <Button
+          size="sm"
+          variant="secondary"
+          className="gap-2 group bg-muted text-foreground"
+          aria-label="Compare selected"
+          onClick={handleCompareClick}
+        >
+          <GitCompare className="h-4 w-4 text-foreground transition-colors group-hover:text-[hsl(var(--chart-2))]" />
+          <span>Compare</span>
+        </Button>
+        <Button
+          size="sm"
+          variant="secondary"
+          className="gap-2 group bg-muted text-foreground"
+          onClick={handleFavorite}
+          disabled={isMutating}
+          aria-label="Toggle favorite status"
         >
           <Star
-            className={`h-4 w-4 ${
+            className={cn(
+              "h-4 w-4 text-foreground transition-colors",
               favoriteStatus.shouldRemove
                 ? "fill-yellow-400 text-yellow-400"
-                : ""
-            }`}
+                : "group-hover:text-yellow-400"
+            )}
           />
           <span>
             {favoriteStatus.shouldRemove
@@ -518,43 +542,6 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
               : "Favorite"}
           </span>
         </Button>
-        {canCompare ? (
-          <Button
-            size="sm"
-            variant="secondary"
-            className="gap-2 disabled:opacity-100 disabled:text-muted-foreground"
-            aria-label="Compare selected"
-            onClick={() => setIsCompareOpen(true)}
-          >
-            <GitCompare className="h-4 w-4" />
-            <span>Compare</span>
-          </Button>
-        ) : (
-          <HoverCard>
-            <HoverCardTrigger asChild>
-              <span tabIndex={0} className="inline-flex">
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="gap-2 disabled:opacity-100 disabled:text-muted-foreground"
-                  disabled
-                  aria-label="Select at least 2 to compare"
-                >
-                  <GitCompare className="h-4 w-4" />
-                  <span>Compare</span>
-                </Button>
-              </span>
-            </HoverCardTrigger>
-          <HoverCardContent side="top" align="center" sideOffset={16} className="z-[var(--z-tooltip)] text-xs w-auto whitespace-nowrap p-2">
-            Select at least 2 to compare
-          </HoverCardContent>
-          </HoverCard>
-        )}
-        <Button size="sm" variant="secondary" className="gap-2 disabled:opacity-100 disabled:text-muted-foreground" aria-label="Deploy selected">
-          <Rocket className="h-4 w-4" />
-          <span>Deploy</span>
-        </Button>
-        
       </div>
     </div>
   );

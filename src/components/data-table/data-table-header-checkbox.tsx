@@ -23,8 +23,8 @@ export function DataTableHeaderCheckbox() {
   const someChecked = checkedCount > 0 && checkedCount < rowIds.length;
 
   const handleToggle = React.useCallback(
-    (state: CheckedState) => {
-      const shouldCheck = state === true;
+    (_state: CheckedState) => {
+      const shouldCheck = !(allChecked || someChecked);
       setCheckedRows((previous) => {
         const nextState = { ...previous };
         if (shouldCheck) {
@@ -39,7 +39,7 @@ export function DataTableHeaderCheckbox() {
         return nextState;
       });
     },
-    [rowIds, setCheckedRows],
+    [allChecked, someChecked, rowIds, setCheckedRows],
   );
 
   return (
