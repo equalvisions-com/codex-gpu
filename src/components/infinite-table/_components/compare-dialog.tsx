@@ -32,14 +32,14 @@ export function CompareDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl bg-background">
+      <DialogContent className="max-w-3xl bg-background p-4 sm:p-4">
         <DialogHeader>
           <DialogTitle>Compare configurations</DialogTitle>
           <DialogDescription>
             Side-by-side details for the selected rows.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-2">
           {rows.map((row, index) => {
             const data = row.original as ColumnSchema;
             const stableKey =
@@ -103,6 +103,13 @@ function GpuCompareChart({
   rows: Row<ColumnSchema>[];
   dialogOpen: boolean;
 }) {
+  const normalizeObservedAt = React.useCallback((value?: string) => {
+    if (!value) return undefined;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())).toISOString();
+  }, []);
+
   const targets = React.useMemo(() => {
     return rows
       .map((row, index) => {
@@ -112,13 +119,17 @@ function GpuCompareChart({
           (data as any).stableKey ??
           null;
         if (!stableKey) return null;
+        const providerName = data.provider
+          ? data.provider.charAt(0).toUpperCase() + data.provider.slice(1)
+          : null;
+        const baseLabel =
+          data.gpu_model ??
+          data.item ??
+          data.sku ??
+          `Configuration ${index + 1}`;
         return {
           stableKey,
-          label:
-            data.gpu_model ??
-            data.item ??
-            data.sku ??
-            `Configuration ${index + 1}`,
+          label: providerName ? `${baseLabel} (${providerName})` : baseLabel,
           color: `hsl(var(--chart-${(index % 5) + 1}))`,
         };
       })
@@ -144,11 +155,11 @@ function GpuCompareChart({
         color: target.color,
         data: data.map((point) => ({
           value: point.priceUsd,
-          observedAt: point.observedAt,
+          observedAt: normalizeObservedAt(point.observedAt),
         })),
       };
     });
-  }, [targets, historyQueries]);
+  }, [targets, historyQueries, normalizeObservedAt]);
 
   const isLoading = historyQueries.some(
     (query) => query.isPending || query.isFetching,
@@ -173,7 +184,7 @@ function GpuCompareChart({
       isLoading={isLoading}
       emptyMessage={emptyMessage}
       valueLabel="USD"
-      valueFormatter={(value) => `$${value.toFixed(4)}`}
+      valueFormatter={(value) => `$${value.toFixed(2)}`}
     />
   );
 }

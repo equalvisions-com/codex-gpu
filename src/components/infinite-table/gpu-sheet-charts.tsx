@@ -21,6 +21,13 @@ interface GpuSheetChartsProps {
 export function GpuSheetCharts({ stableKey }: GpuSheetChartsProps) {
   const enabled = Boolean(stableKey);
 
+  const normalizeObservedAt = React.useCallback((value?: string) => {
+    if (!value) return undefined;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())).toISOString();
+  }, []);
+
   const historyQuery = useQuery<PriceHistoryResponse>({
     queryKey: ["gpu-price-history", stableKey],
     enabled,
@@ -47,9 +54,9 @@ export function GpuSheetCharts({ stableKey }: GpuSheetChartsProps) {
     }
     return historyQuery.data.series.map((point) => ({
       value: point.priceUsd,
-      observedAt: point.observedAt,
+      observedAt: normalizeObservedAt(point.observedAt),
     }));
-  }, [historyQuery.data]);
+  }, [historyQuery.data, normalizeObservedAt]);
 
   const averagePrice = React.useMemo(() => {
     if (!chartData.length) return null;
@@ -78,7 +85,7 @@ export function GpuSheetCharts({ stableKey }: GpuSheetChartsProps) {
       isLoading={isLoading}
       emptyMessage={emptyMessage}
       valueLabel="USD"
-      valueFormatter={(value) => `$${value.toFixed(4)}`}
+      valueFormatter={(value) => `$${value.toFixed(2)}`}
     />
   );
 }

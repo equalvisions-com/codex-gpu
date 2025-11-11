@@ -199,24 +199,23 @@ export function SheetLineChart({
                         <div className="font-medium" style={{ color: "hsl(var(--foreground))" }}>
                           {formatLabel(payload as any, label as any)}
                         </div>
-                        <div
-                          className="recharts-tooltip-item-list flex"
-                          style={{ height: "18px", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}
-                        >
+                        <div className="recharts-tooltip-item-list mt-2 flex flex-col gap-1">
                           {payload.map((entry, index) => (
                             <div key={index} className="flex items-center gap-2 text-xs">
                               <span
                                 className="inline-block h-2 w-2 rounded-full"
                                 style={{ backgroundColor: entry.color ?? stroke }}
                               />
-                              <span>
+                              <span className="font-mono">
                                 {valueFormatter
                                   ? valueFormatter(entry.value as number)
                                   : (entry.value as number).toLocaleString(undefined, {
                                       maximumFractionDigits: 2,
                                     })}
                               </span>
-                              <span>{entry.name ?? valueLabel ?? "value"}</span>
+                              <span className="text-foreground/70">
+                                {entry.name ?? valueLabel ?? "value"}
+                              </span>
                             </div>
                           ))}
                         </div>

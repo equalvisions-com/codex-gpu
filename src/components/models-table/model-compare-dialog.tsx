@@ -32,14 +32,11 @@ export function ModelCompareDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl bg-background">
+      <DialogContent className="max-w-3xl bg-background p-4 sm:p-4">
         <DialogHeader>
-          <DialogTitle>Compare models</DialogTitle>
-          <DialogDescription>
-            Side-by-side details for the selected models.
-          </DialogDescription>
+          <DialogTitle>Model Comparison</DialogTitle>
         </DialogHeader>
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-2">
           {rows.map((row, index) => {
             const data = row.original as ModelsColumnSchema;
             return (
@@ -123,6 +120,7 @@ function ModelComparisonCharts({
           permaslug: data.permaslug,
           endpointId: data.endpointId,
           label: data.shortName ?? data.name ?? data.permaslug,
+          provider: data.provider ?? undefined,
           color: `hsl(var(--chart-${(index % 5) + 1}))`,
         };
       })
@@ -156,7 +154,7 @@ function ModelComparisonCharts({
       const points = series?.data ?? [];
       return {
         id: `throughput-${target.key}`,
-        label: target.label,
+        label: target.provider ? `${target.label} (${target.provider})` : target.label,
         color: target.color,
         data: points.map((point) => ({
           value: point.throughput,
@@ -173,7 +171,7 @@ function ModelComparisonCharts({
       const points = series?.data ?? [];
       return {
         id: `latency-${target.key}`,
-        label: target.label,
+        label: target.provider ? `${target.label} (${target.provider})` : target.label,
         color: target.color,
         data: points.map((point) => ({
           value: point.latency / 1000,
@@ -211,7 +209,7 @@ function ModelComparisonCharts({
   const hasTargets = targets.length > 0;
 
   return (
-    <div className="space-y-4">
+    <div className="grid gap-4 md:grid-cols-2">
       <SheetLineChart
         title="Throughput"
         description={
