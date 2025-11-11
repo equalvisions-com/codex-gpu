@@ -78,7 +78,7 @@ export function ModelSheetCharts({ permaslug, endpointId, provider }: ModelSheet
   const throughputData = React.useMemo(() => {
     const series = throughputQuery.data?.series?.[0];
     if (!series || !Array.isArray(series.data)) {
-      return [] as SheetLineChartProps["data"];
+      return [] as { value: number; observedAt?: string }[];
     }
 
     return series.data.map((point) => ({
@@ -98,7 +98,7 @@ export function ModelSheetCharts({ permaslug, endpointId, provider }: ModelSheet
   const latencyData = React.useMemo(() => {
     const series = latencyQuery.data?.series?.[0];
     if (!series || !Array.isArray(series.data)) {
-      return [] as SheetLineChartProps["data"];
+      return [] as { value: number; observedAt?: string }[];
     }
 
     return series.data.map((point) => ({

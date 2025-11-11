@@ -18,11 +18,27 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
+const DEFAULT_COLORS = [
+  "hsl(var(--chart-1))",
+  "hsl(var(--chart-2))",
+  "hsl(var(--chart-3))",
+  "hsl(var(--chart-4))",
+  "hsl(var(--chart-5))",
+];
+
+export type SheetLineSeries = {
+  id: string;
+  label: string;
+  color?: string;
+  data: { value: number; observedAt?: string }[];
+};
+
 export type SheetLineChartProps = {
   title: string;
   description?: string;
   stroke?: string;
-  data: { value: number; observedAt?: string }[];
+  data?: { value: number; observedAt?: string }[];
+  series?: SheetLineSeries[];
   isLoading?: boolean;
   emptyMessage?: string;
   valueFormatter?: (value: number) => string;
@@ -34,11 +50,36 @@ export function SheetLineChart({
   description,
   stroke = "hsl(var(--chart-1))",
   data,
+  series,
   isLoading,
   emptyMessage,
   valueFormatter,
   valueLabel,
 }: SheetLineChartProps) {
+  const resolvedSeries = React.useMemo<SheetLineSeries[]>(() => {
+    if (series && series.length > 0) {
+      return series.map((item, index) => ({
+        id: item.id ?? `series-${index}`,
+        label: item.label ?? `Series ${index + 1}`,
+        color: item.color ?? DEFAULT_COLORS[index % DEFAULT_COLORS.length],
+        data: item.data ?? [],
+      }));
+    }
+
+    if (data) {
+      return [
+        {
+          id: "value",
+          label: valueLabel ?? "value",
+          color: stroke,
+          data,
+        },
+      ];
+    }
+
+    return [];
+  }, [data, series, stroke, valueLabel]);
+
   const formatLabel = React.useCallback((payload?: any[], fallbackLabel?: string | number) => {
     const raw = (payload?.[0]?.payload?.observedAt as string | undefined) ?? (typeof fallbackLabel === "string" ? fallbackLabel : undefined);
     if (!raw) return "";
@@ -54,10 +95,40 @@ export function SheetLineChart({
     });
   }, []);
 
-  const showEmpty = !isLoading && data.length === 0;
+  const mergedData = React.useMemo(() => {
+    const pointMap = new Map<string, Record<string, any>>();
+
+    resolvedSeries.forEach((series) => {
+      series.data.forEach((point, index) => {
+        const key = point.observedAt ?? `${series.id}-${index}`;
+        let entry = pointMap.get(key);
+        if (!entry) {
+          entry = { observedAt: point.observedAt ?? key };
+          pointMap.set(key, entry);
+        }
+        entry[series.id] = point.value;
+      });
+    });
+
+    return Array.from(pointMap.values()).sort((a, b) => {
+      const aTime = Date.parse(a.observedAt);
+      const bTime = Date.parse(b.observedAt);
+      if (Number.isNaN(aTime) || Number.isNaN(bTime)) {
+        return String(a.observedAt).localeCompare(String(b.observedAt));
+      }
+      return aTime - bTime;
+    });
+  }, [resolvedSeries]);
+
+  const showEmpty =
+    !isLoading && resolvedSeries.every((series) => (series.data?.length ?? 0) === 0);
 
   const linearDomain = React.useMemo(() => {
-    const values = data.map((point) => point.value).filter((value) => Number.isFinite(value));
+    const values = resolvedSeries.flatMap((series) =>
+      series.data
+        .map((point) => point.value)
+        .filter((value) => Number.isFinite(value)),
+    );
 
     if (!values.length) {
       return [0, 1] as [number, number];
@@ -73,7 +144,7 @@ export function SheetLineChart({
 
     const padding = (max - min) * 0.11 || 0.11;
     return [min - padding, max + padding] as [number, number];
-  }, [data]);
+  }, [resolvedSeries]);
 
   return (
     <Card className="border-border/60 bg-muted/30">
@@ -97,7 +168,7 @@ export function SheetLineChart({
             </div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={data} margin={{ top: 4, right: 0, bottom: 4, left: 0 }}>
+              <LineChart data={mergedData} margin={{ top: 4, right: 0, bottom: 4, left: 0 }}>
                 <YAxis hide domain={linearDomain} tickCount={5} />
                 <CartesianGrid
                   strokeDasharray="3 3"
@@ -112,13 +183,6 @@ export function SheetLineChart({
                     fontSize: "0.75rem",
                   }}
                   labelFormatter={(label, payload) => formatLabel(payload, label)}
-                  formatter={(value: number) =>
-                    [
-                      valueFormatter
-                        ? valueFormatter(value)
-                        : value.toLocaleString(undefined, { maximumFractionDigits: 2 }),
-                      valueLabel ?? "value",
-                    ]}
                   content={({ payload, label }) => {
                     if (!payload?.length) return null;
                     return (
@@ -130,7 +194,6 @@ export function SheetLineChart({
                           borderRadius: "0.5rem",
                           fontSize: "0.75rem",
                           padding: "0.5rem 0.75rem",
-                          color: stroke,
                         }}
                       >
                         <div className="font-medium" style={{ color: "hsl(var(--foreground))" }}>
@@ -138,10 +201,14 @@ export function SheetLineChart({
                         </div>
                         <div
                           className="recharts-tooltip-item-list flex"
-                          style={{ height: "18px", alignItems: "center", gap: "0.5rem" }}
+                          style={{ height: "18px", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}
                         >
                           {payload.map((entry, index) => (
                             <div key={index} className="flex items-center gap-2 text-xs">
+                              <span
+                                className="inline-block h-2 w-2 rounded-full"
+                                style={{ backgroundColor: entry.color ?? stroke }}
+                              />
                               <span>
                                 {valueFormatter
                                   ? valueFormatter(entry.value as number)
@@ -149,7 +216,7 @@ export function SheetLineChart({
                                       maximumFractionDigits: 2,
                                     })}
                               </span>
-                              <span>{valueLabel ?? entry.name}</span>
+                              <span>{entry.name ?? valueLabel ?? "value"}</span>
                             </div>
                           ))}
                         </div>
@@ -157,15 +224,19 @@ export function SheetLineChart({
                     );
                   }}
                 />
-                <Line
-                  type="natural"
-                  dot={false}
-                  dataKey="value"
-                  stroke={stroke}
-                  strokeWidth={2}
-                  activeDot={{ r: 4 }}
-                  isAnimationActive={false}
-                />
+                {resolvedSeries.map((series, index) => (
+                  <Line
+                    key={series.id}
+                    type="natural"
+                    dot={false}
+                    dataKey={series.id}
+                    stroke={series.color ?? DEFAULT_COLORS[index % DEFAULT_COLORS.length]}
+                    strokeWidth={2}
+                    activeDot={{ r: 4 }}
+                    isAnimationActive={false}
+                    name={series.label}
+                  />
+                ))}
               </LineChart>
             </ResponsiveContainer>
           )}

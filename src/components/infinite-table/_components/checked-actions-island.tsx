@@ -28,6 +28,8 @@ import {
 import { useAuthDialog } from "@/providers/auth-dialog-provider";
 import { useAuth } from "@/providers/auth-client-provider";
 import { getFavoritesBroadcastId } from "@/lib/favorites/broadcast";
+import type { Row } from "@tanstack/react-table";
+import { CompareDialog } from "./compare-dialog";
 
 export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteKeys?: FavoriteKey[] }) {
   const { checkedRows, table } = useDataTable<ColumnSchema, unknown>();
@@ -39,6 +41,7 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
   const { showSignIn } = useAuthDialog();
   const { session, isPending: authPending } = useAuth();
   const broadcastId = React.useMemo(() => getFavoritesBroadcastId(), []);
+  const [isCompareOpen, setIsCompareOpen] = React.useState(false);
 
   const promptForAuth = React.useCallback(() => {
     const callbackUrl =
@@ -56,6 +59,12 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
 
   const flatRows = table.getRowModel().flatRows;
   const visibleRowIds = React.useMemo(() => new Set(flatRows.map((row) => row.id)), [flatRows]);
+  const selectedRows = React.useMemo<Row<ColumnSchema>[]>(() => {
+    return table
+      .getRowModel()
+      .flatRows.filter((row) => checkedRows[row.id]) as Row<ColumnSchema>[];
+  }, [table, checkedRows]);
+  const compareRows = React.useMemo(() => selectedRows.slice(0, 2), [selectedRows]);
 
   const hasSelection = React.useMemo(() => {
     for (const key in checkedRows) {
@@ -175,6 +184,12 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
     }
     return false;
   }, [checkedRows]);
+
+  React.useEffect(() => {
+    if (!canCompare && isCompareOpen) {
+      setIsCompareOpen(false);
+    }
+  }, [canCompare, isCompareOpen]);
 
   const favoriteStatus = React.useMemo(() => {
     const selectedRowIds = Object.keys(checkedRows);
@@ -480,13 +495,13 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
           "supports-[backdrop-filter]:bg-background/60",
         )}
       >
-        <Button
-          size="sm"
-          variant="secondary"
-          className="gap-2"
-          onClick={handleFavorite}
-          disabled={isMutating}
-          aria-label="Toggle favorite status"
+          <Button
+            size="sm"
+            variant="secondary"
+            className="gap-2"
+            onClick={handleFavorite}
+            disabled={isMutating}
+            aria-label="Toggle favorite status"
         >
           <Star
             className={`h-4 w-4 ${
@@ -509,6 +524,7 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
             variant="secondary"
             className="gap-2 disabled:opacity-100 disabled:text-muted-foreground"
             aria-label="Compare selected"
+            onClick={() => setIsCompareOpen(true)}
           >
             <GitCompare className="h-4 w-4" />
             <span>Compare</span>
@@ -543,6 +559,17 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
     </div>
   );
 
-  if (typeof document === "undefined") return content;
-  return createPortal(content, document.body);
+  const island = typeof document === "undefined" ? content : createPortal(content, document.body);
+
+  return (
+    <>
+      <CompareDialog
+        open={isCompareOpen}
+        onOpenChange={setIsCompareOpen}
+        rows={compareRows}
+        table={table}
+      />
+      {island}
+    </>
+  );
 }

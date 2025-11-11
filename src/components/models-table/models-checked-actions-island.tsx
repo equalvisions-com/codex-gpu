@@ -28,6 +28,8 @@ import {
 import { useAuthDialog } from "@/providers/auth-dialog-provider";
 import { useAuth } from "@/providers/auth-client-provider";
 import { getFavoritesBroadcastId } from "@/lib/model-favorites/broadcast";
+import type { Row } from "@tanstack/react-table";
+import { ModelCompareDialog } from "./model-compare-dialog";
 
 export function ModelsCheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteKeys?: ModelFavoriteKey[] }) {
   const { checkedRows, table } = useDataTable<ModelsColumnSchema, unknown>();
@@ -39,6 +41,7 @@ export function ModelsCheckedActionsIsland({ initialFavoriteKeys }: { initialFav
   const { showSignIn } = useAuthDialog();
   const { session, isPending: authPending } = useAuth();
   const broadcastId = React.useMemo(() => getFavoritesBroadcastId(), []);
+  const [isCompareOpen, setIsCompareOpen] = React.useState(false);
 
   const promptForAuth = React.useCallback(() => {
     const callbackUrl =
@@ -56,6 +59,12 @@ export function ModelsCheckedActionsIsland({ initialFavoriteKeys }: { initialFav
 
   const flatRows = table.getRowModel().flatRows;
   const visibleRowIds = React.useMemo(() => new Set(flatRows.map((row) => row.id)), [flatRows]);
+  const selectedRows = React.useMemo<Row<ModelsColumnSchema>[]>(() => {
+    return table
+      .getRowModel()
+      .flatRows.filter((row) => checkedRows[row.id]) as Row<ModelsColumnSchema>[];
+  }, [table, checkedRows]);
+  const compareRows = React.useMemo(() => selectedRows.slice(0, 2), [selectedRows]);
 
   const hasSelection = React.useMemo(() => {
     for (const key in checkedRows) {
@@ -175,6 +184,12 @@ export function ModelsCheckedActionsIsland({ initialFavoriteKeys }: { initialFav
     }
     return false;
   }, [checkedRows]);
+
+  React.useEffect(() => {
+    if (!canCompare && isCompareOpen) {
+      setIsCompareOpen(false);
+    }
+  }, [canCompare, isCompareOpen]);
 
   const favoriteStatus = React.useMemo(() => {
     const selectedRowIds = Object.keys(checkedRows);
@@ -509,6 +524,7 @@ export function ModelsCheckedActionsIsland({ initialFavoriteKeys }: { initialFav
             variant="secondary"
             className="gap-2 disabled:opacity-100 disabled:text-muted-foreground"
             aria-label="Compare selected"
+            onClick={() => setIsCompareOpen(true)}
           >
             <GitCompare className="h-4 w-4" />
             <span>Compare</span>
@@ -542,6 +558,17 @@ export function ModelsCheckedActionsIsland({ initialFavoriteKeys }: { initialFav
     </div>
   );
 
-  if (typeof document === "undefined") return content;
-  return createPortal(content, document.body);
+  const island = typeof document === "undefined" ? content : createPortal(content, document.body);
+
+  return (
+    <>
+      <ModelCompareDialog
+        open={isCompareOpen}
+        onOpenChange={setIsCompareOpen}
+        rows={compareRows}
+        table={table}
+      />
+      {island}
+    </>
+  );
 }
