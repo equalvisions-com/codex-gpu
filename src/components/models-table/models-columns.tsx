@@ -11,7 +11,7 @@ import type { ColumnDef, SortingFn } from "@tanstack/react-table";
 import Image from "next/image";
 import type { ModelsColumnSchema } from "./models-schema";
 
-const MODEL_PROVIDER_LOGOS: Record<
+export const MODEL_PROVIDER_LOGOS: Record<
   string,
   {
     src: string;
@@ -72,6 +72,8 @@ const MODEL_PROVIDER_LOGOS: Record<
   Switchpoint: { src: "/logos/switchpoint.png", alt: "Switchpoint" },
   Targon: { src: "/logos/targon.svg", alt: "Targon" },
   Venice: { src: "/logos/venice.png", alt: "Venice" },
+  Qwen: { src: "/logos/Qwen.png", alt: "Qwen" },
+  Google: { src: "/logos/google.svg", alt: "Google" },
 };
 
 function RowCheckboxCell({ rowId }: { rowId: string }) {

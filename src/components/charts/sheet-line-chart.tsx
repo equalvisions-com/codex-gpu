@@ -168,7 +168,7 @@ export function SheetLineChart({
             </div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={mergedData} margin={{ top: 4, right: 0, bottom: 4, left: 0 }}>
+              <LineChart data={mergedData} margin={{ top: 4, right: 4, bottom: 4, left: 4 }}>
                 <YAxis hide domain={linearDomain} tickCount={5} />
                 <CartesianGrid
                   strokeDasharray="3 3"

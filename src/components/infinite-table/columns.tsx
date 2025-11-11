@@ -26,7 +26,7 @@ import Image from "next/image";
 import { HoverCardTimestamp } from "./_components/hover-card-timestamp";
 import type { ColumnSchema } from "./schema";
 
-const PROVIDER_LOGOS: Record<
+export const PROVIDER_LOGOS: Record<
   string,
   {
     src: string;

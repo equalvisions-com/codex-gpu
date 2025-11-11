@@ -2,6 +2,83 @@
 
 import type { DataTableFilterField, SheetField } from "@/components/data-table/types";
 import type { ModelsColumnSchema } from "./models-schema";
+import Image from "next/image";
+import * as React from "react";
+import { MODEL_PROVIDER_LOGOS } from "./models-columns";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+
+const MODEL_AUTHOR_LOGOS: Record<string, { src: string; alt: string }> = Object.keys(
+  MODEL_PROVIDER_LOGOS,
+).reduce((acc, key) => {
+  acc[key.toLowerCase()] = MODEL_PROVIDER_LOGOS[key];
+  return acc;
+}, {} as Record<string, { src: string; alt: string }>);
+
+const getModelAuthorLogo = (author?: string | null) => {
+  if (!author) return null;
+  return MODEL_AUTHOR_LOGOS[author.toLowerCase()] ?? null;
+};
+
+const LogoBadge = ({
+  src,
+  alt,
+  size,
+  className,
+}: {
+  src?: string | null;
+  alt?: string | null;
+  size: number;
+  className?: string;
+}) => {
+  const [loaded, setLoaded] = React.useState(false);
+  const initial = alt?.charAt(0).toUpperCase() ?? "";
+
+  return (
+    <span
+      className={cn(
+        "relative flex items-center justify-center overflow-hidden rounded-md border border-border/60 bg-background",
+        className,
+      )}
+      style={{ width: size, height: size }}
+    >
+      {!loaded ? <Skeleton className="absolute inset-0 h-full w-full animate-pulse" /> : null}
+      {src ? (
+        <Image
+          src={src}
+          alt={alt ?? ""}
+          fill
+          sizes={`${size}px`}
+          className="object-contain"
+          loading="lazy"
+          onLoadingComplete={() => setLoaded(true)}
+        />
+      ) : initial ? (
+        <span className="text-[10px] font-semibold uppercase text-foreground/70">
+          {initial}
+        </span>
+      ) : null}
+    </span>
+  );
+};
+
+const ModelProviderBadge = ({ provider }: { provider?: string | null }) => {
+  const providerName = provider ?? "";
+  const logo = MODEL_PROVIDER_LOGOS[providerName] ?? getModelAuthorLogo(providerName);
+  return (
+    <div className="flex min-w-0 items-center gap-2">
+      <LogoBadge
+        src={logo?.src ?? null}
+        alt={logo?.alt ?? providerName}
+        size={20}
+        className="h-5 w-5 shrink-0"
+      />
+      <span className="truncate" title={providerName || undefined}>
+        {providerName || "Unknown"}
+      </span>
+    </div>
+  );
+};
 
 const formatPricePerMillion = (price: number | string | null | undefined) => {
   if (price === null || price === undefined) return "Free";
@@ -106,24 +183,36 @@ export const sheetFields: SheetField<ModelsColumnSchema>[] = [
     component: (row) => {
       const fallback = row.name ?? "N/A";
       const value = row.shortName ?? fallback;
-      return <h2 className="text-lg font-semibold">{value || fallback}</h2>;
+      const authorLogo = getModelAuthorLogo(row.author);
+      return (
+        <div className="flex items-start gap-3">
+          {authorLogo ? (
+            <span className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border/60 bg-background">
+              <Image
+                src={authorLogo.src}
+                alt={authorLogo.alt}
+                fill
+                sizes="40px"
+                className="object-contain"
+                loading="lazy"
+              />
+            </span>
+          ) : (
+            <div className="h-10 w-10 shrink-0" />
+          )}
+          <div className="flex flex-col gap-0 leading-tight">
+            <h2 className="text-lg font-semibold leading-tight tracking-tight">{value || fallback}</h2>
+            <p className="pb-4 text-sm text-foreground/70 leading-tight">{row.author ?? "N/A"}</p>
+          </div>
+        </div>
+      );
     },
-  },
-  {
-    id: "author",
-    label: "Author",
-    type: "readonly",
-    hideLabel: true,
-    fullRowValue: true,
-    noPadding: true,
-    component: (row) => (
-      <p className="pb-4 text-sm text-foreground/70">{row.author ?? "N/A"}</p>
-    ),
   },
   {
     id: "provider",
     label: "Provider",
     type: "readonly",
+    component: (row) => <ModelProviderBadge provider={row.provider} />,
   },
   {
     id: "mmlu",

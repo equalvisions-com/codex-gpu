@@ -12,7 +12,6 @@ import { MemoizedDataTableSheetContent } from "@/components/data-table/data-tabl
 import type { Table as TanStackTable, Row } from "@tanstack/react-table";
 import type { ColumnSchema } from "@/components/infinite-table/schema";
 import { filterFields, sheetFields } from "@/components/infinite-table/constants";
-import { GpuSheetCharts } from "@/components/infinite-table/gpu-sheet-charts";
 import { SheetLineChart } from "@/components/charts/sheet-line-chart";
 import { useQueries } from "@tanstack/react-query";
 
