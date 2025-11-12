@@ -35,6 +35,7 @@ export const modelsSearchParamsParser = {
   search: parseAsString,
   name: parseAsString,
   description: parseAsString,
+  favorites: parseAsString,
   // REQUIRED FOR SORTING & PAGINATION
   sort: parseAsSort,
   size: parseAsInteger.withDefault(50),

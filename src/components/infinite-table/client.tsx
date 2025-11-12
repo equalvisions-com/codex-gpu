@@ -33,9 +33,12 @@ interface ClientProps {
 
 const LazyFavoritesRuntime = React.lazy(() => import("./favorites-runtime"));
 
-export function Client({ initialFavoriteKeys, isFavoritesMode = false }: ClientProps = {}) {
+export function Client({ initialFavoriteKeys, isFavoritesMode }: ClientProps = {}) {
   const contentRef = React.useRef<HTMLTableSectionElement>(null);
   const [search] = useQueryStates(searchParamsParser);
+  const favoritesFlag = search.favorites === "true";
+  const effectiveFavoritesMode =
+    typeof isFavoritesMode === "boolean" ? isFavoritesMode : favoritesFlag;
   const queryClient = useQueryClient();
   const router = useRouter();
   const { session, signOut, isPending: authPending } = useAuth();
@@ -92,7 +95,7 @@ export function Client({ initialFavoriteKeys, isFavoritesMode = false }: ClientP
     setFavoritesSnapshot(snapshot);
   }, []);
   const noopAsync = React.useCallback(async () => {}, []);
-  const shouldHydrateFavorites = isFavoritesMode;
+  const shouldHydrateFavorites = effectiveFavoritesMode;
 
 
   const {
@@ -104,7 +107,7 @@ export function Client({ initialFavoriteKeys, isFavoritesMode = false }: ClientP
     hasNextPage,
   } = useInfiniteQuery({
     ...dataOptions(search),
-    enabled: !isFavoritesMode,
+    enabled: !effectiveFavoritesMode,
   });
 
   useHotKey(() => {
@@ -119,20 +122,20 @@ export function Client({ initialFavoriteKeys, isFavoritesMode = false }: ClientP
   const favoritesFlatData = favoritesSnapshot?.flatData ?? [];
   const favoritesLastPage = favoritesSnapshot?.lastPage;
 
-  const flatData = isFavoritesMode ? favoritesFlatData : baseFlatData;
-  const lastPage = isFavoritesMode ? favoritesLastPage : baseLastPage;
+  const flatData = effectiveFavoritesMode ? favoritesFlatData : baseFlatData;
+  const lastPage = effectiveFavoritesMode ? favoritesLastPage : baseLastPage;
   const facetsFromPage = lastPage?.meta?.facets;
-  const totalDBRowCount = isFavoritesMode
+  const totalDBRowCount = effectiveFavoritesMode
     ? favoritesSnapshot?.totalRowCount ?? favoritesFlatData.length
     : baseLastPage?.meta?.totalRowCount ?? baseFlatData.length;
-  const filterDBRowCount = isFavoritesMode
+  const filterDBRowCount = effectiveFavoritesMode
     ? favoritesSnapshot?.filterRowCount ?? favoritesFlatData.length
     : baseLastPage?.meta?.filterRowCount ?? baseFlatData.length;
-  const totalFetched = isFavoritesMode
+  const totalFetched = effectiveFavoritesMode
     ? favoritesSnapshot?.totalFetched ?? favoritesFlatData.length
     : baseFlatData.length;
 
-  const effectiveFavoriteKeys = isFavoritesMode
+  const effectiveFavoriteKeys = effectiveFavoritesMode
     ? favoritesSnapshot?.favoriteKeysFromRows ?? []
     : initialFavoriteKeys;
   
@@ -144,19 +147,19 @@ export function Client({ initialFavoriteKeys, isFavoritesMode = false }: ClientP
     initialFavoriteKeys: effectiveFavoriteKeys,
   };
 
-  const tableIsFetching = isFavoritesMode
+  const tableIsFetching = effectiveFavoritesMode
     ? favoritesSnapshot?.isFetching ?? false
     : isFetching;
-  const tableIsLoading = isFavoritesMode
+  const tableIsLoading = effectiveFavoritesMode
     ? favoritesSnapshot?.isFavoritesLoading ?? true
     : isLoading;
-  const tableIsFetchingNextPage = isFavoritesMode
+  const tableIsFetchingNextPage = effectiveFavoritesMode
     ? favoritesSnapshot?.isFetchingNextPage ?? false
     : isFetchingNextPage;
-  const tableFetchNextPage = isFavoritesMode
+  const tableFetchNextPage = effectiveFavoritesMode
     ? favoritesSnapshot?.fetchNextPage ?? noopAsync
     : fetchNextPage;
-  const tableHasNextPage = isFavoritesMode
+  const tableHasNextPage = effectiveFavoritesMode
     ? favoritesSnapshot?.hasNextPage ?? false
     : hasNextPage;
   const facetsRef = React.useRef<Record<string, FacetMetadataSchema> | undefined>(undefined);
@@ -299,7 +302,7 @@ export function Client({ initialFavoriteKeys, isFavoritesMode = false }: ClientP
         <React.Suspense fallback={null}>
           <LazyFavoritesRuntime
             search={search}
-            isActive={isFavoritesMode}
+            isActive={effectiveFavoritesMode}
             session={session}
             authPending={authPending}
             onStateChange={handleFavoritesSnapshot}
@@ -308,7 +311,7 @@ export function Client({ initialFavoriteKeys, isFavoritesMode = false }: ClientP
         </React.Suspense>
       ) : null}
       <DataTableInfinite
-        key={`table-${isFavoritesMode ? "favorites" : "all"}`}
+        key={`table-${effectiveFavoritesMode ? "favorites" : "all"}`}
         columns={columns}
         data={flatData}
         skeletonRowCount={50}

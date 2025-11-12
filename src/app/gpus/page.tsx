@@ -1,29 +1,18 @@
 import * as React from "react";
-import { searchParamsCache } from "@/components/infinite-table/search-params";
-import { getQueryClient } from "@/providers/get-query-client";
-import { dataOptions } from "@/components/infinite-table/query-options";
+import { Suspense } from "react";
 import { Client } from "@/components/infinite-table/client";
+
 export const revalidate = 86400;
 
-export default async function Gpus({
-  searchParams,
-}: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
-  const params = await searchParams;
-  const isFavoritesMode = params.favorites === "true";
-  const search = searchParamsCache.parse(params);
+export default function GpusPage() {
+  return (
+    <Suspense fallback={<PageFallback />}>
+      <GpusContent />
+    </Suspense>
+  );
+}
 
-  const queryClient = getQueryClient();
-  await queryClient.prefetchInfiniteQuery(dataOptions(search));
-
-  // Skip server-side cache check to avoid blocking SSR
-  // Cache check happens client-side via prefetch (non-blocking HTTP request)
-  // API endpoint uses unstable_cache server-side, so cache still benefits users
-  // This ensures fast, non-blocking page render for all users
-  // initialFavoriteKeys is always undefined from server, forcing client-side lazy loading or prefetching
-  const initialFavoriteKeys: string[] | undefined = undefined;
-
+function GpusContent() {
   return (
     <div
       className="flex min-h-dvh w-full flex-col sm:flex-row pt-2 sm:p-0 min-h-0"
@@ -33,9 +22,16 @@ export default async function Gpus({
       } as React.CSSProperties}
     >
       <Client
-        initialFavoriteKeys={initialFavoriteKeys}
-        isFavoritesMode={isFavoritesMode}
+        initialFavoriteKeys={undefined}
       />
+    </div>
+  );
+}
+
+function PageFallback() {
+  return (
+    <div className="flex min-h-dvh w-full items-center justify-center text-sm text-muted-foreground">
+      Loading GPUs…
     </div>
   );
 }
