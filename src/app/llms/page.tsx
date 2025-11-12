@@ -3,7 +3,7 @@ import { modelsSearchParamsCache } from "@/components/models-table/models-search
 import { getQueryClient } from "@/providers/get-query-client";
 import { modelsDataOptions } from "@/components/models-table/models-query-options";
 import { ModelsClient } from "@/components/models-table/models-client";
-export const revalidate = 60 * 60 * 24;
+export const revalidate = 86400;
 
 export default async function Models({
   searchParams,
