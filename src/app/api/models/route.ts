@@ -540,11 +540,7 @@ export async function GET(req: NextRequest): Promise<Response> {
       nextCursor: cursor + size < totalCount ? cursor + size : null,
     };
 
-    const res = Response.json(response, {
-      headers: {
-        "Cache-Control": "public, s-maxage=43200, stale-while-revalidate=3600",
-      },
-    });
+    const res = Response.json(response);
     logger.info(
       JSON.stringify({
         event: "api.models.page",

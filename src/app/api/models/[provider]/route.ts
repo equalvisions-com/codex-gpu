@@ -22,14 +22,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       }, { status: 404 });
     }
 
-    // Set cache headers for Edge caching (provider-level data)
-    const response = NextResponse.json(models, {
-      headers: {
-        'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=7200',
-      },
-    });
-
-    return response;
+    return NextResponse.json(models);
 
   } catch (error) {
     const resolvedParams = await params;

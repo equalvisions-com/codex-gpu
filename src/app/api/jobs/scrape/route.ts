@@ -6,6 +6,11 @@ import { gpuPricingStore } from "@/lib/gpu-pricing-store";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30; // Allow up to 30 seconds for scraping
+const CORE_PAGE_PATHS = ["/", "/gpus", "/llms"];
+
+async function revalidateCorePages() {
+  await Promise.all(CORE_PAGE_PATHS.map((path) => revalidatePath(path)));
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -35,14 +40,15 @@ export async function POST(request: NextRequest) {
     // Also invalidates favorites cache since favorites JOIN with gpuPricing
     revalidateTag("pricing");
     revalidateTag("favorites");
-    revalidatePath("/api");
-    await Promise.all(
-      touchedStableKeys.map((stableKey) =>
+    await Promise.all([
+      revalidatePath("/api"),
+      ...touchedStableKeys.map((stableKey) =>
         revalidateTag(`gpu-price-history:${stableKey}`),
       ),
-    );
+    ]);
+    await revalidateCorePages();
     
-    logger.info(`[GpuPricingJob] Cache invalidated (tags: 'pricing', 'favorites', path: '/api')`);
+    logger.info(`[GpuPricingJob] Cache invalidated (tags: 'pricing', 'favorites', path: '/api', pages: ${CORE_PAGE_PATHS.join(", ")})`);
 
     const duration = Date.now() - startTime;
     const totalRows = scrapeResult.providerResults.reduce((acc, result) => acc + result.rows.length, 0);
@@ -103,14 +109,15 @@ export async function GET(request: NextRequest) {
       // Also invalidates favorites cache since favorites JOIN with gpuPricing
       revalidateTag("pricing");
       revalidateTag("favorites");
-      revalidatePath("/api");
-      await Promise.all(
-        touchedStableKeys.map((stableKey) =>
+      await Promise.all([
+        revalidatePath("/api"),
+        ...touchedStableKeys.map((stableKey) =>
           revalidateTag(`gpu-price-history:${stableKey}`),
         ),
-      );
+      ]);
+      await revalidateCorePages();
       
-      logger.info(`[GpuPricingJob] [cron] Cache invalidated (tags: 'pricing', 'favorites', path: '/api')`);
+      logger.info(`[GpuPricingJob] [cron] Cache invalidated (tags: 'pricing', 'favorites', path: '/api', pages: ${CORE_PAGE_PATHS.join(", ")})`);
 
       const duration = Date.now() - startedAt;
       const totalRows = scrapeResult.providerResults.reduce((acc, result) => acc + result.rows.length, 0);

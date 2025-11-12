@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidateTag } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { modelsThroughputScraper } from "@/lib/providers/models-throughput-scraper";
 import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
+const CORE_PAGE_PATHS = ["/", "/gpus", "/llms"];
+
+async function revalidateCorePages() {
+  await Promise.all(CORE_PAGE_PATHS.map((path) => revalidatePath(path)));
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,6 +29,7 @@ export async function POST(request: NextRequest) {
         ),
       );
     }
+    await revalidateCorePages();
 
     logger.info(
       JSON.stringify({
@@ -34,6 +40,7 @@ export async function POST(request: NextRequest) {
         samplesStored: result.samplesStored,
         clearedSamples: result.clearedSamples,
         duration,
+        pagesRevalidated: CORE_PAGE_PATHS,
       }),
     );
 

@@ -6,6 +6,11 @@ import { revalidatePath, revalidateTag } from 'next/cache';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30; // Allow up to 30 seconds for scraping
+const CORE_PAGE_PATHS = ["/", "/gpus", "/llms"];
+
+async function revalidateCorePages() {
+  await Promise.all(CORE_PAGE_PATHS.map((path) => revalidatePath(path)));
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,10 +35,13 @@ export async function POST(request: NextRequest) {
     //   (favorites cache includes model data via JOIN, so it must be invalidated too)
     revalidateTag('models');
     revalidateTag('model-favorites');
-    revalidatePath('/api');
-    revalidatePath('/api/models');
+    await Promise.all([
+      revalidatePath('/api'),
+      revalidatePath('/api/models'),
+    ]);
+    await revalidateCorePages();
     
-    logger.info(`[ModelsScraper] Cache invalidated (tags: 'models', 'model-favorites', paths: '/api', '/api/models')`);
+    logger.info(`[ModelsScraper] Cache invalidated (tags: 'models', 'model-favorites', paths: '/api', '/api/models', pages: ${CORE_PAGE_PATHS.join(', ')})`);
 
     const duration = Date.now() - startTime;
 
@@ -79,10 +87,13 @@ export async function GET(request: NextRequest) {
       //   (favorites cache includes model data via JOIN, so it must be invalidated too)
       revalidateTag('models');
       revalidateTag('model-favorites');
-      revalidatePath('/api');
-      revalidatePath('/api/models');
+      await Promise.all([
+        revalidatePath('/api'),
+        revalidatePath('/api/models'),
+      ]);
+      await revalidateCorePages();
       
-      logger.info(`[ModelsScraper] [cron] Cache invalidated (tags: 'models', 'model-favorites', paths: '/api', '/api/models')`);
+      logger.info(`[ModelsScraper] [cron] Cache invalidated (tags: 'models', 'model-favorites', paths: '/api', '/api/models', pages: ${CORE_PAGE_PATHS.join(', ')})`);
 
       const duration = Date.now() - startTime;
       logger.info(`[ModelsScraper] [cron] Scraping completed in ${duration}ms. Stored ${modelsStored} models.`);

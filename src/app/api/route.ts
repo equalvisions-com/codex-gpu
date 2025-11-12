@@ -182,11 +182,7 @@ export async function GET(req: NextRequest): Promise<Response> {
       },
       prevCursor,
       nextCursor,
-    } satisfies InfiniteQueryResponse<ColumnSchema[], LogsMeta>, {
-      headers: {
-        'Cache-Control': 'public, s-maxage=43200, stale-while-revalidate=3600',
-      },
-    });
+    } satisfies InfiniteQueryResponse<ColumnSchema[], LogsMeta>);
     logger.info(JSON.stringify({
       event: 'api.page',
       cursor: search.cursor ?? 0,

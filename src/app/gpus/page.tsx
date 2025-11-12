@@ -3,10 +3,7 @@ import { searchParamsCache } from "@/components/infinite-table/search-params";
 import { getQueryClient } from "@/providers/get-query-client";
 import { dataOptions } from "@/components/infinite-table/query-options";
 import { Client } from "@/components/infinite-table/client";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-import { getCookieCache } from "better-auth/cookies";
-import type { Session } from "@/lib/auth-client";
+export const revalidate = 60 * 60 * 24;
 
 export default async function Gpus({
   searchParams,
@@ -18,30 +15,7 @@ export default async function Gpus({
   const search = searchParamsCache.parse(params);
 
   const queryClient = getQueryClient();
-  const prefetchPromise = queryClient.prefetchInfiniteQuery(dataOptions(search));
-
-  const hdrs = await headers();
-  // Start cookie cache check in parallel with prefetch (both are fast, no DB hits)
-  const cookieCachePromise = getCookieCache(new Headers(hdrs), {
-    secret: process.env.BETTER_AUTH_SECRET,
-  }) as Promise<Session | null>;
-  
-  // Wait for cookie cache result first (it's very fast, ~1-5ms)
-  // This allows us to start DB hit immediately if cache misses, without waiting for prefetch
-  const sessionFromCookie = await cookieCachePromise;
-  
-  // If cookie cache missed, start DB hit immediately (in parallel with prefetch)
-  // If cookie cache hit, use it (no DB hit needed)
-  const sessionPromise = sessionFromCookie
-    ? Promise.resolve(sessionFromCookie)
-    : auth.api.getSession({ headers: hdrs });
-  
-  // Wait for both prefetch and session in parallel
-  // This ensures DB hit (if needed) runs concurrently with prefetch, not sequentially
-  const [, session] = await Promise.all([
-    prefetchPromise,
-    sessionPromise,
-  ]);
+  await queryClient.prefetchInfiniteQuery(dataOptions(search));
 
   // Skip server-side cache check to avoid blocking SSR
   // Cache check happens client-side via prefetch (non-blocking HTTP request)

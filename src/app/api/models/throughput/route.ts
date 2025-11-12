@@ -45,12 +45,9 @@ export async function GET(request: NextRequest) {
     ? series.filter((group) => group.endpointId === endpointId)
     : series;
 
-  return NextResponse.json(
-    {
-      permaslug,
-      endpointId: endpointId ?? null,
-      series: filtered,
-    },
-    { headers: { "Cache-Control": "public, s-maxage=900, stale-while-revalidate=900" } },
-  );
+  return NextResponse.json({
+    permaslug,
+    endpointId: endpointId ?? null,
+    series: filtered,
+  });
 }
