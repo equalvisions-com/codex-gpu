@@ -1,7 +1,7 @@
 "use client";
 
 import { useHotKey } from "@/hooks/use-hot-key";
-import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import type {
   ColumnFiltersState,
   RowSelectionState,
@@ -17,20 +17,13 @@ import { filterFields as defaultFilterFields, sheetFields } from "./constants";
 import { DataTableInfinite } from "./data-table-infinite";
 import type { DataTableMeta } from "./data-table-infinite";
 import { dataOptions } from "./query-options";
-import { favoritesDataOptions } from "./favorites-query-options";
 import { searchParamsParser } from "./search-params";
 import type { RowWithId } from "@/types/api";
 import type { ColumnSchema, FacetMetadataSchema } from "./schema";
-import { stableGpuKey } from "./stable-key";
 // Inline notices handle favorites feedback; no toasts here.
-import type { FavoriteKey } from "@/types/favorites";
-import { 
-  FAVORITES_QUERY_KEY, 
-  FAVORITES_BROADCAST_CHANNEL,
-} from "@/lib/favorites/constants";
-import { getFavorites } from "@/lib/favorites/api-client";
 import { syncFavorites } from "@/lib/favorites/sync";
 import { getFavoritesBroadcastId } from "@/lib/favorites/broadcast";
+import type { FavoritesRuntimeSnapshot } from "./favorites-runtime";
 import { MobileTopNav, SidebarPanel, type AccountUser } from "./account-components";
 
 interface ClientProps {
@@ -38,9 +31,10 @@ interface ClientProps {
   isFavoritesMode?: boolean;
 }
 
+const LazyFavoritesRuntime = React.lazy(() => import("./favorites-runtime"));
+
 export function Client({ initialFavoriteKeys, isFavoritesMode = false }: ClientProps = {}) {
   const contentRef = React.useRef<HTMLTableSectionElement>(null);
-  const broadcastChannelRef = React.useRef<BroadcastChannel | null>(null);
   const [search] = useQueryStates(searchParamsParser);
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -93,144 +87,12 @@ export function Client({ initialFavoriteKeys, isFavoritesMode = false }: ClientP
     }
   }, [initialFavoriteKeys, queryClient]);
 
-  // Fetch favorites when in favorites mode (for checkbox UI)
-  // Only needed for the checkbox/selection UI, not for favorites view data
-  const { data: favorites = [] } = useQuery({
-    queryKey: FAVORITES_QUERY_KEY,
-    queryFn: getFavorites,
-    staleTime: Infinity,
-    enabled: false, // Disabled - only used for checkbox UI, fetched lazily when needed
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-  });
-
-  // BroadcastChannel setup for cross-tab favorites sync
-  React.useEffect(() => {
-    if (typeof window === "undefined" || typeof BroadcastChannel === "undefined") {
-      return;
-    }
-
-    if (!broadcastChannelRef.current) {
-      broadcastChannelRef.current = new BroadcastChannel(FAVORITES_BROADCAST_CHANNEL);
-    }
-
-    const bc = broadcastChannelRef.current;
-    const timeoutIds: NodeJS.Timeout[] = [];
-
-    const handleMessage = async (event: MessageEvent<any>) => {
-      if (event.data?.type !== "updated" || !Array.isArray(event.data?.favorites)) {
-        return;
-      }
-
-      if (event.data?.source === broadcastId) {
-        return;
-      }
-
-      const newFavorites = event.data.favorites as FavoriteKey[];
-
-      syncFavorites({
-        queryClient,
-        favorites: newFavorites,
-      });
-
-      // Always mark favorites rows queries as stale so next view fetches fresh data
-      void queryClient.invalidateQueries({
-        queryKey: ["favorites", "rows"],
-        exact: false,
-      });
-
-      if (isFavoritesMode) {
-        const timeoutId = setTimeout(() => {
-          void queryClient.refetchQueries({
-            queryKey: ["favorites", "rows"],
-            exact: false,
-            type: "active",
-          });
-        }, 100);
-        timeoutIds.push(timeoutId);
-      }
-    };
-
-    bc.onmessage = handleMessage;
-
-    return () => {
-      if (bc) {
-        bc.onmessage = null;
-      }
-      timeoutIds.forEach(clearTimeout);
-    };
-  }, [broadcastId, isFavoritesMode, queryClient]);
-
-  React.useEffect(() => {
-    return () => {
-      if (broadcastChannelRef.current) {
-        broadcastChannelRef.current.close();
-        broadcastChannelRef.current = null;
-      }
-    };
+  const [favoritesSnapshot, setFavoritesSnapshot] = React.useState<FavoritesRuntimeSnapshot | null>(null);
+  const handleFavoritesSnapshot = React.useCallback((snapshot: FavoritesRuntimeSnapshot | null) => {
+    setFavoritesSnapshot(snapshot);
   }, []);
-  const prevFavoritesModeRef = React.useRef<boolean>(isFavoritesMode);
-  React.useEffect(() => {
-    const wasFavorites = prevFavoritesModeRef.current;
-    prevFavoritesModeRef.current = isFavoritesMode;
-    if (isFavoritesMode && !wasFavorites) {
-      void queryClient.invalidateQueries({
-        queryKey: ["favorites", "rows"],
-        exact: false,
-      });
-    }
-  }, [isFavoritesMode, queryClient]);
-
-  // Fetch favorite rows with pagination when in favorites mode
-  // Uses useInfiniteQuery for pagination (same as main table)
-  // API endpoint uses unstable_cache server-side for favorite keys
-  const {
-    data: favoriteData,
-    isFetching: isFetchingFavorites,
-    isLoading: isLoadingFavorites,
-    isFetchingNextPage: isFetchingNextPageFavorites,
-    fetchNextPage: fetchNextPageFavorites,
-    hasNextPage: hasNextPageFavorites,
-    status: favoritesStatus,
-  } = useInfiniteQuery({
-    ...favoritesDataOptions(search),
-    enabled: isFavoritesMode && !!session && !authPending,
-  });
-
-  // Show loading state if:
-  // - Query is loading
-  // - Query is pending (not started yet, including when disabled)
-  // - Query is disabled but we're waiting for auth (session pending or not authenticated)
-  // When query is disabled, TanStack Query sets isLoading=false, so we need to check status and auth state
-  const isFavoritesLoading = isLoadingFavorites || 
-    favoritesStatus === 'pending' || 
-    (isFavoritesMode && (authPending || !session));
-
-  // Extract favorite keys from all pages (for checkbox UI)
-  const favoriteKeysFromRows = React.useMemo(() => {
-    if (!isFavoritesMode || !favoriteData?.pages || favoriteData.pages.length === 0) {
-      return [];
-    }
-    // Get all favorite keys from all pages
-    const allKeys = new Set<FavoriteKey>();
-    favoriteData.pages.forEach((page) => {
-      page.data.forEach((row) => {
-        allKeys.add(stableGpuKey(row) as FavoriteKey);
-      });
-    });
-    return Array.from(allKeys);
-  }, [favoriteData?.pages, isFavoritesMode]);
-
-  // Seed favorites cache with keys from favorites view
-  // This ensures checkboxes are pre-checked immediately (no flicker)
-  React.useEffect(() => {
-    if (isFavoritesMode && favoriteKeysFromRows.length > 0) {
-      const existing = queryClient.getQueryData<FavoriteKey[]>(FAVORITES_QUERY_KEY);
-      if (!existing || existing.length !== favoriteKeysFromRows.length) {
-        queryClient.setQueryData(FAVORITES_QUERY_KEY, favoriteKeysFromRows);
-      }
-    }
-  }, [isFavoritesMode, favoriteKeysFromRows, queryClient]);
+  const noopAsync = React.useCallback(async () => {}, []);
+  const shouldHydrateFavorites = isFavoritesMode;
 
 
   const {
@@ -249,26 +111,31 @@ export function Client({ initialFavoriteKeys, isFavoritesMode = false }: ClientP
     contentRef.current?.focus();
   }, ".");
 
-  const flatData: RowWithId[] = React.useMemo(() => {
-    if (isFavoritesMode) {
-      return (favoriteData?.pages?.flatMap((page) => page.data ?? []) as RowWithId[]) ?? [] as RowWithId[];
-    }
-    // Server guarantees stable, non-overlapping windows via deterministic sort + cursor
-    return (data?.pages?.flatMap((page) => page.data ?? []) as RowWithId[]) ?? [] as RowWithId[];
-  }, [data?.pages, favoriteData?.pages, isFavoritesMode]);
+  const baseFlatData = React.useMemo(() => {
+    return (data?.pages?.flatMap((page) => page.data ?? []) as RowWithId[]) ?? ([] as RowWithId[]);
+  }, [data?.pages]);
+  const baseLastPage = data?.pages?.[data?.pages.length - 1];
 
-  // REMINDER: meta data is always the same for all pages as filters do not change(!)
-  const lastPage = isFavoritesMode 
-    ? favoriteData?.pages?.[favoriteData.pages.length - 1]
-    : data?.pages?.[data?.pages.length - 1];
+  const favoritesFlatData = favoritesSnapshot?.flatData ?? [];
+  const favoritesLastPage = favoritesSnapshot?.lastPage;
+
+  const flatData = isFavoritesMode ? favoritesFlatData : baseFlatData;
+  const lastPage = isFavoritesMode ? favoritesLastPage : baseLastPage;
   const facetsFromPage = lastPage?.meta?.facets;
-  const totalDBRowCount = lastPage?.meta?.totalRowCount ?? flatData.length;
-  const filterDBRowCount = lastPage?.meta?.filterRowCount ?? flatData.length;
+  const totalDBRowCount = isFavoritesMode
+    ? favoritesSnapshot?.totalRowCount ?? favoritesFlatData.length
+    : baseLastPage?.meta?.totalRowCount ?? baseFlatData.length;
+  const filterDBRowCount = isFavoritesMode
+    ? favoritesSnapshot?.filterRowCount ?? favoritesFlatData.length
+    : baseLastPage?.meta?.filterRowCount ?? baseFlatData.length;
+  const totalFetched = isFavoritesMode
+    ? favoritesSnapshot?.totalFetched ?? favoritesFlatData.length
+    : baseFlatData.length;
+
+  const effectiveFavoriteKeys = isFavoritesMode
+    ? favoritesSnapshot?.favoriteKeysFromRows ?? []
+    : initialFavoriteKeys;
   
-  // Use favorite keys from rows query if in favorites mode, otherwise use initialFavoriteKeys from SSR
-  const effectiveFavoriteKeys = isFavoritesMode ? favoriteKeysFromRows : initialFavoriteKeys;
-  
-  const totalFetched = flatData?.length;
   const metadata: DataTableMeta<{ totalRows: number; filterRows: number; totalRowsFetched: number; }> = {
     ...(lastPage?.meta?.metadata ?? {}),
     totalRows: totalDBRowCount ?? 0,
@@ -276,6 +143,22 @@ export function Client({ initialFavoriteKeys, isFavoritesMode = false }: ClientP
     totalRowsFetched: totalFetched ?? 0,
     initialFavoriteKeys: effectiveFavoriteKeys,
   };
+
+  const tableIsFetching = isFavoritesMode
+    ? favoritesSnapshot?.isFetching ?? false
+    : isFetching;
+  const tableIsLoading = isFavoritesMode
+    ? favoritesSnapshot?.isFavoritesLoading ?? true
+    : isLoading;
+  const tableIsFetchingNextPage = isFavoritesMode
+    ? favoritesSnapshot?.isFetchingNextPage ?? false
+    : isFetchingNextPage;
+  const tableFetchNextPage = isFavoritesMode
+    ? favoritesSnapshot?.fetchNextPage ?? noopAsync
+    : fetchNextPage;
+  const tableHasNextPage = isFavoritesMode
+    ? favoritesSnapshot?.hasNextPage ?? false
+    : hasNextPage;
   const facetsRef = React.useRef<Record<string, FacetMetadataSchema> | undefined>(undefined);
   React.useEffect(() => {
     if (facetsFromPage && Object.keys(facetsFromPage).length) {
@@ -411,64 +294,75 @@ export function Client({ initialFavoriteKeys, isFavoritesMode = false }: ClientP
   }, [castFacets]);
 
   return (
-    <DataTableInfinite
-      key={`table-${isFavoritesMode ? "favorites" : "all"}`}
-      columns={columns}
-      data={flatData}
-      skeletonRowCount={50}
-      skeletonNextPageRowCount={undefined}
-      totalRows={totalDBRowCount}
-      filterRows={filterDBRowCount}
-      totalRowsFetched={totalFetched}
-      columnFilters={columnFilters}
-      onColumnFiltersChange={setColumnFilters}
-      sorting={sorting}
-      onSortingChange={setSorting}
-      rowSelection={rowSelection}
-      onRowSelectionChange={setRowSelection}
-      meta={{
-        ...metadata,
-        facets: castFacets,
-      }}
-      filterFields={filterFields}
-      sheetFields={sheetFields}
-      isFetching={isFavoritesMode ? isFetchingFavorites : isFetching}
-      isLoading={isFavoritesMode ? isFavoritesLoading : isLoading}
-      isFetchingNextPage={isFavoritesMode ? isFetchingNextPageFavorites : isFetchingNextPage}
-      fetchNextPage={isFavoritesMode ? fetchNextPageFavorites : fetchNextPage}
-      hasNextPage={isFavoritesMode ? hasNextPageFavorites : hasNextPage}
-      getRowClassName={() => "opacity-100"}
-      getRowId={(row) => row.uuid}
-      renderSheetTitle={(props) => props.row?.original.uuid}
-      searchParamsParser={searchParamsParser}
-      focusTargetRef={contentRef}
-      account={{
-        user: accountUser,
-        onSignOut: handleSignOut,
-        isSigningOut,
-        onSignIn: handleSignIn,
-        onSignUp: handleSignUp,
-      }}
-      headerSlot={
-        <MobileTopNav
-          user={accountUser}
-          onSignOut={handleSignOut}
-          onSignIn={handleSignIn}
-          onSignUp={handleSignUp}
-          isSigningOut={isSigningOut}
-          renderSidebar={() => (
-            <SidebarPanel
-              user={accountUser}
-              onSignOut={handleSignOut}
-              isSigningOut={isSigningOut}
-              className="flex-1"
-              showUserMenuFooter={false}
-            />
-          )}
-        />
-      }
-      mobileHeaderOffset="38px"
-    />
+    <>
+      {shouldHydrateFavorites ? (
+        <React.Suspense fallback={null}>
+          <LazyFavoritesRuntime
+            search={search}
+            isActive={isFavoritesMode}
+            session={session}
+            authPending={authPending}
+            onStateChange={handleFavoritesSnapshot}
+            broadcastId={broadcastId}
+          />
+        </React.Suspense>
+      ) : null}
+      <DataTableInfinite
+        key={`table-${isFavoritesMode ? "favorites" : "all"}`}
+        columns={columns}
+        data={flatData}
+        skeletonRowCount={50}
+        skeletonNextPageRowCount={undefined}
+        totalRows={metadata.totalRows}
+        filterRows={metadata.filterRows}
+        totalRowsFetched={metadata.totalRowsFetched}
+        columnFilters={columnFilters}
+        onColumnFiltersChange={setColumnFilters}
+        sorting={sorting}
+        onSortingChange={setSorting}
+        rowSelection={rowSelection}
+        onRowSelectionChange={setRowSelection}
+        meta={{ ...metadata, facets: castFacets }}
+        filterFields={filterFields}
+        sheetFields={sheetFields}
+        isFetching={tableIsFetching}
+        isLoading={tableIsLoading}
+        isFetchingNextPage={tableIsFetchingNextPage}
+        fetchNextPage={tableFetchNextPage}
+        hasNextPage={tableHasNextPage}
+        getRowClassName={() => "opacity-100"}
+        getRowId={(row) => row.uuid}
+        renderSheetTitle={(props) => props.row?.original.uuid}
+        searchParamsParser={searchParamsParser}
+        focusTargetRef={contentRef}
+        account={{
+          user: accountUser,
+          onSignOut: handleSignOut,
+          isSigningOut,
+          onSignIn: handleSignIn,
+          onSignUp: handleSignUp,
+        }}
+        headerSlot={
+          <MobileTopNav
+            user={accountUser}
+            onSignOut={handleSignOut}
+            onSignIn={handleSignIn}
+            onSignUp={handleSignUp}
+            isSigningOut={isSigningOut}
+            renderSidebar={() => (
+              <SidebarPanel
+                user={accountUser}
+                onSignOut={handleSignOut}
+                isSigningOut={isSigningOut}
+                className="flex-1"
+                showUserMenuFooter={false}
+              />
+            )}
+          />
+        }
+        mobileHeaderOffset="38px"
+      />
+    </>
   );
 }
 

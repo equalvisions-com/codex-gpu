@@ -479,6 +479,54 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     return headerRefsMap.current.get(headerId)!;
   }, []);
 
+  React.useLayoutEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const headerElement = getHeaderRef("gpu_model").current;
+    if (!headerElement) {
+      return;
+    }
+
+    const updateMeasuredWidth = (width?: number) => {
+      if (!width || Number.isNaN(width)) {
+        return;
+      }
+      modelColumnMeasuredWidthRef.current = width;
+    };
+
+    updateMeasuredWidth(headerElement.getBoundingClientRect().width || headerElement.offsetWidth);
+
+    if (typeof ResizeObserver !== "undefined") {
+      const observer = new ResizeObserver((entries) => {
+        const entry = entries[0];
+        if (!entry) return;
+        updateMeasuredWidth(entry.contentRect.width);
+      });
+      observer.observe(headerElement);
+      return () => observer.disconnect();
+    }
+
+    let frame: number | null = null;
+    const handleResize = () => {
+      if (frame) {
+        cancelAnimationFrame(frame);
+      }
+      frame = window.requestAnimationFrame(() => {
+        updateMeasuredWidth(headerElement.getBoundingClientRect().width || headerElement.offsetWidth);
+      });
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      if (frame) {
+        cancelAnimationFrame(frame);
+      }
+    };
+  }, [getHeaderRef]);
+
   const minimumModelColumnWidth = React.useMemo(
     () => table.getColumn("gpu_model")?.columnDef.minSize ?? 275,
     [table]
@@ -738,7 +786,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                       // Note: Regular function (not useCallback) because we're inside a map callback
                       // This is fine - function is recreated per header but only executes on user interaction
                       const handleResizeStart = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
-                        // Safety check: ensure resize handler exists before calling
                         const resizeHandler = header.getResizeHandler();
                         if (!resizeHandler) {
                           return;
@@ -751,96 +798,42 @@ export function DataTableInfinite<TData, TValue, TMeta>({
 
                         const columnSizing = table.getState().columnSizing;
                         const hasBeenResized = header.id in columnSizing || modelColumnHasBeenResizedRef.current;
-                        
-                        // Mark as resized immediately when user starts resizing
-                        modelColumnHasBeenResizedRef.current = true;
-                        
-                        // If column hasn't been resized and is at default size, measure the actual width
+
                         if (!hasBeenResized && header.getSize() === modelColumnDefaultSize) {
-                          const element = headerRef.current;
-                          if (element) {
-                            // Column is using "auto" - measure the actual rendered width synchronously
-                            // This is safe because we're in an event handler, not during render
-                            const actualWidth = element.offsetWidth;
-                            if (actualWidth > 0) {
-                              // Store measured width for reference
-                              modelColumnMeasuredWidthRef.current = actualWidth;
-                              
-                              // Use the actual measured width (don't clamp to min if larger)
-                              // Only enforce minimum if measured width is actually smaller than min
-                              const widthToSet = actualWidth >= minimumModelColumnWidth 
-                                ? actualWidth 
-                                : minimumModelColumnWidth;
-                              
-                              // CRITICAL: Set width directly on element to prevent visual jump
-                              // This ensures the column width is visually set BEFORE resize handler runs
-                              // Direct DOM manipulation is safe here because:
-                              // 1. We're in an event handler (not during render)
-                              // 2. We immediately update React state to match
-                              // 3. React will preserve this style on next render due to state sync
-                              element.style.width = `${widthToSet}px`;
-                              
-                              // Also update all cell elements in the same column to prevent visual mismatch
-                              // PERFORMANCE: With virtualization, only ~50-100 visible rows are in DOM
-                              // querySelectorAll is fast (native API, O(n) where n = visible rows only)
-                              // This happens once per resize start, then standard handler takes over
-                              // Browser compatibility: closest() is supported in IE11+, querySelectorAll is universal
-                              const tableElement = element.closest('table');
-                              if (tableElement) {
-                                // Query only visible cells (virtualization limits DOM nodes)
-                                const cells = tableElement.querySelectorAll(`td[data-column-id="${header.id}"]`);
-                                // Batch DOM updates - browsers optimize style changes to same property
-                                for (let i = 0; i < cells.length; i++) {
-                                  const cell = cells[i];
-                                  if (cell instanceof HTMLElement) {
-                                    cell.style.width = `${widthToSet}px`;
-                                  }
-                                }
-                              }
-                              
-                              // Update column sizing state synchronously
-                              // This ensures React state matches DOM state, preventing conflicts
-                              const currentSizing = table.getState().columnSizing;
-                              table.setColumnSizing({
-                                ...currentSizing,
-                                [header.id]: widthToSet,
-                              });
-                              
-                              // Use requestAnimationFrame to ensure state update is processed
-                              // before calling resize handler. This is necessary because:
-                              // 1. setColumnSizing updates React state asynchronously
-                              // 2. TanStack Table's resize handler reads from state
-                              // 3. RAF ensures state update is flushed before handler runs
-                              // Note: Cleanup not needed - RAF callback completes quickly and includes safety checks
-                              requestAnimationFrame(() => {
-                                // Safety check: ensure resize handler still exists
-                                // This prevents errors if component unmounts between RAF schedule and execution
-                                const handler = header.getResizeHandler();
-                                if (!handler) {
-                                  return;
-                                }
-                                
-                                // Create a synthetic event with the same properties
-                                // Preserves event metadata for TanStack Table's handler
-                                const syntheticEvent = {
-                                  ...e,
-                                  currentTarget: e.currentTarget,
-                                  target: e.target,
-                                } as typeof e;
-                                
-                                // Call resize handler after state update is processed
-                                handler(syntheticEvent);
-                              });
-                              
-                              // Prevent default handler from running
-                              e.preventDefault();
-                              e.stopPropagation();
+                          modelColumnHasBeenResizedRef.current = true;
+
+                          const measuredWidth = modelColumnMeasuredWidthRef.current ?? header.getSize();
+                          const widthToSet =
+                            measuredWidth && measuredWidth > 0
+                              ? Math.max(measuredWidth, minimumModelColumnWidth)
+                              : minimumModelColumnWidth;
+
+                          const currentSizing = table.getState().columnSizing;
+                          table.setColumnSizing({
+                            ...currentSizing,
+                            [header.id]: widthToSet,
+                          });
+
+                          const syntheticEvent = {
+                            ...e,
+                            currentTarget: e.currentTarget,
+                            target: e.target,
+                          } as typeof e;
+
+                          requestAnimationFrame(() => {
+                            const handler = header.getResizeHandler();
+                            if (!handler) {
                               return;
                             }
-                          }
+                            handler(syntheticEvent);
+                          });
+
+                          e.preventDefault();
+                          e.stopPropagation();
+                          return;
                         }
-                        
-                        // Standard resize handler (column already resized or measurement not needed)
+
+                        modelColumnHasBeenResizedRef.current = true;
                         resizeHandler(e);
                       };
                       
