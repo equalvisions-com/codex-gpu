@@ -101,6 +101,7 @@ export interface ModelsDataTableInfiniteProps<TData, TValue, TMeta> {
     isSigningOut: boolean;
     onSignIn?: () => void;
     onSignUp?: () => void;
+    isLoading?: boolean;
   };
   headerSlot?: React.ReactNode;
   mobileHeaderOffset?: string;
@@ -158,6 +159,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
   const accountIsSigningOut = account?.isSigningOut ?? false;
   const accountOnSignIn = account?.onSignIn;
   const accountOnSignUp = account?.onSignUp;
+  const accountIsLoading = account?.isLoading ?? false;
   const pathname = usePathname() ?? "";
   const [isDesktopSearchOpen, setIsDesktopSearchOpen] = React.useState(false);
   // Use proper media query hook for SSR-safe mobile detection
@@ -784,6 +786,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
                   forceUnauthSignInButton
                   onSignIn={accountOnSignIn}
                   onSignUp={accountOnSignUp}
+                  isLoading={accountIsLoading}
                 />
               </div>
             </div>

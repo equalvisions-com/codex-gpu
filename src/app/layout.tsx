@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import "@/styles/globals.css";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import PlausibleProvider from "next-plausible";
@@ -68,10 +69,12 @@ export default function RootLayout({
                   enableSystem
                   disableTransitionOnChange
                 >
-                  <AuthDialogProvider>
-                    {children}
-                    <Toaster richColors />
-                  </AuthDialogProvider>
+                  <Suspense fallback={null}>
+                    <AuthDialogProvider>
+                      {children}
+                      <Toaster richColors />
+                    </AuthDialogProvider>
+                  </Suspense>
                 </ThemeProvider>
               </NuqsAdapter>
             </ReactQueryProvider>

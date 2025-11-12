@@ -341,6 +341,7 @@ export function Client({ initialFavoriteKeys, isFavoritesMode = false }: ClientP
           isSigningOut,
           onSignIn: handleSignIn,
           onSignUp: handleSignUp,
+          isLoading: authPending,
         }}
         headerSlot={
           <MobileTopNav
@@ -349,6 +350,7 @@ export function Client({ initialFavoriteKeys, isFavoritesMode = false }: ClientP
             onSignIn={handleSignIn}
             onSignUp={handleSignUp}
             isSigningOut={isSigningOut}
+            isAuthLoading={authPending}
             renderSidebar={() => (
               <SidebarPanel
                 user={accountUser}
@@ -356,6 +358,7 @@ export function Client({ initialFavoriteKeys, isFavoritesMode = false }: ClientP
                 isSigningOut={isSigningOut}
                 className="flex-1"
                 showUserMenuFooter={false}
+                isAuthLoading={authPending}
               />
             )}
           />

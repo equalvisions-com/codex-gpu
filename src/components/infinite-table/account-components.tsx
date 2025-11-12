@@ -72,6 +72,7 @@ export interface UserMenuProps {
   onSignIn?: () => void;
   onSignUp?: () => void;
   forceUnauthSignInButton?: boolean;
+  isLoading?: boolean;
 }
 
 export function UserMenu({
@@ -85,6 +86,7 @@ export function UserMenu({
   onSignIn,
   onSignUp,
   forceUnauthSignInButton = false,
+  isLoading = false,
 }: UserMenuProps) {
   const normalizedName = user?.name?.trim();
   const email = user?.email ?? "";
@@ -118,6 +120,36 @@ export function UserMenu({
   const triggerAriaLabel = !showDetails ? displayName : undefined;
 
   let triggerElement: React.ReactNode;
+
+  if (isLoading) {
+    if (!showDetails) {
+      return (
+        <Skeleton
+          className={cn(
+            "h-[38px] w-[68px] rounded-md",
+            fullWidth ? "w-full" : "w-[68px]",
+            triggerClassName,
+          )}
+        />
+      );
+    }
+    return (
+      <div
+        className={cn(
+          "flex items-center gap-3 rounded-md px-4 py-4 pr-0",
+          fullWidth ? "w-full" : "w-auto",
+          triggerClassName,
+        )}
+      >
+        <Skeleton className={cn("rounded-full", avatarSizeClass)} />
+        <div className="flex flex-1 flex-col gap-2">
+          <Skeleton className="h-4 w-24 rounded-md" />
+          <Skeleton className="h-3 w-36 rounded-md" />
+        </div>
+        <EllipsisVertical className="h-4 w-4 text-muted-foreground" />
+      </div>
+    );
+  }
 
   if (shouldForceSignInButton) {
     const buttonClassName = cn(
@@ -465,6 +497,7 @@ export interface SidebarPanelProps {
   showUserMenuFooter?: boolean;
   onSignIn?: () => void;
   onSignUp?: () => void;
+  isAuthLoading?: boolean;
 }
 
 export function SidebarPanel({
@@ -475,6 +508,7 @@ export function SidebarPanel({
   showUserMenuFooter = true,
   onSignIn,
   onSignUp,
+  isAuthLoading = false,
 }: SidebarPanelProps) {
   const isAuthenticated = Boolean(user);
   return (
@@ -494,6 +528,7 @@ export function SidebarPanel({
             onSignUp={onSignUp}
             forceUnauthSignInButton
             isAuthenticated={isAuthenticated}
+            isLoading={isAuthLoading}
           />
         </div>
       ) : null}
@@ -510,6 +545,7 @@ export interface MobileTopNavProps {
   isSigningOut: boolean;
   renderSidebar: () => React.ReactNode;
   sheetTitle?: string;
+  isAuthLoading?: boolean;
 }
 
 export function MobileTopNav({
@@ -521,6 +557,7 @@ export function MobileTopNav({
   isSigningOut,
   renderSidebar,
   sheetTitle = "Search",
+  isAuthLoading = false,
 }: MobileTopNavProps) {
   return (
     <NavigationMenu className="flex w-full max-w-none justify-between px-2 sm:hidden">
@@ -580,6 +617,7 @@ export function MobileTopNav({
             fullWidth={false}
             showDetails={false}
             isAuthenticated={Boolean(user)}
+            isLoading={isAuthLoading}
           />
         </NavigationMenuItem>
       </NavigationMenuList>

@@ -1,32 +1,19 @@
-import * as React from "react";
-import { headers } from "next/headers";
-import { getCookieCache } from "better-auth/cookies";
-import type { Session } from "@/lib/auth-client";
+"use client";
+
+import type { ReactNode } from "react";
 import { AuthClientProvider } from "./auth-client-provider";
-import { auth } from "@/lib/auth";
 
 interface AuthProviderProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
-export async function AuthProvider({ children }: AuthProviderProps) {
-  const hdrs = await headers();
-  let session: Session | null = null;
-
-  try {
-    const secret = process.env.BETTER_AUTH_SECRET;
-    if (secret) {
-      const headerBag = new Headers(hdrs);
-      session = (await getCookieCache(headerBag, { secret })) as Session | null;
-    }
-    if (!session) {
-      session = (await auth.api.getSession({ headers: hdrs })) as Session | null;
-    }
-  } catch (error) {
-    if (process.env.NODE_ENV !== "production") {
-      console.warn("[AuthProvider] Failed to hydrate session", error);
-    }
-  }
-
-  return <AuthClientProvider initialSession={session}>{children}</AuthClientProvider>;
+/**
+ * Client-side auth provider
+ *
+ * Better Auth recommends using the React client to hydrate sessions
+ * inside App Router components so pages remain cacheable/ISR-friendly.
+ * See: https://www.better-auth.com/docs/integrations/next#react
+ */
+export function AuthProvider({ children }: AuthProviderProps) {
+  return <AuthClientProvider initialSession={null}>{children}</AuthClientProvider>;
 }
