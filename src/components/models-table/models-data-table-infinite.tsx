@@ -45,7 +45,11 @@ import { Search } from "lucide-react";
 import { DesktopNavTabs, type DesktopNavItem } from "./nav-tabs";
 import type { ModelFavoriteKey } from "@/types/model-favorites";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { ModelSheetCharts } from "./model-sheet-charts";
+const LazyModelSheetCharts = React.lazy(() =>
+  import("./model-sheet-charts").then((module) => ({
+    default: module.ModelSheetCharts,
+  })),
+);
 import type { ModelsColumnSchema } from "./models-schema";
 
 const noop = () => {};
@@ -1087,11 +1091,22 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
               ...meta,
             }}
           />
-          <ModelSheetCharts
-            permaslug={selectedModel?.permaslug}
-            endpointId={selectedModel?.endpointId}
-            provider={selectedModel?.provider}
-          />
+          {selectedModel?.permaslug && selectedModel?.endpointId ? (
+            <React.Suspense
+              fallback={
+                <div className="grid gap-4">
+                  <div className="h-36 animate-pulse rounded-lg bg-muted" />
+                  <div className="h-36 animate-pulse rounded-lg bg-muted" />
+                </div>
+              }
+            >
+              <LazyModelSheetCharts
+                permaslug={selectedModel.permaslug}
+                endpointId={selectedModel.endpointId}
+                provider={selectedModel?.provider}
+              />
+            </React.Suspense>
+          ) : null}
         </div>
       </DataTableSheetDetails>
       <ModelsCheckedActionsIsland initialFavoriteKeys={(meta as any)?.initialFavoriteKeys} />

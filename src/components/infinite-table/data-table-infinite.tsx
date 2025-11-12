@@ -37,7 +37,11 @@ import { useQueryStates, type ParserBuilder } from "nuqs";
 import { searchParamsParser } from "./search-params";
 import { RowSkeletons } from "./_components/row-skeletons";
 import { CheckedActionsIsland } from "./_components/checked-actions-island";
-import { GpuSheetCharts } from "./gpu-sheet-charts";
+const LazyGpuSheetCharts = React.lazy(() =>
+  import("./gpu-sheet-charts").then((module) => ({
+    default: module.GpuSheetCharts,
+  })),
+);
 import { filterFields, sheetFields } from "./constants";
 import { UserMenu, type AccountUser } from "./account-components";
 import { usePathname } from "next/navigation";
@@ -1044,7 +1048,18 @@ export function DataTableInfinite<TData, TValue, TMeta>({
             }}
           />
           <div className="border-t border-border/60 pt-4">
-            <GpuSheetCharts stableKey={(selectedRow?.original as any)?.stable_key} />
+          {selectedRow?.original ? (
+            <React.Suspense
+              fallback={
+                <div className="grid gap-4">
+                  <div className="h-36 animate-pulse rounded-lg bg-muted" />
+                  <div className="h-36 animate-pulse rounded-lg bg-muted" />
+                </div>
+              }
+            >
+              <LazyGpuSheetCharts stableKey={(selectedRow.original as any)?.stable_key} />
+            </React.Suspense>
+          ) : null}
           </div>
         </div>
       </DataTableSheetDetails>
