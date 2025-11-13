@@ -58,6 +58,10 @@ export default function RootLayout({
       className={`${GeistSans.variable} ${GeistMono.variable}`}
       suppressHydrationWarning
     >
+      <head>
+        <link rel="preconnect" href="https://plausible.io" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://plausible.io" />
+      </head>
       <body className="min-h-[100dvh] bg-background sm:bg-muted/40 dark:sm:bg-background antialiased overscroll-x-none">
         <PlausibleProvider domain="data-table.openstatus.dev">
           <AuthProvider>

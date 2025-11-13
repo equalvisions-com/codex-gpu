@@ -495,14 +495,31 @@ export function DataTableInfinite<TData, TValue, TMeta>({
       return;
     }
 
+    let frame: number | null = null;
+
     const updateMeasuredWidth = (width?: number) => {
       if (!width || Number.isNaN(width)) {
         return;
       }
+
+      if (modelColumnMeasuredWidthRef.current === width) {
+        return;
+      }
+
       modelColumnMeasuredWidthRef.current = width;
     };
 
-    updateMeasuredWidth(headerElement.getBoundingClientRect().width || headerElement.offsetWidth);
+    const scheduleMeasure = () => {
+      if (frame) {
+        cancelAnimationFrame(frame);
+      }
+
+      frame = window.requestAnimationFrame(() => {
+        updateMeasuredWidth(headerElement.offsetWidth);
+      });
+    };
+
+    scheduleMeasure();
 
     if (typeof ResizeObserver !== "undefined") {
       const observer = new ResizeObserver((entries) => {
@@ -511,17 +528,16 @@ export function DataTableInfinite<TData, TValue, TMeta>({
         updateMeasuredWidth(entry.contentRect.width);
       });
       observer.observe(headerElement);
-      return () => observer.disconnect();
+      return () => {
+        observer.disconnect();
+        if (frame) {
+          cancelAnimationFrame(frame);
+        }
+      };
     }
 
-    let frame: number | null = null;
     const handleResize = () => {
-      if (frame) {
-        cancelAnimationFrame(frame);
-      }
-      frame = window.requestAnimationFrame(() => {
-        updateMeasuredWidth(headerElement.getBoundingClientRect().width || headerElement.offsetWidth);
-      });
+      scheduleMeasure();
     };
 
     window.addEventListener("resize", handleResize);
