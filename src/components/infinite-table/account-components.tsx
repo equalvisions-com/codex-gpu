@@ -376,17 +376,17 @@ export function UserMenu({
                     </span>
                   </AccordionTrigger>
                   <AccordionContent className="px-0 pt-0 [&>div]:pb-0">
-                    <div className="relative flex flex-col gap-1 pl-[25px]">
+                    <div className="relative flex flex-col gap-1 pl-5">
                       <span
                         aria-hidden
-                        className="pointer-events-none absolute left-[15px] top-1 bottom-1 w-px bg-muted"
+                        className="pointer-events-none absolute left-2 top-1 bottom-1 w-px bg-border"
                       />
-                      <DropdownMenuItem asChild className={cn(dropdownMenuItemClassName, "pl-2")}>
+                      <DropdownMenuItem asChild className={cn(dropdownMenuItemClassName, "pl-6")}>
                         <Link href="/llms?favorites=true">
                           <span>LLMs</span>
                         </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem asChild className={cn(dropdownMenuItemClassName, "pl-2")}>
+                      <DropdownMenuItem asChild className={cn(dropdownMenuItemClassName, "pl-6")}>
                         <Link href="/gpus?favorites=true">
                           <span>GPUs</span>
                         </Link>
@@ -397,7 +397,7 @@ export function UserMenu({
               </Accordion>
             ) : null}
           </div>
-          <DropdownMenuSeparator className={cn(!isAuthenticated && "sm:hidden")} />
+          {isAuthenticated ? <DropdownMenuSeparator /> : null}
           <DropdownMenuItem
             asChild
             onSelect={(event) => {
