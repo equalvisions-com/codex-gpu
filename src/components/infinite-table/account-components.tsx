@@ -376,17 +376,17 @@ export function UserMenu({
                     </span>
                   </AccordionTrigger>
                   <AccordionContent className="px-0 pt-0 [&>div]:pb-0">
-                    <div className="relative flex flex-col gap-1 pl-5">
+                    <div className="relative flex flex-col gap-1 pl-[25px]">
                       <span
                         aria-hidden
-                        className="pointer-events-none absolute left-2 top-1 bottom-1 w-px bg-border"
+                        className="pointer-events-none absolute left-[15px] top-1 bottom-1 w-px bg-muted"
                       />
-                      <DropdownMenuItem asChild className={cn(dropdownMenuItemClassName, "pl-6")}>
+                      <DropdownMenuItem asChild className={cn(dropdownMenuItemClassName, "pl-2")}>
                         <Link href="/llms?favorites=true">
                           <span>LLMs</span>
                         </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem asChild className={cn(dropdownMenuItemClassName, "pl-6")}>
+                      <DropdownMenuItem asChild className={cn(dropdownMenuItemClassName, "pl-2")}>
                         <Link href="/gpus?favorites=true">
                           <span>GPUs</span>
                         </Link>
@@ -557,15 +557,28 @@ export function MobileTopNav({
           </NavigationMenuLink>
         </NavigationMenuItem>
         <NavigationMenuItem>
+          <UserMenu
+            user={user}
+            onSignOut={onSignOut}
+            onSignIn={onSignIn}
+            onSignUp={onSignUp}
+            isSigningOut={isSigningOut}
+            fullWidth={false}
+            showDetails={false}
+            isAuthenticated={Boolean(user)}
+            isLoading={isAuthLoading}
+          />
+        </NavigationMenuItem>
+        <NavigationMenuItem>
           <Sheet>
             <SheetTrigger asChild>
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 !bg-transparent hover:!bg-transparent focus:!bg-transparent focus-visible:!bg-transparent active:!bg-transparent"
+                className="h-9 w-9 rounded-md border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground shadow-[0_1px_0_0_hsl(var(--foreground)_/_6%),0_4px_8px_-10px_hsl(var(--foreground)_/_28%)] hover:text-accent-foreground"
               >
-                <Search className="h-5 w-5 text-foreground" />
+                <Search className="h-[18px] w-[18px] text-foreground" strokeWidth={1.5} />
                 <span className="sr-only">Toggle filters</span>
               </Button>
             </SheetTrigger>
@@ -593,19 +606,6 @@ export function MobileTopNav({
               <div className="p-4">{renderSidebar()}</div>
             </SheetContent>
           </Sheet>
-        </NavigationMenuItem>
-        <NavigationMenuItem>
-          <UserMenu
-            user={user}
-            onSignOut={onSignOut}
-            onSignIn={onSignIn}
-            onSignUp={onSignUp}
-            isSigningOut={isSigningOut}
-            fullWidth={false}
-            showDetails={false}
-            isAuthenticated={Boolean(user)}
-            isLoading={isAuthLoading}
-          />
         </NavigationMenuItem>
       </NavigationMenuList>
     </NavigationMenu>

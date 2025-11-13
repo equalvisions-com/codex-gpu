@@ -702,7 +702,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
         <div className="grid h-full grid-cols-1 gap-4 sm:grid-cols-[13rem_1fr] md:grid-cols-[18rem_1fr]">
           <div
             className={cn(
-              "hidden sm:flex h-[calc(100dvh-var(--total-padding-mobile))] sm:h-[100dvh] flex-col sticky top-0 min-w-52 max-w-52 self-start md:min-w-72 md:max-w-72 rounded-lg overflow-hidden"
+              "hidden sm:flex h-[calc(100dvh-var(--total-padding-mobile))] sm:h-[100dvh] flex-col sticky top-0 self-start min-w-72 max-w-72 rounded-lg overflow-hidden"
             )}
           >
             <div className="flex h-full w-full flex-col">
@@ -1053,12 +1053,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
           <div className="border-t border-border/60 pt-4">
           {selectedRow?.original ? (
             <React.Suspense
-              fallback={
-                <div className="grid gap-4">
-                  <div className="h-36 animate-pulse rounded-lg bg-muted" />
-                  <div className="h-36 animate-pulse rounded-lg bg-muted" />
-                </div>
-              }
+              fallback={<div className="h-[240px] animate-pulse rounded-lg bg-muted" />}
             >
               <LazyGpuSheetCharts stableKey={(selectedRow.original as any)?.stable_key} />
             </React.Suspense>

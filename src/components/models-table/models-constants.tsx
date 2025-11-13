@@ -215,16 +215,6 @@ export const sheetFields: SheetField<ModelsColumnSchema>[] = [
     component: (row) => <ModelProviderBadge provider={row.provider} />,
   },
   {
-    id: "mmlu",
-    label: "MMLU-Pro",
-    type: "readonly",
-    component: (row) => {
-      const score = row.mmlu;
-      if (score === null || score === undefined) return "N/A";
-      return `${(score * 100).toFixed(1)}%`;
-    },
-  },
-  {
     id: "inputPrice" as keyof ModelsColumnSchema,
     label: "Prompt Price",
     type: "readonly",
@@ -244,7 +234,7 @@ export const sheetFields: SheetField<ModelsColumnSchema>[] = [
   },
   {
     id: "maxCompletionTokens",
-    label: "Max Output Tokens",
+    label: "Max Output",
     type: "readonly",
     component: (row) => formatContextLength(row.maxCompletionTokens),
   },
@@ -259,6 +249,16 @@ export const sheetFields: SheetField<ModelsColumnSchema>[] = [
     label: "Output Modalities",
     type: "readonly",
     component: (row) => formatModalities(row.outputModalities),
+  },
+   {
+    id: "mmlu",
+    label: "MMLU-Pro",
+    type: "readonly",
+    component: (row) => {
+      const score = row.mmlu;
+      if (score === null || score === undefined) return "N/A";
+      return `${(score * 100).toFixed(1)}%`;
+    },
   },
   {
     id: "supportedParameters",

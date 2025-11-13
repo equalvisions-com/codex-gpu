@@ -69,8 +69,8 @@ export function ModelCompareDialog({
             <React.Suspense
               fallback={
                 <div className="grid gap-4">
-                  <div className="h-40 animate-pulse rounded-xl bg-muted" />
-                  <div className="h-40 animate-pulse rounded-xl bg-muted" />
+                  <div className="h-[260px] animate-pulse rounded-xl bg-muted" />
+                  <div className="h-[260px] animate-pulse rounded-xl bg-muted" />
                 </div>
               }
             >

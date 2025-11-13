@@ -1098,8 +1098,8 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
             <React.Suspense
               fallback={
                 <div className="grid gap-4">
-                  <div className="h-36 animate-pulse rounded-lg bg-muted" />
-                  <div className="h-36 animate-pulse rounded-lg bg-muted" />
+                  <div className="h-[240px] animate-pulse rounded-lg bg-muted" />
+                  <div className="h-[240px] animate-pulse rounded-lg bg-muted" />
                 </div>
               }
             >

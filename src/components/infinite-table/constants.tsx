@@ -210,7 +210,7 @@ export const sheetFields = [
     label: "Price",
     type: "readonly",
     component: (row) =>
-      row.price_hour_usd ? `$${row.price_hour_usd.toFixed(2)} /hr` : (
+      row.price_hour_usd ? `$${row.price_hour_usd.toFixed(2)} /HR` : (
         <span className="text-muted-foreground">N/A</span>
       ),
     skeletonClassName: "w-24",
@@ -219,14 +219,14 @@ export const sheetFields = [
     id: "gpu_count",
     label: "GPU Count",
     type: "readonly",
-    component: (row) => (row.gpu_count ? `${row.gpu_count}x` : "N/A"),
+    component: (row) => (row.gpu_count ? `${row.gpu_count}` : "N/A"),
     skeletonClassName: "w-16",
   },
   {
     id: "vram_gb",
     label: "VRAM",
     type: "readonly",
-    component: (row) => (row.vram_gb ? `${row.vram_gb}GB` : "N/A"),
+    component: (row) => (row.vram_gb ? `${row.vram_gb} GB` : "N/A"),
     skeletonClassName: "w-16",
   },
   {
@@ -239,14 +239,14 @@ export const sheetFields = [
   },
   {
     id: "system_ram_gb",
-    label: "System RAM",
+    label: "RAM",
     type: "readonly",
-    component: (row) => (row.system_ram_gb ? `${row.system_ram_gb}GB` : "N/A"),
+    component: (row) => (row.system_ram_gb ? `${row.system_ram_gb} GB` : "N/A"),
     skeletonClassName: "w-20",
   },
   {
     id: "type",
-    label: "Type",
+    label: "Config",
     type: "readonly",
     component: (row) => row.type ?? "N/A",
     skeletonClassName: "w-20",

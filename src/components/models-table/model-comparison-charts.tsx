@@ -158,7 +158,7 @@ export function ModelComparisonCharts({
   const hasTargets = targets.length > 0;
 
   return (
-    <div className="grid gap-4 rounded-xl border border-border/60 bg-background/60 p-4">
+    <div className="grid gap-4">
       <SheetLineChart
         title="Throughput"
         description={
