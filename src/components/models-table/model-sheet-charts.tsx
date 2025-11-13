@@ -131,7 +131,7 @@ export function ModelSheetCharts({ permaslug, endpointId, provider }: ModelSheet
   const throughputDescription = throughputAverage != null
     ? `${throughputAverage.toLocaleString(undefined, {
         maximumFractionDigits: 1,
-      })} TPS`
+      })} tps`
     : "";
   const latencyDescription = latencyAverage != null
     ? `${latencyAverage.toLocaleString(undefined, {

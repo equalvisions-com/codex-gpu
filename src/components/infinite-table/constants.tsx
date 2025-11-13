@@ -149,19 +149,19 @@ export const filterFields: DataTableFilterField<ColumnSchema>[] = [
     defaultOpen: true,
   },
   {
+    label: "Provider",
+    value: "provider",
+    type: "checkbox",
+    defaultOpen: true,
+    component: CapitalizedOption,
+  },
+  {
     label: "Config",
     value: "type",
     type: "checkbox",
     defaultOpen: true,
     component: CapitalizedOption,
     skeletonRows: 2,
-  },
-  {
-    label: "Provider",
-    value: "provider",
-    type: "checkbox",
-    defaultOpen: true,
-    component: CapitalizedOption,
   },
 ];
 

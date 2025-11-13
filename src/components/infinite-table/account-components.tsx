@@ -37,12 +37,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import {
   Bookmark,
-  Bot,
   EllipsisVertical,
   LogIn,
   LogOut,
   Search,
-  Server,
   Settings as SettingsIcon,
   X,
 } from "lucide-react";
@@ -364,24 +362,6 @@ export function UserMenu({
           className="w-60 mr-2 sm:mr-0"
         >
           <div className="flex flex-col space-y-1">
-            <DropdownMenuItem
-              asChild
-              className={cn(dropdownMenuItemClassName, "sm:hidden")}
-            >
-              <Link href="/llms" className="flex w-full items-center gap-2">
-                <Bot className="h-4 w-4" />
-                <span>LLMs</span>
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              asChild
-              className={cn(dropdownMenuItemClassName, "sm:hidden")}
-            >
-              <Link href="/gpus" className="flex w-full items-center gap-2">
-                <Server className="h-4 w-4" />
-                <span>GPUs</span>
-              </Link>
-            </DropdownMenuItem>
             {isAuthenticated ? (
               <Accordion
                 type="single"
