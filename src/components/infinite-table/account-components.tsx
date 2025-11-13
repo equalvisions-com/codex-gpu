@@ -36,6 +36,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import {
+  Bookmark,
   Bot,
   EllipsisVertical,
   LogIn,
@@ -43,7 +44,6 @@ import {
   Search,
   Server,
   Settings as SettingsIcon,
-  Star,
   X,
 } from "lucide-react";
 import Link from "next/link";
@@ -389,20 +389,24 @@ export function UserMenu({
                 className="-mx-2 w-[calc(100%+16px)] px-2"
               >
                 <AccordionItem value="favorites" className="border-none">
-                  <AccordionTrigger className="flex w-full cursor-pointer select-none items-center justify-between gap-2 rounded-sm px-2 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted hover:no-underline focus-visible:bg-muted focus-visible:text-accent-foreground [&>svg]:hidden">
+                  <AccordionTrigger className="flex w-full cursor-pointer select-none items-center justify-between gap-2 rounded-sm px-2 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted hover:no-underline focus-visible:bg-muted focus-visible:text-accent-foreground">
                     <span className="flex items-center gap-2">
-                      <Star className="h-4 w-4" />
-                      Favorites
+                      <Bookmark className="h-4 w-4" />
+                      <span>Bookmarks</span>
                     </span>
                   </AccordionTrigger>
                   <AccordionContent className="px-0 pt-0 [&>div]:pb-0">
-                    <div className="flex flex-col gap-1">
-                      <DropdownMenuItem asChild className={dropdownMenuItemClassName}>
+                    <div className="relative flex flex-col gap-1 pl-[25px]">
+                      <span
+                        aria-hidden
+                        className="pointer-events-none absolute left-[15px] top-1 bottom-1 w-px bg-muted"
+                      />
+                      <DropdownMenuItem asChild className={cn(dropdownMenuItemClassName, "pl-2")}>
                         <Link href="/llms?favorites=true">
                           <span>LLMs</span>
                         </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem asChild className={dropdownMenuItemClassName}>
+                      <DropdownMenuItem asChild className={cn(dropdownMenuItemClassName, "pl-2")}>
                         <Link href="/gpus?favorites=true">
                           <span>GPUs</span>
                         </Link>
@@ -411,17 +415,6 @@ export function UserMenu({
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
-            ) : null}
-            {isAuthenticated ? (
-              <DropdownMenuItem asChild>
-                <Link
-                  href="/settings"
-                  className={dropdownMenuItemClassName}
-                >
-                  <SettingsIcon className="h-4 w-4" />
-                  <span>Settings</span>
-                </Link>
-              </DropdownMenuItem>
             ) : null}
           </div>
           <DropdownMenuSeparator className={cn(!isAuthenticated && "sm:hidden")} />
@@ -434,6 +427,20 @@ export function UserMenu({
           >
             <ModeToggle appearance="menu" />
           </DropdownMenuItem>
+          {isAuthenticated ? (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link
+                  href="/settings"
+                  className={dropdownMenuItemClassName}
+                >
+                  <SettingsIcon className="h-4 w-4" />
+                  <span>Settings</span>
+                </Link>
+              </DropdownMenuItem>
+            </>
+          ) : null}
           <DropdownMenuSeparator />
           <DropdownMenuItem
             className={dropdownMenuItemClassName}
@@ -549,7 +556,7 @@ export interface MobileTopNavProps {
 }
 
 export function MobileTopNav({
-  brandLabel = "OpenStatus",
+  brandLabel = "Deploybase",
   user,
   onSignOut,
   onSignIn,

@@ -158,14 +158,14 @@ export const filterFields: DataTableFilterField<ModelsColumnSchema>[] = [
     defaultOpen: true,
   },
   {
-    label: "Modalities",
-    value: "modalities",
+    label: "Provider",
+    value: "provider",
     type: "checkbox",
     defaultOpen: true,
   },
   {
-    label: "Provider",
-    value: "provider",
+    label: "Modalities",
+    value: "modalities",
     type: "checkbox",
     defaultOpen: true,
   },

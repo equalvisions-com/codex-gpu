@@ -113,14 +113,24 @@ export function GpuSheetCharts({ stableKey }: GpuSheetChartsProps) {
 
   const priceChangeDescription = React.useMemo(() => {
     if (!priceChangeSummary) {
-      return "History";
+      return "30d change";
     }
 
     const { change, percent } = priceChangeSummary;
     const direction = change > 0 ? "up" : change < 0 ? "down" : "flat";
 
     if (direction === "flat") {
-      return "History";
+      const formattedPercent = `${(percent ?? 0).toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}%`;
+
+      return (
+        <div className="flex items-center gap-1 text-xs text-foreground">
+          <span className="text-foreground/70">30d change</span>
+          <span className="font-medium text-foreground">({formattedPercent})</span>
+        </div>
+      );
     }
     const changeColorClass =
       direction === "down"
@@ -130,10 +140,6 @@ export function GpuSheetCharts({ stableKey }: GpuSheetChartsProps) {
           : "text-foreground/70";
     const symbol =
       direction === "up" ? "▲" : direction === "down" ? "▼" : null;
-    const changeText = `$${change.toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`;
     const percentText =
       percent == null
         ? null
@@ -144,10 +150,10 @@ export function GpuSheetCharts({ stableKey }: GpuSheetChartsProps) {
 
     return (
       <div className="flex items-center gap-1 text-xs text-foreground">
+        <span className="text-foreground/70">30d change</span>
         {symbol ? <span className={changeColorClass}>{symbol}</span> : null}
-        <span className={changeColorClass}>
-          {changeText}
-          {percentText ? ` (${percentText})` : null}
+        <span className={`${changeColorClass} font-medium`}>
+          ({percentText ?? "N/A"})
         </span>
       </div>
     );

@@ -4,7 +4,7 @@ import * as React from "react";
 import { createPortal } from "react-dom";
 import { useDataTable } from "@/components/data-table/data-table-provider";
 import { Button } from "@/components/ui/button";
-import { Star, GitCompare } from "lucide-react";
+import { Bookmark, GitCompare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { logger } from "@/lib/logger";
 import { useEphemeralNotice } from "@/hooks/use-ephemeral-notice";
@@ -278,7 +278,7 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
 
     if (toAdd.length > MAX_FAVORITES_PER_REQUEST || toRemove.length > MAX_FAVORITES_PER_REQUEST) {
       setNoticeVariant("error");
-      showFavoritesNotice(`Error: Max ${MAX_FAVORITES_PER_REQUEST} rows per request`);
+      showFavoritesNotice(`Error: Max ${MAX_FAVORITES_PER_REQUEST} bookmarks per request`);
       return;
     }
     setIsMutating(true);
@@ -444,9 +444,9 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
 
       setNoticeVariant("success");
       if (toAdd.length > 0) {
-        showFavoritesNotice("Added to favorites");
+        showFavoritesNotice("Added to bookmarks");
       } else if (toRemove.length > 0) {
-        showFavoritesNotice("Removed from favorites");
+        showFavoritesNotice("Removed from bookmarks");
       }
     } catch (error) {
       logger.warn("[gpu favorites] mutation failed", {
@@ -474,7 +474,7 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
           }
 
           if (error.status === 400) {
-            showFavoritesNotice(`Error: Max ${MAX_FAVORITES_PER_REQUEST} rows per request`);
+          showFavoritesNotice(`Error: Max ${MAX_FAVORITES_PER_REQUEST} bookmarks per request`);
             return;
           }
 
@@ -485,7 +485,7 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
 
           showFavoritesNotice(error.message);
         } else {
-          showFavoritesNotice("Failed to update favorites");
+          showFavoritesNotice("Failed to update bookmarks");
         }
       }
     }
@@ -524,23 +524,17 @@ export function CheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteK
           className="gap-2 group bg-muted text-foreground"
           onClick={handleFavorite}
           disabled={isMutating}
-          aria-label="Toggle favorite status"
+          aria-label="Toggle bookmark status"
         >
-          <Star
+          <Bookmark
             className={cn(
-              "h-4 w-4 text-foreground transition-colors",
+              "h-4 w-4 fill-transparent text-foreground transition-colors",
               favoriteStatus.shouldRemove
-                ? "fill-yellow-400 text-yellow-400"
-                : "group-hover:text-yellow-400"
+                ? "fill-[hsl(var(--chart-3))] text-[hsl(var(--chart-3))]"
+                : "group-hover:text-[hsl(var(--chart-3))]"
             )}
           />
-          <span>
-            {favoriteStatus.shouldRemove
-              ? "Favorited"
-              : favoriteStatus.shouldAdd
-              ? "Favorite"
-              : "Favorite"}
-          </span>
+          <span>{favoriteStatus.shouldRemove ? "Bookmarked" : "Bookmark"}</span>
         </Button>
       </div>
     </div>
