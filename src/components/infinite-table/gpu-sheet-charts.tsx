@@ -42,7 +42,7 @@ export function GpuSheetCharts({ stableKey }: GpuSheetChartsProps) {
       if (!stableKey) {
         throw new Error("Missing stable key");
       }
-      const params = new URLSearchParams({ stableKey, refresh: "1" });
+      const params = new URLSearchParams({ stableKey });
       const res = await fetch(`/api/gpus/price-history?${params.toString()}`, {
         cache: "no-store",
       });

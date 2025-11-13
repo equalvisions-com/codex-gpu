@@ -18,7 +18,7 @@ type PriceHistoryResponse = {
 };
 
 async function fetchPriceHistory(stableKey: string) {
-  const params = new URLSearchParams({ stableKey, refresh: "1" });
+  const params = new URLSearchParams({ stableKey });
   const res = await fetch(`/api/gpus/price-history?${params.toString()}`, {
     cache: "no-store",
   });

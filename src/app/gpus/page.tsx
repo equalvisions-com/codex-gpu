@@ -15,7 +15,7 @@ export default function GpusPage() {
 function GpusContent() {
   return (
     <div
-      className="flex min-h-dvh w-full flex-col sm:flex-row pt-2 sm:p-0 min-h-0"
+      className="flex min-h-dvh w-full flex-col sm:flex-row pt-2 sm:p-0"
       style={{
         "--total-padding-mobile": "calc(0.5rem + 0.5rem)",
         "--total-padding-desktop": "3rem",
@@ -31,7 +31,7 @@ function GpusContent() {
 function PageFallback() {
   return (
     <div className="flex min-h-dvh w-full items-center justify-center text-sm text-muted-foreground">
-      Loading GPUs…
+
     </div>
   );
 }

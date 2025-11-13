@@ -44,7 +44,7 @@ export function ModelSheetCharts({ permaslug, endpointId, provider }: ModelSheet
       if (!permaslug || !endpointId) {
         throw new Error("Missing throughput identifiers");
       }
-      const params = new URLSearchParams({ permaslug, endpointId, refresh: "1" });
+      const params = new URLSearchParams({ permaslug, endpointId });
       const res = await fetch(`/api/models/throughput?${params.toString()}`, {
         cache: "no-store",
       });
@@ -64,7 +64,7 @@ export function ModelSheetCharts({ permaslug, endpointId, provider }: ModelSheet
       if (!permaslug || !endpointId) {
         throw new Error("Missing latency identifiers");
       }
-      const params = new URLSearchParams({ permaslug, endpointId, refresh: "1" });
+      const params = new URLSearchParams({ permaslug, endpointId });
       const res = await fetch(`/api/models/latency?${params.toString()}`, {
         cache: "no-store",
       });
