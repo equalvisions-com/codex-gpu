@@ -219,7 +219,7 @@ export function UserMenu({
           <Button
             type="button"
             variant="ghost"
-            className="ml-auto flex h-[38px] w-9 items-center justify-center rounded-md px-0 border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground"
+            className="ml-auto flex h-[38px] w-9 items-center justify-center rounded-full px-0 border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground"
             aria-label="Open account menu"
             disabled={isSigningOut}
           >
@@ -243,7 +243,7 @@ export function UserMenu({
           type="button"
           variant="ghost"
           className={cn(
-            "flex h-[38px] min-w-[76px] flex-1 items-center justify-center rounded-none rounded-l-md px-3 text-sm font-medium",
+            "flex h-[38px] min-w-[76px] flex-1 items-center justify-center rounded-full rounded-r-none px-3 text-sm font-medium",
             "border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground shadow-[0_1px_0_0_hsl(var(--foreground)_/_6%),0_4px_8px_-10px_hsl(var(--foreground)_/_28%)]",
             "border-r-0",
           )}
@@ -257,7 +257,7 @@ export function UserMenu({
             type="button"
             variant="ghost"
             className={cn(
-              "flex h-[38px] w-9 items-center justify-center rounded-none rounded-r-md px-0",
+              "flex h-[38px] w-9 items-center justify-center rounded-full rounded-l-none px-0",
               "border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground shadow-[0_1px_0_0_hsl(var(--foreground)_/_6%),0_4px_8px_-10px_hsl(var(--foreground)_/_28%)]",
             )}
             aria-label="Open account menu"
@@ -359,7 +359,7 @@ export function UserMenu({
         {triggerElement}
         <DropdownMenuContent
           align="center"
-          className="w-60 mr-2 sm:mr-0"
+          className="w-60 mt-[4px] sm:mt-0 mr-2 sm:mr-0"
         >
           <div className="flex flex-col space-y-1">
             {isAuthenticated ? (
@@ -557,26 +557,13 @@ export function MobileTopNav({
           </NavigationMenuLink>
         </NavigationMenuItem>
         <NavigationMenuItem>
-          <UserMenu
-            user={user}
-            onSignOut={onSignOut}
-            onSignIn={onSignIn}
-            onSignUp={onSignUp}
-            isSigningOut={isSigningOut}
-            fullWidth={false}
-            showDetails={false}
-            isAuthenticated={Boolean(user)}
-            isLoading={isAuthLoading}
-          />
-        </NavigationMenuItem>
-        <NavigationMenuItem>
           <Sheet>
             <SheetTrigger asChild>
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 rounded-md border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground hover:text-accent-foreground"
+                className="h-9 w-9 rounded-full border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground hover:text-accent-foreground"
               >
                 <Search className="h-[18px] w-[18px] text-foreground" strokeWidth={1.5} />
                 <span className="sr-only">Toggle filters</span>
@@ -606,6 +593,19 @@ export function MobileTopNav({
               <div className="p-4">{renderSidebar()}</div>
             </SheetContent>
           </Sheet>
+        </NavigationMenuItem>
+        <NavigationMenuItem>
+          <UserMenu
+            user={user}
+            onSignOut={onSignOut}
+            onSignIn={onSignIn}
+            onSignUp={onSignUp}
+            isSigningOut={isSigningOut}
+            fullWidth={false}
+            showDetails={false}
+            isAuthenticated={Boolean(user)}
+            isLoading={isAuthLoading}
+          />
         </NavigationMenuItem>
       </NavigationMenuList>
     </NavigationMenu>
