@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import "@/styles/globals.css";
 import { ThemeProvider } from "@/components/theme/theme-provider";
-import PlausibleProvider from "next-plausible";
 import { ReactQueryProvider } from "@/providers/react-query";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { Toaster } from "@/components/ui/sonner";
@@ -11,12 +10,12 @@ import { GeistMono } from "geist/font/mono";
 import { AuthProvider } from "@/providers/auth-provider";
 import { AuthDialogProvider } from "@/providers/auth-dialog-provider";
 
-const TITLE = "Powerful Data-Table for React | OpenStatus";
+const TITLE = "D";
 const DESCRIPTION =
   "Flexible, fast, and easy-to-use filters with tanstack table, shadcn/ui and search params via nuqs.";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://data-table.openstatus.dev"),
+  metadataBase: new URL("https://deploybase.com"),
   title: TITLE,
   description: DESCRIPTION,
   // Disable iOS Safari data detectors (smart links) to avoid dotted underlines
@@ -57,27 +56,25 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-[100dvh] bg-background sm:bg-muted/40 dark:sm:bg-background antialiased overscroll-x-none">
-        <PlausibleProvider domain="data-table.openstatus.dev">
-          <AuthProvider>
-            <ReactQueryProvider>
-              <NuqsAdapter>
-                <ThemeProvider
-                  attribute="class"
-                  defaultTheme="system"
-                  enableSystem
-                  disableTransitionOnChange
-                >
-                  <Suspense fallback={null}>
-                    <AuthDialogProvider>
-                      {children}
-                      <Toaster richColors />
-                    </AuthDialogProvider>
-                  </Suspense>
-                </ThemeProvider>
-              </NuqsAdapter>
-            </ReactQueryProvider>
-          </AuthProvider>
-        </PlausibleProvider>
+        <AuthProvider>
+          <ReactQueryProvider>
+            <NuqsAdapter>
+              <ThemeProvider
+                attribute="class"
+                defaultTheme="system"
+                enableSystem
+                disableTransitionOnChange
+              >
+                <Suspense fallback={null}>
+                  <AuthDialogProvider>
+                    {children}
+                    <Toaster richColors />
+                  </AuthDialogProvider>
+                </Suspense>
+              </ThemeProvider>
+            </NuqsAdapter>
+          </ReactQueryProvider>
+        </AuthProvider>
       </body>
     </html>
   );
