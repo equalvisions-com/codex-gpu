@@ -12,7 +12,7 @@ interface LatencyApiResponse {
   data?: LatencyApiEntry[];
 }
 
-export interface LatencyScrapeResult {
+interface LatencyScrapeResult {
   permaslugsRequested: number;
   permaslugsProcessed: number;
   permaslugsFailed: number;
@@ -24,7 +24,7 @@ export interface LatencyScrapeResult {
 
 const USER_AGENT = "Mozilla/5.0 (compatible; ModelsLatencyScraper/1.0)";
 
-export class ModelsLatencyScraper {
+class ModelsLatencyScraper {
   private readonly baseUrl = "https://openrouter.ai/api/frontend/stats/latency-comparison";
 
   private parseTimestamp(value?: string): Date | null {

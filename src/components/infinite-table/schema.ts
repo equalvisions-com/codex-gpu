@@ -6,7 +6,7 @@ import {
 import { z } from "zod";
 
 // GPU instance pricing schema
-export const columnSchema = z.object({
+const columnSchema = z.object({
   // Unique identifier for table operations
   uuid: z.string(),
   stable_key: z.string().optional(),
@@ -49,7 +49,7 @@ export const columnSchema = z.object({
 export type ColumnSchema = z.infer<typeof columnSchema>;
 
 // GPU pricing filter schema
-export const columnFilterSchema = z.object({
+const columnFilterSchema = z.object({
   provider: z
     .enum(["coreweave", "nebius", "hyperstack", "runpod", "lambda", "digitalocean", "oracle", "crusoe"])
     .optional(),
@@ -89,10 +89,10 @@ export const columnFilterSchema = z.object({
   type: z.enum(["VM", "Bare Metal"]).optional(),
 });
 
-export type ColumnFilterSchema = z.infer<typeof columnFilterSchema>;
+type ColumnFilterSchema = z.infer<typeof columnFilterSchema>;
 
 
-export const facetMetadataSchema = z.object({
+const facetMetadataSchema = z.object({
   rows: z.array(z.object({ value: z.any(), total: z.number() })),
   total: z.number(),
   min: z.number().optional(),

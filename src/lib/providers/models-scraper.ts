@@ -85,7 +85,7 @@ interface BenchmarkDataset {
 /**
  * Scrapes AI models from OpenRouter API
  */
-export class ModelsScraper {
+class ModelsScraper {
   private readonly baseUrl = 'https://openrouter.ai/api/frontend/models/find?fmt=cards';
   private benchmarkLookupPromise?: Promise<Map<string, BenchmarkModel>>;
 

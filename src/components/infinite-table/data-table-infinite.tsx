@@ -48,6 +48,7 @@ import { usePathname } from "next/navigation";
 import { Search } from "lucide-react";
 import { DesktopNavTabs, type DesktopNavItem } from "./nav-tabs";
 import type { FavoriteKey } from "@/types/favorites";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 const noop = () => {};
 const gradientSurfaceClass =
@@ -160,19 +161,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   const accountIsLoading = account?.isLoading ?? false;
   const pathname = usePathname() ?? "";
   const [isDesktopSearchOpen, setIsDesktopSearchOpen] = React.useState(false);
-  // Detect mobile once and reuse
-  const [isMobile, setIsMobile] = React.useState(() => {
-    if (typeof window === "undefined") return false;
-    return window.innerWidth < 640;
-  });
-  
-  React.useEffect(() => {
-    if (typeof window === "undefined") return;
-    const checkMobile = () => setIsMobile(window.innerWidth < 640);
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
+  const isMobile = useMediaQuery("(max-width: 639px)");
   const searchFilterField = React.useMemo(
     () =>
       filterFields.find(

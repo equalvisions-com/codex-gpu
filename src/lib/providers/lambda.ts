@@ -5,7 +5,7 @@ import type { ProviderScraper } from './types';
 
 const PRICING_URL = 'https://lambda.ai/pricing';
 
-export class LambdaScraper implements ProviderScraper {
+class LambdaScraper implements ProviderScraper {
   name = 'lambda';
   url = PRICING_URL;
   scrapeIntervalMinutes = 1440;

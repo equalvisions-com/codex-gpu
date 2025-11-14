@@ -24,7 +24,7 @@ function toFloat(s?: string | null): number | undefined {
   return isNaN(parsed) ? undefined : parsed;
 }
 
-export class CoreWeaveScraper implements ProviderScraper {
+class CoreWeaveScraper implements ProviderScraper {
   name = 'coreweave';
   url = PRICING_URL;
   scrapeIntervalMinutes = 1440;

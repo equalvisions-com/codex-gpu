@@ -23,7 +23,7 @@ interface DataTableSheetContentProps<TData, TMeta>
   };
 }
 
-export function DataTableSheetContent<TData, TMeta>({
+function DataTableSheetContent<TData, TMeta>({
   data,
   table,
   className,

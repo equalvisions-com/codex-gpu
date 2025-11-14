@@ -9,7 +9,7 @@ export type ModelsLogsMeta = {
   // For AI models, we might add different metadata later
 };
 
-export type ModelsInfiniteQueryMeta<TMeta = Record<string, unknown>> = {
+type ModelsInfiniteQueryMeta<TMeta = Record<string, unknown>> = {
   totalRowCount: number;
   filterRowCount: number;
   facets: Record<string, ModelsFacetMetadataSchema>;

@@ -46,7 +46,7 @@ interface DataTableContextType<TData = unknown, TValue = unknown>
   extends DataTableStateContextType,
     DataTableBaseContextType<TData, TValue> {}
 
-export const DataTableContext = createContext<DataTableContextType<
+const DataTableContext = createContext<DataTableContextType<
   any,
   any
 > | null>(null);

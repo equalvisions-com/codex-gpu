@@ -250,7 +250,7 @@ function buildModelFilterConditions(search: ModelsSearchParamsType) {
   return conditions;
 }
 
-export class ModelsCache {
+class ModelsCache {
   /**
    * Store AI models data by wiping the table and inserting fresh data
    */

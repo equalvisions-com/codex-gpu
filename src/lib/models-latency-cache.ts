@@ -10,13 +10,13 @@ export interface LatencySampleInput {
   scrapedAt?: Date;
 }
 
-export interface LatencySeriesPoint {
+interface LatencySeriesPoint {
   endpointId: string;
   observedAt: string;
   latency: number;
 }
 
-export interface LatencySeriesGroup {
+interface LatencySeriesGroup {
   endpointId: string;
   provider?: string | null;
   modelId?: string | null;

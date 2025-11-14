@@ -37,7 +37,7 @@ const ORACLE_GPU_PRICING: Record<string, number> = {
   'BM.GPU2.2': 1.275,          // 2x GPUs = $2.55 total
 };
 
-export class OracleScraper implements ProviderScraper {
+class OracleScraper implements ProviderScraper {
   name = 'oracle';
   url = PRICING_URL;
   scrapeIntervalMinutes = 1440;

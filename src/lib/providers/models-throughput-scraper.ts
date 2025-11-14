@@ -12,7 +12,7 @@ interface ThroughputApiResponse {
   data?: ThroughputApiEntry[];
 }
 
-export interface ThroughputScrapeResult {
+interface ThroughputScrapeResult {
   permaslugsRequested: number;
   permaslugsProcessed: number;
   permaslugsFailed: number;
@@ -24,7 +24,7 @@ export interface ThroughputScrapeResult {
 
 const USER_AGENT = "Mozilla/5.0 (compatible; ModelsThroughputScraper/1.0)";
 
-export class ModelsThroughputScraper {
+class ModelsThroughputScraper {
   private readonly baseUrl = "https://openrouter.ai/api/frontend/stats/throughput-comparison";
 
   private parseTimestamp(value?: string): Date | null {

@@ -12,7 +12,7 @@ import {
   crusoeScraper,
 } from "./index";
 
-export interface GpuScrapeSummary {
+interface GpuScrapeSummary {
   provider: string;
   rowsScraped: number;
   duration: number;
@@ -21,7 +21,7 @@ export interface GpuScrapeSummary {
   error?: string;
 }
 
-export interface GpuScrapeAllResult {
+interface GpuScrapeAllResult {
   providerResults: ProviderResult[];
   scrapedAt: string;
   sourceHash: string;
@@ -39,7 +39,7 @@ const DEFAULT_SCRAPERS: ProviderScraper[] = [
   crusoeScraper,
 ];
 
-export class GpuPricingScraper {
+class GpuPricingScraper {
   constructor(private readonly scrapers: ProviderScraper[] = DEFAULT_SCRAPERS) {}
 
   async scrapeAll(): Promise<GpuScrapeAllResult> {

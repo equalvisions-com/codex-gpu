@@ -21,7 +21,7 @@ import {
 
 // https://logs.run/i?sort=hourlyRate.desc
 
-export const parseAsSort = createParser({
+const parseAsSort = createParser({
   parse(queryValue) {
     const [id, desc] = queryValue.split(SORT_DELIMITER);
     if (!id && !desc) return null;

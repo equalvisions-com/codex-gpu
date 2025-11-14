@@ -12,7 +12,7 @@ import {
 // Note: import from 'nuqs/server' to avoid the "use client" directive
 import { ARRAY_DELIMITER, SLIDER_DELIMITER, SORT_DELIMITER } from "@/lib/delimiters";
 
-export const parseAsSort = createParser({
+const parseAsSort = createParser({
   parse(queryValue) {
     const [id, desc] = queryValue.split(SORT_DELIMITER);
     if (!id && !desc) return null;

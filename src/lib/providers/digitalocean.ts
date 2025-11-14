@@ -5,7 +5,7 @@ import type { ProviderScraper } from './types';
 
 const PRICING_URL = 'https://www.digitalocean.com/pricing/gpu-droplets';
 
-export class DigitalOceanScraper implements ProviderScraper {
+class DigitalOceanScraper implements ProviderScraper {
   name = 'digitalocean';
   url = PRICING_URL;
   scrapeIntervalMinutes = 1440;

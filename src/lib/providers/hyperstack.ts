@@ -29,7 +29,7 @@ function slugify(input: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
-export class HyperstackScraper implements ProviderScraper {
+class HyperstackScraper implements ProviderScraper {
   name = 'hyperstack';
   url = PRICING_URL;
   scrapeIntervalMinutes = 1440;

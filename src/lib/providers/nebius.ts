@@ -24,7 +24,7 @@ function cleanGpuModelName(item: string): string {
   return cleaned.trim();
 }
 
-export class NebiusScraper implements ProviderScraper {
+class NebiusScraper implements ProviderScraper {
   name = 'nebius';
   url = PRICING_URL;
   scrapeIntervalMinutes = 1440;

@@ -9,7 +9,7 @@ interface SendEmailParams {
   text?: string;
 }
 
-export async function sendEmail({ to, subject, html, text }: SendEmailParams) {
+async function sendEmail({ to, subject, html, text }: SendEmailParams) {
   if (!process.env.RESEND_API_KEY) {
     throw new Error('RESEND_API_KEY is not configured');
   }

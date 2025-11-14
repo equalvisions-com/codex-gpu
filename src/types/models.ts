@@ -28,13 +28,6 @@ export interface AIModel {
   scrapedAt: string;
 }
 
-export interface ModelSnapshot {
-  provider: string;
-  version: number;
-  last_updated: string;
-  models: AIModel[];
-}
-
 export interface ModelScrapeResult {
   models: AIModel[];
   scrapedAt: string;

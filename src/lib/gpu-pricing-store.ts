@@ -55,7 +55,7 @@ function getPriceUsd(row: PriceRow): number | null {
   return null;
 }
 
-export class GpuPricingStore {
+class GpuPricingStore {
   /**
    * Replace all GPU pricing data with the latest scrape results.
    * The table is cleared before new rows are inserted to ensure parity with the models workflow.

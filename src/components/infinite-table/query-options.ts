@@ -10,7 +10,7 @@ export type LogsMeta = {
   // For GPU pricing, we might add different metadata later
 };
 
-export type InfiniteQueryMeta<TMeta = Record<string, unknown>> = {
+type InfiniteQueryMeta<TMeta = Record<string, unknown>> = {
   totalRowCount: number;
   filterRowCount: number;
   facets: Record<string, FacetMetadataSchema>;

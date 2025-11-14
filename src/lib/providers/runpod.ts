@@ -5,7 +5,7 @@ import type { ProviderScraper } from './types';
 
 const PRICING_URL = 'https://www.runpod.io/pricing';
 
-export class RunPodScraper implements ProviderScraper {
+class RunPodScraper implements ProviderScraper {
   name = 'runpod';
   url = PRICING_URL;
   scrapeIntervalMinutes = 1440;

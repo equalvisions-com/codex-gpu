@@ -6,7 +6,7 @@ import {
 import { z } from "zod";
 
 // AI Models schema
-export const modelsColumnSchema = z.object({
+const modelsColumnSchema = z.object({
   // Unique identifier for table operations
   id: z.string(),
 
@@ -43,7 +43,7 @@ export const modelsColumnSchema = z.object({
 export type ModelsColumnSchema = z.infer<typeof modelsColumnSchema>;
 
 // AI Models filter schema
-export const modelsColumnFilterSchema = z.object({
+const modelsColumnFilterSchema = z.object({
   provider: z.array(z.string()).optional(),
   author: z.array(z.string()).optional(),
   name: z.string().optional(),
@@ -58,9 +58,9 @@ export const modelsColumnFilterSchema = z.object({
   search: z.string().optional(),
 });
 
-export type ModelsColumnFilterSchema = z.infer<typeof modelsColumnFilterSchema>;
+type ModelsColumnFilterSchema = z.infer<typeof modelsColumnFilterSchema>;
 
-export const modelsFacetMetadataSchema = z.object({
+const modelsFacetMetadataSchema = z.object({
   rows: z.array(z.object({ value: z.any(), total: z.number() })),
   total: z.number(),
   min: z.number().optional(),

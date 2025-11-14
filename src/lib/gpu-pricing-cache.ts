@@ -184,7 +184,7 @@ function buildGpuFilterConditions(search: SearchParamsType) {
   return conditions;
 }
 
-export class GpuPricingCache {
+class GpuPricingCache {
   /**
    * Get GPUs with database-level filtering, sorting, and pagination
    * This follows TanStack Table's recommended pattern for server-side pagination

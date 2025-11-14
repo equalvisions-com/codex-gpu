@@ -11,13 +11,13 @@ export interface ThroughputSampleInput {
   scrapedAt?: Date;
 }
 
-export interface ThroughputSeriesPoint {
+interface ThroughputSeriesPoint {
   endpointId: string;
   observedAt: string;
   throughput: number;
 }
 
-export interface ThroughputSeriesGroup {
+interface ThroughputSeriesGroup {
   endpointId: string;
   provider?: string | null;
   modelId?: string | null;

@@ -20,7 +20,7 @@ const CRUSOE_GPU_SPECS: Record<string, { vcpus: number; ramGb: number }> = {
   'NVIDIA A40 PCIe (PCIe)': { vcpus: 6, ramGb: 60 },    // Complete specs
 };
 
-export class CrusoeScraper implements ProviderScraper {
+class CrusoeScraper implements ProviderScraper {
   name = 'crusoe';
   url = PRICING_URL;
   scrapeIntervalMinutes = 1440;
