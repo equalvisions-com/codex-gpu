@@ -37,9 +37,7 @@ export const modelsDataOptions = (search: ModelsSearchParamsType) => {
         size: pageParam?.size,
         uuid: null,
       });
-      const response = await fetch(`/api/models${query}`, {
-        next: { revalidate: 900, tags: ["models"] },
-      });
+      const response = await fetch(`/api/models${query}`);
       const json = await response.json();
       return json as ModelsInfiniteQueryResponse<ModelsColumnSchema[], ModelsLogsMeta>;
     },
