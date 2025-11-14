@@ -505,8 +505,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
       modelColumnMeasuredWidthRef.current = width;
     };
 
-    updateMeasuredWidth(headerElement.getBoundingClientRect().width || headerElement.offsetWidth);
-
     if (typeof ResizeObserver !== "undefined") {
       const observer = new ResizeObserver((entries) => {
         const entry = entries[0];
@@ -533,6 +531,25 @@ export function DataTableInfinite<TData, TValue, TMeta>({
       if (frame) {
         cancelAnimationFrame(frame);
       }
+    };
+  }, [getHeaderRef]);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    const headerElement = getHeaderRef("gpu_model").current;
+    if (!headerElement) {
+      return;
+    }
+    const frame = window.requestAnimationFrame(() => {
+      const width = headerElement.getBoundingClientRect().width || headerElement.offsetWidth;
+      if (width && !Number.isNaN(width)) {
+        modelColumnMeasuredWidthRef.current = width;
+      }
+    });
+    return () => {
+      window.cancelAnimationFrame(frame);
     };
   }, [getHeaderRef]);
 
@@ -812,11 +829,15 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                         if (!hasBeenResized && header.getSize() === modelColumnDefaultSize) {
                           modelColumnHasBeenResizedRef.current = true;
 
-                          const measuredWidth = modelColumnMeasuredWidthRef.current ?? header.getSize();
+                          const liveWidth = headerRef.current?.getBoundingClientRect()?.width;
+                          const fallbackSize = header.getSize();
+                          const measuredWidth = liveWidth && liveWidth > 0
+                            ? liveWidth
+                            : (modelColumnMeasuredWidthRef.current ?? fallbackSize);
                           const widthToSet =
                             measuredWidth && measuredWidth > 0
-                              ? Math.max(measuredWidth, minimumModelColumnWidth)
-                              : minimumModelColumnWidth;
+                              ? Math.max(measuredWidth, fallbackSize, minimumModelColumnWidth)
+                              : Math.max(fallbackSize, minimumModelColumnWidth);
 
                           const currentSizing = table.getState().columnSizing;
                           table.setColumnSizing({
