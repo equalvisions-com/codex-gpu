@@ -403,12 +403,15 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   }, [rows, setCheckedRows]);
 
   // Virtual scrolling setup - properly configured to reduce DOM size
+  const virtualizationEnabled =
+    !isLoading && !(isFetching && !data.length) && rows.length > 0;
+
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => containerRef.current,
     estimateSize: () => 37, // Row height in pixels
     overscan: isMobile ? 25 : 50, // Mobile: 25, Desktop: 50 extra rows above/below viewport
-    enabled: !isLoading && !(isFetching && !data.length) && rows.length > 0,
+    enabled: virtualizationEnabled,
   });
 
   // Get virtual items (cached to avoid multiple calls)
@@ -920,34 +923,37 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                   />
                 ) : rows.length ? (
                   <>
-                    {/* Fallback: render all rows if virtualization is disabled or no virtual items */}
-                    {virtualItems.length === 0 ? (
-                      <>
-                        {rows.map((row, index) => {
-                          const triggerOffset = isMobile ? 8 : 15;
-                          const triggerIndex = Math.max(0, rows.length - triggerOffset);
-                          const shouldAttachSentinel =
-                            hasNextPage && index === triggerIndex;
+                    {!virtualizationEnabled && rows.length ? (
+                      rows.map((row, index) => {
+                        const triggerOffset = isMobile ? 8 : 15;
+                        const triggerIndex = Math.max(0, rows.length - triggerOffset);
+                        const shouldAttachSentinel =
+                          hasNextPage && index === triggerIndex;
 
-                          return (
-                            <React.Fragment key={row.id}>
-                              <MemoizedRow
-                                row={row}
-                                table={table}
-                                selected={row.getIsSelected()}
-                                checked={checkedRows[row.id] ?? false}
-                                data-index={index}
-                                getModelColumnWidth={getModelColumnWidth}
-                              />
-                              {shouldAttachSentinel ? (
-                                <TableRow ref={sentinelRef} aria-hidden>
-                                  <TableCell colSpan={columns.length} className="p-0" />
-                                </TableRow>
-                              ) : null}
-                            </React.Fragment>
-                          );
-                        })}
-                      </>
+                        return (
+                          <React.Fragment key={row.id}>
+                            <MemoizedRow
+                              row={row}
+                              table={table}
+                              selected={row.getIsSelected()}
+                              checked={checkedRows[row.id] ?? false}
+                              data-index={index}
+                              getModelColumnWidth={getModelColumnWidth}
+                            />
+                            {shouldAttachSentinel ? (
+                              <TableRow ref={sentinelRef} aria-hidden>
+                                <TableCell colSpan={columns.length} className="p-0" />
+                              </TableRow>
+                            ) : null}
+                          </React.Fragment>
+                        );
+                      })
+                    ) : virtualItems.length === 0 ? (
+                      <RowSkeletons
+                        table={table}
+                        rows={Math.min(rows.length || skeletonRowCount, 50)}
+                        modelColumnWidth={`${minimumModelColumnWidth}px`}
+                      />
                     ) : (
                       <>
                         {/* Virtual spacer for rows before visible range */}
