@@ -500,6 +500,7 @@ function DataTableFilterSliderComponent<TData>({
         value={[localValue]}
         onValueChange={handleChange}
         aria-label={`${label} filter slider`}
+        thumbLabel={`${label} filter slider`}
       />
       {(sliderMarks.lines.length > 0 || sliderMarks.labels.length > 0) ? (
         <div className="px-2">

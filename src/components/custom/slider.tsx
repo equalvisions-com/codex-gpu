@@ -7,13 +7,21 @@ import * as SliderPrimitive from "@radix-ui/react-slider";
 
 import { cn } from "@/lib/utils";
 
+type SliderProps = React.ComponentPropsWithoutRef<typeof SliderPrimitive.Root> & {
+  thumbLabel?: string;
+};
+
 const Slider = React.forwardRef<
   React.ElementRef<typeof SliderPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof SliderPrimitive.Root>
->(({ className, ...props }, ref) => {
+  SliderProps
+>(({ className, thumbLabel, ...props }, ref) => {
   const initialValue = Array.isArray(props.value)
     ? props.value
     : [props.min, props.max];
+  const ariaLabel =
+    thumbLabel ??
+    ((props as Record<string, string | undefined>)["aria-label"] ??
+      undefined);
 
   return (
     <SliderPrimitive.Root
@@ -29,7 +37,10 @@ const Slider = React.forwardRef<
       </SliderPrimitive.Track>
       {initialValue.map((_, index) => (
         <React.Fragment key={index}>
-          <SliderPrimitive.Thumb className="block h-4 w-4 rounded-full border-2 border-primary bg-background ring-offset-background transition-colors focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50" />
+          <SliderPrimitive.Thumb
+            aria-label={ariaLabel}
+            className="block h-4 w-4 rounded-full border-2 border-primary bg-background ring-offset-background transition-colors focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
+          />
         </React.Fragment>
       ))}
     </SliderPrimitive.Root>
