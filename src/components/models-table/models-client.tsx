@@ -1,6 +1,5 @@
 "use client";
 
-import { useHotKey } from "@/hooks/use-hot-key";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import type {
   ColumnFiltersState,
@@ -109,10 +108,6 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
     ...modelsDataOptions(search),
     enabled: !effectiveFavoritesMode,
   });
-
-  useHotKey(() => {
-    contentRef.current?.focus();
-  }, ".");
 
   const baseFlatData = React.useMemo(() => {
     return (data?.pages?.flatMap((page) => page.data ?? []) as ModelsColumnSchema[]) ?? ([] as ModelsColumnSchema[]);
@@ -403,5 +398,4 @@ function isLooseEqual(a: unknown, b: unknown) {
   }
   return false;
 }
-
 

@@ -1,6 +1,5 @@
 "use client";
 
-import { useHotKey } from "@/hooks/use-hot-key";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import type {
   ColumnFiltersState,
@@ -109,10 +108,6 @@ export function Client({ initialFavoriteKeys, isFavoritesMode }: ClientProps = {
     ...dataOptions(search),
     enabled: !effectiveFavoritesMode,
   });
-
-  useHotKey(() => {
-    contentRef.current?.focus();
-  }, ".");
 
   const baseFlatData = React.useMemo(() => {
     return (data?.pages?.flatMap((page) => page.data ?? []) as RowWithId[]) ?? ([] as RowWithId[]);
@@ -256,7 +251,7 @@ export function Client({ initialFavoriteKeys, isFavoritesMode }: ClientProps = {
     derivedRowSelectionRef.current = derivedRowSelection;
   }, [derivedRowSelection]);
 
-  // REMINDER: this is currently needed for the cmdk search
+  // REMINDER: filter metadata is hydrated from the API so checkboxes/sliders stay accurate
   // TODO: auto search via API when the user changes the filter instead of hardcoded
   const filterFields = React.useMemo(() => {
     return defaultFilterFields.map((field) => {

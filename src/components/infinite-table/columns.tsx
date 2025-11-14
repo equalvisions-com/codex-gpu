@@ -7,23 +7,16 @@ import { DataTableColumnCompanyLogo } from "@/components/data-table/data-table-c
 import { DataTableColumnRegion } from "@/components/data-table/data-table-column/data-table-column-region";
 import { DataTableColumnStatusCode } from "@/components/data-table/data-table-column/data-table-column-status-code";
 import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
-import {
   getTimingColor,
   getTimingLabel,
   getTimingPercentage,
   timingPhases,
 } from "@/lib/request/timing";
 import { cn } from "@/lib/utils";
-import { HoverCardPortal } from "@radix-ui/react-hover-card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useDataTable } from "@/components/data-table/data-table-provider";
 import type { ColumnDef } from "@tanstack/react-table";
 import Image from "next/image";
-import { HoverCardTimestamp } from "./_components/hover-card-timestamp";
 import type { ColumnSchema } from "./schema";
 
 export const PROVIDER_LOGOS: Record<

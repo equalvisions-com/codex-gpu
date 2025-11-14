@@ -2,15 +2,10 @@
 
 import { X } from "lucide-react";
 import { Button } from "../ui/button";
-import { Kbd } from "@/components/custom/kbd";
-import { useHotKey } from "@/hooks/use-hot-key";
 import { useDataTable } from "@/components/data-table/data-table-provider";
 
 export function DataTableResetButton() {
   const { table } = useDataTable();
-  useHotKey(() => {
-    table.resetColumnFilters();
-  }, "Escape");
 
   return (
     <Button
@@ -19,8 +14,8 @@ export function DataTableResetButton() {
       onClick={() => {
         table.resetColumnFilters();
       }}
-      aria-label="Reset filters (Cmd+Esc)"
-      title="Reset filters (Cmd+Esc)"
+      aria-label="Reset filters"
+      title="Reset filters"
     >
       <X className="mr-2 h-4 w-4" />
       Reset

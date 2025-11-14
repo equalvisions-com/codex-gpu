@@ -4,7 +4,6 @@ import "@/styles/globals.css";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { ReactQueryProvider } from "@/providers/react-query";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
-import { Toaster } from "@/components/ui/sonner";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { AuthProvider } from "@/providers/auth-provider";
@@ -70,7 +69,6 @@ export default function RootLayout({
                     <main id="content" className="flex min-h-[100dvh] flex-col">
                       {children}
                     </main>
-                    <Toaster richColors />
                   </AuthDialogProvider>
                 </Suspense>
               </ThemeProvider>

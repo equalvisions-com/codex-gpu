@@ -1,11 +1,6 @@
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
 
-import { Copy } from "lucide-react";
-
-import {
-  DropdownMenuContent,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
+import { DropdownMenuContent } from "@/components/ui/dropdown-menu";
 
 import {
   DropdownMenuGroup,
@@ -23,7 +18,6 @@ import {
 import { CalendarDays } from "lucide-react";
 import { startOfDay } from "date-fns";
 import { startOfHour } from "date-fns";
-import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { endOfDay } from "date-fns";
 import { Table } from "@tanstack/react-table";
 import { CalendarClock } from "lucide-react";
@@ -54,7 +48,6 @@ export function DataTableSheetRowAction<
   onKeyDown,
   ...props
 }: DataTableSheetRowActionProps<TData, TFields>) {
-  const { copy, isCopied } = useCopyToClipboard();
   const field = filterFields.find((field) => field.value === fieldValue);
   const column = table.getColumn(fieldValue.toString());
 
@@ -152,7 +145,6 @@ export function DataTableSheetRowAction<
       <DropdownMenuTrigger
         className={cn(
           "rounded-md ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-          "relative",
           className
         )}
         onKeyDown={(e) => {
@@ -167,21 +159,9 @@ export function DataTableSheetRowAction<
         {...props}
       >
         {children}
-        {isCopied ? (
-          <div className="absolute inset-0 bg-background/70 place-content-center">
-            Value copied
-          </div>
-        ) : null}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" side="left">
         {renderOptions()}
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onClick={() => copy(String(value), { timeout: 1000 })}
-        >
-          <Copy />
-          Copy value
-        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
