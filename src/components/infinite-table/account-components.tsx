@@ -219,7 +219,7 @@ export function UserMenu({
           <Button
             type="button"
             variant="ghost"
-            className="ml-auto flex h-[38px] w-9 items-center justify-center rounded-full px-0 border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground"
+            className="ml-auto flex h-9 w-9 justify-end px-0 hover:bg-transparent"
             aria-label="Open account menu"
             disabled={isSigningOut}
           >
@@ -244,7 +244,7 @@ export function UserMenu({
           variant="ghost"
           className={cn(
             "flex h-[38px] min-w-[76px] flex-1 items-center justify-center rounded-full rounded-r-none px-3 text-sm font-medium",
-            "border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground shadow-[0_1px_0_0_hsl(var(--foreground)_/_6%),0_4px_8px_-10px_hsl(var(--foreground)_/_28%)]",
+            "border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground",
             "border-r-0",
           )}
           onClick={handleSignUpClick}
@@ -258,7 +258,7 @@ export function UserMenu({
             variant="ghost"
             className={cn(
               "flex h-[38px] w-9 items-center justify-center rounded-full rounded-l-none px-0",
-              "border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground shadow-[0_1px_0_0_hsl(var(--foreground)_/_6%),0_4px_8px_-10px_hsl(var(--foreground)_/_28%)]",
+              "border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground",
             )}
             aria-label="Open account menu"
             disabled={isSigningOut}

@@ -220,6 +220,7 @@ function DataTableFilterSliderComponent<TData>({
   min: defaultMin,
   max: defaultMax,
   step,
+  label,
 }: DataTableSliderFilterField<TData>) {
   const value = _value as string;
   const { columnFilters, setColumnFilters } = useDataTable();
@@ -498,6 +499,7 @@ function DataTableFilterSliderComponent<TData>({
         step={sliderStep}
         value={[localValue]}
         onValueChange={handleChange}
+        aria-label={`${label} filter slider`}
       />
       {(sliderMarks.lines.length > 0 || sliderMarks.labels.length > 0) ? (
         <div className="px-2">
