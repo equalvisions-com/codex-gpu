@@ -186,14 +186,16 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
             {logo ? (
               <Image
                 src={logo.src}
-                alt={logo.alt}
+                alt=""
+                aria-hidden="true"
+                role="presentation"
                 fill
                 sizes="20px"
                 className="object-contain"
                 loading="eager"
               />
             ) : fallbackInitial ? (
-              <span className="text-[10px] font-semibold uppercase text-muted-foreground">
+              <span className="text-[10px] font-semibold uppercase text-muted-foreground" aria-hidden="true">
                 {fallbackInitial}
               </span>
             ) : null}

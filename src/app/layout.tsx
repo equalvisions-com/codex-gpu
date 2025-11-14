@@ -67,7 +67,9 @@ export default function RootLayout({
               >
                 <Suspense fallback={null}>
                   <AuthDialogProvider>
-                    {children}
+                    <main id="content" className="flex min-h-[100dvh] flex-col">
+                      {children}
+                    </main>
                     <Toaster richColors />
                   </AuthDialogProvider>
                 </Suspense>

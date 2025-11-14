@@ -46,7 +46,9 @@ const LogoBadge = ({
       {src ? (
         <Image
           src={src}
-          alt={alt ?? ""}
+          alt=""
+          aria-hidden="true"
+          role="presentation"
           fill
           sizes={`${size}px`}
           className="object-contain"
@@ -54,7 +56,7 @@ const LogoBadge = ({
           onLoadingComplete={() => setLoaded(true)}
         />
       ) : initial ? (
-        <span className="text-[10px] font-semibold uppercase text-foreground/70">
+        <span className="text-[10px] font-semibold uppercase text-foreground/70" aria-hidden="true">
           {initial}
         </span>
       ) : null}

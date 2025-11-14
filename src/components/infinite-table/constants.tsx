@@ -38,7 +38,9 @@ const LogoBadge = ({
       {src ? (
         <Image
           src={src}
-          alt={alt ?? ""}
+          alt=""
+          aria-hidden="true"
+          role="presentation"
           fill
           sizes={`${size}px`}
           className="object-contain"
@@ -46,7 +48,7 @@ const LogoBadge = ({
           onLoadingComplete={() => setLoaded(true)}
         />
       ) : (
-        <div className="flex h-full w-full items-center justify-center text-[10px] font-semibold uppercase text-foreground/70">
+        <div className="flex h-full w-full items-center justify-center text-[10px] font-semibold uppercase text-foreground/70" aria-hidden="true">
           {(alt ?? "").charAt(0)}
         </div>
       )}
