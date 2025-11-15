@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { unstable_cache } from "next/cache";
 import { modelThroughputCache } from "@/lib/models-throughput-cache";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 43200;
 
 const getCachedThroughput = (permaslug: string) => {
   return unstable_cache(
@@ -11,7 +11,7 @@ const getCachedThroughput = (permaslug: string) => {
     },
     ["model-throughput", permaslug],
     {
-      revalidate: 900,
+      revalidate: 43200,
       tags: [`model-throughput:${permaslug}`],
     },
   )();

@@ -6,7 +6,7 @@ import { gpuPricingStore } from "@/lib/gpu-pricing-store";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30; // Allow up to 30 seconds for scraping
-const CORE_PAGE_PATHS = ["/", "/gpus", "/llms"];
+const CORE_PAGE_PATHS = ["/", "/gpus", "/llms", "/tools"];
 
 async function revalidateCorePages() {
   await Promise.all(CORE_PAGE_PATHS.map((path) => revalidatePath(path)));

@@ -1,11 +1,33 @@
 import * as React from "react";
 import { Suspense } from "react";
+import { HydrationBoundary, dehydrate } from "@tanstack/react-query";
 import { Client } from "@/components/infinite-table/client";
+import {
+  searchParamsCache,
+  type SearchParamsType,
+} from "@/components/infinite-table/search-params";
+import { dataOptions } from "@/components/infinite-table/query-options";
+import { makeQueryClient } from "@/providers/get-query-client";
 
-export default function GpusPage() {
+export const revalidate = 43200;
+
+type PageSearchParams = Record<string, string | string[] | undefined>;
+
+type PageProps = {
+  searchParams?: PageSearchParams | Promise<PageSearchParams>;
+};
+
+export default async function GpusPage({ searchParams }: PageProps) {
+  const resolvedSearchParams = await resolveSearchParams(searchParams);
+  const parsedSearch = parseSearchParams(resolvedSearchParams);
+  const queryClient = await getPrefetchedQueryClient(parsedSearch);
+  const dehydratedState = dehydrate(queryClient);
+
   return (
     <Suspense fallback={<PageFallback />}>
-      <GpusContent />
+      <HydrationBoundary state={dehydratedState}>
+        <GpusContent />
+      </HydrationBoundary>
     </Suspense>
   );
 }
@@ -30,4 +52,47 @@ function PageFallback() {
 
     </div>
   );
+}
+
+async function resolveSearchParams(
+  searchParams?: PageSearchParams | Promise<PageSearchParams>,
+) {
+  if (!searchParams) {
+    return undefined;
+  }
+
+  if (typeof (searchParams as Promise<PageSearchParams>).then === "function") {
+    return await (searchParams as Promise<PageSearchParams>);
+  }
+
+  return searchParams as PageSearchParams;
+}
+
+function parseSearchParams(
+  searchParams?: PageSearchParams,
+): SearchParamsType {
+  const urlSearchParams = new URLSearchParams();
+  if (searchParams) {
+    for (const [key, value] of Object.entries(searchParams)) {
+      if (Array.isArray(value)) {
+        value.forEach((entry) => {
+          if (typeof entry === "string") {
+            urlSearchParams.append(key, entry);
+          }
+        });
+      } else if (typeof value === "string") {
+        urlSearchParams.set(key, value);
+      }
+    }
+  }
+
+  return searchParamsCache.parse(
+    Object.fromEntries(urlSearchParams.entries()),
+  );
+}
+
+async function getPrefetchedQueryClient(search: SearchParamsType) {
+  const queryClient = makeQueryClient();
+  await queryClient.prefetchInfiniteQuery(dataOptions(search));
+  return queryClient;
 }

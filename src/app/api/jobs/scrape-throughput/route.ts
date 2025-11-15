@@ -5,7 +5,7 @@ import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
-const CORE_PAGE_PATHS = ["/", "/gpus", "/llms"];
+const CORE_PAGE_PATHS = ["/", "/gpus", "/llms", "/tools"];
 
 async function revalidateCorePages() {
   await Promise.all(CORE_PAGE_PATHS.map((path) => revalidatePath(path)));

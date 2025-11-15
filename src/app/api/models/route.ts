@@ -379,7 +379,7 @@ function generateModelsFacets(data: ModelsRowWithId[]): Record<string, { rows: {
   return facets;
 }
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 43200;
 
 // Cache facets generation (uses SQL aggregations, not full data load)
 // This avoids the 2MB cache limit while still providing facet data

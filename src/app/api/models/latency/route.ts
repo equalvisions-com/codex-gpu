@@ -2,14 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { unstable_cache } from "next/cache";
 import { modelLatencyCache } from "@/lib/models-latency-cache";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 43200;
 
 const getCachedLatency = (permaslug: string) =>
   unstable_cache(
     async () => modelLatencyCache.getSeriesGrouped(permaslug),
     ["model-latency", permaslug],
     {
-      revalidate: 900,
+      revalidate: 43200,
       tags: [`model-latency:${permaslug}`],
     },
   )();

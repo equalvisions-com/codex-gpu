@@ -2,14 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { unstable_cache } from "next/cache";
 import { gpuPriceHistoryCache } from "@/lib/gpu-price-history-cache";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 43200;
 
 const getCachedHistory = (stableKey: string) =>
   unstable_cache(
     async () => gpuPriceHistoryCache.getSeries(stableKey),
     ["gpu-price-history", stableKey],
     {
-      revalidate: 900,
+      revalidate: 43200,
       tags: [`gpu-price-history:${stableKey}`],
     },
   )();
