@@ -11,14 +11,12 @@ import { makeQueryClient } from "@/providers/get-query-client";
 
 export const revalidate = 43200;
 
-type PageSearchParams = Record<string, string | string[] | undefined>;
-
 type PageProps = {
-  searchParams?: PageSearchParams | Promise<PageSearchParams>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
 export default async function GpusPage({ searchParams }: PageProps) {
-  const resolvedSearchParams = await resolveSearchParams(searchParams);
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const parsedSearch = parseSearchParams(resolvedSearchParams);
   const queryClient = await getPrefetchedQueryClient(parsedSearch);
   const dehydratedState = dehydrate(queryClient);
@@ -54,22 +52,8 @@ function PageFallback() {
   );
 }
 
-async function resolveSearchParams(
-  searchParams?: PageSearchParams | Promise<PageSearchParams>,
-) {
-  if (!searchParams) {
-    return undefined;
-  }
-
-  if (typeof (searchParams as Promise<PageSearchParams>).then === "function") {
-    return await (searchParams as Promise<PageSearchParams>);
-  }
-
-  return searchParams as PageSearchParams;
-}
-
 function parseSearchParams(
-  searchParams?: PageSearchParams,
+  searchParams?: Record<string, string | string[] | undefined>,
 ): SearchParamsType {
   const urlSearchParams = new URLSearchParams();
   if (searchParams) {
