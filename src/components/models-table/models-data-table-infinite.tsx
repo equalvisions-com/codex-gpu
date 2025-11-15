@@ -21,6 +21,7 @@ import type {
 import { cn } from "@/lib/utils";
 import { type FetchNextPageOptions } from "@tanstack/react-query";
 import * as React from "react";
+import type { Dispatch, SetStateAction } from "react";
 import type {
   ColumnDef,
   ColumnFiltersState,
@@ -753,8 +754,12 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
       checkedRows={checkedRows}
       toggleCheckedRow={toggleCheckedRow}
       setCheckedRows={setCheckedRows}
-      setColumnFilters={onColumnFiltersChange as (filters: ColumnFiltersState) => void}
-      setRowSelection={onRowSelectionChange as (selection: RowSelectionState) => void}
+      setColumnFilters={
+        onColumnFiltersChange as Dispatch<SetStateAction<ColumnFiltersState>>
+      }
+      setRowSelection={
+        onRowSelectionChange as Dispatch<SetStateAction<RowSelectionState>>
+      }
       enableColumnOrdering={false}
       isLoading={isFetching || isLoading}
       getFacetedUniqueValues={getFacetedUniqueValues}

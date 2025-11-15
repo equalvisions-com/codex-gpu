@@ -45,12 +45,12 @@ export function DataTableSheetDetails({
 
   const nextId = React.useMemo(
     () => table.getCoreRowModel().flatRows[index + 1]?.id,
-    [index, isLoading, table],
+    [index, table],
   );
 
   const prevId = React.useMemo(
     () => table.getCoreRowModel().flatRows[index - 1]?.id,
-    [index, isLoading, table],
+    [index, table],
   );
   const selectedRowData = selectedRow?.original as Record<string, any> | undefined;
   const deployHref = React.useMemo(() => {

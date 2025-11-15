@@ -23,8 +23,8 @@ interface DataTableStateContextType {
   checkedRows: Record<string, boolean>;
   toggleCheckedRow: (rowId: string, next?: boolean) => void;
   setCheckedRows: Dispatch<SetStateAction<Record<string, boolean>>>;
-  setColumnFilters: (filters: ColumnFiltersState) => void;
-  setRowSelection: (selection: RowSelectionState) => void;
+  setColumnFilters: Dispatch<SetStateAction<ColumnFiltersState>>;
+  setRowSelection: Dispatch<SetStateAction<RowSelectionState>>;
 }
 
 interface DataTableBaseContextType<TData = unknown, TValue = unknown> {
@@ -52,6 +52,8 @@ const DataTableContext = createContext<DataTableContextType<
 > | null>(null);
 
 const noopSetCheckedRows: Dispatch<SetStateAction<Record<string, boolean>>> = () => {};
+const noopSetColumnFilters: Dispatch<SetStateAction<ColumnFiltersState>> = () => {};
+const noopSetRowSelection: Dispatch<SetStateAction<RowSelectionState>> = () => {};
 
 export function DataTableProvider<TData, TValue>({
   children,
@@ -76,8 +78,8 @@ export function DataTableProvider<TData, TValue>({
     checkedRows = {},
     toggleCheckedRow = () => {},
     setCheckedRows = noopSetCheckedRows,
-    setColumnFilters = () => {},
-    setRowSelection = () => {},
+    setColumnFilters = noopSetColumnFilters,
+    setRowSelection = noopSetRowSelection,
   } = props;
 
   const value = useMemo(
