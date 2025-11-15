@@ -6,6 +6,7 @@ import type { SearchParamsType } from "@/components/infinite-table/search-params
 import type { RowWithId } from "@/types/api";
 import { createHash } from "crypto";
 import { isArrayOfDates, isArrayOfNumbers } from "@/lib/is-array";
+import { normalizeObservedAt } from "@/lib/normalize-observed-at";
 import { isSameDay } from "date-fns";
 
 type GpuPricingRow = typeof gpuPricing.$inferSelect;
@@ -21,14 +22,6 @@ const PROVIDER_SORT_PRIORITY: Record<string, number> = {
   hyperstack: 7,
   crusoe: 8,
 };
-
-function normalizeObservedAt(observedAt: string | Date): string {
-  if (observedAt instanceof Date) {
-    return observedAt.toISOString();
-  }
-  const parsed = new Date(observedAt);
-  return Number.isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
-}
 
 function toRowWithId(record: GpuPricingRow): RowWithId {
   const data = record.data as Record<string, any>;

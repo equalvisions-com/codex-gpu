@@ -2,6 +2,7 @@ import { db } from "@/db/client";
 import { aiModels } from "@/db/schema";
 import { sql } from "drizzle-orm";
 import { modelLatencyCache, type LatencySampleInput } from "@/lib/models-latency-cache";
+import { normalizeObservedAtDate } from "@/lib/normalize-observed-at";
 
 interface LatencyApiEntry {
   x?: string;
@@ -29,8 +30,7 @@ class ModelsLatencyScraper {
 
   private parseTimestamp(value?: string): Date | null {
     if (!value || typeof value !== "string") return null;
-    const normalized = value.endsWith("Z") ? value : `${value}Z`;
-    const parsed = new Date(normalized);
+    const parsed = normalizeObservedAtDate(value);
     return Number.isNaN(parsed.getTime()) ? null : parsed;
   }
 

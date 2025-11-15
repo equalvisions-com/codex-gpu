@@ -6,20 +6,13 @@ import type { RowWithId } from "@/types/api";
 import { and, eq, sql } from "drizzle-orm";
 import { stableGpuKey } from "@/components/infinite-table/stable-key";
 import { gpuPriceHistoryStore, type GpuPriceSampleInput } from "@/lib/gpu-price-history-store";
+import { normalizeObservedAt } from "@/lib/normalize-observed-at";
 
 type GpuPricingRow = typeof gpuPricing.$inferSelect;
 
 function computeRowId(provider: string, observedAt: string, row: PriceRow): string {
   const hashInput = JSON.stringify({ provider, observed_at: observedAt, row });
   return createHash("sha256").update(hashInput).digest("hex");
-}
-
-function normalizeObservedAt(observedAt: string | Date): string {
-  if (observedAt instanceof Date) {
-    return observedAt.toISOString();
-  }
-  const parsed = new Date(observedAt);
-  return Number.isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
 }
 
 function toRowWithId(record: GpuPricingRow): RowWithId {

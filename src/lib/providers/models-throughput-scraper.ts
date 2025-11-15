@@ -2,6 +2,7 @@ import { db } from "@/db/client";
 import { aiModels } from "@/db/schema";
 import { sql } from "drizzle-orm";
 import { modelThroughputCache, type ThroughputSampleInput } from "@/lib/models-throughput-cache";
+import { normalizeObservedAtDate } from "@/lib/normalize-observed-at";
 
 interface ThroughputApiEntry {
   x?: string;
@@ -32,12 +33,8 @@ class ModelsThroughputScraper {
       return null;
     }
 
-    const normalized = value.endsWith("Z") ? value : `${value}Z`;
-    const parsed = new Date(normalized);
-    if (Number.isNaN(parsed.getTime())) {
-      return null;
-    }
-    return parsed;
+    const parsed = normalizeObservedAtDate(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
   }
 
   private async fetchPermaslug(permaslug: string): Promise<ThroughputSampleInput[]> {
