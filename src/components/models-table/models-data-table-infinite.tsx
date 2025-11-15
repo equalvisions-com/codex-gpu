@@ -440,9 +440,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
         rowVirtualizer.measure();
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    // rowVirtualizer is a stable reference from useVirtualizer hook
-  }, [rows.length]);
+  }, [rows.length, rowVirtualizer]);
 
   const sentinelNodeRef = React.useRef<HTMLTableRowElement | null>(null);
   const sentinelRef = React.useCallback((node: HTMLTableRowElement | null) => {

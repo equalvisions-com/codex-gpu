@@ -43,8 +43,14 @@ export function ModalitiesFilter() {
 
   const modalitiesFilter = columnFilters.find((filter) => filter.id === "modalities");
   const directionFilter = columnFilters.find((filter) => filter.id === "modalityDirections");
-  const selectedValues = (modalitiesFilter?.value as string[] | undefined) ?? [];
-  const directionMap = (directionFilter?.value as Record<string, ModalitiesDirection> | undefined) ?? {};
+  const selectedValues = React.useMemo(() => {
+    const value = modalitiesFilter?.value as string[] | undefined;
+    return value ?? [];
+  }, [modalitiesFilter?.value]);
+  const directionMap = React.useMemo(() => {
+    const value = directionFilter?.value as Record<string, ModalitiesDirection> | undefined;
+    return value ?? {};
+  }, [directionFilter?.value]);
 
   const facetedValues = getFacetedUniqueValues?.(table, "modalities");
   const filterOptions = React.useMemo(() => {

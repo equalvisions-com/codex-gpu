@@ -29,21 +29,26 @@ export function DataTableFilterInput<TData>({
 
   // Apply filter when debounced input changes (only from user input)
   useEffect(() => {
-    // Only apply filter if this came from user input
     if (!isUserInputRef.current) return;
 
     const newValue = debouncedInput?.trim() === "" ? null : debouncedInput;
-    const newFilters = columnFilters.map(f =>
-      f.id === value
-        ? { ...f, value: newValue }
-        : f
-    );
-    if (!columnFilters.find(f => f.id === value) && newValue !== null) {
-      newFilters.push({ id: value, value: newValue });
-    }
 
-    setColumnFilters(newFilters.filter(f => f.value !== null && f.value !== undefined));
-    isUserInputRef.current = false; // Reset after applying
+    setColumnFilters((current) => {
+      if (newValue === null || newValue === undefined) {
+        return current.filter((filter) => filter.id !== value);
+      }
+
+      const existingIndex = current.findIndex((filter) => filter.id === value);
+      if (existingIndex === -1) {
+        return [...current, { id: value, value: newValue }];
+      }
+
+      return current.map((filter, index) =>
+        index === existingIndex ? { ...filter, value: newValue } : filter,
+      );
+    });
+
+    isUserInputRef.current = false;
   }, [debouncedInput, setColumnFilters, value]);
 
   // Sync external changes to local state (but not when user is typing)
@@ -61,8 +66,7 @@ export function DataTableFilterInput<TData>({
   const handleClear = () => {
     isUserInputRef.current = false;
     if (isFilterActive) {
-      const newFilters = columnFilters.filter((f) => f.id !== value);
-      setColumnFilters(newFilters);
+      setColumnFilters((current) => current.filter((filter) => filter.id !== value));
     }
     setInput(null);
     inputRef.current?.focus();
