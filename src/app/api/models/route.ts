@@ -1,4 +1,3 @@
-import { NextRequest } from "next/server";
 import type { ModelsInfiniteQueryResponse, ModelsLogsMeta } from "@/components/models-table/models-query-options";
 import type { ModelsColumnSchema } from "@/components/models-table/models-schema";
 import { modelsSearchParamsCache } from "@/components/models-table/models-search-params";
@@ -436,7 +435,7 @@ async function getCachedModelsFiltered(search: ModelsSearchParamsType) {
   return cacheFn();
 }
 
-export async function GET(req: NextRequest): Promise<Response> {
+export async function GET(req: Request): Promise<Response> {
   try {
     // Note: using GET for simplicity; consider POST if query size grows
     const requestUrl = new URL(req.url);

@@ -1,4 +1,3 @@
-import { NextRequest } from "next/server";
 import type { InfiniteQueryResponse, LogsMeta } from "@/components/infinite-table/query-options";
 import type { ColumnSchema, FacetMetadataSchema } from "@/components/infinite-table/schema";
 import { searchParamsCache } from "@/components/infinite-table/search-params";
@@ -104,7 +103,7 @@ async function getCachedGpusFiltered(search: SearchParamsType) {
   return cacheFn();
 }
 
-export async function GET(req: NextRequest): Promise<Response> {
+export async function GET(req: Request): Promise<Response> {
   try {
     // Note: using GET for simplicity; consider POST if query size grows
     const requestUrl = new URL(req.url);
