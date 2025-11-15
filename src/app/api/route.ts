@@ -7,7 +7,7 @@ import { gpuPricingCache } from "@/lib/gpu-pricing-cache";
 import { unstable_cache } from "next/cache";
 import { createHash } from "crypto";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 43200;
 
 const PROVIDER_SORT_PRIORITY: Record<string, number> = {
   coreweave: 1,
