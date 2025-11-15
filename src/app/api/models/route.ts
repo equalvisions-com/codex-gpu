@@ -380,8 +380,6 @@ function generateModelsFacets(data: ModelsRowWithId[]): Record<string, { rows: {
   return facets;
 }
 
-export const revalidate = 43200;
-
 // Cache facets generation (uses SQL aggregations, not full data load)
 // This avoids the 2MB cache limit while still providing facet data
 // Cache for 12 hours - data only changes when scraper runs, which invalidates cache
