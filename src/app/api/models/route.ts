@@ -439,8 +439,9 @@ async function getCachedModelsFiltered(search: ModelsSearchParamsType) {
 export async function GET(req: NextRequest): Promise<Response> {
   try {
     // Note: using GET for simplicity; consider POST if query size grows
+    const requestUrl = new URL(req.url);
     const _search: Map<string, string> = new Map();
-    req.nextUrl.searchParams.forEach((value, key) => _search.set(key, value));
+    requestUrl.searchParams.forEach((value, key) => _search.set(key, value));
 
     const search: ModelsSearchParamsType = modelsSearchParamsCache.parse(Object.fromEntries(_search));
     const t1 = Date.now();

@@ -107,8 +107,9 @@ async function getCachedGpusFiltered(search: SearchParamsType) {
 export async function GET(req: NextRequest): Promise<Response> {
   try {
     // Note: using GET for simplicity; consider POST if query size grows
+    const requestUrl = new URL(req.url);
     const _search: Map<string, string> = new Map();
-    req.nextUrl.searchParams.forEach((value, key) => _search.set(key, value));
+    requestUrl.searchParams.forEach((value, key) => _search.set(key, value));
 
     const search: SearchParamsType = searchParamsCache.parse(Object.fromEntries(_search));
 
