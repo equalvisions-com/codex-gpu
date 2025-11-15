@@ -3,11 +3,9 @@ import {
   createSearchParamsCache,
   createSerializer,
   parseAsArrayOf,
-  parseAsBoolean,
   parseAsFloat,
   parseAsInteger,
   parseAsString,
-  parseAsStringLiteral,
   parseAsTimestamp,
   type inferParserType,
 } from "nuqs/server";
@@ -45,9 +43,6 @@ export const searchParamsParser = {
   // REQUIRED FOR SORTING & PAGINATION
   sort: parseAsSort,
   size: parseAsInteger.withDefault(50),
-  start: parseAsInteger.withDefault(0),
-  // REQUIRED FOR INFINITE SCROLLING (Load More)
-  direction: parseAsStringLiteral(["prev", "next"]).withDefault("next"),
   cursor: parseAsInteger, // numeric offset cursor (server-driven)
   // REQUIRED FOR SELECTION
   uuid: parseAsString,

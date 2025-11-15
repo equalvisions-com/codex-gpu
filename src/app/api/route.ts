@@ -113,7 +113,7 @@ export async function GET(req: NextRequest): Promise<Response> {
     const search: SearchParamsType = searchParamsCache.parse(Object.fromEntries(_search));
 
     // Fetch filtered, sorted, paginated data from database (TanStack Table best practice)
-    // Cached server-side with 2min TTL to reduce DB load
+    // Cached server-side with a 12h TTL (matches scraper cadence) to reduce DB load
     // This only loads the rows needed for the current page, not all rows
     // If cache fails (e.g., > 2MB), falls back to DB query gracefully
     let filteredGpus: ColumnSchema[];
@@ -183,15 +183,15 @@ export async function GET(req: NextRequest): Promise<Response> {
       prevCursor,
       nextCursor,
     } satisfies InfiniteQueryResponse<ColumnSchema[], LogsMeta>);
-    logger.info(JSON.stringify({
-      event: 'api.page',
+    logger.info({
+      event: "api.page",
       cursor: search.cursor ?? 0,
       size: search.size ?? 50,
       rowsReturned: filteredGpus.length,
       nextCursor,
       filterCount,
       latencyMs: Date.now() - t1,
-    }));
+    });
     return res;
   } catch (error) {
     console.error('Error in pricing API:', error);

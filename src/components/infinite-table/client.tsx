@@ -171,8 +171,15 @@ export function Client({ initialFavoriteKeys, isFavoritesMode }: ClientProps = {
   }, [facetsFromPage]);
   const castFacets = stableFacets as Record<string, FacetMetadataSchema> | undefined;
 
-  const { sort, start, size, uuid, cursor, direction, observed_at, search: globalSearch, ...filter } =
-    search;
+  const {
+    sort,
+    size: _size,
+    uuid,
+    cursor: _cursor,
+    observed_at: _observedAt,
+    search: globalSearch,
+    ...filter
+  } = search;
 
   const derivedColumnFilters = React.useMemo<ColumnFiltersState>(() => {
     const baseFilters = Object.entries(filter)

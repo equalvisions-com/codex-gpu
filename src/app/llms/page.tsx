@@ -2,8 +2,6 @@ import * as React from "react";
 import { Suspense } from "react";
 import { ModelsClient } from "@/components/models-table/models-client";
 
-export const revalidate = 86400;
-
 export default function ModelsPage() {
   return (
     <Suspense fallback={<PageFallback />}>
@@ -21,9 +19,7 @@ function ModelsContent() {
         "--total-padding-desktop": "3rem",
       } as React.CSSProperties}
     >
-      <ModelsClient
-        initialFavoriteKeys={undefined}
-      />
+      <ModelsClient />
     </div>
   );
 }

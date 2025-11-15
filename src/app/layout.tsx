@@ -13,8 +13,31 @@ const TITLE = "D";
 const DESCRIPTION =
   "Flexible, fast, and easy-to-use filters with tanstack table, shadcn/ui and search params via nuqs.";
 
+const DEFAULT_SITE_URL = "https://deploybase.com";
+
+function resolveMetadataBase() {
+  const envUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    process.env.NEXT_PUBLIC_APP_URL ??
+    process.env.VERCEL_PROJECT_PRODUCTION_URL ??
+    process.env.VERCEL_URL;
+
+  if (!envUrl) {
+    return new URL(DEFAULT_SITE_URL);
+  }
+
+  try {
+    const normalized = envUrl.startsWith("http")
+      ? envUrl
+      : `https://${envUrl}`;
+    return new URL(normalized);
+  } catch {
+    return new URL(DEFAULT_SITE_URL);
+  }
+}
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://deploybase.com"),
+  metadataBase: resolveMetadataBase(),
   title: TITLE,
   description: DESCRIPTION,
   // Disable iOS Safari data detectors (smart links) to avoid dotted underlines

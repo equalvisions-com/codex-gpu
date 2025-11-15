@@ -2,8 +2,6 @@ import * as React from "react";
 import { Suspense } from "react";
 import { Client } from "@/components/infinite-table/client";
 
-export const revalidate = 86400;
-
 export default function GpusPage() {
   return (
     <Suspense fallback={<PageFallback />}>
@@ -21,9 +19,7 @@ function GpusContent() {
         "--total-padding-desktop": "3rem",
       } as React.CSSProperties}
     >
-      <Client
-        initialFavoriteKeys={undefined}
-      />
+      <Client />
     </div>
   );
 }
