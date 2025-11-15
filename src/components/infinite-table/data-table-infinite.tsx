@@ -442,7 +442,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   }, [requestNextPage, rows.length, isMobile]);
 
 
-  const previousFiltersRef = React.useRef<string>("__init__");
+  const previousFiltersRef = React.useRef<ColumnFiltersState | null>(null);
   React.useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -452,11 +452,13 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   React.useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
-    const serializedFilters = JSON.stringify(columnFilters ?? []);
-    if (previousFiltersRef.current === serializedFilters) {
+    if (
+      previousFiltersRef.current &&
+      areColumnFiltersEqual(previousFiltersRef.current, columnFilters ?? [])
+    ) {
       return;
     }
-    previousFiltersRef.current = serializedFilters;
+    previousFiltersRef.current = columnFilters;
     container.scrollTop = 0;
   }, [columnFilters]);
 
@@ -575,7 +577,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     [table]
   );
 
-  const previousSearchPayloadRef = React.useRef<string>("");
+  const previousSearchPayloadRef = React.useRef<Record<string, unknown> | null>(null);
 
   React.useEffect(() => {
     const searchPayload: Record<string, unknown> = {};
@@ -585,12 +587,14 @@ export function DataTableInfinite<TData, TValue, TMeta>({
       searchPayload[field.value as string] = columnFilter ? columnFilter.value : null;
     });
 
-    const payloadString = JSON.stringify(searchPayload);
-    if (previousSearchPayloadRef.current === payloadString) {
+    if (
+      previousSearchPayloadRef.current &&
+      areSearchPayloadsEqual(previousSearchPayloadRef.current, searchPayload)
+    ) {
       return;
     }
 
-    previousSearchPayloadRef.current = payloadString;
+    previousSearchPayloadRef.current = searchPayload;
     setSearch(searchPayload);
   }, [columnFilters, filterFields, setSearch]);
 
@@ -1191,3 +1195,49 @@ const MemoizedRow = React.memo(
     prev["data-index"] === next["data-index"] &&
     prev.getModelColumnWidth === next.getModelColumnWidth,
 ) as typeof Row;
+
+function areColumnFiltersEqual(
+  a: ColumnFiltersState,
+  b: ColumnFiltersState,
+) {
+  if (a.length !== b.length) return false;
+  return a.every((filter, index) => {
+    const other = b[index];
+    if (!other) return false;
+    if (filter.id !== other.id) return false;
+    return isLooseEqual(filter.value, other.value);
+  });
+}
+
+function areSearchPayloadsEqual(
+  previous: Record<string, unknown>,
+  next: Record<string, unknown>,
+) {
+  const previousKeys = Object.keys(previous);
+  const nextKeys = Object.keys(next);
+  if (previousKeys.length !== nextKeys.length) return false;
+
+  for (const key of nextKeys) {
+    if (!previousKeys.includes(key)) return false;
+    if (!isLooseEqual(previous[key], next[key])) return false;
+  }
+
+  return true;
+}
+
+function isLooseEqual(a: unknown, b: unknown) {
+  if (Object.is(a, b)) return true;
+  if (
+    typeof a === "object" &&
+    a !== null &&
+    typeof b === "object" &&
+    b !== null
+  ) {
+    try {
+      return JSON.stringify(a) === JSON.stringify(b);
+    } catch {
+      return false;
+    }
+  }
+  return false;
+}

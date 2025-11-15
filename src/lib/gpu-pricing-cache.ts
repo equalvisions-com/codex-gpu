@@ -66,16 +66,19 @@ function buildGpuFilterConditions(search: SearchParamsType) {
 
   // GPU model filter (JSONB field: gpu_model || item)
   if (search.gpu_model) {
-    if (Array.isArray(search.gpu_model) && search.gpu_model.length > 0) {
-      const modelConditions = search.gpu_model.map(
-        (model) =>
-          sql`(COALESCE(${gpuPricing.data}->>'gpu_model', ${gpuPricing.data}->>'item') ILIKE ${`%${model}%`})`,
-      );
+    const normalize = (value: string) => value.trim().toLowerCase();
+    const normalizedModels = Array.isArray(search.gpu_model)
+      ? search.gpu_model.map((model) => normalize(model))
+      : [normalize(search.gpu_model)];
+
+    const modelConditions = normalizedModels.map((model) =>
+      sql`lower(COALESCE(${gpuPricing.data}->>'gpu_model', ${gpuPricing.data}->>'item')) = ${model}`
+    );
+
+    if (modelConditions.length === 1) {
+      conditions.push(modelConditions[0]);
+    } else {
       conditions.push(or(...modelConditions)!);
-    } else if (typeof search.gpu_model === "string") {
-      conditions.push(
-        sql`(COALESCE(${gpuPricing.data}->>'gpu_model', ${gpuPricing.data}->>'item') ILIKE ${`%${search.gpu_model}%`})`,
-      );
     }
   }
 
@@ -135,34 +138,25 @@ function buildGpuFilterConditions(search: SearchParamsType) {
   // Global search filter (across multiple JSONB fields)
   if (search.search && typeof search.search === "string") {
     const searchTerm = `%${search.search.toLowerCase()}%`;
-    const searchFields = [
+    const textFields = [
       "gpu_model",
       "item",
       "provider",
-      "region",
-      "zone",
-      "sku",
-      "billing_notes",
-      "price_unit",
       "type",
-      "network",
     ];
 
-    const searchConditions = searchFields.map(
+    const searchConditions = textFields.map(
       (field) => sql`${gpuPricing.data}->>${field} ILIKE ${searchTerm}`,
     );
 
-    // Also search numeric fields as strings
     const numericFields = [
+      "price_hour_usd",
+      "price_usd",
       "gpu_count",
       "vram_gb",
-      "system_ram_gb",
-      "local_storage_tb",
       "vcpus",
-      "price_hour_usd",
-      "price_month_usd",
-      "price_usd",
-      "raw_cost",
+      "system_ram_gb",
+      "ram_gb",
     ];
 
     numericFields.forEach((field) => {

@@ -216,19 +216,36 @@ function filterModelsData(data: ModelsRowWithId[], search: ModelsSearchParamsTyp
       }
     }
 
-    // Search filter (global search across name, description, provider, author)
+    // Search filter (limited to visible table columns + parameters)
     if (search.search) {
       const searchTerm = search.search.toLowerCase();
-      const searchableText = [
-        row.shortName,
-        row.description,
+      const pricing = row.pricing ?? {};
+      const promptPrice = pricing.prompt;
+      const outputPrice = pricing.completion;
+      const context = row.contextLength;
+      const maxOutput = row.maxCompletionTokens;
+      const mmluScore = row.mmlu;
+      const textParts = [
         row.provider,
-        row.author
-      ].filter(Boolean).join(' ').toLowerCase();
+        row.shortName ?? row.name,
+        row.author,
+        parameters.join(" "),
+      ];
 
-      if (!searchableText.includes(searchTerm)) {
-        return false;
-      }
+      const numericParts = [
+        promptPrice != null ? promptPrice.toString() : null,
+        outputPrice != null ? outputPrice.toString() : null,
+        context != null ? context.toString() : null,
+        maxOutput != null ? maxOutput.toString() : null,
+        mmluScore != null ? (mmluScore * 100).toFixed(2) : null,
+      ];
+
+      const searchableText = [...textParts, ...numericParts]
+        .filter((part) => typeof part === "string" && part.length > 0)
+        .join(" ")
+        .toLowerCase();
+
+      if (!searchableText.includes(searchTerm)) return false;
     }
 
     return true;

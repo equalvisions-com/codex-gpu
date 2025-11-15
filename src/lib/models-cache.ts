@@ -239,10 +239,16 @@ function buildModelFilterConditions(search: ModelsSearchParamsType) {
     const searchTerm = `%${search.search}%`;
     conditions.push(
       or(
-        ilike(aiModels.shortName, searchTerm),
-        ilike(aiModels.description, searchTerm),
         ilike(aiModels.provider, searchTerm),
+        ilike(aiModels.shortName, searchTerm),
+        ilike(aiModels.name, searchTerm),
         ilike(aiModels.author, searchTerm),
+        sql`array_to_string(${aiModels.supportedParameters}, ',') ILIKE ${searchTerm}`,
+        sql`CAST(${aiModels.pricing}->>'prompt' AS TEXT) ILIKE ${searchTerm}`,
+        sql`CAST(${aiModels.pricing}->>'completion' AS TEXT) ILIKE ${searchTerm}`,
+        sql`CAST(${aiModels.contextLength} AS TEXT) ILIKE ${searchTerm}`,
+        sql`CAST(${aiModels.maxCompletionTokens} AS TEXT) ILIKE ${searchTerm}`,
+        sql`CAST(${aiModels.mmlu} AS TEXT) ILIKE ${searchTerm}`,
       )!,
     );
   }
