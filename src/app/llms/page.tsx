@@ -1,31 +1,13 @@
 import * as React from "react";
 import { Suspense } from "react";
-import { HydrationBoundary, dehydrate } from "@tanstack/react-query";
 import { ModelsClient } from "@/components/models-table/models-client";
-import {
-  modelsSearchParamsCache,
-  type ModelsSearchParamsType,
-} from "@/components/models-table/models-search-params";
-import { modelsDataOptions } from "@/components/models-table/models-query-options";
-import { makeQueryClient } from "@/providers/get-query-client";
 
 export const revalidate = 43200;
 
-type PageProps = {
-  searchParams?: Promise<Record<string, string | string[] | undefined>>;
-};
-
-export default async function ModelsPage({ searchParams }: PageProps) {
-  const resolvedSearchParams = searchParams ? await searchParams : undefined;
-  const parsedSearch = parseSearchParams(resolvedSearchParams);
-  const queryClient = await getPrefetchedQueryClient(parsedSearch);
-  const dehydratedState = dehydrate(queryClient);
-
+export default function ModelsPage() {
   return (
     <Suspense fallback={<PageFallback />}>
-      <HydrationBoundary state={dehydratedState}>
-        <ModelsContent />
-      </HydrationBoundary>
+      <ModelsContent />
     </Suspense>
   );
 }
@@ -49,33 +31,4 @@ function PageFallback() {
     <div className="flex min-h-dvh w-full items-center justify-center text-sm text-muted-foreground">
     </div>
   );
-}
-
-function parseSearchParams(
-  searchParams?: Record<string, string | string[] | undefined>,
-): ModelsSearchParamsType {
-  const urlSearchParams = new URLSearchParams();
-  if (searchParams) {
-    for (const [key, value] of Object.entries(searchParams)) {
-      if (Array.isArray(value)) {
-        value.forEach((entry) => {
-          if (typeof entry === "string") {
-            urlSearchParams.append(key, entry);
-          }
-        });
-      } else if (typeof value === "string") {
-        urlSearchParams.set(key, value);
-      }
-    }
-  }
-
-  return modelsSearchParamsCache.parse(
-    Object.fromEntries(urlSearchParams.entries()),
-  );
-}
-
-async function getPrefetchedQueryClient(search: ModelsSearchParamsType) {
-  const queryClient = makeQueryClient();
-  await queryClient.prefetchInfiniteQuery(modelsDataOptions(search));
-  return queryClient;
 }
