@@ -225,6 +225,7 @@ function filterModelsData(data: ModelsRowWithId[], search: ModelsSearchParamsTyp
       const context = row.contextLength;
       const maxOutput = row.maxCompletionTokens;
       const mmluScore = row.mmlu;
+      const parameters = Array.isArray(row.supportedParameters) ? row.supportedParameters : [];
       const textParts = [
         row.provider,
         row.shortName ?? row.name,
