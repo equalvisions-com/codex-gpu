@@ -40,7 +40,19 @@ export const modelsDataOptions = (search: ModelsSearchParamsType) => {
         cursor,
         uuid: null,
       });
-      return fetchJson<ModelsInfiniteQueryResponse<ModelsColumnSchema[], ModelsLogsMeta>>(`/api/models${query}`);
+      const fetchInit =
+        typeof window === "undefined"
+          ? {
+              next: {
+                revalidate: 43200,
+                tags: ["models"],
+              },
+            }
+          : undefined;
+      return fetchJson<ModelsInfiniteQueryResponse<ModelsColumnSchema[], ModelsLogsMeta>>(
+        `/api/models${query}`,
+        fetchInit,
+      );
     },
     initialPageParam: { cursor: null as number | null, size: search.size ?? 50 },
     getNextPageParam: (lastPage) => lastPage.nextCursor

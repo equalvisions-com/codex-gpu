@@ -40,7 +40,19 @@ export const dataOptions = (search: SearchParamsType) => {
         cursor,
         uuid: null,
       });
-      return fetchJson<InfiniteQueryResponse<ColumnSchema[], LogsMeta>>(`/api${serialize}`);
+      const fetchInit =
+        typeof window === "undefined"
+          ? {
+              next: {
+                revalidate: 43200,
+                tags: ["pricing"],
+              },
+            }
+          : undefined;
+      return fetchJson<InfiniteQueryResponse<ColumnSchema[], LogsMeta>>(
+        `/api${serialize}`,
+        fetchInit,
+      );
     },
     initialPageParam: { cursor: null as number | null, size: search.size ?? 50 },
     getNextPageParam: (lastPage) => lastPage.nextCursor

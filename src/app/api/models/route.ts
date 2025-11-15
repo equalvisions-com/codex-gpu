@@ -8,7 +8,7 @@ import type { AIModel } from "@/types/models";
 import { unstable_cache } from "next/cache";
 import { createHash } from "crypto";
 
-export const revalidate = 43200;
+export const dynamic = "force-dynamic";
 
 type ModalitiesDirection = "input" | "output";
 
