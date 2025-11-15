@@ -16,6 +16,7 @@ import {
   SheetTrigger,
 } from "@/components/custom/sheet";
 import { DataTableFilterControls } from "@/components/data-table/data-table-filter-controls";
+import { DataTableResetButton } from "@/components/data-table/data-table-reset-button";
 import { ModeToggle } from "@/components/theme/toggle-mode";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -59,7 +60,7 @@ export interface AccountUser {
   image?: string | null;
 }
 
-export interface UserMenuProps {
+interface UserMenuProps {
   user: AccountUser | null | undefined;
   onSignOut: () => void;
   isSigningOut: boolean;
@@ -476,7 +477,7 @@ export function UserMenu({
   );
 }
 
-export interface SidebarPanelProps {
+interface SidebarPanelProps {
   user: AccountUser | null | undefined;
   isSigningOut: boolean;
   onSignOut: () => void;
@@ -523,7 +524,7 @@ export function SidebarPanel({
   );
 }
 
-export interface MobileTopNavProps {
+interface MobileTopNavProps {
   brandLabel?: string;
   user: AccountUser | null;
   onSignOut: () => void;
@@ -579,12 +580,15 @@ export function MobileTopNav({
                   <SheetTitle className="text-sm font-semibold">
                     {sheetTitle}
                   </SheetTitle>
-                  <SheetClose asChild>
-                    <Button size="icon" variant="ghost" className="h-7 w-7">
-                      <X className="h-5 w-5" />
-                      <span className="sr-only">Close</span>
-                    </Button>
-                  </SheetClose>
+                  <div className="flex items-center gap-1">
+                    <DataTableResetButton />
+                    <SheetClose asChild>
+                      <Button size="icon" variant="ghost" className="h-7 w-7">
+                        <X className="h-5 w-5" />
+                        <span className="sr-only">Close</span>
+                      </Button>
+                    </SheetClose>
+                  </div>
                 </div>
               </SheetHeader>
               <SheetDescription className="sr-only">

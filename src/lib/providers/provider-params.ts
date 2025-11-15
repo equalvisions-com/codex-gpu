@@ -1,4 +1,4 @@
-export interface ProviderParameter {
+interface ProviderParameter {
   name: string;
   parameter: string;
 }
@@ -68,4 +68,3 @@ export const providerParameters: ProviderParameter[] = [
   { name: "xAI", parameter: "xAI" },
   { name: "Z.AI", parameter: "Z.AI" },
 ];
-

@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 import { useDataTable } from "@/components/data-table/data-table-provider";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export interface DataTableSheetDetailsProps {
+interface DataTableSheetDetailsProps {
   title?: React.ReactNode;
   titleClassName?: string;
   children?: React.ReactNode;

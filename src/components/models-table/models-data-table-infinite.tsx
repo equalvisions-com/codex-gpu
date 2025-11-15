@@ -62,7 +62,7 @@ export type ModelsDataTableMeta<TMeta> = TMeta & {
   initialFavoriteKeys?: ModelFavoriteKey[];
 };
 
-export interface ModelsDataTableInfiniteProps<TData, TValue, TMeta> {
+interface ModelsDataTableInfiniteProps<TData, TValue, TMeta> {
   columns: ColumnDef<TData, TValue>[];
   getRowClassName?: (row: Row<TData>) => string;
   // REMINDER: make sure to pass the correct id to access the rows

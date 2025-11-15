@@ -1,22 +1,17 @@
 import type { JSX } from "react";
 
-export type SearchParams = {
-  [key: string]: string | string[] | undefined;
-};
-
-
 // TODO: we could type the value(!) especially when using enums
 export type Option = {
   label: string;
   value: string | boolean | number | undefined;
 };
 
-export type Input = {
+type Input = {
   type: "input";
   options?: Option[];
 };
 
-export type Checkbox = {
+type Checkbox = {
   type: "checkbox";
   component?: (props: Option) => JSX.Element | null;
   options?: Option[];
@@ -26,7 +21,7 @@ export type Checkbox = {
   skeletonRows?: number;
 };
 
-export type Slider = {
+type Slider = {
   type: "slider";
   min: number;
   max: number;
@@ -35,14 +30,14 @@ export type Slider = {
   options?: Option[];
 };
 
-export type Timerange = {
+type Timerange = {
   type: "timerange";
   // Timerange typically works with date ranges, no min/max needed like slider
   options?: Option[];
 };
 
 
-export type Base<TData> = {
+type Base<TData> = {
   label: string;
   value: keyof TData | string;
   /**
@@ -55,10 +50,11 @@ export type Base<TData> = {
   commandDisabled?: boolean;
 };
 
+type DataTableTimerangeFilterField<TData> = Base<TData> & Timerange;
+
 export type DataTableCheckboxFilterField<TData> = Base<TData> & Checkbox;
 export type DataTableSliderFilterField<TData> = Base<TData> & Slider;
 export type DataTableInputFilterField<TData> = Base<TData> & Input;
-export type DataTableTimerangeFilterField<TData> = Base<TData> & Timerange;
 
 export type DataTableFilterField<TData> =
   | DataTableCheckboxFilterField<TData>

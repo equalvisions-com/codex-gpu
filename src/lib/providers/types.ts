@@ -13,16 +13,3 @@ export interface ProviderScraper {
   /** Scrape the provider and return normalized data */
   scrape(): Promise<ProviderResult>;
 }
-
-export interface ScraperConfig {
-  userAgent?: string;
-  timeout?: number;
-  retries?: number;
-}
-
-export interface ScrapeResult {
-  success: boolean;
-  data?: ProviderResult;
-  error?: string;
-  duration: number;
-}

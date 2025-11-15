@@ -26,7 +26,7 @@ const DEFAULT_COLORS = [
   "hsl(var(--chart-5))",
 ];
 
-export type SheetLineSeries = {
+type SheetLineSeries = {
   id: string;
   label: string;
   color?: string;

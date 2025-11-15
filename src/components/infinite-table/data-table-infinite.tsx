@@ -60,7 +60,7 @@ export type DataTableMeta<TMeta> = TMeta & {
   initialFavoriteKeys?: FavoriteKey[];
 };
 
-export interface DataTableInfiniteProps<TData, TValue, TMeta> {
+interface DataTableInfiniteProps<TData, TValue, TMeta> {
   columns: ColumnDef<TData, TValue>[];
   getRowClassName?: (row: Row<TData>) => string;
   // REMINDER: make sure to pass the correct id to access the rows

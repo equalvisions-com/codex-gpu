@@ -2,7 +2,7 @@
 export type Provider = "coreweave" | "nebius" | "hyperstack" | "runpod" | "lambda" | "digitalocean" | "oracle" | "crusoe";
 
 // CoreWeave pricing schema
-export type CoreWeavePriceRow = {
+type CoreWeavePriceRow = {
   provider: "coreweave";
   source_url: string;           // e.g., https://www.coreweave.com/pricing
   observed_at: string;          // ISO timestamp when you scraped
@@ -250,11 +250,4 @@ export interface ProviderResult {
   observedAt: string; // ISO timestamp
   sourceHash: string;
   version?: number;
-}
-
-export interface CachedPricingData {
-  latest: ProviderSnapshot;
-  version: number;
-  hash: string;
-  byInstance: Record<string, PriceRow>;
 }

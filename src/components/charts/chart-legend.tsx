@@ -1,7 +1,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-export type ChartLegendItem = {
+type ChartLegendItem = {
   id?: string;
   label: string;
   provider?: string | null;

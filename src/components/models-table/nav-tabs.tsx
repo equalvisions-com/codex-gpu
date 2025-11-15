@@ -20,7 +20,7 @@ export type DesktopNavItem =
       onSelect: () => void;
     };
 
-export interface DesktopNavTabsProps {
+interface DesktopNavTabsProps {
   items: DesktopNavItem[];
   className?: string;
 }
