@@ -55,6 +55,17 @@ function getPriceUsd(row: PriceRow): number | null {
   return null;
 }
 
+const INSERT_CHUNK_SIZE = 100;
+
+function chunkArray<T>(items: T[], size: number): T[][] {
+  if (items.length <= size) return [items];
+  const chunks: T[][] = [];
+  for (let i = 0; i < items.length; i += size) {
+    chunks.push(items.slice(i, i + size));
+  }
+  return chunks;
+}
+
 class GpuPricingStore {
   /**
    * Replace all GPU pricing data with the latest scrape results.
@@ -68,14 +79,14 @@ class GpuPricingStore {
     console.log(`[GpuPricingStore] Replacing GPU pricing data for ${providerResults.length} providers...`);
     await db.delete(gpuPricing);
 
-    let stored = 0;
     const historySamples: GpuPriceSampleInput[] = [];
+    const rowsToInsert: (typeof gpuPricing.$inferInsert)[] = [];
+
     for (const result of providerResults) {
+      if (!result.rows.length) continue;
+
       const observedAtIso = normalizeObservedAt(result.observedAt);
       const version = typeof result.version === "number" ? result.version : 1;
-      if (!result.rows.length) {
-        continue;
-      }
 
       for (const row of result.rows) {
         const id = computeRowId(result.provider, observedAtIso, row);
@@ -88,42 +99,44 @@ class GpuPricingStore {
           vram_gb: (row as any).vram_gb,
           type: (row as any).type,
         } as any);
-        try {
-          await db.insert(gpuPricing).values({
-            id,
+
+        rowsToInsert.push({
+          id,
+          provider: result.provider,
+          observedAt: new Date(observedAtIso),
+          version,
+          sourceHash: result.sourceHash,
+          data: row,
+          stableKey,
+        });
+
+        const priceUsd = getPriceUsd(row);
+        if (priceUsd != null) {
+          historySamples.push({
+            stableKey,
             provider: result.provider,
             observedAt: new Date(observedAtIso),
-            version,
-            sourceHash: result.sourceHash,
-            data: row,
-            stableKey,
-          });
-          stored += 1;
-
-          const priceUsd = getPriceUsd(row);
-          if (priceUsd != null) {
-            historySamples.push({
-              stableKey,
-              provider: result.provider,
-              observedAt: new Date(observedAtIso),
-              priceUsd,
-            });
-          }
-        } catch (error) {
-          console.error("[GpuPricingStore] Failed to store row", {
-            provider: result.provider,
-            id,
-            error: error instanceof Error ? error.message : String(error),
+            priceUsd,
           });
         }
       }
     }
 
+    await db.transaction(async (tx) => {
+      await tx.delete(gpuPricing);
+      if (!rowsToInsert.length) {
+        return;
+      }
+      for (const chunk of chunkArray(rowsToInsert, INSERT_CHUNK_SIZE)) {
+        await tx.insert(gpuPricing).values(chunk);
+      }
+    });
+
     const touchedStableKeys = await gpuPriceHistoryStore.appendSamples(historySamples);
     await gpuPriceHistoryStore.pruneThirtyDaysWindow();
 
-    console.log(`[GpuPricingStore] Stored ${stored} GPU pricing rows`);
-    return { stored, touchedStableKeys };
+    console.log(`[GpuPricingStore] Stored ${rowsToInsert.length} GPU pricing rows`);
+    return { stored: rowsToInsert.length, touchedStableKeys };
   }
 
   async getAllRows(): Promise<RowWithId[]> {

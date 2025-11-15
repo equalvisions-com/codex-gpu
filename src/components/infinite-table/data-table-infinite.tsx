@@ -1062,7 +1062,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
               totalRows,
               filterRows,
               totalRowsFetched,
-              // REMINDER: includes `currentPercentiles`
               ...meta,
             }}
           />

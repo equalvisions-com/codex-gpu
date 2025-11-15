@@ -250,6 +250,17 @@ function buildModelFilterConditions(search: ModelsSearchParamsType) {
   return conditions;
 }
 
+const MODEL_INSERT_CHUNK_SIZE = 100;
+
+function chunkModels<T>(items: T[], size: number): T[][] {
+  if (items.length <= size) return [items];
+  const chunks: T[][] = [];
+  for (let i = 0; i < items.length; i += size) {
+    chunks.push(items.slice(i, i + size));
+  }
+  return chunks;
+}
+
 class ModelsCache {
   /**
    * Store AI models data by wiping the table and inserting fresh data
@@ -262,51 +273,45 @@ class ModelsCache {
     // Wipe the table (as requested - no historical data)
     await db.delete(aiModels);
 
-    // Insert new models - handle in very small batches to avoid parameter limits with large JSON
-    let stored = 0;
-    const batchSize = 1; // Single models to avoid PostgreSQL parameter limits with large JSONB data
-
-    if (models.length > 0) {
-      for (let i = 0; i < models.length; i += batchSize) {
-        const batch = models.slice(i, i + batchSize);
-        const values = batch.map(model => ({
-          id: model.id,
-          slug: model.slug,
-          name: model.name,
-          shortName: model.shortName,
-          author: model.author,
-          description: model.description,
-          modelVersionGroupId: model.modelVersionGroupId,
-          contextLength: model.contextLength,
-          inputModalities: model.inputModalities,
-          outputModalities: model.outputModalities,
-          hasTextOutput: model.hasTextOutput,
-          group: model.group,
-          instructType: model.instructType,
-          permaslug: model.permaslug,
-          endpointId: model.endpointId,
-          pricing: model.pricing,
-          features: model.features,
-          provider: model.provider,
-          mmlu: model.mmlu ?? null,
-          maxCompletionTokens: model.maxCompletionTokens ?? null,
-          supportedParameters: model.supportedParameters,
-          scrapedAt: new Date(model.scrapedAt),
-        }));
-
-        try {
-          await db.insert(aiModels).values(values);
-          stored += batch.length;
-          console.log(`[ModelsCache] Stored model ${i + 1}/${models.length}: ${batch[0].slug} (${batch[0].provider})`);
-        } catch (error: any) {
-          console.error(`[ModelsCache] Failed to store model ${i + 1}: ${batch[0].slug} (${batch[0].provider}) - ${error.message}`);
-          // Continue with next model instead of failing
-        }
-      }
+    if (!models.length) {
+      console.log(`[ModelsCache] Successfully stored 0 AI models (empty payload)`);
+      return 0;
     }
 
-    console.log(`[ModelsCache] Successfully stored ${stored}/${models.length} AI models`);
-    return stored;
+    const rows = models.map((model) => ({
+      id: model.id,
+      slug: model.slug,
+      name: model.name,
+      shortName: model.shortName,
+      author: model.author,
+      description: model.description,
+      modelVersionGroupId: model.modelVersionGroupId,
+      contextLength: model.contextLength,
+      inputModalities: model.inputModalities,
+      outputModalities: model.outputModalities,
+      hasTextOutput: model.hasTextOutput,
+      group: model.group,
+      instructType: model.instructType,
+      permaslug: model.permaslug,
+      endpointId: model.endpointId,
+      pricing: model.pricing,
+      features: model.features,
+      provider: model.provider,
+      mmlu: model.mmlu ?? null,
+      maxCompletionTokens: model.maxCompletionTokens ?? null,
+      supportedParameters: model.supportedParameters,
+      scrapedAt: new Date(model.scrapedAt),
+    }));
+
+    await db.transaction(async (tx) => {
+      await tx.delete(aiModels);
+      for (const chunk of chunkModels(rows, MODEL_INSERT_CHUNK_SIZE)) {
+        await tx.insert(aiModels).values(chunk);
+      }
+    });
+
+    console.log(`[ModelsCache] Successfully stored ${models.length} AI models`);
+    return models.length;
   }
 
   /**

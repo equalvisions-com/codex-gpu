@@ -42,8 +42,6 @@ const columnSchema = z.object({
   class: z.literal("GPU").optional(),
   type: z.enum(["VM", "Bare Metal"]).optional(),
 
-  // Computed fields
-  percentile: z.number().optional(),
 });
 
 export type ColumnSchema = z.infer<typeof columnSchema>;

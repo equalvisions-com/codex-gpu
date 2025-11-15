@@ -1,9 +1,13 @@
 import { infiniteQueryOptions } from "@tanstack/react-query";
+import { fetchJson } from "@/lib/fetch-json";
 import type {
   ModelsColumnSchema,
   ModelsFacetMetadataSchema,
 } from "./models-schema";
-import { modelsSearchParamsSerializer, type ModelsSearchParamsType } from "./models-search-params";
+import {
+  modelsSearchParamsSerializer,
+  type ModelsSearchParamsType,
+} from "./models-search-params";
 
 export type ModelsLogsMeta = {
   // For AI models, we might add different metadata later
@@ -30,16 +34,13 @@ export const modelsDataOptions = (search: ModelsSearchParamsType) => {
       modelsSearchParamsSerializer({ ...search, uuid: null }),
     ],
     queryFn: async ({ pageParam }) => {
+      const cursor = pageParam?.cursor ?? undefined;
       const query = modelsSearchParamsSerializer({
         ...search,
-        cursor: pageParam?.cursor ?? null,
-        start: pageParam?.cursor ? (undefined as unknown as number) : 0,
-        size: pageParam?.size,
+        cursor,
         uuid: null,
       });
-      const response = await fetch(`/api/models${query}`);
-      const json = await response.json();
-      return json as ModelsInfiniteQueryResponse<ModelsColumnSchema[], ModelsLogsMeta>;
+      return fetchJson<ModelsInfiniteQueryResponse<ModelsColumnSchema[], ModelsLogsMeta>>(`/api/models${query}`);
     },
     initialPageParam: { cursor: null as number | null, size: search.size ?? 50 },
     getNextPageParam: (lastPage) => lastPage.nextCursor

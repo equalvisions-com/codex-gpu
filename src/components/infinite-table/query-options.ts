@@ -1,10 +1,13 @@
-import type { Percentile } from "@/lib/request/percentile";
 import { infiniteQueryOptions } from "@tanstack/react-query";
 import type {
   ColumnSchema,
   FacetMetadataSchema,
 } from "./schema";
-import { searchParamsSerializer, type SearchParamsType } from "./search-params";
+import {
+  searchParamsSerializer,
+  type SearchParamsType,
+} from "./search-params";
+import { fetchJson } from "@/lib/fetch-json";
 
 export type LogsMeta = {
   // For GPU pricing, we might add different metadata later
@@ -31,16 +34,13 @@ export const dataOptions = (search: SearchParamsType) => {
       searchParamsSerializer({ ...search, uuid: null }),
     ],
     queryFn: async ({ pageParam }) => {
+      const cursor = pageParam?.cursor ?? undefined;
       const serialize = searchParamsSerializer({
         ...search,
-        cursor: pageParam?.cursor ?? null,
-        start: pageParam?.cursor ? undefined as unknown as number : 0,
-        size: pageParam?.size,
+        cursor,
         uuid: null,
       });
-      const response = await fetch(`/api${serialize}`);
-      const json = await response.json();
-      return json as InfiniteQueryResponse<ColumnSchema[], LogsMeta>;
+      return fetchJson<InfiniteQueryResponse<ColumnSchema[], LogsMeta>>(`/api${serialize}`);
     },
     initialPageParam: { cursor: null as number | null, size: search.size ?? 50 },
     getNextPageParam: (lastPage) => lastPage.nextCursor

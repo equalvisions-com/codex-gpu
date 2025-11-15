@@ -7,7 +7,6 @@ import type { RowWithId } from "@/types/api";
 import { createHash } from "crypto";
 import { isArrayOfDates, isArrayOfNumbers } from "@/lib/is-array";
 import { isSameDay } from "date-fns";
-import { calculatePercentile } from "@/lib/request/percentile";
 
 type GpuPricingRow = typeof gpuPricing.$inferSelect;
 
@@ -267,18 +266,10 @@ class GpuPricingCache {
       .limit(size)
       .offset(cursor);
 
-    // Convert to RowWithId format and calculate percentiles
     const rawRows = rows.map(toRowWithId);
-    
-    // Calculate percentiles for price_hour_usd
-    const prices = rawRows.map(row => row.price_hour_usd || 0);
-    const rowsWithPercentiles = rawRows.map(row => ({
-      ...row,
-      percentile: calculatePercentile(prices, row.price_hour_usd || 0),
-    }));
 
     return {
-      data: rowsWithPercentiles,
+      data: rawRows,
       totalCount: filterCount, // Total matching filters
       filterCount: filterCount, // Same as totalCount (no separate unfiltered count needed)
     };
@@ -581,18 +572,10 @@ class GpuPricingCache {
       .limit(size)
       .offset(cursor);
 
-    // Convert to RowWithId format and calculate percentiles
     const rawRows = rows.map(toRowWithId);
-    
-    // Calculate percentiles for price_hour_usd
-    const prices = rawRows.map(row => row.price_hour_usd || 0);
-    const rowsWithPercentiles = rawRows.map(row => ({
-      ...row,
-      percentile: calculatePercentile(prices, row.price_hour_usd || 0),
-    }));
 
     return {
-      data: rowsWithPercentiles,
+      data: rawRows,
       totalCount,
       filterCount,
     };
