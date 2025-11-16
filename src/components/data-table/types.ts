@@ -76,8 +76,6 @@ export type SheetField<TData, TMeta = Record<string, unknown>> = {
     props: TData & {
       metadata?: {
         totalRows: number;
-        filterRows: number;
-        totalRowsFetched: number;
       } & TMeta;
     }
   ) => JSX.Element | null | string;

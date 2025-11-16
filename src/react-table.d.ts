@@ -6,8 +6,6 @@ declare module "@tanstack/react-table" {
     getRowClassName?: (row: Row<TData>) => string;
     metadata?: {
       totalRows?: number;
-      filterRows?: number;
-      totalRowsFetched?: number;
     };
   }
 

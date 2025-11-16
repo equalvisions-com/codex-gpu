@@ -18,8 +18,6 @@ interface DataTableSheetContentProps<TData, TMeta>
   // totalRowsFetched: number;
   metadata?: TMeta & {
     totalRows: number;
-    filterRows: number;
-    totalRowsFetched: number;
   };
 }
 

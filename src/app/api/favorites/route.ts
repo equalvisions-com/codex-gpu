@@ -63,14 +63,12 @@ export async function GET() {
      * Solution: Use type assertion after query execution - runtime behavior is correct
      * TODO: Remove when Drizzle resolves upstream type conflicts
      */
-    const rows = await db
-      .select()
-      // @ts-ignore - Drizzle ORM type conflict between build artifacts (see comment above)
-      .from(userFavorites)
-      // @ts-ignore - Drizzle ORM type conflict between build artifacts
+        const rows = await db
+          .select()
+          .from(userFavorites)
           .where(eq(userFavorites.userId, userId));
     
-    const typedRows = rows as unknown as UserFavoriteRow[];
+        const typedRows = rows as unknown as UserFavoriteRow[];
         return (typedRows || []).map((r) => r.gpuUuid as FavoriteKey);
       },
       ["favorites:api", session.user.id],
@@ -163,7 +161,6 @@ export async function POST(request: NextRequest) {
      * TODO: Remove when Drizzle resolves upstream type conflicts
      */
     await db
-      // @ts-ignore - Drizzle ORM type conflict between build artifacts (see comment above)
       .insert(userFavorites)
       .values(favoritesToInsert)
       .onConflictDoNothing();
@@ -258,10 +255,8 @@ export async function DELETE(request: NextRequest) {
      * TODO: Remove when Drizzle resolves upstream type conflicts
      */
     await db
-      // @ts-ignore - Drizzle ORM type conflict between build artifacts (see comment above)
       .delete(userFavorites)
       .where(
-        // @ts-ignore - Drizzle ORM type conflict between build artifacts
         and(
           eq(userFavorites.userId, session.user.id),
           inArray(userFavorites.gpuUuid, gpuUuids)

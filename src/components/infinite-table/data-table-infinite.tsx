@@ -34,7 +34,7 @@ import type {
 } from "@tanstack/react-table";
 import { flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { useQueryStates, type ParserBuilder } from "nuqs";
+import { type ParserBuilder } from "nuqs";
 import { searchParamsParser } from "./search-params";
 import { RowSkeletons } from "./_components/row-skeletons";
 import { CheckedActionsIsland } from "./_components/checked-actions-island";
@@ -57,6 +57,7 @@ const gradientSurfaceClass =
 
 // Note: chart groupings could be added later if needed
 export type DataTableMeta<TMeta> = TMeta & {
+  totalRows: number;
   facets?: Record<string, any>;
   initialFavoriteKeys?: FavoriteKey[];
 };
@@ -80,8 +81,6 @@ interface DataTableInfiniteProps<TData, TValue, TMeta> {
   filterFields?: DataTableFilterField<TData>[];
   sheetFields?: SheetField<TData, TMeta>[];
   totalRows?: number;
-  filterRows?: number;
-  totalRowsFetched?: number;
   meta: DataTableMeta<TMeta>;
   isFetching?: boolean;
   isLoading?: boolean;
@@ -127,8 +126,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   fetchNextPage,
   hasNextPage,
   totalRows = 0,
-  filterRows = 0,
-  totalRowsFetched = 0,
   meta,
   renderSheetTitle,
   searchParamsParser: searchParamsParserProp,
@@ -152,8 +149,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   const tableRef = React.useRef<HTMLTableElement>(null);
   const containerRef = React.useRef<HTMLDivElement>(null);
   // searchParamsParser is provided as a prop
-  const [_, setSearch] = useQueryStates(searchParamsParserProp);
-
   const accountUser: AccountUser | null = account?.user ?? null;
   const accountOnSignOut = account?.onSignOut ?? noop;
   const accountIsSigningOut = account?.isSigningOut ?? false;
@@ -352,7 +347,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     debugAll: process.env.NEXT_PUBLIC_TABLE_DEBUG === "true",
     meta: {
       getRowClassName,
-      metadata: { totalRows, filterRows, totalRowsFetched },
+      metadata: { totalRows },
     },
   });
 
@@ -417,28 +412,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
       });
     }
   }, [rows.length, rowVirtualizer]);
-
-  const sentinelNodeRef = React.useRef<HTMLTableRowElement | null>(null);
-  const sentinelRef = React.useCallback((node: HTMLTableRowElement | null) => {
-    sentinelNodeRef.current = node;
-  }, []);
-  React.useEffect(() => {
-    const node = sentinelNodeRef.current;
-    if (!node) return;
-    const root = containerRef.current ?? undefined;
-    // Use more aggressive rootMargin on mobile (smaller screens) to trigger earlier
-    const rootMargin = isMobile ? "300px 0px 0px 0px" : "600px 0px 0px 0px";
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting) {
-          requestNextPage();
-        }
-      },
-      { root, rootMargin },
-    );
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, [requestNextPage, rows.length, isMobile]);
 
 
   const previousFiltersRef = React.useRef<ColumnFiltersState | null>(null);
@@ -576,41 +549,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     [table]
   );
 
-  const previousSearchPayloadRef = React.useRef<Record<string, unknown> | null>(null);
-
-  React.useEffect(() => {
-    const searchPayload: Record<string, unknown> = {};
-
-    filterFields.forEach((field) => {
-      const columnFilter = columnFilters.find((filter) => filter.id === field.value);
-      searchPayload[field.value as string] = columnFilter ? columnFilter.value : null;
-    });
-
-    if (
-      previousSearchPayloadRef.current &&
-      areSearchPayloadsEqual(previousSearchPayloadRef.current, searchPayload)
-    ) {
-      return;
-    }
-
-    previousSearchPayloadRef.current = searchPayload;
-    setSearch(searchPayload);
-  }, [columnFilters, filterFields, setSearch]);
-
-  const previousSortParamRef = React.useRef<string>("__init__");
-  React.useEffect(() => {
-    const sortEntry = sorting?.[0] ?? null;
-    const serializedSort =
-      sortEntry === null
-        ? "null"
-        : `${sortEntry.id}:${sortEntry.desc ? "desc" : "asc"}`;
-    if (previousSortParamRef.current === serializedSort) {
-      return;
-    }
-    previousSortParamRef.current = serializedSort;
-    setSearch({ sort: sortEntry ?? null });
-  }, [setSearch, sorting]);
-
   const selectedRow = React.useMemo(() => {
     if ((isLoading || isFetching) && !data.length) return;
     const selectedRowKey = Object.keys(rowSelection)?.[0];
@@ -620,28 +558,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   }, [rowSelection, table, isLoading, isFetching, data]);
 
   // Selection sync limited to the current batch
-  const previousUuidRef = React.useRef<string>("__init__");
-  React.useEffect(() => {
-    if (isLoading || isFetching) return;
-    const selectedKeys = Object.keys(rowSelection ?? {});
-    const nextUuid = selectedKeys[0] ?? null;
-
-    if (selectedKeys.length && !selectedRow) {
-      previousUuidRef.current = "null";
-      setSearch({ uuid: null });
-      onRowSelectionChange({});
-      return;
-    }
-
-    const serializedUuid = nextUuid ?? "null";
-    if (previousUuidRef.current === serializedUuid) {
-      return;
-    }
-
-    previousUuidRef.current = serializedUuid;
-    setSearch({ uuid: nextUuid });
-  }, [isFetching, isLoading, onRowSelectionChange, rowSelection, selectedRow, setSearch]);
-
 
   const getFacetedUniqueValues = React.useCallback(
     (table: TTable<TData>, columnId: string) => {
@@ -957,11 +873,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                               data-index={index}
                               getModelColumnWidth={getModelColumnWidth}
                             />
-                            {shouldAttachSentinel ? (
-                              <TableRow ref={sentinelRef} aria-hidden>
-                                <TableCell colSpan={columns.length} className="p-0" />
-                              </TableRow>
-                            ) : null}
                           </React.Fragment>
                         );
                       })
@@ -1001,11 +912,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                                 ref={rowVirtualizer.measureElement}
                                 getModelColumnWidth={getModelColumnWidth}
                               />
-                              {shouldAttachSentinel ? (
-                                <TableRow ref={sentinelRef} aria-hidden>
-                                  <TableCell colSpan={columns.length} className="p-0" />
-                                </TableRow>
-                              ) : null}
                             </React.Fragment>
                           );
                         })}
@@ -1065,12 +971,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
             fields={sheetFields}
             // Memoization can be added later if needed
             // REMINDER: this is used to pass additional data like the `InfiniteQueryMeta`
-            metadata={{
-              totalRows,
-              filterRows,
-              totalRowsFetched,
-              ...meta,
-            }}
+            metadata={meta}
           />
           <div className="border-t border-border/60 pt-4">
           {selectedRow?.original ? (
@@ -1210,22 +1111,6 @@ function areColumnFiltersEqual(
     if (filter.id !== other.id) return false;
     return isLooseEqual(filter.value, other.value);
   });
-}
-
-function areSearchPayloadsEqual(
-  previous: Record<string, unknown>,
-  next: Record<string, unknown>,
-) {
-  const previousKeys = Object.keys(previous);
-  const nextKeys = Object.keys(next);
-  if (previousKeys.length !== nextKeys.length) return false;
-
-  for (const key of nextKeys) {
-    if (!previousKeys.includes(key)) return false;
-    if (!isLooseEqual(previous[key], next[key])) return false;
-  }
-
-  return true;
 }
 
 function isLooseEqual(a: unknown, b: unknown) {

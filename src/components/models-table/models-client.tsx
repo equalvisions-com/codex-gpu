@@ -3,6 +3,7 @@
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import type {
   ColumnFiltersState,
+  OnChangeFn,
   RowSelectionState,
   SortingState,
 } from "@tanstack/react-table";
@@ -33,7 +34,7 @@ const LazyFavoritesRuntime = React.lazy(() => import("./models-favorites-runtime
 
 export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsClientProps = {}) {
   const contentRef = React.useRef<HTMLTableSectionElement>(null);
-  const [search] = useQueryStates(modelsSearchParamsParser);
+  const [search, setSearch] = useQueryStates(modelsSearchParamsParser);
   const favoritesFlag = search.favorites === "true";
   const effectiveFavoritesMode =
     typeof isFavoritesMode === "boolean" ? isFavoritesMode : favoritesFlag;
@@ -136,12 +137,6 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
   const totalDBRowCount = effectiveFavoritesMode
     ? favoritesSnapshot?.totalRowCount ?? favoritesFlatData.length
     : baseLastPage?.meta?.totalRowCount ?? baseFlatData.length;
-  const filterDBRowCount = effectiveFavoritesMode
-    ? favoritesSnapshot?.filterRowCount ?? favoritesFlatData.length
-    : baseLastPage?.meta?.filterRowCount ?? baseFlatData.length;
-  const totalFetched = effectiveFavoritesMode
-    ? favoritesSnapshot?.totalFetched ?? favoritesFlatData.length
-    : baseFlatData.length;
 
   const effectiveFavoriteKeys = effectiveFavoritesMode
     ? favoritesSnapshot?.favoriteKeysFromRows ?? []
@@ -149,6 +144,7 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
 
   const metadata: ModelsDataTableMeta<Record<string, unknown>> = {
     ...(lastPage?.meta?.metadata ?? {}),
+    totalRows: totalDBRowCount ?? 0,
     initialFavoriteKeys: effectiveFavoriteKeys,
   };
 
@@ -203,54 +199,15 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
     return baseFilters;
   }, [filter, globalSearch]);
 
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(derivedColumnFilters);
-  const derivedColumnFiltersRef = React.useRef<ColumnFiltersState>(derivedColumnFilters);
+  const columnFilters = React.useMemo<ColumnFiltersState>(() => derivedColumnFilters, [derivedColumnFilters]);
 
-  React.useEffect(() => {
-    if (!areColumnFiltersEqual(derivedColumnFiltersRef.current, derivedColumnFilters)) {
-      setColumnFilters(derivedColumnFilters);
-    }
-    derivedColumnFiltersRef.current = derivedColumnFilters;
-  }, [derivedColumnFilters]);
-
-  const derivedSorting = React.useMemo<SortingState>(() => {
+  const sorting = React.useMemo<SortingState>(() => {
     return sort ? [sort] : [];
   }, [sort]);
 
-  const [sorting, setSorting] = React.useState<SortingState>(derivedSorting);
-  const derivedSortingRef = React.useRef<SortingState>(derivedSorting);
-  const previousSortingRef = React.useRef<SortingState>(derivedSorting);
-
-  React.useEffect(() => {
-    if (!isSortingStateEqual(derivedSortingRef.current, derivedSorting)) {
-      setSorting(derivedSorting);
-    }
-    derivedSortingRef.current = derivedSorting;
-  }, [derivedSorting]);
-
-  // Only scroll to top when sorting actually changes (user clicks column header)
-  // Not when pagination happens (which shouldn't change sorting)
-  React.useEffect(() => {
-    const didSortingChange = !isSortingStateEqual(previousSortingRef.current, sorting);
-    if (didSortingChange && sorting.length > 0) {
-      window.scrollTo({ top: 0, behavior: "auto" });
-    }
-    previousSortingRef.current = sorting;
-  }, [sorting]);
-
-  const derivedRowSelection = React.useMemo<RowSelectionState>(() => {
+  const rowSelection = React.useMemo<RowSelectionState>(() => {
     return uuid ? { [uuid]: true } : {};
   }, [uuid]);
-
-  const [rowSelection, setRowSelection] = React.useState<RowSelectionState>(derivedRowSelection);
-  const derivedRowSelectionRef = React.useRef<RowSelectionState>(derivedRowSelection);
-
-  React.useEffect(() => {
-    if (!isRowSelectionEqual(derivedRowSelectionRef.current, derivedRowSelection)) {
-      setRowSelection(derivedRowSelection);
-    }
-    derivedRowSelectionRef.current = derivedRowSelection;
-  }, [derivedRowSelection]);
 
   const filterFields = React.useMemo(() => {
     return defaultFilterFields.map((field) => {
@@ -282,6 +239,86 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
     });
   }, [castFacets]);
 
+  const previousFiltersPayloadRef = React.useRef<Record<string, unknown> | null>(null);
+  const handleColumnFiltersChange = React.useCallback<OnChangeFn<ColumnFiltersState>>(
+    (updater) => {
+      const nextFilters =
+        typeof updater === "function" ? updater(columnFilters) : updater ?? [];
+      const searchPayload: Record<string, unknown> = {};
+
+      filterFields.forEach((field) => {
+        if (field.value === "modalities") {
+          const modalitiesFilter = nextFilters.find((filter) => filter.id === field.value);
+          const modalityValue = modalitiesFilter?.value as string[] | undefined;
+          const values = modalityValue ?? [];
+
+          const directionsFilter = nextFilters.find((filter) => filter.id === "modalityDirections");
+          const directionsValue = directionsFilter?.value as Record<string, ModalitiesDirection> | undefined;
+          const directionEntries = directionsValue
+            ? Object.entries(directionsValue)
+                .map(([key, dir]) => `${key}:${dir}`)
+                .sort()
+            : [];
+
+          searchPayload[field.value as string] = values.length ? values : null;
+          searchPayload.modalityDirections =
+            values.length && directionEntries.length ? directionEntries : null;
+          return;
+        }
+
+        const columnFilter = nextFilters.find((filter) => filter.id === field.value);
+        searchPayload[field.value as string] = columnFilter ? columnFilter.value : null;
+      });
+
+      if (
+        previousFiltersPayloadRef.current &&
+        areSearchPayloadsEqual(previousFiltersPayloadRef.current, searchPayload)
+      ) {
+        return;
+      }
+
+      previousFiltersPayloadRef.current = searchPayload;
+      setSearch(searchPayload);
+    },
+    [columnFilters, filterFields, setSearch],
+  );
+
+  const previousSortParamRef = React.useRef<string>("__init__");
+  const handleSortingChange = React.useCallback<OnChangeFn<SortingState>>(
+    (updater) => {
+      const nextSorting =
+        typeof updater === "function" ? updater(sorting) : updater ?? [];
+      const sortEntry = nextSorting[0] ?? null;
+      const serialized =
+        sortEntry === null
+          ? "null"
+          : `${sortEntry.id}:${sortEntry.desc ? "desc" : "asc"}`;
+      if (previousSortParamRef.current === serialized) {
+        return;
+      }
+      previousSortParamRef.current = serialized;
+      setSearch({ sort: sortEntry ?? null });
+    },
+    [setSearch, sorting],
+  );
+
+  const previousUuidRef = React.useRef<string>("__init__");
+  const handleRowSelectionChange = React.useCallback<OnChangeFn<RowSelectionState>>(
+    (updater) => {
+      const nextSelection =
+        typeof updater === "function" ? updater(rowSelection) : updater ?? {};
+      const selectedKeys = Object.keys(nextSelection ?? {});
+      const nextUuid = selectedKeys[0] ?? null;
+      const serializedUuid = nextUuid ?? "null";
+      if (previousUuidRef.current === serializedUuid) {
+        return;
+      }
+      previousUuidRef.current = serializedUuid;
+      setSearch({ uuid: nextUuid });
+    },
+    [rowSelection, setSearch],
+  );
+
   return (
     <>
       {shouldHydrateFavorites ? (
@@ -303,14 +340,12 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
         skeletonRowCount={50}
         skeletonNextPageRowCount={undefined}
         totalRows={totalDBRowCount}
-        filterRows={filterDBRowCount}
-        totalRowsFetched={totalFetched}
         columnFilters={columnFilters}
-        onColumnFiltersChange={setColumnFilters}
+        onColumnFiltersChange={handleColumnFiltersChange}
         sorting={sorting}
-        onSortingChange={setSorting}
+        onSortingChange={handleSortingChange}
         rowSelection={rowSelection}
-        onRowSelectionChange={setRowSelection}
+        onRowSelectionChange={handleRowSelectionChange}
         meta={{ ...metadata, facets: castFacets }}
         filterFields={filterFields}
         sheetFields={sheetFields}
@@ -324,7 +359,6 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
           const model = row.original as ModelsColumnSchema;
           return model.shortName || model.name || "Model Details";
         }}
-        modelsSearchParamsParser={modelsSearchParamsParser}
         getRowId={(row) => row.id}
         focusTargetRef={contentRef}
         account={{
@@ -361,30 +395,21 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
   );
 }
 
-function areColumnFiltersEqual(a: ColumnFiltersState, b: ColumnFiltersState) {
-  if (a.length !== b.length) return false;
-  return a.every((filter, index) => {
-    const other = b[index];
-    if (!other) return false;
-    if (filter.id !== other.id) return false;
-    return isLooseEqual(filter.value, other.value);
-  });
-}
+function areSearchPayloadsEqual(
+  previous: Record<string, unknown> | null,
+  next: Record<string, unknown>,
+) {
+  if (!previous) return false;
+  const previousKeys = Object.keys(previous);
+  const nextKeys = Object.keys(next);
+  if (previousKeys.length !== nextKeys.length) return false;
 
-function isSortingStateEqual(a: SortingState, b: SortingState) {
-  if (a.length !== b.length) return false;
-  return a.every((entry, index) => {
-    const other = b[index];
-    if (!other) return false;
-    return entry.id === other.id && entry.desc === other.desc;
-  });
-}
+  for (const key of nextKeys) {
+    if (!previousKeys.includes(key)) return false;
+    if (!isLooseEqual(previous[key], next[key])) return false;
+  }
 
-function isRowSelectionEqual(a: RowSelectionState, b: RowSelectionState) {
-  const aKeys = Object.keys(a);
-  const bKeys = Object.keys(b);
-  if (aKeys.length !== bKeys.length) return false;
-  return aKeys.every((key) => Boolean(a[key]) === Boolean(b[key]));
+  return true;
 }
 
 function isLooseEqual(a: unknown, b: unknown) {
@@ -398,4 +423,3 @@ function isLooseEqual(a: unknown, b: unknown) {
   }
   return false;
 }
-

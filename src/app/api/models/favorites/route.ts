@@ -40,15 +40,12 @@ export async function GET() {
     // If cache misses: queries DB and caches result (non-blocking for SSR since this is an API route)
     const getCachedFavorites = unstable_cache(
       async (userId: string) => {
-    const rows = await db
-      // @ts-ignore - Drizzle types conflict
-      .select()
-      // @ts-ignore
-      .from(userModelFavorites)
-      // @ts-ignore
+        const rows = await db
+          .select()
+          .from(userModelFavorites)
           .where(eq(userModelFavorites.userId, userId));
 
-    const typedRows = rows as unknown as UserModelFavoriteRow[];
+        const typedRows = rows as unknown as UserModelFavoriteRow[];
         return (typedRows || []).map((r) => r.modelId as ModelFavoriteKey);
       },
       ["model-favorites:api", session.user.id],
@@ -119,7 +116,6 @@ export async function POST(request: NextRequest) {
     }));
 
     await db
-      // @ts-ignore
       .insert(userModelFavorites)
       .values(favoritesToInsert)
       .onConflictDoNothing();
@@ -191,11 +187,9 @@ export async function DELETE(request: NextRequest) {
     const modelIds = Array.from(new Set(parsed.data.modelIds)) as ModelFavoriteKey[];
 
     await db
-      // @ts-ignore
       .delete(userModelFavorites)
       .where(
         and(
-          // @ts-ignore
           eq(userModelFavorites.userId, session.user.id),
           inArray(userModelFavorites.modelId, modelIds)
         )

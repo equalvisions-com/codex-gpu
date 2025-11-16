@@ -3,6 +3,7 @@
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import type {
   ColumnFiltersState,
+  OnChangeFn,
   RowSelectionState,
   SortingState,
 } from "@tanstack/react-table";
@@ -34,7 +35,7 @@ const LazyFavoritesRuntime = React.lazy(() => import("./favorites-runtime"));
 
 export function Client({ initialFavoriteKeys, isFavoritesMode }: ClientProps = {}) {
   const contentRef = React.useRef<HTMLTableSectionElement>(null);
-  const [search] = useQueryStates(searchParamsParser);
+  const [search, setSearch] = useQueryStates(searchParamsParser);
   const favoritesFlag = search.favorites === "true";
   const effectiveFavoritesMode =
     typeof isFavoritesMode === "boolean" ? isFavoritesMode : favoritesFlag;
@@ -123,22 +124,14 @@ export function Client({ initialFavoriteKeys, isFavoritesMode }: ClientProps = {
   const totalDBRowCount = effectiveFavoritesMode
     ? favoritesSnapshot?.totalRowCount ?? favoritesFlatData.length
     : baseLastPage?.meta?.totalRowCount ?? baseFlatData.length;
-  const filterDBRowCount = effectiveFavoritesMode
-    ? favoritesSnapshot?.filterRowCount ?? favoritesFlatData.length
-    : baseLastPage?.meta?.filterRowCount ?? baseFlatData.length;
-  const totalFetched = effectiveFavoritesMode
-    ? favoritesSnapshot?.totalFetched ?? favoritesFlatData.length
-    : baseFlatData.length;
 
   const effectiveFavoriteKeys = effectiveFavoritesMode
     ? favoritesSnapshot?.favoriteKeysFromRows ?? []
     : initialFavoriteKeys;
   
-  const metadata: DataTableMeta<{ totalRows: number; filterRows: number; totalRowsFetched: number; }> = {
+  const metadata: DataTableMeta<Record<string, unknown>> = {
     ...(lastPage?.meta?.metadata ?? {}),
     totalRows: totalDBRowCount ?? 0,
-    filterRows: filterDBRowCount ?? 0,
-    totalRowsFetched: totalFetched ?? 0,
     initialFavoriteKeys: effectiveFavoriteKeys,
   };
 
@@ -181,7 +174,7 @@ export function Client({ initialFavoriteKeys, isFavoritesMode }: ClientProps = {
     ...filter
   } = search;
 
-  const derivedColumnFilters = React.useMemo<ColumnFiltersState>(() => {
+  const columnFilters = React.useMemo<ColumnFiltersState>(() => {
     const baseFilters = Object.entries(filter)
       .map(([key, value]) => ({
         id: key,
@@ -196,67 +189,13 @@ export function Client({ initialFavoriteKeys, isFavoritesMode }: ClientProps = {
     return baseFilters;
   }, [filter, globalSearch]);
 
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    derivedColumnFilters,
-  );
-  const derivedColumnFiltersRef =
-    React.useRef<ColumnFiltersState>(derivedColumnFilters);
-
-  React.useEffect(() => {
-    if (
-      !areColumnFiltersEqual(
-        derivedColumnFiltersRef.current,
-        derivedColumnFilters,
-      )
-    ) {
-      setColumnFilters(derivedColumnFilters);
-    }
-    derivedColumnFiltersRef.current = derivedColumnFilters;
-  }, [derivedColumnFilters]);
-
-  const derivedSorting = React.useMemo<SortingState>(() => {
+  const sorting = React.useMemo<SortingState>(() => {
     return sort ? [sort] : [];
   }, [sort]);
 
-  const [sorting, setSorting] = React.useState<SortingState>(derivedSorting);
-  const derivedSortingRef = React.useRef<SortingState>(derivedSorting);
-  const previousSortingRef = React.useRef<SortingState>(derivedSorting);
-
-  React.useEffect(() => {
-    if (!isSortingStateEqual(derivedSortingRef.current, derivedSorting)) {
-      setSorting(derivedSorting);
-    }
-    derivedSortingRef.current = derivedSorting;
-  }, [derivedSorting]);
-
-  // Only scroll to top when sorting actually changes (user clicks column header)
-  // Not when pagination happens (which shouldn't change sorting)
-  React.useEffect(() => {
-    const didSortingChange = !isSortingStateEqual(previousSortingRef.current, sorting);
-    if (didSortingChange && sorting.length > 0) {
-      window.scrollTo({ top: 0, behavior: "auto" });
-    }
-    previousSortingRef.current = sorting;
-  }, [sorting]);
-
-  const derivedRowSelection = React.useMemo<RowSelectionState>(() => {
+  const rowSelection = React.useMemo<RowSelectionState>(() => {
     return search.uuid ? { [search.uuid]: true } : {};
   }, [search.uuid]);
-
-  const [rowSelection, setRowSelection] = React.useState<RowSelectionState>(
-    derivedRowSelection,
-  );
-  const derivedRowSelectionRef =
-    React.useRef<RowSelectionState>(derivedRowSelection);
-
-  React.useEffect(() => {
-    if (
-      !isRowSelectionEqual(derivedRowSelectionRef.current, derivedRowSelection)
-    ) {
-      setRowSelection(derivedRowSelection);
-    }
-    derivedRowSelectionRef.current = derivedRowSelection;
-  }, [derivedRowSelection]);
 
   // REMINDER: filter metadata is hydrated from the API so checkboxes/sliders stay accurate
   // TODO: auto search via API when the user changes the filter instead of hardcoded
@@ -298,6 +237,67 @@ export function Client({ initialFavoriteKeys, isFavoritesMode }: ClientProps = {
     });
   }, [castFacets]);
 
+  const previousFilterPayloadRef = React.useRef<Record<string, unknown> | null>(null);
+  const handleColumnFiltersChange = React.useCallback<OnChangeFn<ColumnFiltersState>>(
+    (updater) => {
+      const nextFilters =
+        typeof updater === "function" ? updater(columnFilters) : updater ?? [];
+      const searchPayload: Record<string, unknown> = {};
+
+      filterFields.forEach((field) => {
+        const columnFilter = nextFilters.find((filter) => filter.id === field.value);
+        searchPayload[field.value as string] = columnFilter ? columnFilter.value : null;
+      });
+
+      if (
+        previousFilterPayloadRef.current &&
+        areSearchPayloadsEqual(previousFilterPayloadRef.current, searchPayload)
+      ) {
+        return;
+      }
+
+      previousFilterPayloadRef.current = searchPayload;
+      setSearch(searchPayload);
+    },
+    [columnFilters, filterFields, setSearch],
+  );
+
+  const previousSortParamRef = React.useRef<string>("__init__");
+  const handleSortingChange = React.useCallback<OnChangeFn<SortingState>>(
+    (updater) => {
+      const nextSorting =
+        typeof updater === "function" ? updater(sorting) : updater ?? [];
+      const sortEntry = nextSorting[0] ?? null;
+      const serialized =
+        sortEntry === null
+          ? "null"
+          : `${sortEntry.id}:${sortEntry.desc ? "desc" : "asc"}`;
+      if (previousSortParamRef.current === serialized) {
+        return;
+      }
+      previousSortParamRef.current = serialized;
+      setSearch({ sort: sortEntry ?? null });
+    },
+    [setSearch, sorting],
+  );
+
+  const previousUuidRef = React.useRef<string>("__init__");
+  const handleRowSelectionChange = React.useCallback<OnChangeFn<RowSelectionState>>(
+    (updater) => {
+      const nextSelection =
+        typeof updater === "function" ? updater(rowSelection) : updater ?? {};
+      const selectedKeys = Object.keys(nextSelection ?? {});
+      const nextUuid = selectedKeys[0] ?? null;
+      const serializedUuid = nextUuid ?? "null";
+      if (previousUuidRef.current === serializedUuid) {
+        return;
+      }
+      previousUuidRef.current = serializedUuid;
+      setSearch({ uuid: nextUuid });
+    },
+    [rowSelection, setSearch],
+  );
+
   return (
     <>
       {shouldHydrateFavorites ? (
@@ -319,14 +319,12 @@ export function Client({ initialFavoriteKeys, isFavoritesMode }: ClientProps = {
         skeletonRowCount={50}
         skeletonNextPageRowCount={undefined}
         totalRows={metadata.totalRows}
-        filterRows={metadata.filterRows}
-        totalRowsFetched={metadata.totalRowsFetched}
         columnFilters={columnFilters}
-        onColumnFiltersChange={setColumnFilters}
+        onColumnFiltersChange={handleColumnFiltersChange}
         sorting={sorting}
-        onSortingChange={setSorting}
+        onSortingChange={handleSortingChange}
         rowSelection={rowSelection}
-        onRowSelectionChange={setRowSelection}
+        onRowSelectionChange={handleRowSelectionChange}
         meta={{ ...metadata, facets: castFacets }}
         filterFields={filterFields}
         sheetFields={sheetFields}
@@ -395,6 +393,29 @@ function isSortingStateEqual(a: SortingState, b: SortingState) {
     const other = b[index];
     if (!other) return false;
     return entry.id === other.id && entry.desc === other.desc;
+  });
+}
+
+function areSearchPayloadsEqual(
+  a: Record<string, unknown>,
+  b: Record<string, unknown>,
+) {
+  const aEntries = Object.entries(a ?? {}).filter(
+    ([_, value]) => value !== undefined,
+  );
+  const bEntries = Object.entries(b ?? {}).filter(
+    ([_, value]) => value !== undefined,
+  );
+  if (aEntries.length !== bEntries.length) return false;
+  return aEntries.every(([key, value]) => {
+    const other = b[key];
+    if (Array.isArray(value) && Array.isArray(other)) {
+      if (value.length !== other.length) return false;
+      return value.every(
+        (val, index) => JSON.stringify(val) === JSON.stringify(other[index]),
+      );
+    }
+    return JSON.stringify(value) === JSON.stringify(other);
   });
 }
 
