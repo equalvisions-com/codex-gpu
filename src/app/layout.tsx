@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "@/styles/globals.css";
+import { Suspense } from "react";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { ReactQueryProvider } from "@/providers/react-query";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
@@ -86,11 +87,13 @@ export default function RootLayout({
                 enableSystem
                 disableTransitionOnChange
               >
-                <AuthDialogProvider>
-                  <main id="content" className="flex min-h-[100dvh] flex-col">
-                    {children}
-                  </main>
-                </AuthDialogProvider>
+                <Suspense fallback={null}>
+                  <AuthDialogProvider>
+                    <main id="content" className="flex min-h-[100dvh] flex-col">
+                      {children}
+                    </main>
+                  </AuthDialogProvider>
+                </Suspense>
               </ThemeProvider>
             </NuqsAdapter>
           </ReactQueryProvider>
