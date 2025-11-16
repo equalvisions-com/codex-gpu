@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { modelsCache } from '@/lib/models-cache';
+import { NextRequest, NextResponse } from "next/server";
+import { modelsCache } from "@/lib/models-cache";
 
 export const revalidate = 43200;
 
@@ -10,7 +10,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     if (!provider) {
       return NextResponse.json({
-        error: 'Provider parameter is required',
+        error: "Provider parameter is required",
       }, { status: 400 });
     }
 
@@ -29,8 +29,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     console.error(`Failed to fetch models for provider ${resolvedParams.provider}:`, error);
 
     return NextResponse.json({
-      error: 'Failed to fetch models data',
-      details: error instanceof Error ? error.message : 'Unknown error',
+      error: "Failed to fetch models data",
+      details: error instanceof Error ? error.message : "Unknown error",
     }, { status: 500 });
   }
 }

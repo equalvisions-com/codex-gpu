@@ -1,96 +1,46 @@
 Next.js & Vercel architecture
-✅ Strong points
+✅ Prefetch + hydration. The /gpus route now builds a QueryClient, prefetches the first TanStack infinite-query page server-side, and ships it through a HydrationBoundary, so the client no longer waits on an extra round trip before rendering the table shell.
 
-Root layout centralizes global fonts, theme switching, React Query hydration, auth context, and nuqs adapters, which is the canonical way to wire shared providers in the App Router.
+✅ Streaming boundaries. Dedicated loading.tsx, error.tsx, and not-found.tsx files give the route predictable skeleton, error, and empty-state surfaces that line up with App Router guidance.
 
-The GPU page exports revalidate = 43200 so the route shell is statically optimized every 12 hours, while the data itself streams through React Query (keeping deploy/build cost low on Vercel).
+⚠️ Metadata still placeholder. The root layout still exports title = "D" and the Deploybase URL stub for OG/Twitter metadata, so links will share meaningless text and the wrong canonical host; replacing these with descriptive defaults (and per-route overrides) is still necessary to meet Vercel’s polish expectations.
 
-Route handlers lean on unstable_cache, hashable query keys, and cache tags to keep Vercel data caches coherent with scraper cadence while still forcing per-request execution through export const dynamic = "force-dynamic" and per-user Cache-Control where needed.
+⚠️ Redundant Suspense. The root layout wraps the entire app in <Suspense fallback={null}>, and the /gpus page adds another Suspense while already owning a loading.tsx fallback. Dropping the redundant wrappers would simplify the tree and avoid hiding real loading states.
 
-⚠️ Gaps vs. best practice
+⚠️ API style drift. The top-level /api handler mixes double and single quotes despite the repository style guide, and its console.error('...') block still uses single quotes; standardizing keeps lint happy on CI.
 
-Metadata defaults are clearly placeholder (TITLE = "D", default site https://deploybase.com), so Open Graph / Twitter cards are inaccurate and can hurt sharing/SEO. Modern Next.js guidance is to set descriptive defaults or derive them dynamically.
+React & client-state patterns
+✅ Provider hygiene. ReactQueryProvider and getQueryClient follow TanStack’s SSR-safe singleton recipe (server-only instances, devtools gated to dev), so hydration and transitions remain stable under React 19’s concurrency.
 
-The /gpus page wraps a client-only component with <Suspense> but never actually suspends (no async work is awaited), so the fallback never renders. Replace it with a proper loading.tsx or move the initial page fetch server-side to reduce unnecessary client suspense boundaries.
+✅ Facet-driven filters. Client-side filters now derive directly from the cached facet metadata, so checkbox and slider options always reflect the latest dataset without extra requests.
 
-No server-side React Query prefetch/Hydration Boundary exists, so the first page always flashes skeletons while the client refetches /api. Next.js 15 encourages preloading critical data in server components (or via fetch in the route) to improve TTFB and can still hand off to React Query for pagination.
+⚠️ State duplication. The table client still mirrors URL params into columnFilters, sorting, rowSelection, and then writes them back through multiple refs/effects. That redundancy (and the TODO around auto-search) is the same source of complexity as before; leaning on useQueryStates as the single source of truth would remove a lot of defensive equality checks.
 
-There are no error.tsx/not-found.tsx boundaries per route; adding them would align with App Router resiliency guidance.
-
-React patterns & state management
-✅ What’s working
-
-The React Query provider uses the recommended singleton creation pattern (getQueryClient, isServer guard) and keeps DevTools out of production bundles.
-
-The main table client synchronizes URL search params with TanStack state via nuqs parsers, then memoizes equality checks (areColumnFiltersEqual, isSortingStateEqual) to avoid extra renders—great attention to React 19’s concurrent behavior.
-
-Favorites logic is split into a lazily loaded runtime that keeps its own React Query cache, sends BroadcastChannel updates, and reuses the same URL search contract; that keeps the heavy logic off the main bundle until needed.
-
-⚠️ Potential improvements
-
-The client component re-derives almost every state slice (columnFilters, sorting, rowSelection) from URL params into React state and then syncs them back through effects. That duplication adds a lot of useEffect plumbing and can desync if an effect misses a dependency. Consider relying directly on search for derived values and only storing user interactions that have not yet been committed to the URL.
-
-useTransition sign-out logic still calls router.refresh() after router.replace("/"), forcing a full app refresh. Using startTransition(() => router.replace("/?refresh=1")) or server mutations could avoid clearing the entire React Query cache every time, unless the intent truly is a cold start.
-
-RootLayout wraps everything in <Suspense fallback={null}>, but there is no actual suspense boundary nested inside. You can drop that outer Suspense (Next.js already handles font streaming) or move actual async components inside to give users a visible fallback.
+⚠️ Global refresh on sign-out. Logging out still clears the entire React Query cache, issues router.replace("/"), and triggers router.refresh(), forcing a cold boot on every device—even when a scoped mutation or cache invalidation would suffice. This is heavy-handed for an otherwise optimized SPA flow.
 
 TanStack Query/Table usage
-✅ What’s working
+✅ Query configuration. dataOptions centralizes the infinite-query key, cursor serialization, and fetcher while disabling window-focus refetches, which matches TanStack’s recommended setup for server-driven pagination.
 
-dataOptions and favoritesDataOptions build stable query keys by serializing URL params and pass cursor/page-size information down to the fetchJson helper with consistent error handling, matching TanStack’s infinite-query documentation.
+✅ SSR-friendly hydration. The server-prefetched HydrationBoundary now passes the same query key the client uses, so TanStack skips the redundant first fetch in non-favorites mode, improving first paint without custom glue code.
 
-DataTableInfinite opts into manual filtering/sorting/pagination and hands real row counts from the server into TanStack Table, while virtualization is enabled only when data exists, with mobile vs. desktop overscan tuning. That’s a textbook TanStack pattern for large tables.
-
-Column definitions include explicit getRowId fallbacks, per-column sizes, and custom cell renderers (provider logos, price formatting) that play nicely with virtualization because widths are measured/resized via refs and ResizeObserver.
-
-Favorited rows use a dedicated infinite query plus a BroadcastChannel sync, keeping the base /api feed unaffected when someone toggles the favorites view.
-
-⚠️ Improvements
-
-There’s no hydration of the first page—useInfiniteQuery always starts empty—so even when the server already produced the HTML shell, the table must fetch again. Prefetching via dehydrate/HydrationBoundary in the page (or fetching in the route handler and seeding React Query) would improve FCP without extra work for TanStack.
-
-Both onScroll and an IntersectionObserver trigger requestNextPage(). The guard isPrefetching prevents double concurrent requests, but you might be doing redundant work. Choosing one trigger (observer for column virtualization, for example) would simplify the flow and remove an extra effect.
-
-DataTableMeta advertises totalRows vs. filterRows, but the backend sets both to the same count because it never fetches the unfiltered total. Either adjust the API to return the overall dataset size or drop the distinction to avoid misleading UI metrics.
+⚠️ No first-load data for favorites. When favorites=true, the SSR branch intentionally skips prefetching, so the favorites toggle still flashes a spinner while the lazy runtime hydrates. Consider persisting favorite keys server-side (e.g., via cookies) so you can seed that query, or at least show a distinct optimistic state.
 
 API, caching, and data modeling
-✅ Strengths
+✅ Cache-aware loaders. getGpuPricingPage wraps database access in unstable_cache, hashes query params for deterministic keys, and enforces a 2 MB limit so oversized responses fall back to live DB queries with logging—exactly what Vercel recommends for App Router data caches.
 
-gpuPricingCache pushes all heavy lifting to PostgreSQL via Drizzle: filters for JSONB columns, range checks, text search, global search, and manual ORDER BY clauses mirror the TanStack table columns exactly. Indices in src/db/schema.ts back those fields (GIN on JSON, trigram on model/type) so queries remain fast as data scales.
+✅ Facet generation. Database-side facet aggregation keeps provider/type/model/VRAM/price filters accurate without hauling large JSON payloads into Node, which is a scalable pattern as the dataset grows.
 
-Route handlers wrap DB calls in unstable_cache with deterministic keys, reject caches >2 MB (to avoid Next/Vercel cache limits), and fall back to live DB queries with console warnings. This is precisely what Vercel recommends for large JSON responses.
+⚠️ Total vs. filtered counts still identical. The cache still returns totalCount: filterCount, so clients never learn how many total GPUs exist outside the active filters—undermining UI copy that references “Showing N of M.” Without a real unfiltered total, analytics and UX remain misleading.
 
-Favorites APIs apply Upstash rate limiting, zod validation, deduplication, and revalidation tags, plus they respond with private cache headers and rate-limit metadata so clients can throttle themselves.
+⚠️ API response logging only half-fixes reliability. The /api route logs cursor/latency metrics, but error responses are still generic and don’t set Retry-After headers, so rate-limit and cache issues remain opaque to clients.
 
-Favorites runtime uses BroadcastChannel messages to keep multi-tab state aligned and reuses the same search params + infinite query interface as the base dataset, so toggling between “All” and “Favorites” is seamless.
+Recommendations to reach A+
+Ship accurate site metadata. Replace the hard-coded "D" title and Deploybase URL with real branding defaults and add per-route generateMetadata for SEO-grade OG/Twitter content.
 
-⚠️ Concerns
+Simplify suspense + loading strategy. Remove unnecessary Suspense wrappers (or give them visible fallbacks) now that you have route-level loading.tsx files.
 
-gpu-pricing-cache.ts falls back to returning totalCount = filterCount, so clients never know the “global” row count when filters are applied. If UX needs to show “Showing N of M total GPUs,” expose both counts explicitly or adjust the UI copy.
+Streamline query-param synchronization. Collapse columnFilters/sorting/rowSelection into derived values from useQueryStates and let TanStack callbacks write directly to URL state; this will eliminate most of the memoized equality helpers and effects.
 
-Several Drizzle calls are annotated with // @ts-ignore due to type conflicts in generated artifacts. That’s acceptable temporarily, but carrying ts-ignore inside core API code can hide real regression; upgrading the duplicated Drizzle version or consolidating node_modules would be safer.
+Return real dataset totals. Extend gpuPricingCache.getGpusFiltered to fetch both unfiltered and filtered counts so the UI can honestly report “Showing N of M,” or rename the metadata fields to avoid confusion.
 
-The Redis rate limiter sets a single window (100 / 24h) for all write operations. If this repo expects bursts (e.g., mass-favoriting during demos), consider a sliding window or per-route limits to avoid surprising 429s.
-
-Recommendations to reach “A+”
-Ship accurate metadata & marketing polish.
-
-Replace placeholder title/description/site URL with meaningful defaults, add route-specific generateMetadata, and supply OG images per table type. This is low-hanging fruit for perceived quality.
-
-Prefetch the first dataset page on the server.
-
-Fetch the initial /api payload inside GpusPage (server component) and pass it to the client via HydrationBoundary. This eliminates duplicate round trips and lines up with React Query’s SSR guidance, materially improving perceived performance.
-
-Simplify state synchronization.
-
-Reduce reliance on multiple local states mirroring search and instead push updates directly through nuqs setters; components like DataTableInfinite already receive setColumnFilters etc., so removing duplication would shrink effect chains and potential bugs.
-
-Tighten API signals.
-
-Teach gpuPricingCache to also return a global total (unfiltered rows) or rename the metadata fields so UI doesn’t overpromise. Similarly, remove lingering ts-ignores by aligning Drizzle versions or splitting generated types.
-
-Add resilience surfaces.
-
-Implement loading.tsx, error.tsx, and not-found.tsx per route group so Vercel deployments behave predictably under failure and to deliver clearer fallbacks than inline Suspense placeholders.
-
-With those refinements, the codebase would feel much closer to “A+”—polished UX, accurate metadata, streamlined client state, and fully aligned server signals—on top of the already solid foundation of modern Next.js, React, TanStack, and Vercel practices.
+Make sign-out incremental. Replace the full router.refresh() with targeted cache invalidation (e.g., remove auth-dependent queries and navigate via router.replace) so users don’t pay a cold-start penalty after every logout.

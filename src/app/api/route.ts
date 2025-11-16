@@ -30,11 +30,11 @@ export async function GET(req: Request): Promise<Response> {
     });
     return res;
   } catch (error) {
-    console.error('Error in pricing API:', error);
+    console.error("Error in pricing API:", error);
     return Response.json(
       {
-        error: 'Failed to fetch pricing data',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        error: "Failed to fetch pricing data",
+        details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 }
     );
