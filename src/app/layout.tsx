@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import "@/styles/globals.css";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { ReactQueryProvider } from "@/providers/react-query";
@@ -86,11 +87,13 @@ export default function RootLayout({
                 enableSystem
                 disableTransitionOnChange
               >
-                <AuthDialogProvider>
-                  <main id="content" className="flex min-h-[100dvh] flex-col">
-                    {children}
-                  </main>
-                </AuthDialogProvider>
+                <Suspense fallback={null}>
+                  <AuthDialogProvider>
+                    <main id="content" className="flex min-h-[100dvh] flex-col">
+                      {children}
+                    </main>
+                  </AuthDialogProvider>
+                </Suspense>
               </ThemeProvider>
             </NuqsAdapter>
           </ReactQueryProvider>
