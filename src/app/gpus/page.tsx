@@ -1,29 +1,81 @@
 import * as React from "react";
 import { Suspense } from "react";
+import {
+  HydrationBoundary,
+  QueryClient,
+  dehydrate,
+  type DehydratedState,
+} from "@tanstack/react-query";
 import { Loader } from "lucide-react";
 import { Client } from "@/components/infinite-table/client";
+import { dataOptions } from "@/components/infinite-table/query-options";
+import { searchParamsCache } from "@/components/infinite-table/search-params";
 
 export const revalidate = 43200;
 
-export default function GpusPage() {
+interface GpusPageProps {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}
+
+function normalizeSearchParams(
+  input: Record<string, string | string[] | undefined>,
+) {
+  const normalized: Record<string, string> = {};
+
+  for (const [key, value] of Object.entries(input)) {
+    if (typeof value === "string") {
+      normalized[key] = value;
+      continue;
+    }
+
+    if (Array.isArray(value) && value.length > 0) {
+      normalized[key] = value[0] ?? "";
+    }
+  }
+
+  return normalized;
+}
+
+export default async function GpusPage({ searchParams }: GpusPageProps) {
+  const resolvedSearchParams = normalizeSearchParams(
+    (await searchParams) ?? {},
+  );
+  const parsedSearch = searchParamsCache.parse(resolvedSearchParams);
+
+  const queryClient = new QueryClient();
+
+  if (parsedSearch.favorites !== "true") {
+    try {
+      await queryClient.prefetchInfiniteQuery(dataOptions(parsedSearch));
+    } catch (error) {
+      console.error("[GpusPage] Failed to prefetch GPU data", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  const dehydratedState = dehydrate(queryClient);
+
   return (
     <Suspense fallback={<PageFallback />}>
-      <GpusContent />
+      <GpusContent dehydratedState={dehydratedState} />
     </Suspense>
   );
 }
 
-function GpusContent() {
+function GpusContent({ dehydratedState }: { dehydratedState: DehydratedState }) {
   return (
-    <div
-      className="flex min-h-dvh w-full flex-col sm:flex-row pt-2 sm:p-0"
-      style={{
-        "--total-padding-mobile": "calc(0.5rem + 0.5rem)",
-        "--total-padding-desktop": "3rem",
-      } as React.CSSProperties}
-    >
-      <Client />
-    </div>
+    <HydrationBoundary state={dehydratedState}>
+      <div
+        className="flex min-h-dvh w-full flex-col sm:flex-row pt-2 sm:p-0"
+        style={{
+          "--total-padding-mobile": "calc(0.5rem + 0.5rem)",
+          "--total-padding-desktop": "3rem",
+        } as React.CSSProperties}
+      >
+        <Client />
+      </div>
+    </HydrationBoundary>
   );
 }
 
