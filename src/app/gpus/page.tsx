@@ -10,6 +10,7 @@ import { Loader } from "lucide-react";
 import { Client } from "@/components/infinite-table/client";
 import { dataOptions } from "@/components/infinite-table/query-options";
 import { searchParamsCache } from "@/components/infinite-table/search-params";
+import { getGpuPricingPage } from "@/lib/gpu-pricing-loader";
 
 export const revalidate = 43200;
 
@@ -46,7 +47,24 @@ export default async function GpusPage({ searchParams }: GpusPageProps) {
 
   if (parsedSearch.favorites !== "true") {
     try {
-      await queryClient.prefetchInfiniteQuery(dataOptions(parsedSearch));
+      const infiniteOptions = dataOptions(parsedSearch);
+      await queryClient.prefetchInfiniteQuery({
+        ...infiniteOptions,
+        queryFn: async ({ pageParam }) => {
+          const cursor =
+            typeof pageParam?.cursor === "number" ? pageParam.cursor : null;
+          const size =
+            (pageParam as { size?: number } | undefined)?.size ??
+            parsedSearch.size ??
+            50;
+          return getGpuPricingPage({
+            ...parsedSearch,
+            cursor,
+            size,
+            uuid: null,
+          });
+        },
+      });
     } catch (error) {
       console.error("[GpusPage] Failed to prefetch GPU data", {
         error: error instanceof Error ? error.message : String(error),

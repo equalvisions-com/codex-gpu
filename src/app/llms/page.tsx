@@ -10,6 +10,7 @@ import { Loader } from "lucide-react";
 import { ModelsClient } from "@/components/models-table/models-client";
 import { modelsDataOptions } from "@/components/models-table/models-query-options";
 import { modelsSearchParamsCache } from "@/components/models-table/models-search-params";
+import { getModelsPage } from "@/lib/models-loader";
 
 export const revalidate = 43200;
 
@@ -46,7 +47,24 @@ export default async function ModelsPage({ searchParams }: ModelsPageProps) {
 
   if (parsedSearch.favorites !== "true") {
     try {
-      await queryClient.prefetchInfiniteQuery(modelsDataOptions(parsedSearch));
+      const infiniteOptions = modelsDataOptions(parsedSearch);
+      await queryClient.prefetchInfiniteQuery({
+        ...infiniteOptions,
+        queryFn: async ({ pageParam }) => {
+          const cursor =
+            typeof pageParam?.cursor === "number" ? pageParam.cursor : null;
+          const size =
+            (pageParam as { size?: number } | undefined)?.size ??
+            parsedSearch.size ??
+            50;
+          return getModelsPage({
+            ...parsedSearch,
+            cursor,
+            size,
+            uuid: null,
+          });
+        },
+      });
     } catch (error) {
       console.error("[ModelsPage] Failed to prefetch models data", {
         error: error instanceof Error ? error.message : String(error),
