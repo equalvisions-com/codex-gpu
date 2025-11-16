@@ -12,8 +12,8 @@ function getResendClient(apiKey?: string) {
 interface SendEmailParams {
   to: string;
   subject: string;
-  html?: string;
-  text?: string;
+  html: string;
+  text: string;
 }
 
 async function sendEmail({ to, subject, html, text }: SendEmailParams) {
@@ -21,7 +21,7 @@ async function sendEmail({ to, subject, html, text }: SendEmailParams) {
   const fromAddress = process.env.RESEND_FROM_EMAIL || FROM_EMAIL_FALLBACK;
 
   try {
-    const emailOptions = {
+    const emailOptions: Parameters<typeof resend.emails.send>[0] = {
       from: fromAddress,
       to,
       subject,
