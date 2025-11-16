@@ -1,6 +1,13 @@
-import { Resend } from 'resend';
+import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const FROM_EMAIL_FALLBACK = "noreply@yourdomain.com";
+
+function getResendClient(apiKey?: string) {
+  if (!apiKey) {
+    throw new Error("RESEND_API_KEY is not configured");
+  }
+  return new Resend(apiKey);
+}
 
 interface SendEmailParams {
   to: string;
@@ -10,35 +17,28 @@ interface SendEmailParams {
 }
 
 async function sendEmail({ to, subject, html, text }: SendEmailParams) {
-  if (!process.env.RESEND_API_KEY) {
-    throw new Error('RESEND_API_KEY is not configured');
-  }
+  const resend = getResendClient(process.env.RESEND_API_KEY);
+  const fromAddress = process.env.RESEND_FROM_EMAIL || FROM_EMAIL_FALLBACK;
 
   try {
-    const emailOptions: any = {
-      from: process.env.RESEND_FROM_EMAIL || 'noreply@yourdomain.com',
+    const emailOptions = {
+      from: fromAddress,
       to,
       subject,
+      html,
+      text,
     };
-
-    if (html) {
-      emailOptions.html = html;
-    }
-
-    if (text) {
-      emailOptions.text = text;
-    }
 
     const { data, error } = await resend.emails.send(emailOptions);
 
     if (error) {
-      console.error('Failed to send email:', error);
+      console.error("Failed to send email:", error);
       throw new Error(`Email sending failed: ${error.message}`);
     }
 
     return data;
   } catch (error) {
-    console.error('Email service error:', error);
+    console.error("Email service error:", error);
     throw error;
   }
 }
@@ -105,7 +105,7 @@ If you didn't create an account, you can safely ignore this email.
 
   return sendEmail({
     to,
-    subject: 'Verify Your Email - OpenStatus',
+    subject: "Verify Your Email - OpenStatus",
     html,
     text,
   });
@@ -179,7 +179,7 @@ If you didn't request a password reset, you can safely ignore this email.
 
   return sendEmail({
     to,
-    subject: 'Reset Your Password - OpenStatus',
+    subject: "Reset Your Password - OpenStatus",
     html,
     text,
   });

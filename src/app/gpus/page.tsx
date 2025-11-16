@@ -1,12 +1,9 @@
 import * as React from "react";
-import { Suspense } from "react";
 import {
   HydrationBoundary,
   QueryClient,
   dehydrate,
-  type DehydratedState,
 } from "@tanstack/react-query";
-import { Loader } from "lucide-react";
 import { Client } from "@/components/infinite-table/client";
 import { dataOptions } from "@/components/infinite-table/query-options";
 import { searchParamsCache } from "@/components/infinite-table/search-params";
@@ -38,11 +35,7 @@ function normalizeSearchParams(
 }
 
 export default function GpusPage({ searchParams }: GpusPageProps) {
-  return (
-    <Suspense fallback={<PageFallback />}>
-      <GpusHydratedContent searchParams={searchParams} />
-    </Suspense>
-  );
+  return <GpusHydratedContent searchParams={searchParams} />;
 }
 
 async function GpusHydratedContent({
@@ -98,16 +91,5 @@ async function GpusHydratedContent({
         <Client />
       </div>
     </HydrationBoundary>
-  );
-}
-
-function PageFallback() {
-  return (
-    <div className="flex min-h-dvh w-full items-center justify-center">
-      <span className="inline-flex items-center justify-center text-muted-foreground" aria-label="Loading">
-        <Loader className="h-8 w-8 animate-spin text-foreground/70" strokeWidth={1.5} />
-        <span className="sr-only">Loading</span>
-      </span>
-    </div>
   );
 }

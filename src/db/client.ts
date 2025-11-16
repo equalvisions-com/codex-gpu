@@ -13,10 +13,19 @@ if (!connectionString) {
   throw new Error('DATABASE_URL is not set');
 }
 
+const isProduction = process.env.NODE_ENV === "production";
+const shouldEnforceSSL =
+  process.env.DATABASE_SSL === "true" ||
+  process.env.DATABASE_SSL === "require" ||
+  isProduction;
+
+const rejectUnauthorized =
+  process.env.DATABASE_SSL_REJECT_UNAUTHORIZED === "false" ? false : true;
+
 const sql = globalThis.__DRIZZLE_SQL__ ?? postgres(connectionString, {
-  max: 10,         // maximum number of connections your app uses
-  prepare: false,  // disable prepared statements (safer behind PgBouncer)
-  ssl: { rejectUnauthorized: false },  // depending on your SSL / cert setup
+  max: 10, // maximum number of connections your app uses
+  prepare: false, // disable prepared statements (safer behind PgBouncer)
+  ssl: shouldEnforceSSL ? { rejectUnauthorized } : undefined,
 });
 
 if (process.env.NODE_ENV !== 'production') globalThis.__DRIZZLE_SQL__ = sql;

@@ -74,9 +74,7 @@ export type SheetField<TData, TMeta = Record<string, unknown>> = {
   component?: (
     // REMINDER: this is used to pass additional data like the `InfiniteQueryMeta`
     props: TData & {
-      metadata?: {
-        totalRows: number;
-      } & TMeta;
+      metadata?: TMeta;
     }
   ) => JSX.Element | null | string;
   condition?: (props: TData) => boolean;

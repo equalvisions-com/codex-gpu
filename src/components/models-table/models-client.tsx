@@ -24,6 +24,7 @@ import { MobileTopNav, SidebarPanel, type AccountUser } from "../infinite-table/
 import { syncModelFavorites } from "@/lib/model-favorites/sync";
 import { getFavoritesBroadcastId } from "@/lib/model-favorites/broadcast";
 import type { FavoritesRuntimeSnapshot } from "./models-favorites-runtime";
+import { MODEL_FAVORITES_QUERY_KEY } from "@/lib/model-favorites/constants";
 
 interface ModelsClientProps {
   initialFavoriteKeys?: ModelFavoriteKey[];
@@ -47,6 +48,10 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
   const broadcastId = React.useMemo(() => getFavoritesBroadcastId(), []);
   const [favoritesSnapshot, setFavoritesSnapshot] = React.useState<FavoritesRuntimeSnapshot | null>(null);
   const noopAsync = React.useCallback(async () => {}, []);
+  const clearFavoriteQueries = React.useCallback(() => {
+    queryClient.removeQueries({ queryKey: MODEL_FAVORITES_QUERY_KEY });
+    queryClient.removeQueries({ queryKey: ["model-favorites", "rows"], exact: false });
+  }, [queryClient]);
 
   const handleFavoritesSnapshot = React.useCallback((snapshot: FavoritesRuntimeSnapshot | null) => {
     setFavoritesSnapshot(snapshot);
@@ -75,12 +80,11 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
       try {
         await signOut();
       } finally {
-        queryClient.clear();
-        router.replace("/", { scroll: false });
+        clearFavoriteQueries();
         router.refresh();
       }
     });
-  }, [queryClient, router, signOut]);
+  }, [clearFavoriteQueries, router, signOut]);
 
   // Seed cache with initialFavoriteKeys if provided (from SSR)
   const initializedRef = React.useRef(false);
@@ -134,17 +138,12 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
     return facetsRef.current ?? {};
   }, [rawFacets]);
   const castFacets = stableFacets as Record<string, ModelsFacetMetadataSchema> | undefined;
-  const totalDBRowCount = effectiveFavoritesMode
-    ? favoritesSnapshot?.totalRowCount ?? favoritesFlatData.length
-    : baseLastPage?.meta?.totalRowCount ?? baseFlatData.length;
-
   const effectiveFavoriteKeys = effectiveFavoritesMode
     ? favoritesSnapshot?.favoriteKeysFromRows ?? []
     : initialFavoriteKeys;
 
   const metadata: ModelsDataTableMeta<Record<string, unknown>> = {
     ...(lastPage?.meta?.metadata ?? {}),
-    totalRows: totalDBRowCount ?? 0,
     initialFavoriteKeys: effectiveFavoriteKeys,
   };
 
@@ -339,7 +338,6 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
         data={flatData}
         skeletonRowCount={50}
         skeletonNextPageRowCount={undefined}
-        totalRows={totalDBRowCount}
         columnFilters={columnFilters}
         onColumnFiltersChange={handleColumnFiltersChange}
         sorting={sorting}

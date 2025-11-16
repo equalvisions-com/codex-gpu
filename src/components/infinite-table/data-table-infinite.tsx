@@ -57,7 +57,6 @@ const gradientSurfaceClass =
 
 // Note: chart groupings could be added later if needed
 export type DataTableMeta<TMeta> = TMeta & {
-  totalRows: number;
   facets?: Record<string, any>;
   initialFavoriteKeys?: FavoriteKey[];
 };
@@ -80,7 +79,6 @@ interface DataTableInfiniteProps<TData, TValue, TMeta> {
   onRowSelectionChange: OnChangeFn<RowSelectionState>;
   filterFields?: DataTableFilterField<TData>[];
   sheetFields?: SheetField<TData, TMeta>[];
-  totalRows?: number;
   meta: DataTableMeta<TMeta>;
   isFetching?: boolean;
   isLoading?: boolean;
@@ -125,7 +123,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   isFetchingNextPage,
   fetchNextPage,
   hasNextPage,
-  totalRows = 0,
   meta,
   renderSheetTitle,
   searchParamsParser: searchParamsParserProp,
@@ -303,8 +300,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     manualFiltering: true,
     manualSorting: true,
     manualPagination: true,
-    // Total row count for pagination calculation
-    rowCount: totalRows,
     initialState: {
       columnOrder: [
         "blank",
@@ -347,7 +342,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     debugAll: process.env.NEXT_PUBLIC_TABLE_DEBUG === "true",
     meta: {
       getRowClassName,
-      metadata: { totalRows },
     },
   });
 

@@ -25,6 +25,7 @@ import { syncFavorites } from "@/lib/favorites/sync";
 import { getFavoritesBroadcastId } from "@/lib/favorites/broadcast";
 import type { FavoritesRuntimeSnapshot } from "./favorites-runtime";
 import { MobileTopNav, SidebarPanel, type AccountUser } from "./account-components";
+import { FAVORITES_QUERY_KEY } from "@/lib/favorites/constants";
 
 interface ClientProps {
   initialFavoriteKeys?: string[];
@@ -46,6 +47,11 @@ export function Client({ initialFavoriteKeys, isFavoritesMode }: ClientProps = {
   const [isSigningOut, startSignOutTransition] = React.useTransition();
   const accountUser = (session?.user ?? null) as AccountUser | null;
   const broadcastId = React.useMemo(() => getFavoritesBroadcastId(), []);
+
+  const clearFavoriteQueries = React.useCallback(() => {
+    queryClient.removeQueries({ queryKey: FAVORITES_QUERY_KEY });
+    queryClient.removeQueries({ queryKey: ["favorites", "rows"], exact: false });
+  }, [queryClient]);
 
   const handleSignIn = React.useCallback(() => {
     if (!showSignIn) return;
@@ -70,12 +76,11 @@ export function Client({ initialFavoriteKeys, isFavoritesMode }: ClientProps = {
       try {
         await signOut();
       } finally {
-        queryClient.clear();
-        router.replace("/", { scroll: false });
+        clearFavoriteQueries();
         router.refresh();
       }
     });
-  }, [queryClient, router, signOut]);
+  }, [clearFavoriteQueries, router, signOut]);
 
   // Seed cache with initialFavoriteKeys if provided (from SSR)
   const initializedRef = React.useRef(false);
@@ -121,17 +126,12 @@ export function Client({ initialFavoriteKeys, isFavoritesMode }: ClientProps = {
   const flatData = effectiveFavoritesMode ? favoritesFlatData : baseFlatData;
   const lastPage = effectiveFavoritesMode ? favoritesLastPage : baseLastPage;
   const facetsFromPage = lastPage?.meta?.facets;
-  const totalDBRowCount = effectiveFavoritesMode
-    ? favoritesSnapshot?.totalRowCount ?? favoritesFlatData.length
-    : baseLastPage?.meta?.totalRowCount ?? baseFlatData.length;
-
   const effectiveFavoriteKeys = effectiveFavoritesMode
     ? favoritesSnapshot?.favoriteKeysFromRows ?? []
     : initialFavoriteKeys;
   
   const metadata: DataTableMeta<Record<string, unknown>> = {
     ...(lastPage?.meta?.metadata ?? {}),
-    totalRows: totalDBRowCount ?? 0,
     initialFavoriteKeys: effectiveFavoriteKeys,
   };
 
@@ -318,7 +318,6 @@ export function Client({ initialFavoriteKeys, isFavoritesMode }: ClientProps = {
         data={flatData}
         skeletonRowCount={50}
         skeletonNextPageRowCount={undefined}
-        totalRows={metadata.totalRows}
         columnFilters={columnFilters}
         onColumnFiltersChange={handleColumnFiltersChange}
         sorting={sorting}

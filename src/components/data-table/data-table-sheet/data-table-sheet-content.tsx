@@ -16,9 +16,7 @@ interface DataTableSheetContentProps<TData, TMeta>
   // totalRows: number;
   // filterRows: number;
   // totalRowsFetched: number;
-  metadata?: TMeta & {
-    totalRows: number;
-  };
+  metadata?: TMeta;
 }
 
 function DataTableSheetContent<TData, TMeta>({

@@ -1,12 +1,9 @@
 import * as React from "react";
-import { Suspense } from "react";
 import {
   HydrationBoundary,
   QueryClient,
   dehydrate,
-  type DehydratedState,
 } from "@tanstack/react-query";
-import { Loader } from "lucide-react";
 import { ModelsClient } from "@/components/models-table/models-client";
 import { modelsDataOptions } from "@/components/models-table/models-query-options";
 import { modelsSearchParamsCache } from "@/components/models-table/models-search-params";
@@ -38,11 +35,7 @@ function normalizeModelsSearchParams(
 }
 
 export default function ModelsPage({ searchParams }: ModelsPageProps) {
-  return (
-    <Suspense fallback={<PageFallback />}>
-      <ModelsHydratedContent searchParams={searchParams} />
-    </Suspense>
-  );
+  return <ModelsHydratedContent searchParams={searchParams} />;
 }
 
 async function ModelsHydratedContent({
@@ -98,16 +91,5 @@ async function ModelsHydratedContent({
         <ModelsClient />
       </div>
     </HydrationBoundary>
-  );
-}
-
-function PageFallback() {
-  return (
-    <div className="flex min-h-dvh w-full items-center justify-center">
-      <span className="inline-flex items-center justify-center text-muted-foreground" aria-label="Loading">
-        <Loader className="h-8 w-8 animate-spin text-foreground/70" strokeWidth={1.5} />
-        <span className="sr-only">Loading</span>
-      </span>
-    </div>
   );
 }
