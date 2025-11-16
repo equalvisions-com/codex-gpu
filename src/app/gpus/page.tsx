@@ -37,7 +37,19 @@ function normalizeSearchParams(
   return normalized;
 }
 
-export default async function GpusPage({ searchParams }: GpusPageProps) {
+export default function GpusPage({ searchParams }: GpusPageProps) {
+  return (
+    <Suspense fallback={<PageFallback />}>
+      <GpusHydratedContent searchParams={searchParams} />
+    </Suspense>
+  );
+}
+
+async function GpusHydratedContent({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const resolvedSearchParams = normalizeSearchParams(
     (await searchParams) ?? {},
   );
@@ -74,14 +86,6 @@ export default async function GpusPage({ searchParams }: GpusPageProps) {
 
   const dehydratedState = dehydrate(queryClient);
 
-  return (
-    <Suspense fallback={<PageFallback />}>
-      <GpusContent dehydratedState={dehydratedState} />
-    </Suspense>
-  );
-}
-
-function GpusContent({ dehydratedState }: { dehydratedState: DehydratedState }) {
   return (
     <HydrationBoundary state={dehydratedState}>
       <div

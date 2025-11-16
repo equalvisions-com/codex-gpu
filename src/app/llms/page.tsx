@@ -37,7 +37,19 @@ function normalizeModelsSearchParams(
   return normalized;
 }
 
-export default async function ModelsPage({ searchParams }: ModelsPageProps) {
+export default function ModelsPage({ searchParams }: ModelsPageProps) {
+  return (
+    <Suspense fallback={<PageFallback />}>
+      <ModelsHydratedContent searchParams={searchParams} />
+    </Suspense>
+  );
+}
+
+async function ModelsHydratedContent({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const resolvedSearchParams = normalizeModelsSearchParams(
     (await searchParams) ?? {},
   );
@@ -74,18 +86,6 @@ export default async function ModelsPage({ searchParams }: ModelsPageProps) {
 
   const dehydratedState = dehydrate(queryClient);
 
-  return (
-    <Suspense fallback={<PageFallback />}>
-      <ModelsContent dehydratedState={dehydratedState} />
-    </Suspense>
-  );
-}
-
-function ModelsContent({
-  dehydratedState,
-}: {
-  dehydratedState: DehydratedState;
-}) {
   return (
     <HydrationBoundary state={dehydratedState}>
       <div
