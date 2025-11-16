@@ -1,13 +1,6 @@
 "use client";
 
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
-import type {
-  ColumnFiltersState,
-  OnChangeFn,
-  RowSelectionState,
-  SortingState,
-} from "@tanstack/react-table";
-import { useQueryStates } from "nuqs";
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/providers/auth-client-provider";
@@ -21,11 +14,11 @@ import { searchParamsParser } from "./search-params";
 import type { RowWithId } from "@/types/api";
 import type { ColumnSchema, FacetMetadataSchema } from "./schema";
 // Inline notices handle favorites feedback; no toasts here.
-import { syncFavorites } from "@/lib/favorites/sync";
 import { getFavoritesBroadcastId } from "@/lib/favorites/broadcast";
-import type { FavoritesRuntimeSnapshot } from "./favorites-runtime";
 import { MobileTopNav, SidebarPanel, type AccountUser } from "./account-components";
 import { FAVORITES_QUERY_KEY } from "@/lib/favorites/constants";
+import { useTableSearchState } from "./hooks/use-table-search-state";
+import { useFavoritesState } from "./hooks/use-favorites-state";
 
 interface ClientProps {
   initialFavoriteKeys?: string[];
@@ -36,7 +29,15 @@ const LazyFavoritesRuntime = React.lazy(() => import("./favorites-runtime"));
 
 export function Client({ initialFavoriteKeys, isFavoritesMode }: ClientProps = {}) {
   const contentRef = React.useRef<HTMLTableSectionElement>(null);
-  const [search, setSearch] = useQueryStates(searchParamsParser);
+  const {
+    search,
+    columnFilters,
+    sorting,
+    rowSelection,
+    handleColumnFiltersChange,
+    handleSortingChange,
+    handleRowSelectionChange,
+  } = useTableSearchState(defaultFilterFields);
   const favoritesFlag = search.favorites === "true";
   const effectiveFavoritesMode =
     typeof isFavoritesMode === "boolean" ? isFavoritesMode : favoritesFlag;
@@ -82,25 +83,13 @@ export function Client({ initialFavoriteKeys, isFavoritesMode }: ClientProps = {
     });
   }, [clearFavoriteQueries, router, signOut]);
 
-  // Seed cache with initialFavoriteKeys if provided (from SSR)
-  const initializedRef = React.useRef(false);
-  React.useEffect(() => {
-    if (!initializedRef.current && initialFavoriteKeys) {
-      syncFavorites({
-        queryClient,
-        favorites: initialFavoriteKeys,
-        invalidateRows: false,
-      });
-      initializedRef.current = true;
-    }
-  }, [initialFavoriteKeys, queryClient]);
-
-  const [favoritesSnapshot, setFavoritesSnapshot] = React.useState<FavoritesRuntimeSnapshot | null>(null);
-  const handleFavoritesSnapshot = React.useCallback((snapshot: FavoritesRuntimeSnapshot | null) => {
-    setFavoritesSnapshot(snapshot);
-  }, []);
+  const { favoritesSnapshot, handleFavoritesSnapshot, shouldHydrateFavorites } =
+    useFavoritesState({
+      initialFavoriteKeys,
+      effectiveFavoritesMode,
+      queryClient,
+    });
   const noopAsync = React.useCallback(async () => {}, []);
-  const shouldHydrateFavorites = effectiveFavoritesMode;
 
 
   const {
@@ -164,41 +153,7 @@ export function Client({ initialFavoriteKeys, isFavoritesMode }: ClientProps = {
   }, [facetsFromPage]);
   const castFacets = stableFacets as Record<string, FacetMetadataSchema> | undefined;
 
-  const {
-    sort,
-    size: _size,
-    uuid,
-    cursor: _cursor,
-    observed_at: _observedAt,
-    search: globalSearch,
-    ...filter
-  } = search;
-
-  const columnFilters = React.useMemo<ColumnFiltersState>(() => {
-    const baseFilters = Object.entries(filter)
-      .map(([key, value]) => ({
-        id: key,
-        value: value as unknown,
-      }))
-      .filter(({ value }) => value ?? undefined) as ColumnFiltersState;
-
-    if (typeof globalSearch === "string" && globalSearch.trim().length) {
-      baseFilters.push({ id: "search", value: globalSearch } as { id: string; value: unknown });
-    }
-
-    return baseFilters;
-  }, [filter, globalSearch]);
-
-  const sorting = React.useMemo<SortingState>(() => {
-    return sort ? [sort] : [];
-  }, [sort]);
-
-  const rowSelection = React.useMemo<RowSelectionState>(() => {
-    return search.uuid ? { [search.uuid]: true } : {};
-  }, [search.uuid]);
-
   // REMINDER: filter metadata is hydrated from the API so checkboxes/sliders stay accurate
-  // TODO: auto search via API when the user changes the filter instead of hardcoded
   const filterFields = React.useMemo(() => {
     return defaultFilterFields.map((field) => {
       const facetsField = castFacets?.[field.value];
@@ -238,66 +193,6 @@ export function Client({ initialFavoriteKeys, isFavoritesMode }: ClientProps = {
   }, [castFacets]);
 
   const previousFilterPayloadRef = React.useRef<Record<string, unknown> | null>(null);
-  const handleColumnFiltersChange = React.useCallback<OnChangeFn<ColumnFiltersState>>(
-    (updater) => {
-      const nextFilters =
-        typeof updater === "function" ? updater(columnFilters) : updater ?? [];
-      const searchPayload: Record<string, unknown> = {};
-
-      filterFields.forEach((field) => {
-        const columnFilter = nextFilters.find((filter) => filter.id === field.value);
-        searchPayload[field.value as string] = columnFilter ? columnFilter.value : null;
-      });
-
-      if (
-        previousFilterPayloadRef.current &&
-        areSearchPayloadsEqual(previousFilterPayloadRef.current, searchPayload)
-      ) {
-        return;
-      }
-
-      previousFilterPayloadRef.current = searchPayload;
-      setSearch(searchPayload);
-    },
-    [columnFilters, filterFields, setSearch],
-  );
-
-  const previousSortParamRef = React.useRef<string>("__init__");
-  const handleSortingChange = React.useCallback<OnChangeFn<SortingState>>(
-    (updater) => {
-      const nextSorting =
-        typeof updater === "function" ? updater(sorting) : updater ?? [];
-      const sortEntry = nextSorting[0] ?? null;
-      const serialized =
-        sortEntry === null
-          ? "null"
-          : `${sortEntry.id}:${sortEntry.desc ? "desc" : "asc"}`;
-      if (previousSortParamRef.current === serialized) {
-        return;
-      }
-      previousSortParamRef.current = serialized;
-      setSearch({ sort: sortEntry ?? null });
-    },
-    [setSearch, sorting],
-  );
-
-  const previousUuidRef = React.useRef<string>("__init__");
-  const handleRowSelectionChange = React.useCallback<OnChangeFn<RowSelectionState>>(
-    (updater) => {
-      const nextSelection =
-        typeof updater === "function" ? updater(rowSelection) : updater ?? {};
-      const selectedKeys = Object.keys(nextSelection ?? {});
-      const nextUuid = selectedKeys[0] ?? null;
-      const serializedUuid = nextUuid ?? "null";
-      if (previousUuidRef.current === serializedUuid) {
-        return;
-      }
-      previousUuidRef.current = serializedUuid;
-      setSearch({ uuid: nextUuid });
-    },
-    [rowSelection, setSearch],
-  );
-
   return (
     <>
       {shouldHydrateFavorites ? (
@@ -371,73 +266,3 @@ export function Client({ initialFavoriteKeys, isFavoritesMode }: ClientProps = {
   );
 }
 
-
-
-function areColumnFiltersEqual(
-  a: ColumnFiltersState,
-  b: ColumnFiltersState,
-) {
-  if (a.length !== b.length) return false;
-  return a.every((filter, index) => {
-    const other = b[index];
-    if (!other) return false;
-    if (filter.id !== other.id) return false;
-    return isLooseEqual(filter.value, other.value);
-  });
-}
-
-function isSortingStateEqual(a: SortingState, b: SortingState) {
-  if (a.length !== b.length) return false;
-  return a.every((entry, index) => {
-    const other = b[index];
-    if (!other) return false;
-    return entry.id === other.id && entry.desc === other.desc;
-  });
-}
-
-function areSearchPayloadsEqual(
-  a: Record<string, unknown>,
-  b: Record<string, unknown>,
-) {
-  const aEntries = Object.entries(a ?? {}).filter(
-    ([_, value]) => value !== undefined,
-  );
-  const bEntries = Object.entries(b ?? {}).filter(
-    ([_, value]) => value !== undefined,
-  );
-  if (aEntries.length !== bEntries.length) return false;
-  return aEntries.every(([key, value]) => {
-    const other = b[key];
-    if (Array.isArray(value) && Array.isArray(other)) {
-      if (value.length !== other.length) return false;
-      return value.every(
-        (val, index) => JSON.stringify(val) === JSON.stringify(other[index]),
-      );
-    }
-    return JSON.stringify(value) === JSON.stringify(other);
-  });
-}
-
-function isRowSelectionEqual(a: RowSelectionState, b: RowSelectionState) {
-  const aKeys = Object.keys(a);
-  const bKeys = Object.keys(b);
-  if (aKeys.length !== bKeys.length) return false;
-  return aKeys.every((key) => Boolean(a[key]) === Boolean(b[key]));
-}
-
-function isLooseEqual(a: unknown, b: unknown) {
-  if (Object.is(a, b)) return true;
-  if (
-    typeof a === "object" &&
-    a !== null &&
-    typeof b === "object" &&
-    b !== null
-  ) {
-    try {
-      return JSON.stringify(a) === JSON.stringify(b);
-    } catch {
-      return false;
-    }
-  }
-  return false;
-}
