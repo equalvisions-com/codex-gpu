@@ -9,7 +9,6 @@ import { Client } from "@/components/infinite-table/client";
 import { dataOptions } from "@/components/infinite-table/query-options";
 import { searchParamsCache } from "@/components/infinite-table/search-params";
 import { getGpuPricingPage } from "@/lib/gpu-pricing-loader";
-import { PROVIDER_LOGOS } from "@/components/infinite-table/columns";
 
 export const revalidate = 43200;
 const GPU_META_TITLE = "GPU Pricing Explorer | Deploybase";
@@ -144,66 +143,74 @@ function buildGpuSchema(
   }
 
   const items = payload.data.slice(0, 50).map((row) => {
-    const normalizedProvider = row.provider?.toLowerCase() ?? "";
-    const logo = PROVIDER_LOGOS[normalizedProvider];
-    const image = logo?.src;
     const hasPrice =
       typeof row.price_hour_usd === "number" && !Number.isNaN(row.price_hour_usd);
-    const offer = hasPrice
-      ? {
-          "@type": "Offer",
-          priceCurrency: "USD",
+    const additionalProperty = [
+      {
+        "@type": "PropertyValue",
+        name: "VRAM (GB)",
+        value: row.vram_gb,
+      },
+      {
+        "@type": "PropertyValue",
+        name: "vCPUs",
+        value: row.vcpus,
+      },
+      {
+        "@type": "PropertyValue",
+        name: "System RAM (GB)",
+        value: row.system_ram_gb,
+      },
+      {
+        "@type": "PropertyValue",
+        name: "Instance Type",
+        value: row.type,
+      },
+    ].filter((prop) => prop.value !== undefined && prop.value !== null);
+
+    const productItem = {
+      "@type": "Product" as const,
+      name: `${row.provider} ${row.gpu_count ?? 1}× ${row.gpu_model ?? "GPU"}`,
+      brand: {
+        "@type": "Organization",
+        name: row.provider,
+      },
+      category: "GPU Cloud Instance",
+      url: row.source_url,
+      image: SHARED_OG_IMAGE,
+      offers: {
+        "@type": "Offer",
+        priceCurrency: "USD",
+        price: row.price_hour_usd,
+        availabilityStarts: row.observed_at,
+        areaServed: row.region,
+        priceSpecification: {
+          "@type": "UnitPriceSpecification",
           price: row.price_hour_usd,
-          availabilityStarts: row.observed_at,
-          areaServed: row.region,
-          priceSpecification: {
-            "@type": "UnitPriceSpecification",
-            price: row.price_hour_usd,
-            priceCurrency: "USD",
-            unitCode: "HUR",
-          },
-        }
-      : undefined;
+          priceCurrency: "USD",
+          unitCode: "HUR",
+        },
+      },
+      additionalProperty,
+    };
+
+    const serviceItem = {
+      "@type": "Service" as const,
+      name: `${row.provider} ${row.gpu_count ?? 1}× ${row.gpu_model ?? "GPU"}`,
+      serviceType: "GPU Cloud Instance",
+      provider: {
+        "@type": "Organization",
+        name: row.provider,
+      },
+      areaServed: row.region,
+      url: row.source_url,
+      additionalProperty,
+    };
 
     return {
       "@type": "DataFeedItem",
       dateCreated: row.observed_at,
-      item: {
-        "@type": "Product",
-        name: `${row.provider} ${row.gpu_count ?? 1}× ${row.gpu_model ?? "GPU"}`,
-        brand: {
-          "@type": "Organization",
-          name: row.provider,
-        },
-        category: "GPU Cloud Instance",
-        url: row.source_url,
-        ...(image ? { image } : {}),
-        ...(offer ? { offers: offer } : {}),
-        additionalProperty: [
-          {
-            "@type": "PropertyValue",
-            name: "VRAM (GB)",
-            value: row.vram_gb,
-          },
-          {
-            "@type": "PropertyValue",
-            name: "vCPUs",
-            value: row.vcpus,
-          },
-          {
-            "@type": "PropertyValue",
-            name: "System RAM (GB)",
-            value: row.system_ram_gb,
-          },
-          {
-            "@type": "PropertyValue",
-            name: "Instance Type",
-            value: row.type,
-          },
-        ].filter((prop) =>
-          prop.value !== undefined && prop.value !== null,
-        ),
-      },
+      item: hasPrice ? productItem : serviceItem,
     };
   });
 

@@ -145,7 +145,7 @@ function buildModelsSchema(
   const items = payload.data.slice(0, 50).map((model) => {
     const offers = [] as Array<Record<string, unknown>>;
 
-    if (model.pricing?.prompt != null) {
+    if (typeof model.pricing?.prompt === "number") {
       offers.push({
         "@type": "Offer",
         priceSpecification: {
@@ -157,7 +157,7 @@ function buildModelsSchema(
       });
     }
 
-    if (model.pricing?.completion != null) {
+    if (typeof model.pricing?.completion === "number") {
       offers.push({
         "@type": "Offer",
         priceSpecification: {
@@ -187,7 +187,7 @@ function buildModelsSchema(
       },
     ].filter((prop) => prop.value !== null && prop.value !== undefined);
 
-    return {
+    const item: Record<string, unknown> = {
       "@type": "DataFeedItem",
       dateModified: model.scrapedAt,
       item: {
@@ -202,12 +202,26 @@ function buildModelsSchema(
         },
         author: model.author,
         softwareVersion: model.modelVersionGroupId ?? undefined,
-        offers: offers.length ? offers : undefined,
+        offers: offers.length
+          ? offers
+          : {
+              "@type": "Offer",
+              priceCurrency: "USD",
+              price: 0,
+              availability: "https://schema.org/InStoreOnly",
+              priceSpecification: {
+                "@type": "UnitPriceSpecification",
+                price: 0,
+                priceCurrency: "USD",
+                unitText: "contact provider",
+              },
+            },
         additionalProperty: additionalProperty.length
           ? additionalProperty
           : undefined,
       },
     };
+    return item;
   });
 
   return {
