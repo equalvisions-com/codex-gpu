@@ -145,28 +145,45 @@ function buildModelsSchema(
   const items = payload.data.slice(0, 50).map((model) => {
     const offers = [] as Array<Record<string, unknown>>;
 
-    if (typeof model.pricing?.prompt === "number") {
+    const promptPricePerMillion =
+      typeof model.pricing?.prompt === "number"
+        ? Number((model.pricing.prompt * 1_000_000).toFixed(6))
+        : null;
+    const completionPricePerMillion =
+      typeof model.pricing?.completion === "number"
+        ? Number((model.pricing.completion * 1_000_000).toFixed(6))
+        : null;
+
+    if (
+      typeof promptPricePerMillion === "number" &&
+      !Number.isNaN(promptPricePerMillion) &&
+      promptPricePerMillion > 0
+    ) {
       offers.push({
         "@type": "Offer",
         priceCurrency: "USD",
-        price: model.pricing.prompt,
+        price: promptPricePerMillion,
         priceSpecification: {
           "@type": "UnitPriceSpecification",
-          price: model.pricing.prompt,
+          price: promptPricePerMillion,
           priceCurrency: "USD",
           unitText: "per million prompt tokens",
         },
       });
     }
 
-    if (typeof model.pricing?.completion === "number") {
+    if (
+      typeof completionPricePerMillion === "number" &&
+      !Number.isNaN(completionPricePerMillion) &&
+      completionPricePerMillion > 0
+    ) {
       offers.push({
         "@type": "Offer",
         priceCurrency: "USD",
-        price: model.pricing.completion,
+        price: completionPricePerMillion,
         priceSpecification: {
           "@type": "UnitPriceSpecification",
-          price: model.pricing.completion,
+          price: completionPricePerMillion,
           priceCurrency: "USD",
           unitText: "per million completion tokens",
         },
@@ -181,8 +198,19 @@ function buildModelsSchema(
       },
       {
         "@type": "PropertyValue",
-        name: "Modalities",
-        value: [...model.inputModalities, ...model.outputModalities].join(", "),
+        name: "Input Modalities",
+        value:
+          model.inputModalities && model.inputModalities.length
+            ? model.inputModalities.join(", ")
+            : undefined,
+      },
+      {
+        "@type": "PropertyValue",
+        name: "Output Modalities",
+        value:
+          model.outputModalities && model.outputModalities.length
+            ? model.outputModalities.join(", ")
+            : undefined,
       },
       {
         "@type": "PropertyValue",
