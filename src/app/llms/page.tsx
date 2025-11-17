@@ -238,8 +238,8 @@ function buildModelsSchema(
           : undefined,
         url:
           model.id && process.env.NEXT_PUBLIC_SITE_URL
-            ? `${process.env.NEXT_PUBLIC_SITE_URL}/llms?uuid=${encodeURIComponent(
-                String(model.id).replace(/\s+/g, "-"),
+            ? `${process.env.NEXT_PUBLIC_SITE_URL}/llms?uuid=${normalizeModelId(
+                model.id,
               )}`
             : undefined,
       },
@@ -268,4 +268,11 @@ function parsePricePerMillion(value: unknown) {
       : null;
   }
   return null;
+}
+
+function normalizeModelId(value: unknown) {
+  return String(value ?? "")
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/[\\/]/g, "-");
 }
