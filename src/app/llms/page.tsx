@@ -36,6 +36,11 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
+// Next.js 15 exposes `searchParams` as a promise in RSCs. We resolve it once at
+// the top to keep the pattern consistent with Nuqs’ server parsers, which
+// expect delimited strings for multi-value filters; array entries are flattened
+// to the first value before parsing.
+
 interface ModelsPageProps {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }

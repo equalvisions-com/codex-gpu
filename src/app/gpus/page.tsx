@@ -36,6 +36,11 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
+// Next.js 15 surfaces `searchParams` as a promise in RSCs; we await it once at
+// the top-level to avoid re-reading the stream later. Nuqs encodes multi-value
+// filters into a single delimited string, so we intentionally flatten any
+// array values to the first item before parsing.
+
 interface GpusPageProps {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }
