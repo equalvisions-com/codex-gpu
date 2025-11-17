@@ -145,49 +145,42 @@ function buildModelsSchema(
   const items = payload.data.slice(0, 50).map((model) => {
     const offers = [] as Array<Record<string, unknown>>;
 
-    const promptPricePerMillion =
-      typeof model.pricing?.prompt === "number"
-        ? Number((model.pricing.prompt * 1_000_000).toFixed(6))
-        : null;
-    const completionPricePerMillion =
-      typeof model.pricing?.completion === "number"
-        ? Number((model.pricing.completion * 1_000_000).toFixed(6))
-        : null;
-
-    if (
-      typeof promptPricePerMillion === "number" &&
-      !Number.isNaN(promptPricePerMillion) &&
-      promptPricePerMillion > 0
-    ) {
-      offers.push({
-        "@type": "Offer",
-        priceCurrency: "USD",
-        price: promptPricePerMillion,
-        priceSpecification: {
-          "@type": "UnitPriceSpecification",
-          price: promptPricePerMillion,
+    if (typeof model.pricing?.prompt === "number") {
+      const promptPerMillion = Number(
+        (model.pricing.prompt * 1_000_000).toFixed(6),
+      );
+      if (!Number.isNaN(promptPerMillion) && promptPerMillion > 0) {
+        offers.push({
+          "@type": "Offer",
           priceCurrency: "USD",
-          unitText: "per million prompt tokens",
-        },
-      });
+          price: promptPerMillion,
+          priceSpecification: {
+            "@type": "UnitPriceSpecification",
+            price: promptPerMillion,
+            priceCurrency: "USD",
+            unitText: "per million prompt tokens",
+          },
+        });
+      }
     }
 
-    if (
-      typeof completionPricePerMillion === "number" &&
-      !Number.isNaN(completionPricePerMillion) &&
-      completionPricePerMillion > 0
-    ) {
-      offers.push({
-        "@type": "Offer",
-        priceCurrency: "USD",
-        price: completionPricePerMillion,
-        priceSpecification: {
-          "@type": "UnitPriceSpecification",
-          price: completionPricePerMillion,
+    if (typeof model.pricing?.completion === "number") {
+      const completionPerMillion = Number(
+        (model.pricing.completion * 1_000_000).toFixed(6),
+      );
+      if (!Number.isNaN(completionPerMillion) && completionPerMillion > 0) {
+        offers.push({
+          "@type": "Offer",
           priceCurrency: "USD",
-          unitText: "per million completion tokens",
-        },
-      });
+          price: completionPerMillion,
+          priceSpecification: {
+            "@type": "UnitPriceSpecification",
+            price: completionPerMillion,
+            priceCurrency: "USD",
+            unitText: "per million completion tokens",
+          },
+        });
+      }
     }
 
     const additionalProperty = [
