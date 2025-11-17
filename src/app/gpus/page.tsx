@@ -143,41 +143,54 @@ function buildGpuSchema(
   }
 
   const items = payload.data.slice(0, 50).map((row) => {
+    const providerName = formatProviderName(row.provider);
+    const gpuModel = row.gpu_model?.trim() || null;
+    const gpuCount =
+      typeof row.gpu_count === "number" && row.gpu_count > 0
+        ? row.gpu_count
+        : null;
+    const instanceType = row.type ?? "VM";
     const hasPrice =
       typeof row.price_hour_usd === "number" && !Number.isNaN(row.price_hour_usd);
-    const additionalProperty = [
-      {
-        "@type": "PropertyValue",
-        name: "VRAM (GB)",
-        value: row.vram_gb,
-      },
-      {
-        "@type": "PropertyValue",
-        name: "vCPUs",
-        value: row.vcpus,
-      },
-      {
-        "@type": "PropertyValue",
-        name: "System RAM (GB)",
-        value: row.system_ram_gb,
-      },
-      {
-        "@type": "PropertyValue",
-        name: "Instance Type",
-        value: row.type,
-      },
-    ].filter((prop) => prop.value !== undefined && prop.value !== null);
+
+    const additionalProperty: Array<{
+      "@type": "PropertyValue";
+      name: string;
+      value: string | number;
+    }> = [];
+
+    pushProperty(additionalProperty, "GPU Model", gpuModel);
+    pushProperty(additionalProperty, "GPU Count", gpuCount);
+    pushProperty(additionalProperty, "VRAM (GB)", row.vram_gb);
+    pushProperty(additionalProperty, "vCPUs", row.vcpus);
+    pushProperty(additionalProperty, "System RAM (GB)", row.system_ram_gb);
+    pushProperty(additionalProperty, "Instance Type", instanceType);
 
     const productItem: Record<string, unknown> = {
       "@type": "Product",
-      name: `${row.provider} ${row.gpu_count ?? 1}× ${row.gpu_model ?? "GPU"}`,
+      name: buildGpuProductName(providerName, gpuCount, gpuModel, instanceType),
       brand: {
         "@type": "Organization",
-        name: row.provider,
+        name: providerName,
       },
       category: "GPU Cloud Instance",
-      url: row.source_url,
+      url:
+        row.uuid && process.env.NEXT_PUBLIC_SITE_URL
+          ? `${process.env.NEXT_PUBLIC_SITE_URL}/gpus?uuid=${encodeURIComponent(
+              row.uuid,
+            )}`
+          : undefined,
       image: SHARED_OG_IMAGE,
+      sku: row.stable_key ?? row.sku ?? undefined,
+      description: buildGpuDescription({
+        providerName,
+        gpuModel,
+        gpuCount,
+        instanceType,
+        vram: row.vram_gb,
+        vcpus: row.vcpus,
+        systemRam: row.system_ram_gb,
+      }),
       additionalProperty,
     };
 
@@ -196,15 +209,9 @@ function buildGpuSchema(
         },
       };
     } else {
-      productItem.additionalProperty = [
-        ...additionalProperty,
-        {
-          "@type": "PropertyValue",
-          name: "price_status",
-          value: "missing",
-        },
-      ];
+      pushProperty(additionalProperty, "Price Status", "missing");
     }
+    pushProperty(additionalProperty, "Stable Key", row.stable_key);
 
     return {
       "@type": "DataFeedItem",
@@ -220,4 +227,75 @@ function buildGpuSchema(
     dateModified: new Date().toISOString(),
     dataFeedElement: items,
   };
+}
+
+function pushProperty(
+  list: Array<{ "@type": "PropertyValue"; name: string; value: string | number }>,
+  name: string,
+  value: unknown,
+) {
+  if (
+    value === null ||
+    value === undefined ||
+    (typeof value === "string" && value.trim() === "")
+  ) {
+    return;
+  }
+  list.push({
+    "@type": "PropertyValue",
+    name,
+    value: typeof value === "string" ? value : Number(value),
+  });
+}
+
+function formatProviderName(provider?: string | null) {
+  if (!provider) return "Unknown Provider";
+  return provider.charAt(0).toUpperCase() + provider.slice(1);
+}
+
+function buildGpuProductName(
+  provider: string,
+  gpuCount: number | null,
+  gpuModel: string | null,
+  instanceType: string,
+) {
+  const countLabel = gpuCount ?? 1;
+  const modelLabel = gpuModel ?? "GPU";
+  return `${provider} – ${countLabel}× ${modelLabel} (${instanceType})`;
+}
+
+function buildGpuDescription({
+  providerName,
+  gpuModel,
+  gpuCount,
+  instanceType,
+  vram,
+  vcpus,
+  systemRam,
+}: {
+  providerName: string;
+  gpuModel: string | null;
+  gpuCount: number | null;
+  instanceType: string;
+  vram?: number | null;
+  vcpus?: number | string | null;
+  systemRam?: number | null;
+}) {
+  const parts: string[] = [];
+  const countLabel = gpuCount ?? 1;
+  const modelLabel = gpuModel ?? "GPU";
+  parts.push(
+    `${countLabel}× ${modelLabel} ${instanceType.toLowerCase()} from ${providerName}`,
+  );
+  if (typeof vram === "number") {
+    parts.push(`${vram} GB VRAM`);
+  }
+  if (vcpus !== null && vcpus !== undefined && vcpus !== "") {
+    parts.push(`${vcpus} vCPUs`);
+  }
+  if (typeof systemRam === "number") {
+    parts.push(`${systemRam} GB system RAM`);
+  }
+  parts.push("billed hourly.");
+  return parts.join(", ");
 }
