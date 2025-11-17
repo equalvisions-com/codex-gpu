@@ -118,7 +118,7 @@ async function ModelsHydratedContent({
           type="application/ld+json"
           suppressHydrationWarning
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(schemaMarkup),
+            __html: JSON.stringify(schemaMarkup).replace(/</g, "\\u003c"),
           }}
         />
       ) : null}
