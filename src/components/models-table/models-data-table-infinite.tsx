@@ -8,6 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/custom/table";
+import { Button } from "@/components/ui/button";
 import { DataTableProvider } from "@/components/data-table/data-table-provider";
 import { DataTableFilterControls } from "@/components/data-table/data-table-filter-controls";
 import { DataTableFilterInput } from "@/components/data-table/data-table-filter-input";
@@ -86,6 +87,9 @@ interface ModelsDataTableInfiniteProps<TData, TValue, TMeta> {
   fetchNextPage: (
     options?: FetchNextPageOptions | undefined,
   ) => Promise<unknown>;
+  isError?: boolean;
+  error?: unknown;
+  onRetry?: () => Promise<unknown> | void;
   renderSheetTitle: (props: { row?: Row<TData> }) => React.ReactNode;
   // Optional ref target to programmatically focus the table body
   focusTargetRef?: React.Ref<HTMLTableSectionElement>;
@@ -121,6 +125,9 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
   isFetchingNextPage,
   fetchNextPage,
   hasNextPage,
+  isError,
+  error,
+  onRetry = noop,
   meta,
   renderSheetTitle,
   focusTargetRef,
@@ -416,6 +423,8 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
   // Get virtual items (cached to avoid multiple calls)
   const virtualItems = rowVirtualizer.getVirtualItems();
   const totalSize = rowVirtualizer.getTotalSize();
+  const showErrorState = Boolean(isError);
+  const errorMessage = React.useMemo(() => getErrorMessage(error), [error]);
   
   // Force virtualizer to recalculate when rows change (important for pagination)
   React.useEffect(() => {
@@ -868,10 +877,32 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
                 style={{
                   scrollMarginTop: "40px",
                 }}
-            aria-busy={Boolean(isLoading || (isFetching && !data.length))}
-            aria-live="polite"
+                aria-busy={Boolean(isLoading || (isFetching && !data.length))}
+                aria-live="polite"
               >
-                {isLoading || (isFetching && !data.length) ? (
+                {showErrorState ? (
+                  <TableRow>
+                    <TableCell colSpan={columns.length} className="py-10">
+                      <div className="flex flex-col gap-4 rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive-foreground sm:flex-row sm:items-center sm:justify-between">
+                        <div className="space-y-1">
+                          <p className="font-medium">We couldn’t load model rows.</p>
+                          <p className="text-muted-foreground">{errorMessage}</p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          className="w-full sm:w-auto"
+                          onClick={() => {
+                            if (typeof onRetry === "function") {
+                              void onRetry();
+                            }
+                          }}
+                        >
+                          Retry
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : isLoading || (isFetching && !data.length) ? (
                   <RowSkeletons
                     table={table}
                     rows={skeletonRowCount}
@@ -1158,4 +1189,21 @@ function isLooseEqual(a: unknown, b: unknown) {
     }
   }
   return false;
+}
+
+function getErrorMessage(error: unknown) {
+  if (!error) {
+    return "Something went wrong while fetching data.";
+  }
+  if (typeof error === "string") {
+    return error;
+  }
+  if (error instanceof Error) {
+    return error.message || "Request failed.";
+  }
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return "Request failed.";
+  }
 }

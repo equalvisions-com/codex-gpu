@@ -95,6 +95,9 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
     isFetchingNextPage,
     fetchNextPage,
     hasNextPage,
+    isError,
+    error,
+    refetch,
   } = useInfiniteQuery({
     ...modelsDataOptions(search),
     enabled: !effectiveFavoritesMode,
@@ -151,6 +154,9 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
   const tableHasNextPage = effectiveFavoritesMode
     ? favoritesSnapshot?.hasNextPage ?? false
     : hasNextPage;
+  const tableIsError = effectiveFavoritesMode ? false : isError;
+  const tableError = effectiveFavoritesMode ? null : error;
+  const tableRetry = effectiveFavoritesMode ? noopAsync : refetch;
 
   const filterFields = React.useMemo(() => {
     return defaultFilterFields.map((field) => {
@@ -216,6 +222,9 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
         isFetchingNextPage={tableIsFetchingNextPage}
         fetchNextPage={tableFetchNextPage}
         hasNextPage={tableHasNextPage}
+        isError={tableIsError}
+        error={tableError}
+        onRetry={tableRetry}
         renderSheetTitle={({ row }) => {
           if (!row) return "AI Model Details";
           const model = row.original as ModelsColumnSchema;

@@ -99,6 +99,9 @@ export function Client({ initialFavoriteKeys, isFavoritesMode }: ClientProps = {
     isFetchingNextPage,
     fetchNextPage,
     hasNextPage,
+    isError,
+    error,
+    refetch,
   } = useInfiniteQuery({
     ...dataOptions(search),
     enabled: !effectiveFavoritesMode,
@@ -139,6 +142,9 @@ export function Client({ initialFavoriteKeys, isFavoritesMode }: ClientProps = {
   const tableHasNextPage = effectiveFavoritesMode
     ? favoritesSnapshot?.hasNextPage ?? false
     : hasNextPage;
+  const tableIsError = effectiveFavoritesMode ? false : isError;
+  const tableError = effectiveFavoritesMode ? null : error;
+  const tableRetry = effectiveFavoritesMode ? noopAsync : refetch;
   const facetsRef = React.useRef<Record<string, FacetMetadataSchema> | undefined>(undefined);
   React.useEffect(() => {
     if (facetsFromPage && Object.keys(facetsFromPage).length) {
@@ -227,6 +233,9 @@ export function Client({ initialFavoriteKeys, isFavoritesMode }: ClientProps = {
         isFetchingNextPage={tableIsFetchingNextPage}
         fetchNextPage={tableFetchNextPage}
         hasNextPage={tableHasNextPage}
+        isError={tableIsError}
+        error={tableError}
+        onRetry={tableRetry}
         getRowClassName={() => "opacity-100"}
         getRowId={(row) => row.uuid}
         renderSheetTitle={(props) => props.row?.original.uuid}
@@ -265,4 +274,3 @@ export function Client({ initialFavoriteKeys, isFavoritesMode }: ClientProps = {
     </>
   );
 }
-

@@ -9,7 +9,7 @@ import { GeistMono } from "geist/font/mono";
 import { AuthProvider } from "@/providers/auth-provider";
 import { AuthDialogProvider } from "@/providers/auth-dialog-provider";
 
-const TITLE = "D";
+const TITLE = "Deploybase";
 const DESCRIPTION =
   "Flexible, fast, and easy-to-use filters with tanstack table, shadcn/ui and search params via nuqs.";
 

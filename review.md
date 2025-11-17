@@ -1,13 +1,10 @@
+Gaps & Risks
+Non-standard searchParams typing: GpusPage declares searchParams as a Promise, then awaits it. App Router delivers a plain object, so this pattern introduces unnecessary async work and risks type drift as Next.js evolves. Consider searchParams?: Record<string, string | string[] | undefined> and synchronous parsing.
 
+Error handling visibility: Server-side prefetch errors are only logged with console.error/console.warn and hydration proceeds with empty data. Users get no feedback beyond the client’s loading state, and observability is limited. A surfaced user-facing fallback or error boundary for the prefetched segment would improve resilience.
 
-Resolved items noted in the review:
+Experimental React Compiler flag: reactCompiler: true is enabled globally. This is still experimental; without per-component opt-in or measurements, it may introduce regressions and complicate debugging. Guarding with environment toggles or rollout plans would be safer.
 
-- Suspense boundaries rely on route-level `loading.tsx` plus a small Suspense wrapper around `AuthDialogProvider` to satisfy `useSearchParams` requirements.
-- Sign-out clears only favorites-related queries and uses `router.refresh()`, avoiding global cache nukes.
-- Favorites intentionally skip server prefetch to avoid caching user-specific data; the client shows row skeletons while the auth-gated query hydrates.
-- Drizzle/Postgres SSL now defaults to `rejectUnauthorized: true` unless overridden, matching Drizzle’s SSL guidance.
-- TypeScript `target` bumped to ES2020 (per Next.js docs).
-- `src/lib/email.ts` now enforces double quotes, typed payloads, and lazy Resend instantiation.
-- Unfiltered totals: `gpuPricingCache.getGpusFiltered` (and the models equivalent) still returns `totalCount === filterCount`. That’s acceptable for pagination today because the UI only needs filtered counts; we’ll add an unfiltered total later if a feature (reports/exports) actually needs it.
-- TypeScript strictness: `tsconfig.json` now targets ES2020, but we still allow JS files and skip lib checks. That matches the official Next.js template, so tightening further is optional; we can revisit if we ever want “stricter than Next defaults.”
-- Client component complexity: Refactored. `Client` and `ModelsClient` now delegate URL/filter/favorites logic to dedicated hooks (`useTableSearchState`, `useFavoritesState`), leaving the components focused on rendering per React/TanStack guidance.
+Default metadata stub: The app title is hardcoded to "D", which undermines SEO/share previews. Using a meaningful brand/title and deriving description per route would better leverage Next’s metadata system.
+
+Cache blast potential: getCachedGpusFiltered keys each unique search input; high-cardinality search params could create many cache entries and waste memory. Adding normalization/limits on sortable/filterable params or tightening TTL for highly variable keys would align better with Vercel edge cache guidance.
