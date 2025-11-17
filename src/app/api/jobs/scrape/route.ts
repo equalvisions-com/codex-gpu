@@ -3,6 +3,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { logger } from "@/lib/logger";
 import { gpuPricingScraper } from "@/lib/providers/gpu-pricing-scraper";
 import { gpuPricingStore } from "@/lib/gpu-pricing-store";
+import { isAuthorizedCronRequest } from "@/lib/cron-auth";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30; // Allow up to 30 seconds for scraping
@@ -85,6 +86,8 @@ export async function GET(request: NextRequest) {
     const run = searchParams.get("run") === "1";
     const providerParam = searchParams.get("provider");
     const force = searchParams.get("force") === "1";
+    const cronAuthorized = isAuthorizedCronRequest(request);
+    const shouldRunJob = cronAuthorized || run;
 
     if (providerParam && providerParam !== "all") {
       return NextResponse.json(
@@ -96,7 +99,17 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    if (run) {
+    if (shouldRunJob) {
+      if (!cronAuthorized && process.env.NODE_ENV === "production") {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Unauthorized cron invocation.",
+          },
+          { status: 401 },
+        );
+      }
+
       const startedAt = Date.now();
       logger.info("[GpuPricingJob][cron] Starting scheduled GPU pricing scrape...");
 

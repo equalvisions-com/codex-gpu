@@ -3,6 +3,7 @@ import { modelsScraper } from '@/lib/providers/models-scraper';
 import { modelsCache } from '@/lib/models-cache';
 import { logger } from '@/lib/logger';
 import { revalidatePath, revalidateTag } from 'next/cache';
+import { isAuthorizedCronRequest } from '@/lib/cron-auth';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30; // Allow up to 30 seconds for scraping
@@ -71,8 +72,20 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const run = searchParams.get('run') === '1';
+    const cronAuthorized = isAuthorizedCronRequest(request);
+    const shouldRunJob = cronAuthorized || run;
 
-    if (run) {
+    if (shouldRunJob) {
+      if (!cronAuthorized && process.env.NODE_ENV === "production") {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Unauthorized cron invocation.",
+          },
+          { status: 401 },
+        );
+      }
+
       // Trigger scraping
       const startTime = Date.now();
       logger.info('[ModelsScraper] [cron] Starting AI models scraping job...');
