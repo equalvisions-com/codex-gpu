@@ -142,51 +142,74 @@ function buildModelsSchema(
     return null;
   }
 
-const items = payload.data.slice(0, 50).map((model) => {
-    const offers = [] as Array<Record<string, unknown>>;
+  const items = payload.data.slice(0, 50).map((model) => {
 
-    const promptPerMillion = formatPerMillion(model.pricing?.prompt);
-    if (promptPerMillion) {
-      offers.push(
-        buildOffer(promptPerMillion, "per million prompt tokens"),
-      );
-    }
+    const inputPricePerMillion = parsePricePerMillion(model.pricing?.prompt);
+    const outputPricePerMillion = parsePricePerMillion(
+      model.pricing?.completion,
+    );
 
-    const completionPerMillion = formatPerMillion(model.pricing?.completion);
-    if (completionPerMillion) {
-      offers.push(
-        buildOffer(completionPerMillion, "per million completion tokens"),
-      );
-    }
+    const additionalProperty: Array<{
+      "@type": "PropertyValue";
+      name: string;
+      value: string | number;
+    }> = [];
 
-    const additionalProperty = [
-      {
+    if (typeof model.contextLength === "number") {
+      additionalProperty.push({
         "@type": "PropertyValue",
         name: "Context Length",
         value: model.contextLength,
-      },
-      {
+      });
+    }
+
+    if (model.slug) {
+      additionalProperty.push({
+        "@type": "PropertyValue",
+        name: "Model ID",
+        value: model.slug,
+      });
+    }
+
+    if (model.inputModalities && model.inputModalities.length > 0) {
+      additionalProperty.push({
         "@type": "PropertyValue",
         name: "Input Modalities",
-        value:
-          model.inputModalities && model.inputModalities.length
-            ? model.inputModalities.join(", ")
-            : undefined,
-      },
-      {
+        value: model.inputModalities.join(", "),
+      });
+    }
+
+    if (model.outputModalities && model.outputModalities.length > 0) {
+      additionalProperty.push({
         "@type": "PropertyValue",
         name: "Output Modalities",
-        value:
-          model.outputModalities && model.outputModalities.length
-            ? model.outputModalities.join(", ")
-            : undefined,
-      },
-      {
+        value: model.outputModalities.join(", "),
+      });
+    }
+
+    if (inputPricePerMillion !== null) {
+      additionalProperty.push({
+        "@type": "PropertyValue",
+        name: "Prompt Price (USD / 1M tokens)",
+        value: inputPricePerMillion,
+      });
+    }
+
+    if (outputPricePerMillion !== null) {
+      additionalProperty.push({
+        "@type": "PropertyValue",
+        name: "Output Price (USD / 1M tokens)",
+        value: outputPricePerMillion,
+      });
+    }
+
+    if (typeof model.mmlu === "number") {
+      additionalProperty.push({
         "@type": "PropertyValue",
         name: "MMLU-Pro Score",
-        value: model.mmlu,
-      },
-    ].filter((prop) => prop.value !== null && prop.value !== undefined);
+        value: Number((model.mmlu * 100).toFixed(2)),
+      });
+    }
 
     return {
       "@type": "DataFeedItem",
@@ -210,10 +233,13 @@ const items = payload.data.slice(0, 50).map((model) => {
             }
           : undefined,
         softwareVersion: model.modelVersionGroupId ?? undefined,
-        ...(offers.length ? { offers } : {}),
         additionalProperty: additionalProperty.length
           ? additionalProperty
           : undefined,
+        url:
+          model.slug && process.env.NEXT_PUBLIC_SITE_URL
+            ? `${process.env.NEXT_PUBLIC_SITE_URL}/llms?uuid=${model.id}`
+            : undefined,
       },
     };
   });
@@ -227,23 +253,17 @@ const items = payload.data.slice(0, 50).map((model) => {
   };
 }
 
-function formatPerMillion(value?: number | null) {
-  if (typeof value !== "number" || Number.isNaN(value) || value <= 0) {
-    return null;
+function parsePricePerMillion(value: unknown) {
+  if (typeof value === "number") {
+    return Number.isFinite(value)
+      ? Number((value * 1_000_000).toFixed(6))
+      : null;
   }
-  return Number((value * 1_000_000).toFixed(6));
-}
-
-function buildOffer(price: number, unitText: string) {
-  return {
-    "@type": "Offer",
-    priceCurrency: "USD",
-    price,
-    priceSpecification: {
-      "@type": "UnitPriceSpecification",
-      price,
-      priceCurrency: "USD",
-      unitText,
-    },
-  } satisfies Record<string, unknown>;
+  if (typeof value === "string") {
+    const numeric = Number(value);
+    return Number.isFinite(numeric)
+      ? Number((numeric * 1_000_000).toFixed(6))
+      : null;
+  }
+  return null;
 }
