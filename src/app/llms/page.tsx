@@ -142,7 +142,18 @@ function buildModelsSchema(
     return null;
   }
 
-  const items = payload.data.slice(0, 50).map((model) => {
+  const pricedModels = payload.data.filter((model) => {
+    return (
+      typeof model.pricing?.prompt === "number" ||
+      typeof model.pricing?.completion === "number"
+    );
+  });
+
+  if (!pricedModels.length) {
+    return null;
+  }
+
+  const items = pricedModels.slice(0, 50).map((model) => {
     const offers = [] as Array<Record<string, unknown>>;
 
     if (typeof model.pricing?.prompt === "number") {
@@ -191,43 +202,26 @@ function buildModelsSchema(
       },
     ].filter((prop) => prop.value !== null && prop.value !== undefined);
 
-    const softwareItem = {
-      "@type": "SoftwareApplication" as const,
-      name: model.name ?? model.shortName ?? model.slug,
-      applicationCategory: "AI language model",
-      operatingSystem: "Cloud",
-      description: model.description,
-      provider: {
-        "@type": "Organization",
-        name: model.provider,
-      },
-      author: model.author,
-      softwareVersion: model.modelVersionGroupId ?? undefined,
-      offers,
-      additionalProperty: additionalProperty.length
-        ? additionalProperty
-        : undefined,
-    };
-
-    const serviceItem = {
-      "@type": "Service" as const,
-      name: model.name ?? model.shortName ?? model.slug,
-      serviceType: "AI language model",
-      provider: {
-        "@type": "Organization",
-        name: model.provider,
-      },
-      areaServed: undefined,
-      description: model.description,
-      additionalProperty: additionalProperty.length
-        ? additionalProperty
-        : undefined,
-    };
-
     return {
       "@type": "DataFeedItem",
       dateModified: model.scrapedAt,
-      item: offers.length ? softwareItem : serviceItem,
+      item: {
+        "@type": "SoftwareApplication",
+        name: model.name ?? model.shortName ?? model.slug,
+        applicationCategory: "AI language model",
+        operatingSystem: "Cloud",
+        description: model.description,
+        provider: {
+          "@type": "Organization",
+          name: model.provider,
+        },
+        author: model.author,
+        softwareVersion: model.modelVersionGroupId ?? undefined,
+        offers,
+        additionalProperty: additionalProperty.length
+          ? additionalProperty
+          : undefined,
+      },
     };
   });
 
