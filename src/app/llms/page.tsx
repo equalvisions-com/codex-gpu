@@ -148,6 +148,8 @@ function buildModelsSchema(
     if (typeof model.pricing?.prompt === "number") {
       offers.push({
         "@type": "Offer",
+        priceCurrency: "USD",
+        price: model.pricing.prompt,
         priceSpecification: {
           "@type": "UnitPriceSpecification",
           price: model.pricing.prompt,
@@ -160,6 +162,8 @@ function buildModelsSchema(
     if (typeof model.pricing?.completion === "number") {
       offers.push({
         "@type": "Offer",
+        priceCurrency: "USD",
+        price: model.pricing.completion,
         priceSpecification: {
           "@type": "UnitPriceSpecification",
           price: model.pricing.completion,
@@ -187,41 +191,44 @@ function buildModelsSchema(
       },
     ].filter((prop) => prop.value !== null && prop.value !== undefined);
 
-    const item: Record<string, unknown> = {
+    const softwareItem = {
+      "@type": "SoftwareApplication" as const,
+      name: model.name ?? model.shortName ?? model.slug,
+      applicationCategory: "AI language model",
+      operatingSystem: "Cloud",
+      description: model.description,
+      provider: {
+        "@type": "Organization",
+        name: model.provider,
+      },
+      author: model.author,
+      softwareVersion: model.modelVersionGroupId ?? undefined,
+      offers,
+      additionalProperty: additionalProperty.length
+        ? additionalProperty
+        : undefined,
+    };
+
+    const serviceItem = {
+      "@type": "Service" as const,
+      name: model.name ?? model.shortName ?? model.slug,
+      serviceType: "AI language model",
+      provider: {
+        "@type": "Organization",
+        name: model.provider,
+      },
+      areaServed: undefined,
+      description: model.description,
+      additionalProperty: additionalProperty.length
+        ? additionalProperty
+        : undefined,
+    };
+
+    return {
       "@type": "DataFeedItem",
       dateModified: model.scrapedAt,
-      item: {
-        "@type": "SoftwareApplication",
-        name: model.name ?? model.shortName ?? model.slug,
-        applicationCategory: "AI language model",
-        operatingSystem: "Cloud",
-        description: model.description,
-        provider: {
-          "@type": "Organization",
-          name: model.provider,
-        },
-        author: model.author,
-        softwareVersion: model.modelVersionGroupId ?? undefined,
-        offers: offers.length
-          ? offers
-          : {
-              "@type": "Offer",
-              priceCurrency: "USD",
-              price: 0,
-              availability: "https://schema.org/InStoreOnly",
-              priceSpecification: {
-                "@type": "UnitPriceSpecification",
-                price: 0,
-                priceCurrency: "USD",
-                unitText: "contact provider",
-              },
-            },
-        additionalProperty: additionalProperty.length
-          ? additionalProperty
-          : undefined,
-      },
+      item: offers.length ? softwareItem : serviceItem,
     };
-    return item;
   });
 
   return {
