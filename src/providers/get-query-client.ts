@@ -9,7 +9,9 @@ function makeQueryClient() {
     defaultOptions: {
       queries: {
         staleTime: 10 * 60 * 1000, // 10 minutes
-        refetchOnWindowFocus: false,
+        // Follow TanStack Query guidance: automatically refetch stale data
+        // when the tab regains focus so long-lived sessions stay fresh.
+        refetchOnWindowFocus: true,
       },
       dehydrate: {
         // include pending queries in dehydration

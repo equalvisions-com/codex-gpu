@@ -3,12 +3,14 @@ import type { ModelsColumnSchema } from "@/components/models-table/models-schema
 import { modelsSearchParamsCache } from "@/components/models-table/models-search-params";
 import type { ModelsSearchParamsType } from "@/components/models-table/models-search-params";
 import { logger } from "@/lib/logger";
+import { getRequestLogContext } from "@/lib/request-log-context";
 import { getModelsPage } from "@/lib/models-loader";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request): Promise<Response> {
   try {
+    const logContext = getRequestLogContext(req);
     const requestUrl = new URL(req.url);
     const _search: Map<string, string> = new Map();
     requestUrl.searchParams.forEach((value, key) => _search.set(key, value));
@@ -33,6 +35,7 @@ export async function GET(req: Request): Promise<Response> {
         nextCursor: response.nextCursor,
         filterCount: response.meta.filterRowCount,
         latencyMs: Date.now() - t1,
+        ...logContext,
       }),
     );
 

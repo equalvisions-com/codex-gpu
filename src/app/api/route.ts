@@ -3,12 +3,14 @@ import type { ColumnSchema } from "@/components/infinite-table/schema";
 import { searchParamsCache } from "@/components/infinite-table/search-params";
 import type { SearchParamsType } from "@/components/infinite-table/search-params";
 import { logger } from "@/lib/logger";
+import { getRequestLogContext } from "@/lib/request-log-context";
 import { getGpuPricingPage } from "@/lib/gpu-pricing-loader";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request): Promise<Response> {
   try {
+    const logContext = getRequestLogContext(req);
     // Note: using GET for simplicity; consider POST if query size grows
     const requestUrl = new URL(req.url);
     const _search: Map<string, string> = new Map();
@@ -27,6 +29,7 @@ export async function GET(req: Request): Promise<Response> {
       nextCursor: result.nextCursor,
       filterCount: result.meta.filterRowCount,
       latencyMs: Date.now() - t1,
+      ...logContext,
     });
     return res;
   } catch (error) {
