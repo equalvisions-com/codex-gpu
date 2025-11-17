@@ -9,6 +9,7 @@ import { Client } from "@/components/infinite-table/client";
 import { dataOptions } from "@/components/infinite-table/query-options";
 import { searchParamsCache } from "@/components/infinite-table/search-params";
 import { getGpuPricingPage } from "@/lib/gpu-pricing-loader";
+import { PROVIDER_LOGOS } from "@/components/infinite-table/columns";
 
 export const revalidate = 43200;
 const GPU_META_TITLE = "GPU Pricing Explorer | Deploybase";
@@ -142,7 +143,28 @@ function buildGpuSchema(
     return null;
   }
 
-  const items = payload.data.slice(0, 25).map((row) => {
+  const items = payload.data.slice(0, 50).map((row) => {
+    const normalizedProvider = row.provider?.toLowerCase() ?? "";
+    const logo = PROVIDER_LOGOS[normalizedProvider];
+    const image = logo?.src;
+    const hasPrice =
+      typeof row.price_hour_usd === "number" && !Number.isNaN(row.price_hour_usd);
+    const offer = hasPrice
+      ? {
+          "@type": "Offer",
+          priceCurrency: "USD",
+          price: row.price_hour_usd,
+          availabilityStarts: row.observed_at,
+          areaServed: row.region,
+          priceSpecification: {
+            "@type": "UnitPriceSpecification",
+            price: row.price_hour_usd,
+            priceCurrency: "USD",
+            unitCode: "HUR",
+          },
+        }
+      : undefined;
+
     return {
       "@type": "DataFeedItem",
       dateCreated: row.observed_at,
@@ -155,19 +177,8 @@ function buildGpuSchema(
         },
         category: "GPU Cloud Instance",
         url: row.source_url,
-        offers: {
-          "@type": "Offer",
-          priceCurrency: "USD",
-          price: row.price_hour_usd,
-          availabilityStarts: row.observed_at,
-          areaServed: row.region,
-          priceSpecification: {
-            "@type": "UnitPriceSpecification",
-            price: row.price_hour_usd,
-            priceCurrency: "USD",
-            unitCode: "HUR",
-          },
-        },
+        ...(image ? { image } : {}),
+        ...(offer ? { offers: offer } : {}),
         additionalProperty: [
           {
             "@type": "PropertyValue",

@@ -142,7 +142,7 @@ function buildModelsSchema(
     return null;
   }
 
-  const items = payload.data.slice(0, 25).map((model) => {
+  const items = payload.data.slice(0, 50).map((model) => {
     const offers = [] as Array<Record<string, unknown>>;
 
     if (model.pricing?.prompt != null) {
