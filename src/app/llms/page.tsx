@@ -142,18 +142,7 @@ function buildModelsSchema(
     return null;
   }
 
-  const pricedModels = payload.data.filter((model) => {
-    return (
-      typeof model.pricing?.prompt === "number" ||
-      typeof model.pricing?.completion === "number"
-    );
-  });
-
-  if (!pricedModels.length) {
-    return null;
-  }
-
-  const items = pricedModels.slice(0, 50).map((model) => {
+  const items = payload.data.slice(0, 50).map((model) => {
     const offers = [] as Array<Record<string, unknown>>;
 
     if (typeof model.pricing?.prompt === "number") {
@@ -217,7 +206,7 @@ function buildModelsSchema(
         },
         author: model.author,
         softwareVersion: model.modelVersionGroupId ?? undefined,
-        offers,
+        ...(offers.length ? { offers } : {}),
         additionalProperty: additionalProperty.length
           ? additionalProperty
           : undefined,
