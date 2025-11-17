@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import * as React from "react";
 import {
   HydrationBoundary,
@@ -10,6 +11,30 @@ import { modelsSearchParamsCache } from "@/components/models-table/models-search
 import { getModelsPage } from "@/lib/models-loader";
 
 export const revalidate = 43200;
+const LLMS_META_TITLE = "LLM Benchmark Explorer | Deploybase";
+const LLMS_META_DESCRIPTION =
+  "Filter and benchmark large language models by latency, throughput, modality support, and pricing using our interactive table experience.";
+const SHARED_OG_IMAGE = "/assets/data-table-infinite.png";
+
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    title: LLMS_META_TITLE,
+    description: LLMS_META_DESCRIPTION,
+    openGraph: {
+      title: LLMS_META_TITLE,
+      description: LLMS_META_DESCRIPTION,
+      url: "/llms",
+      images: [SHARED_OG_IMAGE],
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: LLMS_META_TITLE,
+      description: LLMS_META_DESCRIPTION,
+      images: [SHARED_OG_IMAGE],
+    },
+  };
+}
 
 interface ModelsPageProps {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -49,6 +74,8 @@ async function ModelsHydratedContent({
   const parsedSearch = modelsSearchParamsCache.parse(resolvedSearchParams);
 
   const queryClient = new QueryClient();
+  let firstPagePayload: Awaited<ReturnType<typeof getModelsPage>> | null =
+    null;
 
   if (parsedSearch.favorites !== "true") {
     try {
@@ -62,12 +89,16 @@ async function ModelsHydratedContent({
             (pageParam as { size?: number } | undefined)?.size ??
             parsedSearch.size ??
             50;
-          return getModelsPage({
+          const result = await getModelsPage({
             ...parsedSearch,
             cursor,
             size,
             uuid: null,
           });
+          if (!firstPagePayload && (cursor === null || cursor === 0)) {
+            firstPagePayload = result;
+          }
+          return result;
         },
       });
     } catch (error) {
@@ -78,9 +109,19 @@ async function ModelsHydratedContent({
   }
 
   const dehydratedState = dehydrate(queryClient);
+  const schemaMarkup = buildModelsSchema(firstPagePayload);
 
   return (
     <HydrationBoundary state={dehydratedState}>
+      {schemaMarkup ? (
+        <script
+          type="application/ld+json"
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(schemaMarkup),
+          }}
+        />
+      ) : null}
       <div
         className="flex min-h-dvh w-full flex-col sm:flex-row pt-2 sm:p-0"
         style={{
@@ -92,4 +133,88 @@ async function ModelsHydratedContent({
       </div>
     </HydrationBoundary>
   );
+}
+
+function buildModelsSchema(
+  payload: Awaited<ReturnType<typeof getModelsPage>> | null,
+) {
+  if (!payload || !payload.data?.length) {
+    return null;
+  }
+
+  const items = payload.data.slice(0, 25).map((model) => {
+    const offers = [] as Array<Record<string, unknown>>;
+
+    if (model.pricing?.prompt != null) {
+      offers.push({
+        "@type": "Offer",
+        priceSpecification: {
+          "@type": "UnitPriceSpecification",
+          price: model.pricing.prompt,
+          priceCurrency: "USD",
+          unitText: "per million prompt tokens",
+        },
+      });
+    }
+
+    if (model.pricing?.completion != null) {
+      offers.push({
+        "@type": "Offer",
+        priceSpecification: {
+          "@type": "UnitPriceSpecification",
+          price: model.pricing.completion,
+          priceCurrency: "USD",
+          unitText: "per million completion tokens",
+        },
+      });
+    }
+
+    const additionalProperty = [
+      {
+        "@type": "PropertyValue",
+        name: "Context Length",
+        value: model.contextLength,
+      },
+      {
+        "@type": "PropertyValue",
+        name: "Modalities",
+        value: [...model.inputModalities, ...model.outputModalities].join(", "),
+      },
+      {
+        "@type": "PropertyValue",
+        name: "MMLU",
+        value: model.mmlu,
+      },
+    ].filter((prop) => prop.value !== null && prop.value !== undefined);
+
+    return {
+      "@type": "DataFeedItem",
+      dateModified: model.scrapedAt,
+      item: {
+        "@type": "SoftwareApplication",
+        name: model.name ?? model.shortName ?? model.slug,
+        applicationCategory: "AI language model",
+        operatingSystem: "Cloud",
+        description: model.description,
+        provider: {
+          "@type": "Organization",
+          name: model.provider,
+        },
+        author: model.author,
+        softwareVersion: model.modelVersionGroupId ?? undefined,
+        offers: offers.length ? offers : undefined,
+        additionalProperty: additionalProperty.length
+          ? additionalProperty
+          : undefined,
+      },
+    };
+  });
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "DataFeed",
+    name: "LLM Benchmark Feed",
+    dateModified: new Date().toISOString(),
+    dataFeedElement: items,
+  };
 }

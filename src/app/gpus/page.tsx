@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import * as React from "react";
 import {
   HydrationBoundary,
@@ -10,6 +11,30 @@ import { searchParamsCache } from "@/components/infinite-table/search-params";
 import { getGpuPricingPage } from "@/lib/gpu-pricing-loader";
 
 export const revalidate = 43200;
+const GPU_META_TITLE = "GPU Pricing Explorer | Deploybase";
+const GPU_META_DESCRIPTION =
+  "Compare hourly GPU prices, VRAM, and provider availability with our infinite data table powered by TanStack Table, nuqs, and shadcn/ui.";
+const SHARED_OG_IMAGE = "/assets/data-table-infinite.png";
+
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    title: GPU_META_TITLE,
+    description: GPU_META_DESCRIPTION,
+    openGraph: {
+      title: GPU_META_TITLE,
+      description: GPU_META_DESCRIPTION,
+      images: [SHARED_OG_IMAGE],
+      url: "/gpus",
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: GPU_META_TITLE,
+      description: GPU_META_DESCRIPTION,
+      images: [SHARED_OG_IMAGE],
+    },
+  };
+}
 
 interface GpusPageProps {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -49,6 +74,8 @@ async function GpusHydratedContent({
   const parsedSearch = searchParamsCache.parse(resolvedSearchParams);
 
   const queryClient = new QueryClient();
+  let firstPagePayload: Awaited<ReturnType<typeof getGpuPricingPage>> | null =
+    null;
 
   if (parsedSearch.favorites !== "true") {
     try {
@@ -62,12 +89,16 @@ async function GpusHydratedContent({
             (pageParam as { size?: number } | undefined)?.size ??
             parsedSearch.size ??
             50;
-          return getGpuPricingPage({
+          const result = await getGpuPricingPage({
             ...parsedSearch,
             cursor,
             size,
             uuid: null,
           });
+          if (!firstPagePayload && (cursor === null || cursor === 0)) {
+            firstPagePayload = result;
+          }
+          return result;
         },
       });
     } catch (error) {
@@ -78,9 +109,19 @@ async function GpusHydratedContent({
   }
 
   const dehydratedState = dehydrate(queryClient);
+  const schemaMarkup = buildGpuSchema(firstPagePayload);
 
   return (
     <HydrationBoundary state={dehydratedState}>
+      {schemaMarkup ? (
+        <script
+          type="application/ld+json"
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(schemaMarkup),
+          }}
+        />
+      ) : null}
       <div
         className="flex min-h-dvh w-full flex-col sm:flex-row pt-2 sm:p-0"
         style={{
@@ -92,4 +133,74 @@ async function GpusHydratedContent({
       </div>
     </HydrationBoundary>
   );
+}
+
+function buildGpuSchema(
+  payload: Awaited<ReturnType<typeof getGpuPricingPage>> | null,
+) {
+  if (!payload || !payload.data?.length) {
+    return null;
+  }
+
+  const items = payload.data.slice(0, 25).map((row) => {
+    return {
+      "@type": "DataFeedItem",
+      dateCreated: row.observed_at,
+      item: {
+        "@type": "Product",
+        name: `${row.provider} ${row.gpu_count ?? 1}× ${row.gpu_model ?? "GPU"}`,
+        brand: {
+          "@type": "Organization",
+          name: row.provider,
+        },
+        category: "GPU Cloud Instance",
+        url: row.source_url,
+        offers: {
+          "@type": "Offer",
+          priceCurrency: "USD",
+          price: row.price_hour_usd,
+          availabilityStarts: row.observed_at,
+          areaServed: row.region,
+          priceSpecification: {
+            "@type": "UnitPriceSpecification",
+            price: row.price_hour_usd,
+            priceCurrency: "USD",
+            unitCode: "HUR",
+          },
+        },
+        additionalProperty: [
+          {
+            "@type": "PropertyValue",
+            name: "VRAM (GB)",
+            value: row.vram_gb,
+          },
+          {
+            "@type": "PropertyValue",
+            name: "vCPUs",
+            value: row.vcpus,
+          },
+          {
+            "@type": "PropertyValue",
+            name: "System RAM (GB)",
+            value: row.system_ram_gb,
+          },
+          {
+            "@type": "PropertyValue",
+            name: "Instance Type",
+            value: row.type,
+          },
+        ].filter((prop) =>
+          prop.value !== undefined && prop.value !== null,
+        ),
+      },
+    };
+  });
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "DataFeed",
+    name: "GPU Pricing Feed",
+    dateModified: new Date().toISOString(),
+    dataFeedElement: items,
+  };
 }
