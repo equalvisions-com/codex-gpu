@@ -200,11 +200,18 @@ function buildModelsSchema(
         applicationCategory: "AI language model",
         operatingSystem: "Cloud",
         description: model.description,
-        provider: {
-          "@type": "Organization",
-          name: model.provider,
-        },
-        author: model.author,
+        provider: model.provider
+          ? {
+              "@type": "Organization",
+              name: model.provider,
+            }
+          : undefined,
+        author: model.author
+          ? {
+              "@type": "Organization",
+              name: model.author,
+            }
+          : undefined,
         softwareVersion: model.modelVersionGroupId ?? undefined,
         ...(offers.length ? { offers } : {}),
         additionalProperty: additionalProperty.length

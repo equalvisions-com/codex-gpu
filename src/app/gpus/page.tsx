@@ -168,8 +168,8 @@ function buildGpuSchema(
       },
     ].filter((prop) => prop.value !== undefined && prop.value !== null);
 
-    const productItem = {
-      "@type": "Product" as const,
+    const productItem: Record<string, unknown> = {
+      "@type": "Product",
       name: `${row.provider} ${row.gpu_count ?? 1}× ${row.gpu_model ?? "GPU"}`,
       brand: {
         "@type": "Organization",
@@ -178,7 +178,11 @@ function buildGpuSchema(
       category: "GPU Cloud Instance",
       url: row.source_url,
       image: SHARED_OG_IMAGE,
-      offers: {
+      additionalProperty,
+    };
+
+    if (hasPrice) {
+      productItem.offers = {
         "@type": "Offer",
         priceCurrency: "USD",
         price: row.price_hour_usd,
@@ -190,27 +194,22 @@ function buildGpuSchema(
           priceCurrency: "USD",
           unitCode: "HUR",
         },
-      },
-      additionalProperty,
-    };
-
-    const serviceItem = {
-      "@type": "Service" as const,
-      name: `${row.provider} ${row.gpu_count ?? 1}× ${row.gpu_model ?? "GPU"}`,
-      serviceType: "GPU Cloud Instance",
-      provider: {
-        "@type": "Organization",
-        name: row.provider,
-      },
-      areaServed: row.region,
-      url: row.source_url,
-      additionalProperty,
-    };
+      };
+    } else {
+      productItem.additionalProperty = [
+        ...additionalProperty,
+        {
+          "@type": "PropertyValue",
+          name: "price_status",
+          value: "missing",
+        },
+      ];
+    }
 
     return {
       "@type": "DataFeedItem",
       dateCreated: row.observed_at,
-      item: hasPrice ? productItem : serviceItem,
+      item: productItem,
     };
   });
 
