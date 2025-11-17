@@ -273,6 +273,5 @@ function parsePricePerMillion(value: unknown) {
 function normalizeModelId(value: unknown) {
   return String(value ?? "")
     .trim()
-    .replace(/\s+/g, "-")
-    .replace(/[\\/]/g, "-");
+    .replace(/\s+/g, "/");
 }
