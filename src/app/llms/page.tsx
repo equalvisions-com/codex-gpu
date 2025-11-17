@@ -237,8 +237,10 @@ function buildModelsSchema(
           ? additionalProperty
           : undefined,
         url:
-          model.slug && process.env.NEXT_PUBLIC_SITE_URL
-            ? `${process.env.NEXT_PUBLIC_SITE_URL}/llms?uuid=${model.id}`
+          model.id && process.env.NEXT_PUBLIC_SITE_URL
+            ? `${process.env.NEXT_PUBLIC_SITE_URL}/llms?uuid=${encodeURIComponent(
+                String(model.id).replace(/\s+/g, "-"),
+              )}`
             : undefined,
       },
     };
