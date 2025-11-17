@@ -142,7 +142,17 @@ function buildGpuSchema(
     return null;
   }
 
-  const items = payload.data.slice(0, 50).map((row) => {
+  const pricedRows = payload.data.filter(
+    (row) =>
+      typeof row.price_hour_usd === "number" &&
+      !Number.isNaN(row.price_hour_usd),
+  );
+
+  if (!pricedRows.length) {
+    return null;
+  }
+
+  const items = pricedRows.slice(0, 50).map((row) => {
     const providerName = formatProviderName(row.provider);
     const gpuModel = row.gpu_model?.trim() || null;
     const gpuCount =
@@ -150,9 +160,6 @@ function buildGpuSchema(
         ? row.gpu_count
         : null;
     const instanceType = row.type ?? "VM";
-    const hasPrice =
-      typeof row.price_hour_usd === "number" && !Number.isNaN(row.price_hour_usd);
-
     const additionalProperty: Array<{
       "@type": "PropertyValue";
       name: string;
@@ -165,6 +172,8 @@ function buildGpuSchema(
     pushProperty(additionalProperty, "vCPUs", row.vcpus);
     pushProperty(additionalProperty, "System RAM (GB)", row.system_ram_gb);
     pushProperty(additionalProperty, "Instance Type", instanceType);
+
+    const normalizedSku = normalizeSku(row.stable_key ?? row.sku ?? null);
 
     const productItem: Record<string, unknown> = {
       "@type": "Product",
@@ -181,7 +190,7 @@ function buildGpuSchema(
             )}`
           : undefined,
       image: SHARED_OG_IMAGE,
-      sku: row.stable_key ?? row.sku ?? undefined,
+      sku: normalizedSku ?? undefined,
       description: buildGpuDescription({
         providerName,
         gpuModel,
@@ -194,23 +203,19 @@ function buildGpuSchema(
       additionalProperty,
     };
 
-    if (hasPrice) {
-      productItem.offers = {
-        "@type": "Offer",
-        priceCurrency: "USD",
+    productItem.offers = {
+      "@type": "Offer",
+      priceCurrency: "USD",
+      price: row.price_hour_usd,
+      availabilityStarts: row.observed_at,
+      areaServed: row.region,
+      priceSpecification: {
+        "@type": "UnitPriceSpecification",
         price: row.price_hour_usd,
-        availabilityStarts: row.observed_at,
-        areaServed: row.region,
-        priceSpecification: {
-          "@type": "UnitPriceSpecification",
-          price: row.price_hour_usd,
-          priceCurrency: "USD",
-          unitCode: "HUR",
-        },
-      };
-    } else {
-      pushProperty(additionalProperty, "Price Status", "missing");
-    }
+        priceCurrency: "USD",
+        unitCode: "HUR",
+      },
+    };
     pushProperty(additionalProperty, "Stable Key", row.stable_key);
 
     return {
@@ -298,4 +303,11 @@ function buildGpuDescription({
   }
   parts.push("billed hourly.");
   return parts.join(", ");
+}
+
+function normalizeSku(value: unknown) {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  return trimmed.replace(/\s+/g, "-");
 }
