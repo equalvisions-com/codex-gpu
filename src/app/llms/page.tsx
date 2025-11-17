@@ -142,45 +142,21 @@ function buildModelsSchema(
     return null;
   }
 
-  const items = payload.data.slice(0, 50).map((model) => {
+const items = payload.data.slice(0, 50).map((model) => {
     const offers = [] as Array<Record<string, unknown>>;
 
-    if (typeof model.pricing?.prompt === "number") {
-      const promptPerMillion = Number(
-        (model.pricing.prompt * 1_000_000).toFixed(6),
+    const promptPerMillion = formatPerMillion(model.pricing?.prompt);
+    if (promptPerMillion) {
+      offers.push(
+        buildOffer(promptPerMillion, "per million prompt tokens"),
       );
-      if (!Number.isNaN(promptPerMillion) && promptPerMillion > 0) {
-        offers.push({
-          "@type": "Offer",
-          priceCurrency: "USD",
-          price: promptPerMillion,
-          priceSpecification: {
-            "@type": "UnitPriceSpecification",
-            price: promptPerMillion,
-            priceCurrency: "USD",
-            unitText: "per million prompt tokens",
-          },
-        });
-      }
     }
 
-    if (typeof model.pricing?.completion === "number") {
-      const completionPerMillion = Number(
-        (model.pricing.completion * 1_000_000).toFixed(6),
+    const completionPerMillion = formatPerMillion(model.pricing?.completion);
+    if (completionPerMillion) {
+      offers.push(
+        buildOffer(completionPerMillion, "per million completion tokens"),
       );
-      if (!Number.isNaN(completionPerMillion) && completionPerMillion > 0) {
-        offers.push({
-          "@type": "Offer",
-          priceCurrency: "USD",
-          price: completionPerMillion,
-          priceSpecification: {
-            "@type": "UnitPriceSpecification",
-            price: completionPerMillion,
-            priceCurrency: "USD",
-            unitText: "per million completion tokens",
-          },
-        });
-      }
     }
 
     const additionalProperty = [
@@ -207,7 +183,7 @@ function buildModelsSchema(
       },
       {
         "@type": "PropertyValue",
-        name: "MMLU",
+        name: "MMLU-Pro Score",
         value: model.mmlu,
       },
     ].filter((prop) => prop.value !== null && prop.value !== undefined);
@@ -249,4 +225,25 @@ function buildModelsSchema(
     dateModified: new Date().toISOString(),
     dataFeedElement: items,
   };
+}
+
+function formatPerMillion(value?: number | null) {
+  if (typeof value !== "number" || Number.isNaN(value) || value <= 0) {
+    return null;
+  }
+  return Number((value * 1_000_000).toFixed(6));
+}
+
+function buildOffer(price: number, unitText: string) {
+  return {
+    "@type": "Offer",
+    priceCurrency: "USD",
+    price,
+    priceSpecification: {
+      "@type": "UnitPriceSpecification",
+      price,
+      priceCurrency: "USD",
+      unitText,
+    },
+  } satisfies Record<string, unknown>;
 }
