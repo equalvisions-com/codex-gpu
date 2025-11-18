@@ -1,0 +1,7 @@
+{
+  "name": "aggra",
+  "compatibility_date": "2025-11-18",
+  "assets": {
+    "directory": "./dist"
+  }
+}

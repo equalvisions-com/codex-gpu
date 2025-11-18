@@ -27,7 +27,16 @@ export function useModelsTableSearchState(
 ): ModelsTableSearchState {
   const [search, setSearch] = useQueryStates(modelsSearchParamsParser);
 
-  const { sort, uuid, search: globalSearch, ...filter } = search;
+  const {
+    sort,
+    size: _size,
+    start: _start,
+    direction: _direction,
+    cursor: _cursor,
+    uuid,
+    search: globalSearch,
+    ...filter
+  } = search;
 
   const columnFilters = React.useMemo<ColumnFiltersState>(() => {
     const baseFilters = Object.entries(filter)

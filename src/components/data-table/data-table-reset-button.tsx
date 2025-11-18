@@ -1,24 +1,27 @@
 "use client";
 
-import { X } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { Button } from "../ui/button";
 import { useDataTable } from "@/components/data-table/data-table-provider";
 
 export function DataTableResetButton() {
-  const { table } = useDataTable();
+  const { table, columnFilters } = useDataTable();
+  const hasActiveFilters = columnFilters.length > 0;
 
   return (
     <Button
       variant="ghost"
-      size="sm"
+      size="icon"
       onClick={() => {
+        if (!hasActiveFilters) return;
         table.resetColumnFilters();
       }}
       aria-label="Reset filters"
       title="Reset filters"
+      className="h-6 w-6"
+      disabled={!hasActiveFilters}
     >
-      <X className="mr-2 h-4 w-4" />
-      Reset
+      <Trash2 className="h-4 w-4 text-accent-foreground" />
     </Button>
   );
 }

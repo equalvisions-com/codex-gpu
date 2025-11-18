@@ -34,6 +34,7 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
 } from "@/components/ui/navigation-menu";
+import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import {
@@ -575,26 +576,23 @@ export function MobileTopNav({
               className="overflow-y-auto p-0 sm:max-w-md"
               hideClose
             >
-              <SheetHeader className="sticky top-0 z-10 border-b border-border bg-background p-4">
-                <div className="flex items-center justify-between gap-2">
-                  <SheetTitle className="text-sm font-semibold">
-                    {sheetTitle}
-                  </SheetTitle>
-                  <div className="flex items-center gap-1">
-                    <DataTableResetButton />
-                    <SheetClose asChild>
-                      <Button size="icon" variant="ghost" className="h-7 w-7">
-                        <X className="h-5 w-5" />
-                        <span className="sr-only">Close</span>
-                      </Button>
-                    </SheetClose>
-                  </div>
-                </div>
+              <SheetHeader className="sr-only">
+                <SheetTitle>{sheetTitle}</SheetTitle>
+                <SheetDescription>Filters and account options</SheetDescription>
               </SheetHeader>
-              <SheetDescription className="sr-only">
-                Filters and account options
-              </SheetDescription>
-              <div className="p-4">{renderSidebar()}</div>
+              <div className="p-4">
+                <div className="mb-[14px] flex h-6 items-center justify-end gap-1">
+                  <DataTableResetButton />
+                  <Separator orientation="vertical" className="mx-1" />
+                  <SheetClose asChild>
+                    <Button size="icon" variant="ghost" className="h-6 w-6">
+                      <X className="h-5 w-5 text-accent-foreground" />
+                      <span className="sr-only">Close</span>
+                    </Button>
+                  </SheetClose>
+                </div>
+                {renderSidebar()}
+              </div>
             </SheetContent>
           </Sheet>
         </NavigationMenuItem>
