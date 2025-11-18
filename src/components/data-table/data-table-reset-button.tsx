@@ -5,7 +5,7 @@ import { Button } from "../ui/button";
 import { useDataTable } from "@/components/data-table/data-table-provider";
 
 export function DataTableResetButton() {
-  const { table, columnFilters } = useDataTable();
+  const { table, columnFilters, setColumnFilters } = useDataTable();
   const hasActiveFilters = columnFilters.length > 0;
 
   return (
@@ -14,7 +14,9 @@ export function DataTableResetButton() {
       size="icon"
       onClick={() => {
         if (!hasActiveFilters) return;
+        // Reset both the table state and the externally-controlled filter state
         table.resetColumnFilters();
+        setColumnFilters([]);
       }}
       aria-label="Reset filters"
       title="Reset filters"
