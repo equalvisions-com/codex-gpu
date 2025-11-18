@@ -40,10 +40,18 @@ export function useModelsTableSearchState(
 
   const columnFilters = React.useMemo<ColumnFiltersState>(() => {
     const baseFilters = Object.entries(filter)
-      .map(([key, value]) => ({
-        id: key,
-        value: value as unknown,
-      }))
+      .map(([key, value]) => {
+        if (key === "modalityDirections") {
+          return {
+            id: key,
+            value: deserializeModalityDirections(value),
+          };
+        }
+        return {
+          id: key,
+          value: value as unknown,
+        };
+      })
       .filter(({ value }) => value ?? undefined) as ColumnFiltersState;
 
     if (typeof globalSearch === "string" && globalSearch.trim().length) {
@@ -188,4 +196,34 @@ function areSearchPayloadsEqual(
     }
     return JSON.stringify(value) === JSON.stringify(other);
   });
+}
+
+function deserializeModalityDirections(
+  value: unknown,
+): Record<string, ModalitiesDirection> {
+  if (!value) {
+    return {};
+  }
+
+  if (Array.isArray(value)) {
+    return value.reduce<Record<string, ModalitiesDirection>>((acc, entry) => {
+      if (typeof entry !== "string") return acc;
+      const [modality, direction] = entry.split(":");
+      if (!modality || (direction !== "input" && direction !== "output")) {
+        return acc;
+      }
+      if (direction === "input") {
+        delete acc[modality];
+        return acc;
+      }
+      acc[modality] = direction;
+      return acc;
+    }, {});
+  }
+
+  if (typeof value === "object") {
+    return value as Record<string, ModalitiesDirection>;
+  }
+
+  return {};
 }

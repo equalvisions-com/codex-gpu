@@ -48,8 +48,32 @@ export function ModalitiesFilter() {
     return value ?? [];
   }, [modalitiesFilter?.value]);
   const directionMap = React.useMemo(() => {
-    const value = directionFilter?.value as Record<string, ModalitiesDirection> | undefined;
-    return value ?? {};
+    const value = directionFilter?.value;
+    if (!value) {
+      return {} as Record<string, ModalitiesDirection>;
+    }
+
+    if (Array.isArray(value)) {
+      return value.reduce<Record<string, ModalitiesDirection>>((acc, entry) => {
+        if (typeof entry !== "string") return acc;
+        const [modality, direction] = entry.split(":");
+        if (!modality || (direction !== "input" && direction !== "output")) {
+          return acc;
+        }
+        if (direction === "input") {
+          delete acc[modality];
+          return acc;
+        }
+        acc[modality] = direction;
+        return acc;
+      }, {});
+    }
+
+    if (typeof value === "object") {
+      return value as Record<string, ModalitiesDirection>;
+    }
+
+    return {};
   }, [directionFilter?.value]);
 
   const facetedValues = getFacetedUniqueValues?.(table, "modalities");

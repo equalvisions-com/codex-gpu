@@ -292,6 +292,7 @@ function DataTableFilterSliderComponent<TData>({
 
   // Local state for responsive UI updates (synced with external state)
   const [localValue, setLocalValue] = useState(currentValue);
+  const isUserInteractingRef = useRef(false);
 
   // Sync local state when external filter changes
   useEffect(() => {
@@ -307,6 +308,14 @@ function DataTableFilterSliderComponent<TData>({
 
   // Apply filter when debounced value changes (single effect for all filter logic)
   useEffect(() => {
+    if (!isUserInteractingRef.current) {
+      return;
+    }
+
+    const finishInteraction = () => {
+      isUserInteractingRef.current = false;
+    };
+
     const otherFilters = columnFiltersRef.current.filter((f: any) => f.id !== value);
     const tolerance = Math.max(1e-12, sliderStep ?? (defaultMax - defaultMin) * 0.001);
 
@@ -321,6 +330,7 @@ function DataTableFilterSliderComponent<TData>({
         if (previous && Array.isArray(previous.value)) {
           const [prevMin, prevMax] = previous.value as (string | number)[];
           if (Number(prevMax) === Number(normalizedMax) && Number(prevMin) === Number(normalizedMin)) {
+            finishInteraction();
             return;
           }
         }
@@ -331,6 +341,7 @@ function DataTableFilterSliderComponent<TData>({
         : [...otherFilters, { id: value, value: [normalizedMin, normalizedMax] }];
 
       setColumnFilters(newFilters);
+      finishInteraction();
       return;
     }
 
@@ -348,6 +359,7 @@ function DataTableFilterSliderComponent<TData>({
         if (previous && Array.isArray(previous.value)) {
           const [prevMin, prevMax] = previous.value as (string | number)[];
           if (Number(prevMax) === Number(boundedMax) && Number(prevMin) === Number(normalizedMin)) {
+            finishInteraction();
             return;
           }
         }
@@ -358,6 +370,7 @@ function DataTableFilterSliderComponent<TData>({
         : [...otherFilters, { id: value, value: [normalizedMin, boundedMax] }];
 
       setColumnFilters(newFilters);
+      finishInteraction();
       return;
     }
 
@@ -374,6 +387,7 @@ function DataTableFilterSliderComponent<TData>({
       if (previous && Array.isArray(previous.value)) {
         const [prevMin, prevMax] = previous.value as (string | number)[];
         if (Number(prevMax) === Number(maxValue) && Number(prevMin) === Number(normalizedMin)) {
+          finishInteraction();
           return;
         }
       }
@@ -384,6 +398,7 @@ function DataTableFilterSliderComponent<TData>({
       : [...otherFilters, { id: value, value: [normalizedMin, maxValue] }];
 
     setColumnFilters(newFilters);
+    finishInteraction();
   }, [
     debouncedValue,
     value,
@@ -488,6 +503,7 @@ function DataTableFilterSliderComponent<TData>({
 
   // Stable change handler
   const handleChange = useCallback((values: number[]) => {
+    isUserInteractingRef.current = true;
     setLocalValue(values[0]);
   }, []);
 
