@@ -212,7 +212,7 @@ export const sheetFields = [
     label: "Price",
     type: "readonly",
     component: (row) =>
-      row.price_hour_usd ? `$${row.price_hour_usd.toFixed(2)} /HR` : (
+      row.price_hour_usd ? `$${row.price_hour_usd.toFixed(2)} HR` : (
         <span className="text-muted-foreground">N/A</span>
       ),
     skeletonClassName: "w-24",

@@ -140,6 +140,18 @@ export const gpuPricing = pgTable("gpu_pricing", {
     "gin",
     sql`(COALESCE(${table.data}->>'type', '')) gin_trgm_ops`
   ),
+  gpuCountIndex: index("gpu_pricing_gpu_count_idx").on(
+    sql`(CAST(${table.data}->>'gpu_count' AS NUMERIC))`
+  ),
+  vcpusIndex: index("gpu_pricing_vcpus_idx").on(
+    sql`(CAST(${table.data}->>'vcpus' AS NUMERIC))`
+  ),
+  systemRamIndex: index("gpu_pricing_system_ram_idx").on(
+    sql`(CAST(${table.data}->>'system_ram_gb' AS NUMERIC))`
+  ),
+  typeSortIndex: index("gpu_pricing_type_sort_idx").on(
+    sql`(COALESCE(${table.data}->>'type', ''))`
+  ),
   stableKeyIndex: index("gpu_pricing_stable_key_idx").on(table.stableKey),
 }));
 

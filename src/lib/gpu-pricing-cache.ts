@@ -196,6 +196,7 @@ class GpuPricingCache {
     if (search.sort) {
       const { id, desc: isDesc } = search.sort;
       const direction = isDesc ? desc : asc;
+      const sqlDirection = isDesc ? sql.raw('DESC') : sql.raw('ASC');
 
       switch (id) {
         case 'provider':
@@ -210,22 +211,25 @@ class GpuPricingCache {
           orderByClause = sql`COALESCE(
             CAST(${gpuPricing.data}->>'price_hour_usd' AS NUMERIC),
             CAST(${gpuPricing.data}->>'price_usd' AS NUMERIC)
-          ) ${isDesc ? sql.raw('DESC') : sql.raw('ASC')}`;
+          ) ${sqlDirection}`;
+          break;
+        case 'gpu_count':
+          orderByClause = sql`CAST(${gpuPricing.data}->>'gpu_count' AS NUMERIC) ${sqlDirection}`;
           break;
         case 'system_ram_gb':
-          // JSONB field: system_ram_gb || parseFloat(ram_gb)
-          orderByClause = sql`COALESCE(
-            CAST(${gpuPricing.data}->>'system_ram_gb' AS NUMERIC),
-            CAST(${gpuPricing.data}->>'ram_gb' AS NUMERIC)
-          ) ${isDesc ? sql.raw('DESC') : sql.raw('ASC')}`;
+          // JSONB field: system_ram_gb
+          orderByClause = sql`CAST(${gpuPricing.data}->>'system_ram_gb' AS NUMERIC) ${sqlDirection}`;
           break;
         case 'vcpus':
           // JSONB field: vcpus
-          orderByClause = sql`CAST(${gpuPricing.data}->>'vcpus' AS NUMERIC) ${isDesc ? sql.raw('DESC') : sql.raw('ASC')}`;
+          orderByClause = sql`CAST(${gpuPricing.data}->>'vcpus' AS NUMERIC) ${sqlDirection}`;
           break;
         case 'vram_gb':
           // JSONB field: vram_gb
-          orderByClause = sql`CAST(${gpuPricing.data}->>'vram_gb' AS NUMERIC) ${isDesc ? sql.raw('DESC') : sql.raw('ASC')}`;
+          orderByClause = sql`CAST(${gpuPricing.data}->>'vram_gb' AS NUMERIC) ${sqlDirection}`;
+          break;
+        case 'type':
+          orderByClause = sql`COALESCE(${gpuPricing.data}->>'type', '') ${sqlDirection}`;
           break;
         case 'observed_at':
           orderByClause = direction(gpuPricing.observedAt);
@@ -460,6 +464,7 @@ class GpuPricingCache {
     if (search.sort) {
       const { id, desc: isDesc } = search.sort;
       const direction = isDesc ? desc : asc;
+      const sqlDirection = isDesc ? sql.raw('DESC') : sql.raw('ASC');
 
       switch (id) {
         case 'provider':
@@ -474,22 +479,25 @@ class GpuPricingCache {
           orderByClause = sql`COALESCE(
             CAST(${gpuPricing.data}->>'price_hour_usd' AS NUMERIC),
             CAST(${gpuPricing.data}->>'price_usd' AS NUMERIC)
-          ) ${isDesc ? sql.raw('DESC') : sql.raw('ASC')}`;
+          ) ${sqlDirection}`;
+          break;
+        case 'gpu_count':
+          orderByClause = sql`CAST(${gpuPricing.data}->>'gpu_count' AS NUMERIC) ${sqlDirection}`;
           break;
         case 'system_ram_gb':
-          // JSONB field: system_ram_gb || parseFloat(ram_gb)
-          orderByClause = sql`COALESCE(
-            CAST(${gpuPricing.data}->>'system_ram_gb' AS NUMERIC),
-            CAST(${gpuPricing.data}->>'ram_gb' AS NUMERIC)
-          ) ${isDesc ? sql.raw('DESC') : sql.raw('ASC')}`;
+          // JSONB field: system_ram_gb
+          orderByClause = sql`CAST(${gpuPricing.data}->>'system_ram_gb' AS NUMERIC) ${sqlDirection}`;
           break;
         case 'vcpus':
           // JSONB field: vcpus
-          orderByClause = sql`CAST(${gpuPricing.data}->>'vcpus' AS NUMERIC) ${isDesc ? sql.raw('DESC') : sql.raw('ASC')}`;
+          orderByClause = sql`CAST(${gpuPricing.data}->>'vcpus' AS NUMERIC) ${sqlDirection}`;
           break;
         case 'vram_gb':
           // JSONB field: vram_gb
-          orderByClause = sql`CAST(${gpuPricing.data}->>'vram_gb' AS NUMERIC) ${isDesc ? sql.raw('DESC') : sql.raw('ASC')}`;
+          orderByClause = sql`CAST(${gpuPricing.data}->>'vram_gb' AS NUMERIC) ${sqlDirection}`;
+          break;
+        case 'type':
+          orderByClause = sql`COALESCE(${gpuPricing.data}->>'type', '') ${sqlDirection}`;
           break;
         case 'observed_at':
           orderByClause = direction(gpuPricing.observedAt);

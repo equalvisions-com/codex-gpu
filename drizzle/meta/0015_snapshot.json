@@ -468,6 +468,66 @@
           "method": "gin",
           "with": {}
         },
+        "gpu_pricing_gpu_count_idx": {
+          "name": "gpu_pricing_gpu_count_idx",
+          "columns": [
+            {
+              "expression": "(CAST(\"data\"->>'gpu_count' AS NUMERIC))",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "gpu_pricing_vcpus_idx": {
+          "name": "gpu_pricing_vcpus_idx",
+          "columns": [
+            {
+              "expression": "(CAST(\"data\"->>'vcpus' AS NUMERIC))",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "gpu_pricing_system_ram_idx": {
+          "name": "gpu_pricing_system_ram_idx",
+          "columns": [
+            {
+              "expression": "(CAST(\"data\"->>'system_ram_gb' AS NUMERIC))",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "gpu_pricing_type_sort_idx": {
+          "name": "gpu_pricing_type_sort_idx",
+          "columns": [
+            {
+              "expression": "(COALESCE(\"data\"->>'type', ''))",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
         "gpu_pricing_stable_key_idx": {
           "name": "gpu_pricing_stable_key_idx",
           "columns": [
