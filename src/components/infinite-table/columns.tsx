@@ -2,7 +2,6 @@
 
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { DataTableHeaderCheckbox } from "@/components/data-table/data-table-header-checkbox";
-import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useDataTable } from "@/components/data-table/data-table-provider";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -140,8 +139,6 @@ export const columns: ColumnDef<ColumnSchema>[] = [
     cell: ({ row }) => {
       const original = row.original;
       const price = original.price_hour_usd || original.price_usd;
-      const unit = original.price_unit || "hour";
-
       if (!price) return <span className="text-foreground/70">N/A</span>;
 
       return (

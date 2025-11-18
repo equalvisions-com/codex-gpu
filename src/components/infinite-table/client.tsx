@@ -10,7 +10,6 @@ import { filterFields as defaultFilterFields, sheetFields } from "./constants";
 import { DataTableInfinite } from "./data-table-infinite";
 import type { DataTableMeta } from "./data-table-infinite";
 import { dataOptions } from "./query-options";
-import { searchParamsParser } from "./search-params";
 import type { RowWithId } from "@/types/api";
 import type { ColumnSchema, FacetMetadataSchema } from "./schema";
 // Inline notices handle favorites feedback; no toasts here.
@@ -239,7 +238,6 @@ export function Client({ initialFavoriteKeys, isFavoritesMode }: ClientProps = {
         getRowClassName={() => "opacity-100"}
         getRowId={(row) => row.uuid}
         renderSheetTitle={(props) => props.row?.original.uuid}
-        searchParamsParser={searchParamsParser}
         focusTargetRef={contentRef}
         account={{
           user: accountUser,

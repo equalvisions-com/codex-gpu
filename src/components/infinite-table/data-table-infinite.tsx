@@ -35,8 +35,6 @@ import type {
 } from "@tanstack/react-table";
 import { flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { type ParserBuilder } from "nuqs";
-import { searchParamsParser } from "./search-params";
 import { RowSkeletons } from "./_components/row-skeletons";
 import { CheckedActionsIsland } from "./_components/checked-actions-island";
 const LazyGpuSheetCharts = React.lazy(() =>
@@ -92,7 +90,6 @@ interface DataTableInfiniteProps<TData, TValue, TMeta> {
   error?: unknown;
   onRetry?: () => Promise<unknown> | void;
   renderSheetTitle: (props: { row?: Row<TData> }) => React.ReactNode;
-  searchParamsParser: Record<string, ParserBuilder<any>>;
   // Optional ref target to programmatically focus the table body
   focusTargetRef?: React.Ref<HTMLTableSectionElement>;
   account?: {
@@ -132,7 +129,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   onRetry = noop,
   meta,
   renderSheetTitle,
-  searchParamsParser: searchParamsParserProp,
   focusTargetRef,
   account,
   headerSlot,
@@ -152,7 +148,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
 
   const tableRef = React.useRef<HTMLTableElement>(null);
   const containerRef = React.useRef<HTMLDivElement>(null);
-  // searchParamsParser is provided as a prop
   const accountUser: AccountUser | null = account?.user ?? null;
   const accountOnSignOut = account?.onSignOut ?? noop;
   const accountIsSigningOut = account?.isSigningOut ?? false;
@@ -882,25 +877,18 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                 ) : rows.length ? (
                   <>
                     {!virtualizationEnabled && rows.length ? (
-                      rows.map((row, index) => {
-                        const triggerOffset = isMobile ? 8 : 15;
-                        const triggerIndex = Math.max(0, rows.length - triggerOffset);
-                        const shouldAttachSentinel =
-                          hasNextPage && index === triggerIndex;
-
-                        return (
-                          <React.Fragment key={row.id}>
-                            <MemoizedRow
-                              row={row}
-                              table={table}
-                              selected={row.getIsSelected()}
-                              checked={checkedRows[row.id] ?? false}
-                              data-index={index}
-                              getModelColumnWidth={getModelColumnWidth}
-                            />
-                          </React.Fragment>
-                        );
-                      })
+                      rows.map((row, index) => (
+                        <React.Fragment key={row.id}>
+                          <MemoizedRow
+                            row={row}
+                            table={table}
+                            selected={row.getIsSelected()}
+                            checked={checkedRows[row.id] ?? false}
+                            data-index={index}
+                            getModelColumnWidth={getModelColumnWidth}
+                          />
+                        </React.Fragment>
+                      ))
                     ) : virtualItems.length === 0 ? (
                       <RowSkeletons
                         table={table}
@@ -919,12 +907,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                         {virtualItems.map((virtualItem) => {
                           const row = rows[virtualItem.index];
                           if (!row) return null;
-
-                          // Trigger earlier on mobile (smaller screens) to prevent bottoming out
-                          const triggerOffset = isMobile ? 8 : 15;
-                          const triggerIndex = Math.max(0, rows.length - triggerOffset);
-                          const shouldAttachSentinel =
-                            hasNextPage && virtualItem.index === triggerIndex;
 
                           return (
                             <React.Fragment key={virtualItem.key}>

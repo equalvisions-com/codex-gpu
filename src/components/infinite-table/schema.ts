@@ -1,8 +1,4 @@
-import {
-  ARRAY_DELIMITER,
-  RANGE_DELIMITER,
-  SLIDER_DELIMITER,
-} from "@/lib/delimiters";
+import { RANGE_DELIMITER, SLIDER_DELIMITER } from "@/lib/delimiters";
 import { z } from "zod";
 
 // GPU instance pricing schema
