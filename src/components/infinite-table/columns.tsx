@@ -232,8 +232,7 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       <DataTableColumnHeader column={column} title="RAM" titleClassName="ml-auto text-right" />
     ),
     cell: ({ row }) => {
-      const original = row.original;
-      const ramGb = original.system_ram_gb || original.ram_gb;
+      const ramGb = row.getValue<ColumnSchema["system_ram_gb"]>("system_ram_gb");
       return ramGb ? (
         <div className="text-right">
           <span className="font-mono">{ramGb}</span>{" "}

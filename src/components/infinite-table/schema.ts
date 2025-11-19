@@ -22,7 +22,6 @@ const columnSchema = z.object({
   vram_gb: z.number().optional(),
   vcpus: z.union([z.number(), z.string()]).optional(),
   system_ram_gb: z.number().optional(),
-  ram_gb: z.string().optional(), // For Nebius data
   local_storage_tb: z.number().optional(),
 
   // Pricing

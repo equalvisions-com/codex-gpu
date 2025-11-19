@@ -156,7 +156,6 @@ function buildGpuFilterConditions(search: SearchParamsType) {
       "vram_gb",
       "vcpus",
       "system_ram_gb",
-      "ram_gb",
     ];
 
     numericFields.forEach((field) => {
@@ -197,6 +196,7 @@ class GpuPricingCache {
       const { id, desc: isDesc } = search.sort;
       const direction = isDesc ? desc : asc;
       const sqlDirection = isDesc ? sql.raw('DESC') : sql.raw('ASC');
+      const nullsPlacement = isDesc ? sql.raw('NULLS LAST') : sql.raw('NULLS FIRST');
 
       switch (id) {
         case 'provider':
@@ -211,22 +211,22 @@ class GpuPricingCache {
           orderByClause = sql`COALESCE(
             CAST(${gpuPricing.data}->>'price_hour_usd' AS NUMERIC),
             CAST(${gpuPricing.data}->>'price_usd' AS NUMERIC)
-          ) ${sqlDirection}`;
+          ) ${sqlDirection} ${nullsPlacement}`;
           break;
         case 'gpu_count':
-          orderByClause = sql`CAST(${gpuPricing.data}->>'gpu_count' AS NUMERIC) ${sqlDirection}`;
+          orderByClause = sql`CAST(${gpuPricing.data}->>'gpu_count' AS NUMERIC) ${sqlDirection} ${nullsPlacement}`;
           break;
         case 'system_ram_gb':
           // JSONB field: system_ram_gb
-          orderByClause = sql`CAST(${gpuPricing.data}->>'system_ram_gb' AS NUMERIC) ${sqlDirection}`;
+          orderByClause = sql`CAST(${gpuPricing.data}->>'system_ram_gb' AS NUMERIC) ${sqlDirection} ${nullsPlacement}`;
           break;
         case 'vcpus':
           // JSONB field: vcpus
-          orderByClause = sql`CAST(${gpuPricing.data}->>'vcpus' AS NUMERIC) ${sqlDirection}`;
+          orderByClause = sql`CAST(${gpuPricing.data}->>'vcpus' AS NUMERIC) ${sqlDirection} ${nullsPlacement}`;
           break;
         case 'vram_gb':
           // JSONB field: vram_gb
-          orderByClause = sql`CAST(${gpuPricing.data}->>'vram_gb' AS NUMERIC) ${sqlDirection}`;
+          orderByClause = sql`CAST(${gpuPricing.data}->>'vram_gb' AS NUMERIC) ${sqlDirection} ${nullsPlacement}`;
           break;
         case 'type':
           orderByClause = sql`COALESCE(${gpuPricing.data}->>'type', '') ${sqlDirection}`;
@@ -465,6 +465,7 @@ class GpuPricingCache {
       const { id, desc: isDesc } = search.sort;
       const direction = isDesc ? desc : asc;
       const sqlDirection = isDesc ? sql.raw('DESC') : sql.raw('ASC');
+      const nullsPlacement = isDesc ? sql.raw('NULLS LAST') : sql.raw('NULLS FIRST');
 
       switch (id) {
         case 'provider':
@@ -479,22 +480,22 @@ class GpuPricingCache {
           orderByClause = sql`COALESCE(
             CAST(${gpuPricing.data}->>'price_hour_usd' AS NUMERIC),
             CAST(${gpuPricing.data}->>'price_usd' AS NUMERIC)
-          ) ${sqlDirection}`;
+          ) ${sqlDirection} ${nullsPlacement}`;
           break;
         case 'gpu_count':
-          orderByClause = sql`CAST(${gpuPricing.data}->>'gpu_count' AS NUMERIC) ${sqlDirection}`;
+          orderByClause = sql`CAST(${gpuPricing.data}->>'gpu_count' AS NUMERIC) ${sqlDirection} ${nullsPlacement}`;
           break;
         case 'system_ram_gb':
           // JSONB field: system_ram_gb
-          orderByClause = sql`CAST(${gpuPricing.data}->>'system_ram_gb' AS NUMERIC) ${sqlDirection}`;
+          orderByClause = sql`CAST(${gpuPricing.data}->>'system_ram_gb' AS NUMERIC) ${sqlDirection} ${nullsPlacement}`;
           break;
         case 'vcpus':
           // JSONB field: vcpus
-          orderByClause = sql`CAST(${gpuPricing.data}->>'vcpus' AS NUMERIC) ${sqlDirection}`;
+          orderByClause = sql`CAST(${gpuPricing.data}->>'vcpus' AS NUMERIC) ${sqlDirection} ${nullsPlacement}`;
           break;
         case 'vram_gb':
           // JSONB field: vram_gb
-          orderByClause = sql`CAST(${gpuPricing.data}->>'vram_gb' AS NUMERIC) ${sqlDirection}`;
+          orderByClause = sql`CAST(${gpuPricing.data}->>'vram_gb' AS NUMERIC) ${sqlDirection} ${nullsPlacement}`;
           break;
         case 'type':
           orderByClause = sql`COALESCE(${gpuPricing.data}->>'type', '') ${sqlDirection}`;

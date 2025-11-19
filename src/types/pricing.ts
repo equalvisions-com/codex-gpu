@@ -49,7 +49,7 @@ export type NebiusPriceRow = {
 
   // Specs (may be ranges)
   vcpus: string;                // "16", "8-40", etc.
-  ram_gb: string;               // "200", "32-160", etc.
+  system_ram_gb?: number;       // normalized system RAM value
 
   // Pricing
   price_unit: "gpu_hour";       // per GPU-hour

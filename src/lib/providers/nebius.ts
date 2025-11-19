@@ -28,8 +28,19 @@ function normalizeSpecValue(value: string): string {
   const trimmed = value.trim();
   if (!trimmed) return trimmed;
 
-  const [firstSegment] = trimmed.split(/[-–]/);
+  const [firstSegment] = trimmed.split(/[-–—]/);
   return firstSegment.trim();
+}
+
+function parseSpecNumber(value: string): number | undefined {
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+
+  const numeric = trimmed.replace(/[^\d.]/g, '');
+  if (!numeric) return undefined;
+
+  const parsed = Number(numeric);
+  return Number.isFinite(parsed) ? parsed : undefined;
 }
 
 class NebiusScraper implements ProviderScraper {
@@ -146,6 +157,7 @@ class NebiusScraper implements ProviderScraper {
       const normalizedModel = cleanGpuModelName(item);
       const normalizedVcpus = normalizeSpecValue(vcpus);
       const normalizedRam = normalizeSpecValue(ramGb);
+      const systemRamGb = parseSpecNumber(normalizedRam);
 
       const priceRow: NebiusPriceRow = {
         provider: 'nebius',
@@ -156,7 +168,7 @@ class NebiusScraper implements ProviderScraper {
         class: 'GPU',
         gpu_count: 1,
         vcpus: normalizedVcpus,
-        ram_gb: normalizedRam,
+        system_ram_gb: systemRamGb,
         price_unit: 'gpu_hour',
         price_usd: parsePrice(priceText),
         raw_cost: priceText,
