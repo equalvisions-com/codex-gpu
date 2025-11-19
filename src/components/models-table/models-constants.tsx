@@ -220,13 +220,13 @@ export const sheetFields: SheetField<ModelsColumnSchema>[] = [
     id: "inputPrice" as keyof ModelsColumnSchema,
     label: "Prompt Price",
     type: "readonly",
-    component: (row) => formatPricePerMillion(row.pricing?.prompt),
+    component: (row) => formatPricePerMillion(row.promptPrice),
   },
   {
     id: "outputPrice" as keyof ModelsColumnSchema,
     label: "Output Price",
     type: "readonly",
-    component: (row) => formatPricePerMillion(row.pricing?.completion),
+    component: (row) => formatPricePerMillion(row.completionPrice),
   },
   {
     id: "contextLength",

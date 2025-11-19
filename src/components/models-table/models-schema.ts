@@ -18,18 +18,16 @@ const modelsColumnSchema = z.object({
   contextLength: z.number().nullable(),
   inputModalities: z.array(z.string()),
   outputModalities: z.array(z.string()),
-  hasTextOutput: z.string(),
-  group: z.string().nullable(),
-  instructType: z.string().nullable(),
   permaslug: z.string().nullable(),
   endpointId: z.string().nullable(),
   mmlu: z.number().nullable(),
   maxCompletionTokens: z.number().nullable(),
   supportedParameters: z.array(z.string()),
+  modalityScore: z.number().nullable(),
 
   // Pricing data
-  pricing: z.record(z.any()),
-  features: z.record(z.any()).optional(),
+  promptPrice: z.number().nullable(),
+  completionPrice: z.number().nullable(),
 
   // Metadata
   scrapedAt: z.string(),

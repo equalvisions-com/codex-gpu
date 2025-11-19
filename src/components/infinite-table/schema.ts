@@ -13,8 +13,6 @@ const columnSchema = z.object({
   observed_at: z.string(),
   item: z.string().optional(), // For Nebius data
   sku: z.string().optional(),
-  region: z.string().optional(),
-  zone: z.string().optional(),
 
   // Hardware
   gpu_model: z.string().optional(),
@@ -22,19 +20,12 @@ const columnSchema = z.object({
   vram_gb: z.number().optional(),
   vcpus: z.union([z.number(), z.string()]).optional(),
   system_ram_gb: z.number().optional(),
-  local_storage_tb: z.number().optional(),
 
   // Pricing
-  price_unit: z.enum(["hour", "month", "gb_month", "gpu_hour"]),
   price_hour_usd: z.number().optional(),
-  price_month_usd: z.number().optional(),
   price_usd: z.number().optional(), // For Nebius data
-  raw_cost: z.string().optional(),
-  billing_notes: z.string().optional(),
 
   // Flags
-  spot: z.boolean().optional(),
-  class: z.literal("GPU").optional(),
   type: z.enum(["VM", "Bare Metal"]).optional(),
 
 });

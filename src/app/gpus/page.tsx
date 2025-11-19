@@ -213,7 +213,6 @@ function buildGpuSchema(
       priceCurrency: "USD",
       price: row.price_hour_usd,
       availabilityStarts: row.observed_at,
-      areaServed: row.region,
       priceSpecification: {
         "@type": "UnitPriceSpecification",
         price: row.price_hour_usd,

@@ -4,6 +4,7 @@ import type { SearchParamsType } from "@/components/infinite-table/search-params
 import { gpuPricingCache } from "@/lib/gpu-pricing-cache";
 import { unstable_cache } from "next/cache";
 import { createHash } from "crypto";
+import { mapGpuRowToColumnSchema } from "@/lib/gpu-column-transformer";
 
 const CACHE_SIZE_LIMIT_BYTES = 2 * 1024 * 1024; // 2MB
 
@@ -78,7 +79,7 @@ export async function getGpuPricingPage(
 
   try {
     const result = await getCachedGpusFiltered(search);
-    filteredGpus = result.data as ColumnSchema[];
+    filteredGpus = result.data.map(mapGpuRowToColumnSchema);
     totalCount = result.totalCount;
     filterCount = result.filterCount;
   } catch (error) {
@@ -116,7 +117,7 @@ export async function getGpuPricingPage(
     }
 
     const result = await gpuPricingCache.getGpusFiltered(search);
-    filteredGpus = result.data as ColumnSchema[];
+    filteredGpus = result.data.map(mapGpuRowToColumnSchema);
     totalCount = result.totalCount;
     filterCount = result.filterCount;
   }

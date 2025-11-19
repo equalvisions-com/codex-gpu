@@ -9,6 +9,7 @@ import { searchParamsCache } from "@/components/infinite-table/search-params";
 import type { SearchParamsType } from "@/components/infinite-table/search-params";
 import { unstable_cache } from "next/cache";
 import { createHash } from "crypto";
+import { mapGpuRowToColumnSchema } from "@/lib/gpu-column-transformer";
 
 const CACHE_SIZE_LIMIT_BYTES = 2 * 1024 * 1024; // 2MB
 
@@ -172,7 +173,7 @@ async function getFavoriteRowsDirect(
   const start = typeof search.cursor === "number" && search.cursor >= 0 ? search.cursor : 0;
   const pageSize = Math.min(Math.max(1, search.size ?? 50), 200);
   return {
-    data: filteredGpus,
+    data: filteredGpus.map(mapGpuRowToColumnSchema),
     meta: {
       totalRowCount: totalCount,
       filterRowCount: filterCount,

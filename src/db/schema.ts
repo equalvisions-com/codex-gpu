@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, integer, jsonb, text as textType, uniqueIndex, index, doublePrecision, primaryKey } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, integer, jsonb, text as textType, uniqueIndex, index, doublePrecision, primaryKey, numeric } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { user } from "./auth-schema";
 
@@ -35,10 +35,13 @@ export const aiModels = pgTable("ai_models", {
   mmlu: doublePrecision("mmlu"),
   maxCompletionTokens: integer("max_completion_tokens"),
   supportedParameters: textType("supported_parameters").array(),
+  modalityScore: integer("modality_score"),
 
   // Complex nested data stored as JSONB
   pricing: jsonb("pricing"),
   features: jsonb("features"),
+  promptPrice: doublePrecision("prompt_price"),
+  completionPrice: doublePrecision("completion_price"),
 
   // Metadata
   provider: text("provider").notNull(),
@@ -67,6 +70,12 @@ export const aiModels = pgTable("ai_models", {
   providerNameIndex: index("ai_models_provider_name_idx").on(table.provider, table.shortName),
   // GIN index for pricing queries
   pricingIndex: index("ai_models_pricing_idx").using("gin", table.pricing),
+  promptPriceIndex: index("ai_models_prompt_price_idx").on(table.promptPrice),
+  completionPriceIndex: index("ai_models_completion_price_idx").on(table.completionPrice),
+  normalizedNameIndex: index("ai_models_normalized_name_idx").on(
+    sql`(COALESCE(lower(trim(${table.shortName})), lower(trim(${table.name})), ''))`
+  ),
+  modalityScoreIndex: index("ai_models_modality_score_idx").on(table.modalityScore),
 }));
 
 export const modelThroughputSamples = pgTable("model_throughput_samples", {

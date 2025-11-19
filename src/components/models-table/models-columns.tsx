@@ -88,7 +88,7 @@ function RowCheckboxCell({ rowId }: { rowId: string }) {
   );
 }
 
-function formatPricePerMillion(price: string | number | undefined): string {
+function formatPricePerMillion(price: string | number | null | undefined): string {
   if (price === undefined || price === null) return 'Free';
 
   const numericPrice = typeof price === 'string' ? parseFloat(price) : price;
@@ -105,36 +105,6 @@ function formatMmluScore(score: number | null | undefined): string {
   if (score === null || score === undefined) return 'N/A';
   return `${(score * 100).toFixed(1)}%`;
 }
-
-/**
- * Custom sorting function for model names that matches server-side normalization
- * Server uses: COALESCE(lower(trim(shortName)), '')
- * This ensures consistent sorting behavior between client and server
- */
-const modelNameSortingFn: SortingFn<ModelsColumnSchema> = (rowA, rowB, columnId) => {
-  // Get the normalized value (shortName or name, trimmed and lowercased)
-  const getNormalizedValue = (row: typeof rowA) => {
-    const shortName = row.original.shortName;
-    const name = row.original.name;
-    const value = typeof shortName === "string" && shortName.trim().length > 0
-      ? shortName
-      : name || "";
-    // Normalize: trim whitespace, lowercase, handle null/undefined as empty string
-    return (value || "").trim().toLowerCase();
-  };
-
-  const aValue = getNormalizedValue(rowA);
-  const bValue = getNormalizedValue(rowB);
-
-  // Empty strings sort first in ASC order (matches SQL COALESCE behavior)
-  // In SQL: empty strings come before non-empty in ASC, after in DESC
-  if (aValue === "" && bValue === "") return 0;
-  if (aValue === "") return -1; // Empty comes first in ASC order
-  if (bValue === "") return 1;  // Empty comes first in ASC order
-
-  // Standard string comparison
-  return aValue.localeCompare(bValue);
-};
 
 export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
   {
@@ -216,7 +186,6 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
   {
     id: "name",
     accessorFn: (row) => (typeof row.shortName === "string" ? row.shortName : ""),
-    sortingFn: modelNameSortingFn,
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Model" />
     ),
@@ -342,6 +311,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
     },
   },
   {
+    id: "modalities",
     accessorKey: "inputModalities",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Modality" titleClassName="ml-auto text-right" />
@@ -351,12 +321,16 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
       const outputModalities = row.original.outputModalities ?? [];
       const hasModalities = inputModalities.length + outputModalities.length > 0;
 
-      if (!hasModalities) {
+      const computedScore = row.original.modalityScore ?? new Set([
+        ...inputModalities,
+        ...outputModalities,
+      ]).size;
+
+      if (!hasModalities || computedScore === 0) {
         return <span className="text-foreground/70">-</span>;
       }
 
-      const uniqueModalities = new Set([...inputModalities, ...outputModalities]);
-      const label = uniqueModalities.size > 1 ? "Multimodal" : "Unimodal";
+      const label = computedScore > 1 ? "Multimodal" : "Unimodal";
       const formatList = (modalities: string[]) => (
         modalities.length
           ? modalities.map(modality => modality.charAt(0).toUpperCase() + modality.slice(1)).join(", ")
@@ -385,6 +359,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
         </HoverCard>
       );
     },
+    enableSorting: true,
     size: 150,
     minSize: 150,
     meta: {
@@ -394,13 +369,12 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
   },
   {
     id: "inputPrice",
-    accessorFn: (row) => row.pricing?.prompt || 0,
+    accessorKey: "promptPrice",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Prompt" titleClassName="ml-auto text-right" />
     ),
     cell: ({ row }) => {
-      const pricing = row.original.pricing;
-      const inputPrice = pricing?.prompt;
+      const inputPrice = row.original.promptPrice;
 
       const formattedPrice = formatPricePerMillion(inputPrice);
 
@@ -427,13 +401,12 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
   },
   {
     id: "outputPrice",
-    accessorFn: (row) => row.pricing?.completion || 0,
+    accessorKey: "completionPrice",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Output" titleClassName="ml-auto text-right" />
     ),
     cell: ({ row }) => {
-      const pricing = row.original.pricing;
-      const outputPrice = pricing?.completion;
+      const outputPrice = row.original.completionPrice;
 
       const formattedPrice = formatPricePerMillion(outputPrice);
 

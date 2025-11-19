@@ -56,7 +56,7 @@ const LogoBadge = ({
   );
 };
 
-const ProviderBadge = ({ provider, region, zone }: { provider?: string; region?: string | null; zone?: string | null }) => {
+const ProviderBadge = ({ provider }: { provider?: string | null }) => {
   const normalizedProvider = provider?.toLowerCase() ?? "";
   const logo = PROVIDER_LOGOS[normalizedProvider];
   const fallbackInitial = provider ? provider.charAt(0).toUpperCase() : "";
@@ -71,12 +71,6 @@ const ProviderBadge = ({ provider, region, zone }: { provider?: string; region?:
       <span className="truncate capitalize" title={provider || undefined}>
         {provider || "Unknown"}
       </span>
-      {region ? (
-        <span className="text-xs text-foreground/70">
-          ({region}
-          {zone ? ` - ${zone}` : ""})
-        </span>
-      ) : null}
     </div>
   );
 };
@@ -202,9 +196,7 @@ export const sheetFields = [
     id: "provider",
     label: "Provider",
     type: "readonly",
-    component: (row) => (
-      <ProviderBadge provider={row.provider} region={row.region} zone={row.zone} />
-    ),
+    component: (row) => <ProviderBadge provider={row.provider} />,
     skeletonClassName: "w-40",
   },
   {

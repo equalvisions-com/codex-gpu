@@ -18,10 +18,13 @@ export interface AIModel {
   mmlu?: number | null;
   maxCompletionTokens?: number | null;
   supportedParameters: string[];
+  modalityScore?: number | null;
 
   // Complex nested data
   pricing: Record<string, any>;
   features: Record<string, any>;
+  promptPrice?: number | null;
+  completionPrice?: number | null;
 
   // Metadata
   provider: string;

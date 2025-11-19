@@ -149,9 +149,9 @@ function buildModelsSchema(
 
   const items = payload.data.slice(0, 50).map((model) => {
 
-    const inputPricePerMillion = parsePricePerMillion(model.pricing?.prompt);
+    const inputPricePerMillion = parsePricePerMillion(model.promptPrice);
     const outputPricePerMillion = parsePricePerMillion(
-      model.pricing?.completion,
+      model.completionPrice,
     );
 
     const additionalProperty: Array<{

@@ -127,32 +127,70 @@ const parseNullableNumber = (value: unknown): number | null => {
   return Number.isFinite(parsed) ? parsed : null;
 };
 
+const computeModalityScore = (
+  inputModalities?: string[] | null,
+  outputModalities?: string[] | null,
+): number => {
+  const inputs = Array.isArray(inputModalities) ? inputModalities : [];
+  const outputs = Array.isArray(outputModalities) ? outputModalities : [];
+  if (!inputs.length && !outputs.length) {
+    return 0;
+  }
+  const unique = new Set<string>();
+  for (const modality of inputs) {
+    if (typeof modality === 'string' && modality.trim().length > 0) {
+      unique.add(modality);
+    }
+  }
+  for (const modality of outputs) {
+    if (typeof modality === 'string' && modality.trim().length > 0) {
+      unique.add(modality);
+    }
+  }
+  return unique.size;
+};
+
 type AIModelRow = typeof aiModels.$inferSelect;
 
-const mapRowToAIModel = (row: AIModelRow): AIModel => ({
-  id: row.id,
-  slug: row.slug,
-  name: row.name || undefined,
-  shortName: row.shortName || undefined,
-  author: row.author || undefined,
-  description: row.description || undefined,
-  modelVersionGroupId: row.modelVersionGroupId || undefined,
-  contextLength: row.contextLength || undefined,
-  inputModalities: row.inputModalities || [],
-  outputModalities: row.outputModalities || [],
-  hasTextOutput: row.hasTextOutput ?? "false",
-  group: row.group || undefined,
-  instructType: row.instructType || undefined,
-  permaslug: row.permaslug || undefined,
-  endpointId: row.endpointId || undefined,
-  pricing: row.pricing as Record<string, any>,
-  features: row.features as Record<string, any>,
-  provider: row.provider,
-  mmlu: parseNullableNumber(row.mmlu),
-  maxCompletionTokens: row.maxCompletionTokens ?? null,
-  supportedParameters: row.supportedParameters || [],
-  scrapedAt: row.scrapedAt.toISOString(),
-});
+const mapRowToAIModel = (row: AIModelRow): AIModel => {
+  const pricingData = (row.pricing as Record<string, any>) || {};
+  const promptPrice = parseNullableNumber(
+    row.promptPrice !== undefined ? row.promptPrice : pricingData?.prompt,
+  );
+  const completionPrice = parseNullableNumber(
+    row.completionPrice !== undefined ? row.completionPrice : pricingData?.completion,
+  );
+  const storedModalityScore = typeof row.modalityScore === 'number' ? row.modalityScore : null;
+  const modalityScore = storedModalityScore ?? computeModalityScore(row.inputModalities, row.outputModalities);
+
+  return {
+    id: row.id,
+    slug: row.slug,
+    name: row.name || undefined,
+    shortName: row.shortName || undefined,
+    author: row.author || undefined,
+    description: row.description || undefined,
+    modelVersionGroupId: row.modelVersionGroupId || undefined,
+    contextLength: row.contextLength || undefined,
+    inputModalities: row.inputModalities || [],
+    outputModalities: row.outputModalities || [],
+    hasTextOutput: row.hasTextOutput ?? "false",
+    group: row.group || undefined,
+    instructType: row.instructType || undefined,
+    permaslug: row.permaslug || undefined,
+    endpointId: row.endpointId || undefined,
+    pricing: pricingData,
+    features: row.features as Record<string, any>,
+    provider: row.provider,
+    mmlu: parseNullableNumber(row.mmlu),
+    maxCompletionTokens: row.maxCompletionTokens ?? null,
+    supportedParameters: row.supportedParameters || [],
+    promptPrice,
+    completionPrice,
+    modalityScore,
+    scrapedAt: row.scrapedAt.toISOString(),
+  };
+};
 
 function buildModelFilterConditions(search: ModelsSearchParamsType) {
   const conditions: any[] = [];
@@ -185,14 +223,14 @@ function buildModelFilterConditions(search: ModelsSearchParamsType) {
     const minPerToken = (min ?? 0) / 1_000_000;
     const maxPerToken = (max ?? 0) / 1_000_000;
     conditions.push(
-      sql`CAST(${aiModels.pricing}->>'prompt' AS NUMERIC) BETWEEN ${minPerToken} AND ${maxPerToken}`,
+      sql`${aiModels.promptPrice} BETWEEN ${minPerToken} AND ${maxPerToken}`,
     );
   }
 
   if (search.outputPrice && Array.isArray(search.outputPrice) && search.outputPrice.length === 2) {
     const [min, max] = search.outputPrice;
     conditions.push(
-      sql`CAST(${aiModels.pricing}->>'completion' AS NUMERIC) BETWEEN ${min} AND ${max}`,
+      sql`${aiModels.completionPrice} BETWEEN ${min} AND ${max}`,
     );
   }
 
@@ -244,8 +282,8 @@ function buildModelFilterConditions(search: ModelsSearchParamsType) {
         ilike(aiModels.name, searchTerm),
         ilike(aiModels.author, searchTerm),
         sql`array_to_string(${aiModels.supportedParameters}, ',') ILIKE ${searchTerm}`,
-        sql`CAST(${aiModels.pricing}->>'prompt' AS TEXT) ILIKE ${searchTerm}`,
-        sql`CAST(${aiModels.pricing}->>'completion' AS TEXT) ILIKE ${searchTerm}`,
+        sql`CAST(${aiModels.promptPrice} AS TEXT) ILIKE ${searchTerm}`,
+        sql`CAST(${aiModels.completionPrice} AS TEXT) ILIKE ${searchTerm}`,
         sql`CAST(${aiModels.contextLength} AS TEXT) ILIKE ${searchTerm}`,
         sql`CAST(${aiModels.maxCompletionTokens} AS TEXT) ILIKE ${searchTerm}`,
         sql`CAST(${aiModels.mmlu} AS TEXT) ILIKE ${searchTerm}`,
@@ -306,6 +344,9 @@ class ModelsCache {
       mmlu: model.mmlu ?? null,
       maxCompletionTokens: model.maxCompletionTokens ?? null,
       supportedParameters: model.supportedParameters,
+      modalityScore: computeModalityScore(model.inputModalities, model.outputModalities),
+      promptPrice: parseNullableNumber(model.pricing?.prompt),
+      completionPrice: parseNullableNumber(model.pricing?.completion),
       scrapedAt: new Date(model.scrapedAt),
     }));
 
@@ -446,38 +487,46 @@ class ModelsCache {
     if (search.sort) {
       const { id, desc: isDesc } = search.sort;
       const direction = isDesc ? desc : asc;
+      const sqlDirection = isDesc ? sql.raw('DESC') : sql.raw('ASC');
+      const nullsPlacement = isDesc ? sql.raw('NULLS LAST') : sql.raw('NULLS FIRST');
 
       switch (id) {
         case 'provider':
           orderByClause = direction(aiModels.provider);
           break;
-        case 'name':
-          // Match client-side normalization: trim whitespace, lowercase, handle NULL as empty string
-          // This ensures consistent sorting behavior - entries like "R1 " and "R1" sort the same
-          // NULL values normalize to empty string '', which sorts first alphabetically
-          // This matches TanStack Table's manual sorting expectations for consistent behavior
+        case 'name': {
+          // Normalize to match client-side fallback: shortName -> name -> empty string
+          const normalizedName = sql`COALESCE(
+            lower(trim(${aiModels.shortName})),
+            lower(trim(${aiModels.name})),
+            ''
+          )`;
           orderByClause = isDesc
-            ? sql`COALESCE(lower(trim(${aiModels.shortName})), '') DESC`
-            : sql`COALESCE(lower(trim(${aiModels.shortName})), '') ASC`;
+            ? sql`${normalizedName} DESC`
+            : sql`${normalizedName} ASC`;
           break;
+        }
         case 'contextLength':
-          orderByClause = direction(aiModels.contextLength);
+          orderByClause = sql`${aiModels.contextLength} ${sqlDirection} ${nullsPlacement}`;
           break;
         case 'inputPrice':
-          // JSONB field sorting
-          orderByClause = sql`CAST(${aiModels.pricing}->>'prompt' AS NUMERIC) ${isDesc ? sql.raw('DESC') : sql.raw('ASC')}`;
+          orderByClause = sql`${aiModels.promptPrice} ${sqlDirection} ${nullsPlacement}`;
           break;
         case 'outputPrice':
-          // JSONB field sorting
-          orderByClause = sql`CAST(${aiModels.pricing}->>'completion' AS NUMERIC) ${isDesc ? sql.raw('DESC') : sql.raw('ASC')}`;
+          orderByClause = sql`${aiModels.completionPrice} ${sqlDirection} ${nullsPlacement}`;
           break;
         case 'mmlu':
-          orderByClause = direction(aiModels.mmlu);
+          orderByClause = sql`${aiModels.mmlu} ${sqlDirection} ${nullsPlacement}`;
           break;
         case 'maxCompletionTokens':
           // Direct column sorting (much more efficient than JSONB extraction)
-          orderByClause = direction(aiModels.maxCompletionTokens);
+          orderByClause = sql`${aiModels.maxCompletionTokens} ${sqlDirection} ${nullsPlacement}`;
           break;
+        case 'modalities': {
+          const modalityOrderExpr = sql`COALESCE(${aiModels.modalityScore}, 0)`;
+          orderByClause = sql`${modalityOrderExpr} ${sqlDirection} ${nullsPlacement}`;
+          break;
+        }
         default:
           // Default: sort by provider
           orderByClause = asc(aiModels.provider);
@@ -527,38 +576,45 @@ class ModelsCache {
     if (search.sort) {
       const { id, desc: isDesc } = search.sort;
       const direction = isDesc ? desc : asc;
+      const sqlDirection = isDesc ? sql.raw('DESC') : sql.raw('ASC');
+      const nullsPlacement = isDesc ? sql.raw('NULLS LAST') : sql.raw('NULLS FIRST');
 
       switch (id) {
         case 'provider':
           orderByClause = direction(aiModels.provider);
           break;
-        case 'name':
-          // Match client-side normalization: trim whitespace, lowercase, handle NULL as empty string
-          // This ensures consistent sorting behavior - entries like "R1 " and "R1" sort the same
-          // NULL values normalize to empty string '', which sorts first alphabetically
-          // This matches TanStack Table's manual sorting expectations for consistent behavior
+        case 'name': {
+          const normalizedName = sql`COALESCE(
+            lower(trim(${aiModels.shortName})),
+            lower(trim(${aiModels.name})),
+            ''
+          )`;
           orderByClause = isDesc
-            ? sql`COALESCE(lower(trim(${aiModels.shortName})), '') DESC`
-            : sql`COALESCE(lower(trim(${aiModels.shortName})), '') ASC`;
+            ? sql`${normalizedName} DESC`
+            : sql`${normalizedName} ASC`;
           break;
+        }
         case 'contextLength':
-          orderByClause = direction(aiModels.contextLength);
+          orderByClause = sql`${aiModels.contextLength} ${sqlDirection} ${nullsPlacement}`;
           break;
         case 'inputPrice':
-          // JSONB field sorting
-          orderByClause = sql`CAST(${aiModels.pricing}->>'prompt' AS NUMERIC) ${isDesc ? sql.raw('DESC') : sql.raw('ASC')}`;
+          orderByClause = sql`${aiModels.promptPrice} ${sqlDirection} ${nullsPlacement}`;
           break;
         case 'outputPrice':
-          // JSONB field sorting
-          orderByClause = sql`CAST(${aiModels.pricing}->>'completion' AS NUMERIC) ${isDesc ? sql.raw('DESC') : sql.raw('ASC')}`;
+          orderByClause = sql`${aiModels.completionPrice} ${sqlDirection} ${nullsPlacement}`;
           break;
         case 'mmlu':
-          orderByClause = direction(aiModels.mmlu);
+          orderByClause = sql`${aiModels.mmlu} ${sqlDirection} ${nullsPlacement}`;
           break;
         case 'maxCompletionTokens':
           // Direct column sorting (much more efficient than JSONB extraction)
-          orderByClause = direction(aiModels.maxCompletionTokens);
+          orderByClause = sql`${aiModels.maxCompletionTokens} ${sqlDirection} ${nullsPlacement}`;
           break;
+        case 'modalities': {
+          const modalityOrderExpr = sql`COALESCE(${aiModels.modalityScore}, 0)`;
+          orderByClause = sql`${modalityOrderExpr} ${sqlDirection} ${nullsPlacement}`;
+          break;
+        }
         default:
           // Default: sort by provider
           orderByClause = asc(aiModels.provider);
@@ -621,6 +677,9 @@ class ModelsCache {
         endpointId: aiModels.endpointId,
         pricing: aiModels.pricing,
         features: aiModels.features,
+        modalityScore: aiModels.modalityScore,
+        promptPrice: aiModels.promptPrice,
+        completionPrice: aiModels.completionPrice,
         provider: aiModels.provider,
         mmlu: aiModels.mmlu,
         maxCompletionTokens: aiModels.maxCompletionTokens,
