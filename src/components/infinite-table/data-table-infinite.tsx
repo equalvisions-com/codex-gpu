@@ -44,14 +44,18 @@ const LazyGpuSheetCharts = React.lazy(() =>
 );
 import { filterFields, sheetFields } from "./constants";
 import { UserMenu, type AccountUser } from "./account-components";
-import { usePathname } from "next/navigation";
-import { Search } from "lucide-react";
-import { DesktopNavTabs, type DesktopNavItem } from "./nav-tabs";
+import { usePathname, useRouter } from "next/navigation";
+import { Bot, Search, Server, Wrench } from "lucide-react";
 import type { FavoriteKey } from "@/types/favorites";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const noop = () => {};
-const gradientSurfaceClass =
-  "border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-foreground";
 const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max);
 const ESTIMATED_ROW_HEIGHT_PX = 41;
@@ -157,6 +161,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   const accountOnSignUp = account?.onSignUp;
   const accountIsLoading = account?.isLoading ?? false;
   const pathname = usePathname() ?? "";
+  const router = useRouter();
   const [isDesktopSearchOpen, setIsDesktopSearchOpen] = React.useState(false);
   const [containerHeight, setContainerHeight] = React.useState<number | null>(null);
   const derivedOverscan = React.useMemo(() => {
@@ -185,35 +190,38 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   React.useEffect(() => {
     setIsDesktopSearchOpen(false);
   }, [pathname]);
-  const navigationItems = React.useMemo<DesktopNavItem[]>(
+  const navItems = React.useMemo(
     () => [
       {
-        type: "link",
-        href: "/llms",
         label: "LLMs",
-        isActive: pathname === "/" || pathname.startsWith("/llms"),
+        value: "/llms",
+        isCurrent: pathname === "/" || pathname.startsWith("/llms"),
+        icon: Bot,
       },
       {
-        type: "link",
-        href: "/gpus",
         label: "GPUs",
-        isActive: pathname.startsWith("/gpus"),
+        value: "/gpus",
+        isCurrent: pathname.startsWith("/gpus"),
+        icon: Server,
       },
       {
-        type: "link",
-        href: "/tools",
         label: "Tools",
-        isActive: pathname.startsWith("/tools"),
-      },
-      {
-        type: "action",
-        label: "Search",
-        icon: Search,
-        isActive: isDesktopSearchOpen,
-        onSelect: toggleDesktopSearch,
+        value: "/tools",
+        isCurrent: pathname.startsWith("/tools"),
+        icon: Wrench,
       },
     ],
-    [isDesktopSearchOpen, pathname, toggleDesktopSearch],
+    [pathname],
+  );
+  const currentNavValue =
+    navItems.find((item) => item.isCurrent)?.value ?? "/llms";
+  const handleNavChange = React.useCallback(
+    (value: string) => {
+      if (!value) return;
+      if (value === pathname) return;
+      router.push(value);
+    },
+    [pathname, router],
   );
   const mobileHeightClass = mobileHeaderOffset
     ? "h-[calc(100dvh-var(--total-padding-mobile)-var(--mobile-header-offset))]"
@@ -662,10 +670,44 @@ export function DataTableInfinite<TData, TValue, TMeta>({
           >
             <div className="flex h-full w-full flex-col">
               <div className="mx-auto w-full max-w-full pl-4 pr-0 pt-4 mb-4 space-y-4">
-                <DesktopNavTabs
-                  items={navigationItems}
-                  className={gradientSurfaceClass}
-                />
+                <div className="flex items-center gap-4">
+                  {searchFilterField && isDesktopSearchOpen ? (
+                    <div className="w-full">
+                      <DataTableFilterInput {...searchFilterField} />
+                    </div>
+                  ) : (
+                    <Select value={currentNavValue} onValueChange={handleNavChange}>
+                      <SelectTrigger className="h-9 w-full justify-between">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {navItems.map((item) => (
+                          <SelectItem
+                            key={item.value}
+                            value={item.value}
+                            className="gap-2"
+                          >
+                            <item.icon className="h-4 w-4" aria-hidden="true" />
+                            {item.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  {searchFilterField ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={toggleDesktopSearch}
+                      aria-pressed={isDesktopSearchOpen}
+                      className="shrink-0"
+                    >
+                      <Search className="h-4 w-4" aria-hidden="true" />
+                      <span className="sr-only">Search</span>
+                    </Button>
+                  ) : null}
+                </div>
                 {searchFilterField ? (
                   <>
                     <div className="flex items-center gap-2 sm:hidden">
@@ -673,13 +715,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                         <DataTableFilterInput {...searchFilterField} />
                       </div>
                     </div>
-                    {isDesktopSearchOpen ? (
-                      <div className="hidden items-center gap-2 sm:flex">
-                        <div className="flex-1">
-                          <DataTableFilterInput {...searchFilterField} />
-                        </div>
-                      </div>
-                    ) : null}
                   </>
                 ) : null}
               </div>

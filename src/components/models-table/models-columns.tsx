@@ -153,7 +153,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
 
       return (
         <div className="flex min-w-0 items-center gap-2">
-          <span className="relative flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border/40 bg-background">
+          <span className="relative flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-md bg-background">
             {logo ? (
               <Image
                 src={logo.src}
@@ -208,12 +208,14 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
   {
     accessorKey: "contextLength",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Context" />
+      <div className="flex justify-end">
+        <DataTableColumnHeader column={column} title="Context" />
+      </div>
     ),
     cell: ({ row }) => {
       const contextLength = row.original.contextLength;
 
-      if (!contextLength) return <span className="text-muted-foreground">-</span>;
+      if (!contextLength) return <span className="text-muted-foreground">N/A</span>;
 
       // Format large numbers (e.g., 256000 -> 256K, 1000000 -> 1M)
       const formatContextLength = (length: number): string => {
@@ -226,7 +228,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
       };
 
       return (
-        <div className="font-mono text-sm text-left">
+        <div className="font-mono text-sm text-right">
           {formatContextLength(contextLength)} <span className="text-foreground/70">TOK</span>
         </div>
       );
@@ -235,14 +237,16 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
     size: 150,
     minSize: 150,
     meta: {
-      cellClassName: "text-left min-w-[150px]",
-      headerClassName: "text-left min-w-[150px]",
+      cellClassName: "text-right min-w-[150px]",
+      headerClassName: "text-right min-w-[150px]",
     },
   },
   {
     accessorKey: "mmlu",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="MMLU-Pro" />
+      <div className="flex justify-end">
+        <DataTableColumnHeader column={column} title="MMLU-Pro" />
+      </div>
     ),
     cell: ({ row }) => {
       const score = row.original.mmlu;
@@ -253,7 +257,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
       return (
         <span
           className={cn(
-            "block text-left font-mono text-sm tabular-nums",
+            "block text-right font-mono text-sm tabular-nums",
             isMissing && "text-foreground/70",
           )}
         >
@@ -269,14 +273,16 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
     size: 150,
     minSize: 150,
     meta: {
-      cellClassName: "text-left min-w-[150px] tabular-nums",
-      headerClassName: "text-left min-w-[150px] tabular-nums",
+      cellClassName: "text-right min-w-[150px] tabular-nums",
+      headerClassName: "text-right min-w-[150px] tabular-nums",
     },
   },
   {
     accessorKey: "maxCompletionTokens",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Max Output" />
+      <div className="flex justify-end">
+        <DataTableColumnHeader column={column} title="Max Output" />
+      </div>
     ),
     cell: ({ row }) => {
       const maxTokens = row.original.maxCompletionTokens;
@@ -296,7 +302,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
       };
 
       return (
-        <div className="font-mono text-sm text-left">
+        <div className="font-mono text-sm text-right">
           {formatMaxTokens(maxTokens)} <span className="text-foreground/70">TOK</span>
         </div>
       );
@@ -307,15 +313,17 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
     size: 150,
     minSize: 150,
     meta: {
-      cellClassName: "text-left min-w-[150px]",
-      headerClassName: "text-left min-w-[150px]",
+      cellClassName: "text-right min-w-[150px]",
+      headerClassName: "text-right min-w-[150px]",
     },
   },
   {
     id: "modalities",
     accessorKey: "inputModalities",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Modality" />
+      <div className="flex justify-end">
+        <DataTableColumnHeader column={column} title="Modality" />
+      </div>
     ),
     cell: ({ row }) => {
       const inputModalities = row.original.inputModalities ?? [];
@@ -339,40 +347,44 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
       );
 
       return (
-        <HoverCard openDelay={0} closeDelay={0}>
-          <HoverCardTrigger asChild>
-            <div className="text-[12px] border border-border/70 w-fit bg-background leading-[18px] rounded-sm h-[20px] px-[6px] text-left tracking-wide cursor-pointer">
-              {label}
-            </div>
-          </HoverCardTrigger>
-          <HoverCardPortal>
-            <HoverCardContent side="bottom" sideOffset={8} className="w-fit max-w-[155px] text-left text-xs space-y-1.5 p-2">
-              <div>
-                <span className="font-semibold text-foreground">Input:</span>{" "}
-                <span className="text-foreground/80">{formatList(inputModalities)}</span>
+        <div className="flex justify-end">
+          <HoverCard openDelay={0} closeDelay={0}>
+            <HoverCardTrigger asChild>
+              <div className="text-[12px] border border-border/70 w-fit bg-background leading-[18px] rounded-sm h-[20px] px-[6px] text-left tracking-wide cursor-pointer">
+                {label}
               </div>
-              <div>
-                <span className="font-semibold text-foreground">Output:</span>{" "}
-                <span className="text-foreground/80">{formatList(outputModalities)}</span>
-              </div>
-            </HoverCardContent>
-          </HoverCardPortal>
-        </HoverCard>
+            </HoverCardTrigger>
+            <HoverCardPortal>
+              <HoverCardContent side="bottom" sideOffset={8} collisionPadding={12} className="w-fit max-w-[155px] text-left text-xs space-y-1.5 p-2">
+                <div>
+                  <span className="font-semibold text-foreground">Input:</span>{" "}
+                  <span className="text-foreground/80">{formatList(inputModalities)}</span>
+                </div>
+                <div>
+                  <span className="font-semibold text-foreground">Output:</span>{" "}
+                  <span className="text-foreground/80">{formatList(outputModalities)}</span>
+                </div>
+              </HoverCardContent>
+            </HoverCardPortal>
+          </HoverCard>
+        </div>
       );
     },
     enableSorting: true,
     size: 150,
     minSize: 150,
     meta: {
-      cellClassName: "text-left min-w-[150px]",
-      headerClassName: "text-left min-w-[150px]",
+      cellClassName: "text-right min-w-[150px]",
+      headerClassName: "text-right min-w-[150px]",
     },
   },
   {
     id: "inputPrice",
     accessorKey: "promptPrice",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Prompt" />
+      <div className="flex justify-end">
+        <DataTableColumnHeader column={column} title="Prompt" />
+      </div>
     ),
     cell: ({ row }) => {
       const inputPrice = row.original.promptPrice;
@@ -380,7 +392,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
       const formattedPrice = formatPricePerMillion(inputPrice);
 
       return (
-        <div className="text-left">
+        <div className="text-right">
           {formattedPrice === "Free" ? (
             <span className="font-mono text-foreground">Free</span>
           ) : (
@@ -396,15 +408,17 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
     size: 150,
     minSize: 150,
     meta: {
-      cellClassName: "text-left min-w-[150px]",
-      headerClassName: "text-left min-w-[150px]",
+      cellClassName: "text-right min-w-[150px]",
+      headerClassName: "text-right min-w-[150px]",
     },
   },
   {
     id: "outputPrice",
     accessorKey: "completionPrice",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Output" />
+      <div className="flex justify-end">
+        <DataTableColumnHeader column={column} title="Output" />
+      </div>
     ),
     cell: ({ row }) => {
       const outputPrice = row.original.completionPrice;
@@ -412,7 +426,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
       const formattedPrice = formatPricePerMillion(outputPrice);
 
       return (
-        <div className="text-left">
+        <div className="text-right">
           {formattedPrice === "Free" ? (
             <span className="font-mono text-foreground">Free</span>
           ) : (
@@ -428,8 +442,8 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
     size: 150,
     minSize: 150,
     meta: {
-      cellClassName: "text-left min-w-[150px]",
-      headerClassName: "text-left min-w-[150px]",
+      cellClassName: "text-right min-w-[150px]",
+      headerClassName: "text-right min-w-[150px]",
     },
   },
 ];

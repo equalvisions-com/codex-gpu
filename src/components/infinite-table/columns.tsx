@@ -135,7 +135,9 @@ export const columns: ColumnDef<ColumnSchema>[] = [
   {
     accessorKey: "price_hour_usd",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Price" />
+      <div className="flex justify-end">
+        <DataTableColumnHeader column={column} title="Price" />
+      </div>
     ),
     cell: ({ row }) => {
       const original = row.original;
@@ -143,7 +145,7 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       if (!price) return <span className="text-foreground/70">N/A</span>;
 
       return (
-        <div className="text-left">
+        <div className="text-right">
           <span className="font-mono">${price.toFixed(2)}</span>{" "}
           <span className="font-mono text-foreground/70">HR</span>
         </div>
@@ -153,21 +155,23 @@ export const columns: ColumnDef<ColumnSchema>[] = [
     size: 150,
     minSize: 150,
     meta: {
-      headerClassName: "text-left min-w-[150px]",
-      cellClassName: "text-left min-w-[150px]",
+      headerClassName: "text-right min-w-[150px]",
+      cellClassName: "text-right min-w-[150px]",
     },
   },
   {
     accessorKey: "gpu_count",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="GPUs" />
+      <div className="flex justify-end">
+        <DataTableColumnHeader column={column} title="GPUs" />
+      </div>
     ),
     cell: ({ row }) => {
       const gpuCount = row.getValue<ColumnSchema["gpu_count"]>("gpu_count");
       if (!gpuCount) return <span className="text-foreground/70">N/A</span>;
 
       return (
-        <div className="text-left">
+        <div className="text-right">
           <span className="font-mono">{gpuCount}</span>{" "}
           <span className="text-foreground/70">{gpuCount === 1 ? "GPU" : "GPUs"}</span>
         </div>
@@ -177,19 +181,21 @@ export const columns: ColumnDef<ColumnSchema>[] = [
     size: 150,
     minSize: 150,
     meta: {
-      cellClassName: "text-left min-w-[150px]",
-      headerClassName: "text-left min-w-[150px]",
+      cellClassName: "text-right min-w-[150px]",
+      headerClassName: "text-right min-w-[150px]",
     },
   },
   {
     accessorKey: "vram_gb",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="VRAM" />
+      <div className="flex justify-end">
+        <DataTableColumnHeader column={column} title="VRAM" />
+      </div>
     ),
     cell: ({ row }) => {
       const vramGb = row.getValue<ColumnSchema["vram_gb"]>("vram_gb");
       return vramGb ? (
-        <div className="text-left">
+        <div className="text-right">
           <span className="font-mono">{vramGb}</span>{" "}
           <span className="text-foreground/70">GB</span>
         </div>
@@ -201,21 +207,23 @@ export const columns: ColumnDef<ColumnSchema>[] = [
     size: 150,
     minSize: 150,
     meta: {
-      cellClassName: "text-left min-w-[150px]",
-      headerClassName: "text-left min-w-[150px]",
+      cellClassName: "text-right min-w-[150px]",
+      headerClassName: "text-right min-w-[150px]",
     },
   },
   {
     accessorKey: "vcpus",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="vCPUs" />
+      <div className="flex justify-end">
+        <DataTableColumnHeader column={column} title="vCPUs" />
+      </div>
     ),
     cell: ({ row }) => {
       const vcpus = row.getValue<ColumnSchema["vcpus"]>("vcpus");
       if (!vcpus) return <span className="text-foreground/70">N/A</span>;
 
       return (
-        <div className="text-left">
+        <div className="text-right">
           <span className="font-mono">{vcpus}</span>{" "}
           <span className="text-foreground/70">vCPUs</span>
         </div>
@@ -225,19 +233,21 @@ export const columns: ColumnDef<ColumnSchema>[] = [
     size: 150,
     minSize: 150,
     meta: {
-      cellClassName: "text-left min-w-[150px]",
-      headerClassName: "text-left min-w-[150px]",
+      cellClassName: "text-right min-w-[150px]",
+      headerClassName: "text-right min-w-[150px]",
     },
   },
   {
     accessorKey: "system_ram_gb",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="RAM" />
+      <div className="flex justify-end">
+        <DataTableColumnHeader column={column} title="RAM" />
+      </div>
     ),
     cell: ({ row }) => {
       const ramGb = row.getValue<ColumnSchema["system_ram_gb"]>("system_ram_gb");
       return ramGb ? (
-        <div className="text-left">
+        <div className="text-right">
           <span className="font-mono">{ramGb}</span>{" "}
           <span className="text-foreground/70">GB</span>
         </div>
@@ -249,24 +259,34 @@ export const columns: ColumnDef<ColumnSchema>[] = [
     size: 150,
     minSize: 150,
     meta: {
-      cellClassName: "text-left min-w-[150px]",
-      headerClassName: "text-left min-w-[150px]",
+      cellClassName: "text-right min-w-[150px]",
+      headerClassName: "text-right min-w-[150px]",
     },
   },
   {
     accessorKey: "type",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Config" />
+      <div className="flex justify-end">
+        <DataTableColumnHeader column={column} title="Config" />
+      </div>
     ),
     cell: ({ row }) => {
       const type = row.getValue<ColumnSchema["type"]>("type");
-      return type ? <span className="block text-left text-[12px] border border-border/70 w-fit bg-background leading-[18px] rounded-sm h-[20px] px-[6px]">{type}</span> : <span className="text-foreground/70">N/A</span>;
+      return type ? (
+        <div className="flex justify-end">
+          <span className="block text-[12px] border border-border/70 w-fit bg-background leading-[18px] rounded-sm h-[20px] px-[6px]">
+            {type}
+          </span>
+        </div>
+      ) : (
+        <span className="text-foreground/70">N/A</span>
+      );
     },
     size: 150,
     minSize: 150,
     meta: {
-      cellClassName: "text-left min-w-[150px]",
-      headerClassName: "text-left min-w-[150px]",
+      cellClassName: "text-right min-w-[150px]",
+      headerClassName: "text-right min-w-[150px]",
     },
   },
 ];

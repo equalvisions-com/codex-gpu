@@ -154,7 +154,7 @@ export const filterFields: DataTableFilterField<ModelsColumnSchema>[] = [
     label: "Context",
     value: "contextLength",
     type: "slider",
-    min: 1000,
+    min: 0,
     max: 1000000,
     step: 1024,
     defaultOpen: true,

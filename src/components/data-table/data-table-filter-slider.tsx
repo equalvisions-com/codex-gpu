@@ -22,6 +22,18 @@ const VRAM_SLIDER_MIN = 0;
 const VRAM_SLIDER_MAX = VRAM_STOPS.length - 1;
 const VRAM_SLIDER_STEP = 0.001;
 
+const CONTEXT_SLIDER_MIN = 0;
+const CONTEXT_SLIDER_MAX = 1;
+const CONTEXT_VALUE_MIN = 0;
+const CONTEXT_VALUE_MAX = 1_000_000;
+const CONTEXT_ANCHORS: Array<{ slider: number; value: number }> = [
+  { slider: CONTEXT_SLIDER_MIN, value: CONTEXT_VALUE_MIN },
+  { slider: 0.03, value: 1_000 },
+  { slider: 0.5, value: 500_000 },
+  { slider: 0.97, value: CONTEXT_VALUE_MAX },
+  { slider: CONTEXT_SLIDER_MAX, value: CONTEXT_VALUE_MAX },
+];
+
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
@@ -58,6 +70,34 @@ function vramValueToSlider(vramValue: number) {
   return VRAM_SLIDER_MAX;
 }
 
+function contextSliderToValue(sliderValue: number) {
+  const clamped = clamp(sliderValue, CONTEXT_SLIDER_MIN, CONTEXT_SLIDER_MAX);
+  for (let index = 0; index < CONTEXT_ANCHORS.length - 1; index++) {
+    const current = CONTEXT_ANCHORS[index];
+    const next = CONTEXT_ANCHORS[index + 1];
+    if (clamped <= next.slider) {
+      const span = next.slider - current.slider || 1;
+      const ratio = (clamped - current.slider) / span;
+      return current.value + ratio * (next.value - current.value);
+    }
+  }
+  return CONTEXT_VALUE_MAX;
+}
+
+function contextValueToSlider(value: number) {
+  const clamped = clamp(value, CONTEXT_VALUE_MIN, CONTEXT_VALUE_MAX);
+  for (let index = 0; index < CONTEXT_ANCHORS.length - 1; index++) {
+    const current = CONTEXT_ANCHORS[index];
+    const next = CONTEXT_ANCHORS[index + 1];
+    if (clamped <= next.value) {
+      const span = next.value - current.value || 1;
+      const ratio = (clamped - current.value) / span;
+      return current.slider + ratio * (next.slider - current.slider);
+    }
+  }
+  return CONTEXT_SLIDER_MAX;
+}
+
 type SliderConfig = {
   sliderMin: number;
   sliderMax: number;
@@ -79,7 +119,7 @@ const GPU_PRICE_TICKS = Array.from({ length: 7 }, (_, index) => {
   return GPU_PRICE_SLIDER_MIN + (GPU_PRICE_SLIDER_MAX - GPU_PRICE_SLIDER_MIN) * fraction;
 });
 
-const SLIDER_CONFIG: Record<"price_hour_usd" | "vram_gb", SliderConfig> = {
+const SLIDER_CONFIG: Record<"price_hour_usd" | "vram_gb" | "contextLength", SliderConfig> = {
   price_hour_usd: {
     sliderMin: GPU_PRICE_SLIDER_MIN,
     sliderMax: GPU_PRICE_SLIDER_MAX,
@@ -115,6 +155,28 @@ const SLIDER_CONFIG: Record<"price_hour_usd" | "vram_gb", SliderConfig> = {
     formatLabel: value => {
       const numeric = Math.round(value);
       return numeric >= VRAM_VALUE_MAX ? `${numeric}GB+` : `${numeric}GB`;
+    },
+  },
+  contextLength: {
+    sliderMin: CONTEXT_SLIDER_MIN,
+    sliderMax: CONTEXT_SLIDER_MAX,
+    sliderStep: 0.001,
+    valueMin: CONTEXT_VALUE_MIN,
+    valueMax: CONTEXT_VALUE_MAX,
+    toSlider: contextValueToSlider,
+    fromSlider: contextSliderToValue,
+    postProcessMax: value => Math.round(value),
+    tickValues: [CONTEXT_VALUE_MIN, 1000, 100000, 250000, 500000, 750000, CONTEXT_VALUE_MAX],
+    labelValues: [1000, 500000, CONTEXT_VALUE_MAX],
+    formatLabel: value => {
+      if (value >= CONTEXT_VALUE_MAX) {
+        return "1M+";
+      }
+      if (value >= 1000) {
+        const thousands = Math.round(value / 1000);
+        return `${thousands}K`;
+      }
+      return `${Math.round(value)}`;
     },
   },
 };
