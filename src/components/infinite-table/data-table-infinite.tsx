@@ -670,7 +670,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
           >
             <div className="flex h-full w-full flex-col">
               <div className="mx-auto w-full max-w-full pl-4 pr-0 pt-4 mb-4 space-y-4">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
                   {searchFilterField && isDesktopSearchOpen ? (
                     <div className="w-full">
                       <DataTableFilterInput {...searchFilterField} />
