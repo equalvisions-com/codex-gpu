@@ -43,7 +43,6 @@ import { usePathname } from "next/navigation";
 import { Search } from "lucide-react";
 import { DesktopNavTabs, type DesktopNavItem } from "./nav-tabs";
 import type { ModelFavoriteKey } from "@/types/model-favorites";
-import { useMediaQuery } from "@/hooks/use-media-query";
 const LazyModelSheetCharts = React.lazy(() =>
   import("./model-sheet-charts").then((module) => ({
     default: module.ModelSheetCharts,
@@ -54,6 +53,9 @@ import type { ModelsColumnSchema } from "./models-schema";
 const noop = () => {};
 const gradientSurfaceClass =
   "border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-foreground";
+const clamp = (value: number, min: number, max: number) =>
+  Math.min(Math.max(value, min), max);
+const ESTIMATED_ROW_HEIGHT_PX = 41;
 
 // Note: chart groupings could be added later if needed
 export type ModelsDataTableMeta<TMeta> = TMeta & {
@@ -157,8 +159,19 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
   const accountIsLoading = account?.isLoading ?? false;
   const pathname = usePathname() ?? "";
   const [isDesktopSearchOpen, setIsDesktopSearchOpen] = React.useState(false);
-  // Use proper media query hook for SSR-safe mobile detection
-  const isMobile = useMediaQuery("(max-width: 639px)");
+  const [containerHeight, setContainerHeight] = React.useState<number | null>(null);
+  const derivedOverscan = React.useMemo(() => {
+    if (containerHeight && Number.isFinite(containerHeight)) {
+      const rowsInView = Math.max(
+        1,
+        Math.ceil(containerHeight / ESTIMATED_ROW_HEIGHT_PX),
+      );
+      // Slightly larger buffer to smooth Safari/table layouts
+      return clamp(Math.ceil(rowsInView * 0.75), 6, 16);
+    }
+    // Fallback buffer when not yet measured
+    return 10;
+  }, [containerHeight]);
   const searchFilterField = React.useMemo(
     () =>
       filterFields.find(
@@ -237,6 +250,36 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
     } as React.CSSProperties;
   }, [mobileHeaderOffset]);
 
+  React.useLayoutEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const measure = () => {
+      const height =
+        container.getBoundingClientRect()?.height || container.offsetHeight;
+      if (height) {
+        setContainerHeight(height);
+      }
+    };
+
+    measure();
+
+    if (typeof ResizeObserver !== "undefined") {
+      const observer = new ResizeObserver((entries) => {
+        const entry = entries[0];
+        if (!entry) return;
+        setContainerHeight(entry.contentRect.height);
+      });
+      observer.observe(container);
+      return () => observer.disconnect();
+    }
+
+    window.addEventListener("resize", measure);
+    return () => {
+      window.removeEventListener("resize", measure);
+    };
+  }, []);
+
   const [isPrefetching, setIsPrefetching] = React.useState(false);
   React.useEffect(() => {
     if (!isFetchingNextPage) {
@@ -258,13 +301,14 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
     (e: React.UIEvent<HTMLElement>) => {
       const { scrollTop, clientHeight, scrollHeight } = e.currentTarget;
       const distanceToBottom = scrollHeight - (scrollTop + clientHeight);
-      // Use smaller threshold on mobile to trigger earlier
-      const threshold = isMobile ? 300 : 600;
+      const threshold = containerHeight
+        ? Math.max(containerHeight * 0.5, ESTIMATED_ROW_HEIGHT_PX * derivedOverscan)
+        : 600;
       if (distanceToBottom <= threshold) {
         requestNextPage();
       }
     },
-    [requestNextPage, isMobile],
+    [requestNextPage, containerHeight, derivedOverscan],
   );
 
 
@@ -378,6 +422,10 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
   const rows = table.getRowModel().rows;
   const columnSizing = table.getState().columnSizing;
   const visibleLeafColumns = table.getVisibleLeafColumns();
+  const overscan = React.useMemo(() => {
+    if (!rows.length) return derivedOverscan;
+    return Math.min(Math.max(1, derivedOverscan), rows.length);
+  }, [rows.length, derivedOverscan]);
 
   React.useEffect(() => {
     if (!rows.length) {
@@ -417,8 +465,8 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => containerRef.current,
-    estimateSize: () => 41, // Row height in pixels
-    overscan: isMobile ? 25 : 50, // Mobile: 25, Desktop: 50 extra rows above/below viewport
+    estimateSize: () => ESTIMATED_ROW_HEIGHT_PX, // Row height in pixels
+    overscan,
     enabled: virtualizationEnabled,
   });
 
@@ -427,16 +475,6 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
   const totalSize = rowVirtualizer.getTotalSize();
   const showErrorState = Boolean(isError);
   const errorMessage = React.useMemo(() => getErrorMessage(error), [error]);
-  
-  // Force virtualizer to recalculate when rows change (important for pagination)
-  React.useEffect(() => {
-    if (rows.length > 0 && containerRef.current) {
-      // Small delay to ensure DOM is updated before measuring
-      requestAnimationFrame(() => {
-        rowVirtualizer.measure();
-      });
-    }
-  }, [rows.length, rowVirtualizer]);
 
 
   const previousFiltersRef = React.useRef<ColumnFiltersState | null>(null);
@@ -504,12 +542,16 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
     }
 
     let frame: number | null = null;
+    let pending = false;
     const handleResize = () => {
-      if (frame) {
-        cancelAnimationFrame(frame);
-      }
+      if (pending) return;
+      pending = true;
       frame = window.requestAnimationFrame(() => {
-        updateMeasuredWidth(headerElement.getBoundingClientRect().width || headerElement.offsetWidth);
+        pending = false;
+        updateMeasuredWidth(
+          headerElement.offsetWidth ||
+            headerElement.getBoundingClientRect().width,
+        );
       });
     };
 
@@ -752,11 +794,8 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
                         if (!hasBeenResized && header.getSize() === modelColumnDefaultSize) {
                           modelColumnHasBeenResizedRef.current = true;
 
-                          const liveWidth = headerRef.current?.getBoundingClientRect()?.width;
                           const fallbackSize = header.getSize();
-                          const measuredWidth = liveWidth && liveWidth > 0
-                            ? liveWidth
-                            : (modelColumnMeasuredWidthRef.current ?? fallbackSize);
+                          const measuredWidth = modelColumnMeasuredWidthRef.current ?? fallbackSize;
                           const widthToSet =
                             measuredWidth && measuredWidth > 0
                               ? Math.max(measuredWidth, fallbackSize, minimumModelColumnWidth)
@@ -952,9 +991,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
                         rows={
                           typeof skeletonNextPageRowCount === "number"
                             ? skeletonNextPageRowCount
-                            : isMobile
-                              ? 15
-                              : 50
+                            : Math.max(overscan * 2, 20)
                         }
                         modelColumnWidth={`${minimumModelColumnWidth}px`}
                       />
