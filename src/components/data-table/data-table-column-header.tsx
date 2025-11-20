@@ -1,5 +1,5 @@
 import type { Column } from "@tanstack/react-table";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowUpDown } from "lucide-react";
 
 import { Button, type ButtonProps } from "@/components/ui/button";
 
@@ -21,7 +21,17 @@ export function DataTableColumnHeader<TData, TValue>({
   ...props
 }: DataTableColumnHeaderProps<TData, TValue>) {
   if (!column.getCanSort()) {
-    return <div className={cn(className, centerTitle && "text-center", titleClassName)}>{title}</div>;
+    return (
+      <div
+        className={cn(
+          className,
+          centerTitle && "text-center",
+          titleClassName,
+        )}
+      >
+        {title}
+      </div>
+    );
   }
 
   return (
@@ -32,28 +42,32 @@ export function DataTableColumnHeader<TData, TValue>({
         column.toggleSorting(undefined);
       }}
       className={cn(
-        "py-0 px-0 h-7 hover:bg-transparent flex gap-[10px] items-center w-full",
+        "py-0 px-[12px] h-7 flex gap-[10px] items-center",
         centerTitle ? "relative justify-center" : "justify-between",
-        className
+        className,
       )}
       {...props}
     >
-      <span className={cn(centerTitle && "pointer-events-none", titleClassName)}>{title}</span>
-      <span className={cn("flex flex-col", centerTitle && "absolute right-0 top-1/2 -translate-y-1/2") }>
-        <ChevronUp
+      <span
+        className={cn(
+          centerTitle && "pointer-events-none",
+          titleClassName,
+        )}
+      >
+        {title}
+      </span>
+      <span
+        className={cn(
+          "flex items-center",
+          centerTitle && "absolute right-0 top-1/2 -translate-y-1/2",
+        )}
+      >
+        <ArrowUpDown
           className={cn(
-            "-mb-0.5 h-3 w-3",
-            column.getIsSorted() === "asc"
+            "h-3.5 w-3.5 transition-colors",
+            column.getIsSorted()
               ? "text-accent-foreground"
-              : "text-foreground/70"
-          )}
-        />
-        <ChevronDown
-          className={cn(
-            "-mt-0.5 h-3 w-3",
-            column.getIsSorted() === "desc"
-              ? "text-accent-foreground"
-              : "text-foreground/70"
+              : "text-foreground/70",
           )}
         />
       </span>

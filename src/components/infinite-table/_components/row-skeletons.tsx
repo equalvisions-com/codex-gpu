@@ -24,7 +24,7 @@ export function RowSkeletons<TData>({
         <TableRow
           key={`skeleton-${rowIndex}`}
           className={cn(
-            "bg-background border-b transition-colors [&>:not(:last-child)]:border-r",
+            "bg-background border-b transition-colors",
             "hover:bg-transparent",
           )}
         >
@@ -37,7 +37,7 @@ export function RowSkeletons<TData>({
               <TableCell
                 key={`${id}-${rowIndex}`}
                 className={cn(
-                  "truncate border-b border-border px-[12px] py-[8px]",
+                  "truncate border-b border-border px-[12px] h-[41px]",
                   cellClassName,
                 )}
                 style={{
@@ -65,7 +65,7 @@ export function RowSkeletons<TData>({
                 ) : isModelColumn ? (
                   <Skeleton className="h-4 w-36 sm:w-48" />
                 ) : (
-                  <div className="flex items-center justify-end">
+                  <div className="flex items-center">
                     <Skeleton className="h-4 w-16" />
                   </div>
                 )}

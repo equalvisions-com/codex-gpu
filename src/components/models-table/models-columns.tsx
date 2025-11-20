@@ -84,6 +84,7 @@ function RowCheckboxCell({ rowId }: { rowId: string }) {
       checked={isChecked}
       onCheckedChange={(next) => toggleCheckedRow(rowId, Boolean(next))}
       aria-label={`Check row ${rowId}`}
+      className="shadow-sm transition-shadow"
     />
   );
 }
@@ -207,7 +208,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
   {
     accessorKey: "contextLength",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Context" titleClassName="ml-auto text-right" />
+      <DataTableColumnHeader column={column} title="Context" />
     ),
     cell: ({ row }) => {
       const contextLength = row.original.contextLength;
@@ -225,7 +226,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
       };
 
       return (
-        <div className="font-mono text-sm text-right">
+        <div className="font-mono text-sm text-left">
           {formatContextLength(contextLength)} <span className="text-foreground/70">TOK</span>
         </div>
       );
@@ -234,14 +235,14 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
     size: 150,
     minSize: 150,
     meta: {
-      cellClassName: "text-right min-w-[150px]",
-      headerClassName: "text-right min-w-[150px]",
+      cellClassName: "text-left min-w-[150px]",
+      headerClassName: "text-left min-w-[150px]",
     },
   },
   {
     accessorKey: "mmlu",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="MMLU-Pro" titleClassName="ml-auto text-right" />
+      <DataTableColumnHeader column={column} title="MMLU-Pro" />
     ),
     cell: ({ row }) => {
       const score = row.original.mmlu;
@@ -252,7 +253,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
       return (
         <span
           className={cn(
-            "block text-right font-mono text-sm tabular-nums",
+            "block text-left font-mono text-sm tabular-nums",
             isMissing && "text-foreground/70",
           )}
         >
@@ -268,14 +269,14 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
     size: 150,
     minSize: 150,
     meta: {
-      cellClassName: "text-right min-w-[150px] tabular-nums",
-      headerClassName: "text-right min-w-[150px] tabular-nums",
+      cellClassName: "text-left min-w-[150px] tabular-nums",
+      headerClassName: "text-left min-w-[150px] tabular-nums",
     },
   },
   {
     accessorKey: "maxCompletionTokens",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Max Output" titleClassName="ml-auto text-right" />
+      <DataTableColumnHeader column={column} title="Max Output" />
     ),
     cell: ({ row }) => {
       const maxTokens = row.original.maxCompletionTokens;
@@ -295,7 +296,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
       };
 
       return (
-        <div className="font-mono text-sm text-right">
+        <div className="font-mono text-sm text-left">
           {formatMaxTokens(maxTokens)} <span className="text-foreground/70">TOK</span>
         </div>
       );
@@ -306,15 +307,15 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
     size: 150,
     minSize: 150,
     meta: {
-      cellClassName: "text-right min-w-[150px]",
-      headerClassName: "text-right min-w-[150px]",
+      cellClassName: "text-left min-w-[150px]",
+      headerClassName: "text-left min-w-[150px]",
     },
   },
   {
     id: "modalities",
     accessorKey: "inputModalities",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Modality" titleClassName="ml-auto text-right" />
+      <DataTableColumnHeader column={column} title="Modality" />
     ),
     cell: ({ row }) => {
       const inputModalities = row.original.inputModalities ?? [];
@@ -327,7 +328,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
       ]).size;
 
       if (!hasModalities || computedScore === 0) {
-        return <span className="text-foreground/70">-</span>;
+        return <span className="text-foreground/70">N/A</span>;
       }
 
       const label = computedScore > 1 ? "Multimodal" : "Unimodal";
@@ -340,7 +341,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
       return (
         <HoverCard openDelay={0} closeDelay={0}>
           <HoverCardTrigger asChild>
-            <div className="text-sm text-right tracking-wide cursor-pointer">
+            <div className="text-[12px] border border-border/70 w-fit bg-background leading-[18px] rounded-sm h-[20px] px-[6px] text-left tracking-wide cursor-pointer">
               {label}
             </div>
           </HoverCardTrigger>
@@ -363,15 +364,15 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
     size: 150,
     minSize: 150,
     meta: {
-      cellClassName: "text-right min-w-[150px]",
-      headerClassName: "text-right min-w-[150px]",
+      cellClassName: "text-left min-w-[150px]",
+      headerClassName: "text-left min-w-[150px]",
     },
   },
   {
     id: "inputPrice",
     accessorKey: "promptPrice",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Prompt" titleClassName="ml-auto text-right" />
+      <DataTableColumnHeader column={column} title="Prompt" />
     ),
     cell: ({ row }) => {
       const inputPrice = row.original.promptPrice;
@@ -379,8 +380,8 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
       const formattedPrice = formatPricePerMillion(inputPrice);
 
       return (
-        <div className="text-right">
-          {formattedPrice === 'Free' ? (
+        <div className="text-left">
+          {formattedPrice === "Free" ? (
             <span className="font-mono text-foreground">Free</span>
           ) : (
             <>
@@ -395,15 +396,15 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
     size: 150,
     minSize: 150,
     meta: {
-      cellClassName: "text-right min-w-[150px]",
-      headerClassName: "text-right min-w-[150px]",
+      cellClassName: "text-left min-w-[150px]",
+      headerClassName: "text-left min-w-[150px]",
     },
   },
   {
     id: "outputPrice",
     accessorKey: "completionPrice",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Output" titleClassName="ml-auto text-right" />
+      <DataTableColumnHeader column={column} title="Output" />
     ),
     cell: ({ row }) => {
       const outputPrice = row.original.completionPrice;
@@ -411,8 +412,8 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
       const formattedPrice = formatPricePerMillion(outputPrice);
 
       return (
-        <div className="text-right">
-          {formattedPrice === 'Free' ? (
+        <div className="text-left">
+          {formattedPrice === "Free" ? (
             <span className="font-mono text-foreground">Free</span>
           ) : (
             <>
@@ -427,8 +428,8 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
     size: 150,
     minSize: 150,
     meta: {
-      cellClassName: "text-right min-w-[150px]",
-      headerClassName: "text-right min-w-[150px]",
+      cellClassName: "text-left min-w-[150px]",
+      headerClassName: "text-left min-w-[150px]",
     },
   },
 ];

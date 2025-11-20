@@ -350,6 +350,8 @@ export function DataTableInfinite<TData, TValue, TMeta>({
 
   // Table rows for rendering order
   const rows = table.getRowModel().rows;
+  const columnSizing = table.getState().columnSizing;
+  const visibleLeafColumns = table.getVisibleLeafColumns();
 
   React.useEffect(() => {
     if (!rows.length) {
@@ -390,7 +392,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => containerRef.current,
-    estimateSize: () => 37, // Row height in pixels
+    estimateSize: () => 41, // Row height in pixels
     overscan: isMobile ? 25 : 50, // Mobile: 25, Desktop: 50 extra rows above/below viewport
     enabled: virtualizationEnabled,
   });
@@ -495,25 +497,6 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     };
   }, [getHeaderRef]);
 
-  React.useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-    const headerElement = getHeaderRef("gpu_model").current;
-    if (!headerElement) {
-      return;
-    }
-    const frame = window.requestAnimationFrame(() => {
-      const width = headerElement.getBoundingClientRect().width || headerElement.offsetWidth;
-      if (width && !Number.isNaN(width)) {
-        modelColumnMeasuredWidthRef.current = width;
-      }
-    });
-    return () => {
-      window.cancelAnimationFrame(frame);
-    };
-  }, [getHeaderRef]);
-
   const minimumModelColumnWidth = React.useMemo(
     () => table.getColumn("gpu_model")?.columnDef.minSize ?? 275,
     [table]
@@ -540,11 +523,10 @@ export function DataTableInfinite<TData, TValue, TMeta>({
 
   const fixedColumnsWidth = React.useMemo(
     () =>
-      table
-        .getVisibleLeafColumns()
+      visibleLeafColumns
         .filter((column) => column.id !== "gpu_model")
         .reduce((acc, column) => acc + column.getSize(), 0),
-    [table]
+    [visibleLeafColumns, columnSizing]
   );
 
   const selectedRow = React.useMemo(() => {
@@ -708,10 +690,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow
                     key={headerGroup.id}
-                    className={cn(
-                      "bg-muted",
-                      "[&>:not(:last-child)]:border-r",
-                    )}
+                    className={cn("bg-muted")}
                   >
                     {headerGroup.headers.map((header) => {
                       const isModelColumn = header.id === "gpu_model";
@@ -1051,7 +1030,7 @@ function Row<TData>({
         }
       }}
       className={cn(
-        "group/model-row relative [&>:not(:last-child)]:border-r",
+        "group/model-row relative",
         "bg-background border-b transition-colors focus-visible:bg-muted hover:cursor-pointer",
         canHover && "data-[can-hover=true]:hover:bg-muted data-[state=selected]:bg-muted data-[checked=checked]:bg-muted",
         !canHover && selected && "bg-muted",
@@ -1074,7 +1053,7 @@ function Row<TData>({
             onPointerDown={isCheckboxCell ? stopPropagation : undefined}
             onKeyDown={isCheckboxCell ? stopPropagation : undefined}
             className={cn(
-              "truncate border-b border-border px-[12px] py-[8px] transition-colors",
+              "truncate border-b border-border px-[12px] py-[10px] transition-colors",
               isCheckboxCell && "cursor-default hover:cursor-default",
               cell.column.columnDef.meta?.cellClassName,
             )}

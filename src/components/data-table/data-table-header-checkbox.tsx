@@ -45,7 +45,7 @@ export function DataTableHeaderCheckbox() {
   return (
     <Checkbox
       aria-label={allChecked ? "Unselect all rows" : "Select all rows"}
-      className="h-4 w-4"
+      className="h-4 w-4 shadow-sm transition-shadow"
       disabled={rowIds.length === 0}
       checked={allChecked ? true : someChecked ? "indeterminate" : false}
       onCheckedChange={handleToggle}
