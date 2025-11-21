@@ -65,11 +65,7 @@ function normalizeModelsSearchParams(
 }
 
 export default function ModelsPage({ searchParams }: ModelsPageProps) {
-  return (
-    <React.Suspense fallback={<ModelsSuspenseFallback />}>
-      <ModelsHydratedContent searchParams={searchParams} />
-    </React.Suspense>
-  );
+  return <ModelsHydratedContent searchParams={searchParams} />;
 }
 
 async function ModelsHydratedContent({
@@ -141,20 +137,6 @@ async function ModelsHydratedContent({
         <ModelsClient />
       </div>
     </HydrationBoundary>
-  );
-}
-
-function ModelsSuspenseFallback() {
-  return (
-    <div className="flex min-h-dvh w-full items-center justify-center">
-      <span
-        className="inline-flex items-center justify-center text-muted-foreground"
-        aria-label="Loading models"
-      >
-        <span className="h-8 w-8 animate-spin rounded-full border-2 border-foreground/70 border-t-transparent" />
-        <span className="sr-only">Loading models</span>
-      </span>
-    </div>
   );
 }
 
