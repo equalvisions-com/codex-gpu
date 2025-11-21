@@ -1109,6 +1109,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
                 permaslug={selectedModel.permaslug}
                 endpointId={selectedModel.endpointId}
                 provider={selectedModel?.provider}
+                throughput={selectedModel?.throughput}
               />
             </React.Suspense>
           ) : null}

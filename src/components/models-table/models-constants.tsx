@@ -8,6 +8,13 @@ import { MODEL_PROVIDER_LOGOS } from "./models-columns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
+export const formatThroughputDisplay = (value: number | null | undefined) => {
+  if (value === null || value === undefined) return "N/A";
+  if (!Number.isFinite(value)) return "N/A";
+  const formatted = value.toFixed(1);
+  return `${formatted} TPS`;
+};
+
 const MODEL_AUTHOR_LOGOS: Record<string, { src: string; alt: string }> = Object.keys(
   MODEL_PROVIDER_LOGOS,
 ).reduce((acc, key) => {

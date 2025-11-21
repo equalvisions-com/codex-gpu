@@ -15,7 +15,7 @@ const InputWithAddons = React.forwardRef<
   return (
     <div
       className={cn(
-        "border ring-offset-background focus-within:ring-ring group flex h-10 w-full rounded-md border bg-background text-sm focus-within:outline-none focus-within:ring-none focus-within:ring-offset-none overflow-hidden",
+        "border ring-offset-background focus-within:ring-ring group flex h-10 w-full rounded-md bg-background text-sm focus-within:outline-none focus-within:ring-none focus-within:ring-offset-none overflow-hidden",
         containerClassName
       )}
     >

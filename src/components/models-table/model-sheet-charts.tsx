@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { SheetLineChart, type SheetLineChartProps } from "@/components/charts/sheet-line-chart";
+import { SheetLineChart } from "@/components/charts/sheet-line-chart";
+import { formatThroughputDisplay } from "./models-constants";
 
 type TimeseriesPoint = { observedAt: string };
 
@@ -30,9 +31,15 @@ type ModelSheetChartsProps = {
   permaslug?: string | null;
   endpointId?: string | null;
   provider?: string | null;
+  throughput?: number | null;
 };
 
-export function ModelSheetCharts({ permaslug, endpointId, provider }: ModelSheetChartsProps) {
+export function ModelSheetCharts({
+  permaslug,
+  endpointId,
+  provider,
+  throughput,
+}: ModelSheetChartsProps) {
   const enabled = Boolean(permaslug && endpointId);
 
   const throughputQuery = useQuery<ThroughputApiResponse>({
@@ -87,14 +94,6 @@ export function ModelSheetCharts({ permaslug, endpointId, provider }: ModelSheet
     }));
   }, [throughputQuery.data]);
 
-  const throughputAverage = React.useMemo(() => {
-    if (!throughputData.length) {
-      return null;
-    }
-    const sum = throughputData.reduce((total, point) => total + point.value, 0);
-    return sum / throughputData.length;
-  }, [throughputData]);
-
   const latencyData = React.useMemo(() => {
     const series = latencyQuery.data?.series?.[0];
     if (!series || !Array.isArray(series.data)) {
@@ -128,16 +127,18 @@ export function ModelSheetCharts({ permaslug, endpointId, provider }: ModelSheet
     return `${formatted} tps`;
   }, []);
 
-  const throughputDescription = throughputAverage != null
-    ? `${throughputAverage.toLocaleString(undefined, {
-        maximumFractionDigits: 1,
-      })} tps`
-    : "";
   const latencyDescription = latencyAverage != null
     ? `${latencyAverage.toLocaleString(undefined, {
         maximumFractionDigits: 2,
       })}s`
     : "";
+  const throughputDescription = React.useMemo(() => {
+    const formatted = formatThroughputDisplay(throughput ?? null);
+    if (formatted === "N/A") {
+      return "";
+    }
+    return formatted;
+  }, [throughput]);
   const missingSelection = !permaslug || !endpointId;
   const emptyMessage = missingSelection
     ? "Select a provider variant to load throughput."
