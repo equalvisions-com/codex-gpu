@@ -43,6 +43,7 @@ export function useTableSearchState(
 
   const columnFilters = React.useMemo<ColumnFiltersState>(() => {
     const baseFilters = Object.entries(filter)
+      .filter(([key]) => key !== "bookmarks") // bookmarks mode shouldn't count as an active filter
       .map(([key, value]) => ({
         id: key,
         value: value as unknown,

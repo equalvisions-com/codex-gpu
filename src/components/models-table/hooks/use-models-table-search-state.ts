@@ -40,11 +40,16 @@ export function useModelsTableSearchState(
 
   const columnFilters = React.useMemo<ColumnFiltersState>(() => {
     const baseFilters = Object.entries(filter)
+      .filter(([key]) => key !== "bookmarks") // bookmarks mode shouldn't count as an active filter
       .map(([key, value]) => {
         if (key === "modalityDirections") {
+          const parsed = deserializeModalityDirections(value);
+          const hasDirections = Object.keys(parsed).length > 0;
+
           return {
             id: key,
-            value: deserializeModalityDirections(value),
+            // Avoid keeping an always-truthy empty object so the reset button can disable
+            value: hasDirections ? parsed : null,
           };
         }
         return {

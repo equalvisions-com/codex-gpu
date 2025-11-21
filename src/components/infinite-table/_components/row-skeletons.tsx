@@ -65,7 +65,7 @@ export function RowSkeletons<TData>({
                 ) : isModelColumn ? (
                   <Skeleton className="h-4 w-36 sm:w-48" />
                 ) : (
-                  <div className="flex items-center">
+                  <div className="flex items-center justify-end">
                     <Skeleton className="h-4 w-16" />
                   </div>
                 )}

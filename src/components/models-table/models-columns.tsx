@@ -102,9 +102,10 @@ function formatPricePerMillion(price: string | number | null | undefined): strin
   return `$${perMillion.toFixed(2)}`;
 }
 
-function formatMmluScore(score: number | null | undefined): string {
-  if (score === null || score === undefined) return 'N/A';
-  return `${(score * 100).toFixed(1)}%`;
+function formatThroughput(value: number | null | undefined): string {
+  if (value === null || value === undefined) return 'N/A';
+  if (!Number.isFinite(value)) return 'N/A';
+  return value.toFixed(1);
 }
 
 export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
@@ -242,42 +243,6 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
     },
   },
   {
-    accessorKey: "mmlu",
-    header: ({ column }) => (
-      <div className="flex justify-end">
-        <DataTableColumnHeader column={column} title="MMLU-Pro" />
-      </div>
-    ),
-    cell: ({ row }) => {
-      const score = row.original.mmlu;
-      const formatted = formatMmluScore(score ?? null);
-      const isMissing = formatted === "N/A";
-      const hasPercent = formatted.endsWith("%");
-      const numericPortion = hasPercent ? formatted.slice(0, -1) : formatted;
-      return (
-        <span
-          className={cn(
-            "block text-right font-mono text-sm tabular-nums",
-            isMissing && "text-foreground/70",
-          )}
-        >
-          {numericPortion}
-          {hasPercent ? (
-            <span className="text-foreground/70">%</span>
-          ) : null}
-        </span>
-      );
-    },
-    enableSorting: true,
-    sortingFn: "auto",
-    size: 150,
-    minSize: 150,
-    meta: {
-      cellClassName: "text-right min-w-[150px] tabular-nums",
-      headerClassName: "text-right min-w-[150px] tabular-nums",
-    },
-  },
-  {
     accessorKey: "maxCompletionTokens",
     header: ({ column }) => (
       <div className="flex justify-end">
@@ -315,6 +280,33 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
     meta: {
       cellClassName: "text-right min-w-[150px]",
       headerClassName: "text-right min-w-[150px]",
+    },
+  },
+  {
+    accessorKey: "throughput",
+    header: ({ column }) => (
+      <div className="flex justify-end">
+        <DataTableColumnHeader column={column} title="Throughput" />
+      </div>
+    ),
+    cell: ({ row }) => {
+      const throughput = row.original.throughput;
+      const formatted = formatThroughput(throughput ?? null);
+      const isNA = formatted === "N/A";
+      return (
+        <span className={cn("block text-right font-mono text-sm tabular-nums", isNA ? "text-foreground/70" : undefined)}>
+          {formatted}
+          {!isNA ? <span className="text-foreground/70"> TPS</span> : null}
+        </span>
+      );
+    },
+    enableSorting: true,
+    sortingFn: "auto",
+    size: 150,
+    minSize: 150,
+    meta: {
+      cellClassName: "text-right min-w-[150px] tabular-nums",
+      headerClassName: "text-right min-w-[150px] tabular-nums",
     },
   },
   {

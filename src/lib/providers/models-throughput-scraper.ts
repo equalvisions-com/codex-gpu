@@ -19,6 +19,8 @@ interface ThroughputScrapeResult {
   permaslugsFailed: number;
   samplesStored: number;
   clearedSamples: number;
+  modelsReset: number;
+  modelsUpdated: number;
   touchedPermaslugs: string[];
   errors: { permaslug: string; message: string }[];
 }
@@ -100,6 +102,7 @@ class ModelsThroughputScraper {
     const pending = typeof limit === "number" ? permaslugs.slice(0, Math.max(limit, 0)) : permaslugs;
 
     const clearedSamples = await modelThroughputCache.clearAll();
+    const modelsReset = await modelThroughputCache.resetModelThroughput();
     const touchedPermaslugs = new Set<string>();
 
     const stats: ThroughputScrapeResult = {
@@ -108,6 +111,8 @@ class ModelsThroughputScraper {
       permaslugsFailed: 0,
       samplesStored: 0,
       clearedSamples,
+      modelsReset,
+      modelsUpdated: 0,
       touchedPermaslugs: [],
       errors: [],
     };
@@ -148,6 +153,7 @@ class ModelsThroughputScraper {
     }
 
     stats.touchedPermaslugs = Array.from(touchedPermaslugs);
+    stats.modelsUpdated = await modelThroughputCache.syncLatestThroughputToModels();
     return stats;
   }
 

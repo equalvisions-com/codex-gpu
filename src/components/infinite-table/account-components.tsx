@@ -384,12 +384,12 @@ export function UserMenu({
                         className="pointer-events-none absolute left-[15px] top-1 bottom-1 w-px bg-muted"
                       />
                       <DropdownMenuItem asChild className={cn(dropdownMenuItemClassName, "pl-2")}>
-                        <Link href="/llms?favorites=true">
+                        <Link href="/llms?bookmarks=true">
                           <span>LLMs</span>
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild className={cn(dropdownMenuItemClassName, "pl-2")}>
-                        <Link href="/gpus?favorites=true">
+                        <Link href="/gpus?bookmarks=true">
                           <span>GPUs</span>
                         </Link>
                       </DropdownMenuItem>

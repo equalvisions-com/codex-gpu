@@ -182,7 +182,7 @@ const mapRowToAIModel = (row: AIModelRow): AIModel => {
     pricing: pricingData,
     features: row.features as Record<string, any>,
     provider: row.provider,
-    mmlu: parseNullableNumber(row.mmlu),
+    throughput: parseNullableNumber(row.throughput),
     maxCompletionTokens: row.maxCompletionTokens ?? null,
     supportedParameters: row.supportedParameters || [],
     promptPrice,
@@ -286,7 +286,7 @@ function buildModelFilterConditions(search: ModelsSearchParamsType) {
         sql`CAST(${aiModels.completionPrice} AS TEXT) ILIKE ${searchTerm}`,
         sql`CAST(${aiModels.contextLength} AS TEXT) ILIKE ${searchTerm}`,
         sql`CAST(${aiModels.maxCompletionTokens} AS TEXT) ILIKE ${searchTerm}`,
-        sql`CAST(${aiModels.mmlu} AS TEXT) ILIKE ${searchTerm}`,
+        sql`CAST(${aiModels.throughput} AS TEXT) ILIKE ${searchTerm}`,
       )!,
     );
   }
@@ -341,7 +341,7 @@ class ModelsCache {
       pricing: model.pricing,
       features: model.features,
       provider: model.provider,
-      mmlu: model.mmlu ?? null,
+      throughput: model.throughput ?? null,
       maxCompletionTokens: model.maxCompletionTokens ?? null,
       supportedParameters: model.supportedParameters,
       modalityScore: computeModalityScore(model.inputModalities, model.outputModalities),
@@ -515,8 +515,8 @@ class ModelsCache {
         case 'outputPrice':
           orderByClause = sql`${aiModels.completionPrice} ${sqlDirection} ${nullsPlacement}`;
           break;
-        case 'mmlu':
-          orderByClause = sql`${aiModels.mmlu} ${sqlDirection} ${nullsPlacement}`;
+        case 'throughput':
+          orderByClause = sql`${aiModels.throughput} ${sqlDirection} ${nullsPlacement}`;
           break;
         case 'maxCompletionTokens':
           // Direct column sorting (much more efficient than JSONB extraction)
@@ -572,7 +572,8 @@ class ModelsCache {
     const filterConditions = buildModelFilterConditions(search);
 
     // Build ORDER BY clause (same logic as getModelsFiltered)
-    let orderByClause;
+    const defaultOrderBy = [desc(userModelFavorites.createdAt), asc(aiModels.provider)];
+    let orderByClause: any;
     if (search.sort) {
       const { id, desc: isDesc } = search.sort;
       const direction = isDesc ? desc : asc;
@@ -603,8 +604,8 @@ class ModelsCache {
         case 'outputPrice':
           orderByClause = sql`${aiModels.completionPrice} ${sqlDirection} ${nullsPlacement}`;
           break;
-        case 'mmlu':
-          orderByClause = sql`${aiModels.mmlu} ${sqlDirection} ${nullsPlacement}`;
+        case 'throughput':
+          orderByClause = sql`${aiModels.throughput} ${sqlDirection} ${nullsPlacement}`;
           break;
         case 'maxCompletionTokens':
           // Direct column sorting (much more efficient than JSONB extraction)
@@ -616,12 +617,12 @@ class ModelsCache {
           break;
         }
         default:
-          // Default: sort by provider
-          orderByClause = asc(aiModels.provider);
+          orderByClause = defaultOrderBy;
       }
-    } else {
-      // Default: sort by provider
-      orderByClause = asc(aiModels.provider);
+    }
+
+    if (!Array.isArray(orderByClause)) {
+      orderByClause = orderByClause ? [orderByClause] : defaultOrderBy;
     }
 
     // Apply pagination
@@ -681,7 +682,7 @@ class ModelsCache {
         promptPrice: aiModels.promptPrice,
         completionPrice: aiModels.completionPrice,
         provider: aiModels.provider,
-        mmlu: aiModels.mmlu,
+        throughput: aiModels.throughput,
         maxCompletionTokens: aiModels.maxCompletionTokens,
         supportedParameters: aiModels.supportedParameters,
         scrapedAt: aiModels.scrapedAt,
@@ -689,7 +690,7 @@ class ModelsCache {
       .from(userModelFavorites)
       .innerJoin(aiModels, eq(userModelFavorites.modelId, aiModels.id))
       .where(whereClause)
-      .orderBy(orderByClause)
+      .orderBy(...orderByClause)
       .limit(size)
       .offset(cursor);
 

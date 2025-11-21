@@ -1,6 +1,6 @@
 {
-  "id": "39b360f8-44a4-45e9-8cb8-33a8e59ca6db",
-  "prevId": "473971e9-7cc0-49d2-b541-0bab96a8a28f",
+  "id": "0017_add_ai_models_throughput",
+  "prevId": "0016_models_price_indexes",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -129,9 +129,27 @@
           "primaryKey": false,
           "notNull": false
         },
+        "modality_score": {
+          "name": "modality_score",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
         "endpoint_id": {
           "name": "endpoint_id",
           "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "prompt_price": {
+          "name": "prompt_price",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "completion_price": {
+          "name": "completion_price",
+          "type": "double precision",
           "primaryKey": false,
           "notNull": false
         },
@@ -282,6 +300,66 @@
           "isUnique": false,
           "concurrently": false,
           "method": "gin",
+          "with": {}
+        },
+        "ai_models_prompt_price_idx": {
+          "name": "ai_models_prompt_price_idx",
+          "columns": [
+            {
+              "expression": "prompt_price",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "ai_models_completion_price_idx": {
+          "name": "ai_models_completion_price_idx",
+          "columns": [
+            {
+              "expression": "completion_price",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "ai_models_normalized_name_idx": {
+          "name": "ai_models_normalized_name_idx",
+          "columns": [
+            {
+              "expression": "COALESCE(lower(trim(\"short_name\")), lower(trim(\"name\")), '')",
+              "isExpression": true,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "ai_models_modality_score_idx": {
+          "name": "ai_models_modality_score_idx",
+          "columns": [
+            {
+              "expression": "modality_score",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
           "with": {}
         },
         "ai_models_throughput_idx": {
@@ -465,6 +543,66 @@
           "isUnique": false,
           "concurrently": false,
           "method": "gin",
+          "with": {}
+        },
+        "gpu_pricing_gpu_count_idx": {
+          "name": "gpu_pricing_gpu_count_idx",
+          "columns": [
+            {
+              "expression": "(CAST(\"data\"->>'gpu_count' AS NUMERIC))",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "gpu_pricing_vcpus_idx": {
+          "name": "gpu_pricing_vcpus_idx",
+          "columns": [
+            {
+              "expression": "(CAST(\"data\"->>'vcpus' AS NUMERIC))",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "gpu_pricing_system_ram_idx": {
+          "name": "gpu_pricing_system_ram_idx",
+          "columns": [
+            {
+              "expression": "(CAST(\"data\"->>'system_ram_gb' AS NUMERIC))",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "gpu_pricing_type_sort_idx": {
+          "name": "gpu_pricing_type_sort_idx",
+          "columns": [
+            {
+              "expression": "(COALESCE(\"data\"->>'type', ''))",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
           "with": {}
         },
         "gpu_pricing_stable_key_idx": {
@@ -1050,6 +1188,203 @@
           "columns": [
             "permaslug",
             "endpoint_id",
+            "observed_at"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.model_latency_samples": {
+      "name": "model_latency_samples",
+      "schema": "",
+      "columns": {
+        "permaslug": {
+          "name": "permaslug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "endpoint_id": {
+          "name": "endpoint_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "observed_at": {
+          "name": "observed_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "latency": {
+          "name": "latency",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "scraped_at": {
+          "name": "scraped_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "model_latency_permaslug_idx": {
+          "name": "model_latency_permaslug_idx",
+          "columns": [
+            {
+              "expression": "permaslug",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "model_latency_endpoint_idx": {
+          "name": "model_latency_endpoint_idx",
+          "columns": [
+            {
+              "expression": "endpoint_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "model_latency_observed_idx": {
+          "name": "model_latency_observed_idx",
+          "columns": [
+            {
+              "expression": "observed_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "model_latency_samples_pk": {
+          "name": "model_latency_samples_pk",
+          "columns": [
+            "permaslug",
+            "endpoint_id",
+            "observed_at"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.gpu_price_samples": {
+      "name": "gpu_price_samples",
+      "schema": "",
+      "columns": {
+        "stable_key": {
+          "name": "stable_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "provider": {
+          "name": "provider",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "observed_at": {
+          "name": "observed_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "price_usd": {
+          "name": "price_usd",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "scraped_at": {
+          "name": "scraped_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "gpu_price_samples_stable_key_idx": {
+          "name": "gpu_price_samples_stable_key_idx",
+          "columns": [
+            {
+              "expression": "stable_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "gpu_price_samples_provider_idx": {
+          "name": "gpu_price_samples_provider_idx",
+          "columns": [
+            {
+              "expression": "provider",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "gpu_price_samples_observed_idx": {
+          "name": "gpu_price_samples_observed_idx",
+          "columns": [
+            {
+              "expression": "observed_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "gpu_price_samples_pk": {
+          "name": "gpu_price_samples_pk",
+          "columns": [
+            "stable_key",
             "observed_at"
           ]
         }

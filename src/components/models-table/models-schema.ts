@@ -20,7 +20,7 @@ const modelsColumnSchema = z.object({
   outputModalities: z.array(z.string()),
   permaslug: z.string().nullable(),
   endpointId: z.string().nullable(),
-  mmlu: z.number().nullable(),
+  throughput: z.number().nullable(),
   maxCompletionTokens: z.number().nullable(),
   supportedParameters: z.array(z.string()),
   modalityScore: z.number().nullable(),

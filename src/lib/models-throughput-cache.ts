@@ -65,6 +65,29 @@ class ModelThroughputCache {
     return deleted.length;
   }
 
+  async resetModelThroughput(): Promise<number> {
+    const result = await db.execute(sql`UPDATE ai_models SET throughput = NULL`);
+    return Number((result as any)?.rowCount ?? 0);
+  }
+
+  async syncLatestThroughputToModels(): Promise<number> {
+    const result = await db.execute(sql`
+      UPDATE ai_models AS m
+      SET throughput = latest.throughput
+      FROM (
+        SELECT DISTINCT ON (endpoint_id)
+          endpoint_id,
+          throughput
+        FROM model_throughput_samples
+        WHERE throughput IS NOT NULL
+        ORDER BY endpoint_id, observed_at DESC
+      ) AS latest
+      WHERE m.endpoint_id = latest.endpoint_id
+    `);
+
+    return Number((result as any)?.rowCount ?? 0);
+  }
+
   async getSeries(permaslug: string, endpointId?: string): Promise<ThroughputSeriesPoint[]> {
     if (!permaslug) return [];
 

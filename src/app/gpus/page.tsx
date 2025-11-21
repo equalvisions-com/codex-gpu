@@ -82,7 +82,7 @@ async function GpusHydratedContent({
   let firstPagePayload: Awaited<ReturnType<typeof getGpuPricingPage>> | null =
     null;
 
-  if (parsedSearch.favorites !== "true") {
+  if (parsedSearch.bookmarks !== "true") {
     try {
       const infiniteOptions = dataOptions(parsedSearch);
       await queryClient.prefetchInfiniteQuery({

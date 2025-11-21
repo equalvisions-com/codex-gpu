@@ -13,7 +13,7 @@ CREATE TABLE "ai_models" (
 	"group" text,
 	"instruct_type" text,
 	"permaslug" text,
-	"mmlu" double precision,
+	"throughput" double precision,
 	"pricing" jsonb,
 	"features" jsonb,
 	"endpoint" jsonb,

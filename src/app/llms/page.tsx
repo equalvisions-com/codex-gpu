@@ -82,7 +82,7 @@ async function ModelsHydratedContent({
   let firstPagePayload: Awaited<ReturnType<typeof getModelsPage>> | null =
     null;
 
-  if (parsedSearch.favorites !== "true") {
+  if (parsedSearch.bookmarks !== "true") {
     try {
       const infiniteOptions = modelsDataOptions(parsedSearch);
       await queryClient.prefetchInfiniteQuery({
@@ -208,11 +208,11 @@ function buildModelsSchema(
       });
     }
 
-    if (typeof model.mmlu === "number") {
+    if (typeof model.throughput === "number") {
       additionalProperty.push({
         "@type": "PropertyValue",
-        name: "MMLU-Pro Score",
-        value: Number((model.mmlu * 100).toFixed(2)),
+        name: "Throughput (tok/s)",
+        value: Number(model.throughput.toFixed(2)),
       });
     }
 

@@ -460,7 +460,8 @@ class GpuPricingCache {
     const filterConditions = buildGpuFilterConditions(search);
 
     // Build ORDER BY clause (same logic as getGpusFiltered)
-    let orderByClause;
+    const defaultOrderBy = [desc(userFavorites.createdAt), asc(gpuPricing.provider)];
+    let orderByClause: any;
     if (search.sort) {
       const { id, desc: isDesc } = search.sort;
       const direction = isDesc ? desc : asc;
@@ -504,12 +505,12 @@ class GpuPricingCache {
           orderByClause = direction(gpuPricing.observedAt);
           break;
         default:
-          // Default: sort by provider
-          orderByClause = asc(gpuPricing.provider);
+          orderByClause = defaultOrderBy;
       }
-    } else {
-      // Default: sort by provider
-      orderByClause = asc(gpuPricing.provider);
+    }
+
+    if (!Array.isArray(orderByClause)) {
+      orderByClause = orderByClause ? [orderByClause] : defaultOrderBy;
     }
 
     // Apply pagination
@@ -563,7 +564,7 @@ class GpuPricingCache {
       .from(userFavorites)
       .innerJoin(gpuPricing, eq(userFavorites.gpuUuid, gpuPricing.stableKey))
       .where(whereClause)
-      .orderBy(orderByClause)
+      .orderBy(...orderByClause)
       .limit(size)
       .offset(cursor);
 

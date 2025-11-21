@@ -37,9 +37,9 @@ export function Client({ initialFavoriteKeys, isFavoritesMode }: ClientProps = {
     handleSortingChange,
     handleRowSelectionChange,
   } = useTableSearchState(defaultFilterFields);
-  const favoritesFlag = search.favorites === "true";
+  const bookmarksFlag = search.bookmarks === "true";
   const effectiveFavoritesMode =
-    typeof isFavoritesMode === "boolean" ? isFavoritesMode : favoritesFlag;
+    typeof isFavoritesMode === "boolean" ? isFavoritesMode : bookmarksFlag;
   const queryClient = useQueryClient();
   const router = useRouter();
   const { session, signOut, isPending: authPending } = useAuth();

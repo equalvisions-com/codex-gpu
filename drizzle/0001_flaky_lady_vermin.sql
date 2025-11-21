@@ -1,1 +1,1 @@
-ALTER TABLE "ai_models" ALTER COLUMN "mmlu" SET DATA TYPE double precision;
+-- Migration no longer needed after column cleanup

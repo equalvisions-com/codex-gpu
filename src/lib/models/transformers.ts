@@ -19,7 +19,7 @@ export function toModelsColumnRow(model: AIModel): ModelsColumnSchema {
     promptPrice: model.promptPrice ?? null,
     completionPrice: model.completionPrice ?? null,
     modalityScore: model.modalityScore ?? null,
-    mmlu: model.mmlu ?? null,
+    throughput: model.throughput ?? null,
     maxCompletionTokens: model.maxCompletionTokens ?? null,
     supportedParameters: Array.isArray(model.supportedParameters)
       ? model.supportedParameters

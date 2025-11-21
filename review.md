@@ -116,17 +116,15 @@ Right now you already use `additionalProperty` for:
 
 * `Context Length`
 * `Modalities`
-* `MMLU`
 
 I’d keep that pattern, but make the properties more structured and add 3 derived ones:
 
 1. `Context Length (tokens)`
 2. `Modalities`
-3. `Benchmark: MMLU` (when present)
-4. `Canonical Model Name`
-5. `Canonical Model Slug`
-6. `Reasoning Mode` (`standard` / `thinking` / `hybrid`)
-7. `Provider Type` (`native` / `brokered`)
+3. `Canonical Model Name`
+4. `Canonical Model Slug`
+5. `Reasoning Mode` (`standard` / `thinking` / `hybrid`)
+6. `Provider Type` (`native` / `brokered`)
 
 Example block:
 
@@ -141,11 +139,6 @@ Example block:
     "@type": "PropertyValue",
     "name": "Modalities",
     "value": "text, image, file, text"
-  },
-  {
-    "@type": "PropertyValue",
-    "name": "Benchmark: MMLU",
-    "value": 0.706
   },
   {
     "@type": "PropertyValue",
@@ -209,11 +202,6 @@ All of those can be generated from fields you already have (`name`, `description
     },
     {
       "@type": "PropertyValue",
-      "name": "Benchmark: MMLU",
-      "value": 0.706
-    },
-    {
-      "@type": "PropertyValue",
       "name": "Canonical Model Name",
       "value": "Qwen3 Coder 30B A3B Instruct"
     },
@@ -264,11 +252,6 @@ All of those can be generated from fields you already have (`name`, `description
       "@type": "PropertyValue",
       "name": "Modalities",
       "value": "text, text"
-    },
-    {
-      "@type": "PropertyValue",
-      "name": "Benchmark: MMLU",
-      "value": 0.706
     },
     {
       "@type": "PropertyValue",
@@ -447,11 +430,6 @@ For something like `AI21: Jamba Large 1.7`, you don’t have multiple providers,
       "@type": "PropertyValue",
       "name": "Modalities",
       "value": "text, text"
-    },
-    {
-      "@type": "PropertyValue",
-      "name": "Benchmark: MMLU",
-      "value": 0.577
     },
     {
       "@type": "PropertyValue",

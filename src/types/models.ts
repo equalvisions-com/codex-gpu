@@ -15,7 +15,7 @@ export interface AIModel {
   instructType?: string | null;
   permaslug?: string;
   endpointId?: string | null;
-  mmlu?: number | null;
+  throughput?: number | null;
   maxCompletionTokens?: number | null;
   supportedParameters: string[];
   modalityScore?: number | null;

@@ -39,7 +39,7 @@ export const searchParamsParser = {
   price_hour_usd: parseAsArrayOf(parseAsFloat, SLIDER_DELIMITER),
   observed_at: parseAsArrayOf(parseAsTimestamp, RANGE_DELIMITER),
   search: parseAsString,
-  favorites: parseAsString,
+  bookmarks: parseAsString,
   // REQUIRED FOR SORTING & PAGINATION
   sort: parseAsSort,
   size: parseAsInteger.withDefault(50),

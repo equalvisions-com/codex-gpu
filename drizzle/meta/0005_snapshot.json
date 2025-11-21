@@ -92,12 +92,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "mmlu": {
-          "name": "mmlu",
-          "type": "double precision",
-          "primaryKey": false,
-          "notNull": false
-        },
         "pricing": {
           "name": "pricing",
           "type": "jsonb",
@@ -128,6 +122,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "throughput": {
+          "name": "throughput",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {
@@ -181,21 +181,6 @@
           "columns": [
             {
               "expression": "context_length",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "ai_models_mmlu_idx": {
-          "name": "ai_models_mmlu_idx",
-          "columns": [
-            {
-              "expression": "mmlu",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -292,6 +277,20 @@
           "concurrently": false,
           "method": "gin",
           "with": {}
+        },
+        "ai_models_throughput_idx": {
+          "name": "ai_models_throughput_idx",
+          "columns": [
+            "throughput"
+          ],
+          "isUnique": false,
+          "where": null,
+          "concurrently": false,
+          "using": "btree",
+          "with": null,
+          "include": null,
+          "nullsNotDistinct": false,
+          "expression": "throughput"
         }
       },
       "foreignKeys": {},

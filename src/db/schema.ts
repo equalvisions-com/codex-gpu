@@ -32,7 +32,7 @@ export const aiModels = pgTable("ai_models", {
   instructType: text("instruct_type"),
   permaslug: text("permaslug"),
   endpointId: text("endpoint_id"),
-  mmlu: doublePrecision("mmlu"),
+  throughput: doublePrecision("throughput"),
   maxCompletionTokens: integer("max_completion_tokens"),
   supportedParameters: textType("supported_parameters").array(),
   modalityScore: integer("modality_score"),
@@ -53,8 +53,8 @@ export const aiModels = pgTable("ai_models", {
   authorIndex: index("ai_models_author_idx").on(table.author),
   // Optimize queries by context length (for range queries and sorting)
   contextLengthIndex: index("ai_models_context_length_idx").on(table.contextLength),
-  // Optimize queries by MMLU score (for sorting)
-  mmluIndex: index("ai_models_mmlu_idx").on(table.mmlu),
+  // Optimize queries by throughput (for sorting)
+  throughputIndex: index("ai_models_throughput_idx").on(table.throughput),
   // Optimize queries by max completion tokens (for sorting)
   maxCompletionTokensIndex: index("ai_models_max_completion_tokens_idx").on(table.maxCompletionTokens),
   // Optimize queries by input modalities
