@@ -83,7 +83,7 @@ export function DataTableFilterInput<TData>({
           placeholder="Search"
           leading={<Search className="mt-[1px] h-4 w-4" />}
           containerClassName="h-9 rounded-lg"
-          className="placeholder:text-foreground/70 pr-12"
+          className="placeholder:text-foreground/70 pr-20"
           name={value}
           id={value}
           value={input || ""}
@@ -92,17 +92,24 @@ export function DataTableFilterInput<TData>({
             setInput(e.target.value);
           }}
         />
-        {isFilterActive ? (
-          <button
-            type="button"
-            onClick={handleClear}
-            className="absolute right-2 top-1/2 inline-flex h-5 -translate-y-1/2 items-center justify-center rounded-full border border-input bg-background px-1.5 py-1 text-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-            aria-label="Clear search filter"
-            title="Clear search filter"
-          >
-            <X className="h-2.5 w-2.5 text-muted-foreground" aria-hidden="true" />
-          </button>
-        ) : null}
+        <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-2">
+          {!isFilterActive ? (
+             <span className="inline-flex select-none items-center gap-1 rounded border px-[6px] py-0 text-xs font-mono font-normal h-[18px] bg-accent text-muted-foreground">
+            <span className="opacity-90">⌘</span>
+            <span className="tracking-tight opacity-70">/</span> </span>
+          ) : null}
+          {isFilterActive ? (
+            <button
+              type="button"
+              onClick={handleClear}
+              className="inline-flex h-5 items-center justify-center rounded-full border border-input bg-background px-1.5 py-1 text-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              aria-label="Clear search filter"
+              title="Clear search filter"
+            >
+              <X className="h-2.5 w-2.5 text-muted-foreground" aria-hidden="true" />
+            </button>
+          ) : null}
+        </div>
       </div>
     </div>
   );

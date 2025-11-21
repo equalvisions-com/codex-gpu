@@ -159,7 +159,7 @@ export function ModelSheetCharts({ permaslug, endpointId, provider }: ModelSheet
         stroke="hsl(var(--chart-1))"
         isLoading={throughputQuery.isPending || throughputQuery.isFetching}
         emptyMessage={emptyMessage}
-        valueLabel="tok/s"
+        valueLabel="TPS"
         valueFormatter={throughputValueFormatter}
       />
       <SheetLineChart

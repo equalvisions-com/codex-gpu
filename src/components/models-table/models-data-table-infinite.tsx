@@ -39,6 +39,7 @@ import { RowSkeletons } from "../infinite-table/_components/row-skeletons";
 import { ModelsCheckedActionsIsland } from "./models-checked-actions-island";
 import { filterFields, sheetFields } from "./models-constants";
 import { UserMenu, type AccountUser } from "../infinite-table/account-components";
+import { useGlobalHotkeys } from "@/hooks/use-global-hotkeys";
 import { usePathname, useRouter } from "next/navigation";
 import { Bot, Search, Server, Wrench } from "lucide-react";
 import type { ModelFavoriteKey } from "@/types/model-favorites";
@@ -191,6 +192,23 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
   React.useEffect(() => {
     setIsDesktopSearchOpen(false);
   }, [pathname]);
+  const searchFieldId =
+    (searchFilterField?.value as string | undefined) ?? undefined;
+  useGlobalHotkeys(
+    React.useMemo(
+      () =>
+        searchFieldId
+          ? [
+              {
+                combo: "mod+/",
+                handler: () => setIsDesktopSearchOpen((prev) => !prev),
+                allowWhenFocusedIds: [searchFieldId],
+              },
+            ]
+          : [],
+      [searchFieldId],
+    ),
+  );
   const navItems = React.useMemo(
     () => [
       {
@@ -198,18 +216,21 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
         value: "/llms",
         isCurrent: pathname === "/" || pathname.startsWith("/llms"),
         icon: Bot,
+        shortcut: "k",
       },
       {
         label: "GPUs",
         value: "/gpus",
         isCurrent: pathname.startsWith("/gpus"),
         icon: Server,
+        shortcut: "g",
       },
       {
         label: "Tools",
         value: "/tools",
         isCurrent: pathname.startsWith("/tools"),
         icon: Wrench,
+        shortcut: "e",
       },
     ],
     [pathname],
@@ -709,7 +730,15 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
                       <DataTableFilterInput {...searchFilterField} />
                     </div>
                   ) : (
-                    <Select value={currentNavValue} onValueChange={handleNavChange}>
+                    <Select
+                      value={currentNavValue}
+                      onValueChange={handleNavChange}
+                      hotkeys={[
+                        { combo: "cmd+k", value: "/llms" },
+                        { combo: "cmd+g", value: "/gpus" },
+                        { combo: "cmd+e", value: "/tools" },
+                      ]}
+                    >
                       <SelectTrigger className="h-9 w-full justify-between">
                         <SelectValue />
                       </SelectTrigger>
@@ -719,6 +748,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
                             key={item.value}
                             value={item.value}
                             className="gap-2"
+                            shortcut={item.shortcut}
                           >
                             <item.icon className="h-4 w-4" aria-hidden="true" />
                             {item.label}

@@ -177,7 +177,7 @@ export function ModelComparisonCharts({
         series={throughputSeries}
         isLoading={throughputLoading}
         emptyMessage={throughputEmptyMessage}
-        valueLabel="tok/s"
+        valueLabel="TPS"
         valueFormatter={throughputValueFormatter}
       />
       <SheetLineChart
