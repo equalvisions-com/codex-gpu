@@ -36,47 +36,16 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-// Next.js 15 surfaces `searchParams` as a promise in RSCs; we await it once at
-// the top-level to avoid re-reading the stream later. Nuqs encodes multi-value
-// filters into a single delimited string, so we intentionally flatten any
-// array values to the first item before parsing.
+// ISR-friendly route: we hydrate React Query with the default (unfiltered)
+// dataset only. URL-bound filters are handled on the client via nuqs so SSR
+// stays static while the table fetches as needed after hydration.
 
-interface GpusPageProps {
-  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+export default function GpusPage() {
+  return <GpusHydratedContent />;
 }
 
-function normalizeSearchParams(
-  input: Record<string, string | string[] | undefined>,
-) {
-  const normalized: Record<string, string> = {};
-
-  for (const [key, value] of Object.entries(input)) {
-    if (typeof value === "string") {
-      normalized[key] = value;
-      continue;
-    }
-
-    if (Array.isArray(value) && value.length > 0) {
-      normalized[key] = value[0] ?? "";
-    }
-  }
-
-  return normalized;
-}
-
-export default function GpusPage({ searchParams }: GpusPageProps) {
-  return <GpusHydratedContent searchParams={searchParams} />;
-}
-
-async function GpusHydratedContent({
-  searchParams,
-}: {
-  searchParams?: Promise<Record<string, string | string[] | undefined>>;
-}) {
-  const resolvedSearchParams = normalizeSearchParams(
-    (await searchParams) ?? {},
-  );
-  const parsedSearch = searchParamsCache.parse(resolvedSearchParams);
+async function GpusHydratedContent() {
+  const parsedSearch = searchParamsCache.parse({});
 
   const queryClient = new QueryClient();
   let firstPagePayload: Awaited<ReturnType<typeof getGpuPricingPage>> | null =

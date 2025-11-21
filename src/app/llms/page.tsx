@@ -36,47 +36,14 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-// Next.js 15 exposes `searchParams` as a promise in RSCs. We resolve it once at
-// the top to keep the pattern consistent with Nuqs’ server parsers, which
-// expect delimited strings for multi-value filters; array entries are flattened
-// to the first value before parsing.
-
-interface ModelsPageProps {
-  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+// ISR-friendly route: we seed React Query with the default (unfiltered) data.
+// Client-side nuqs manages URL-bound filters after hydration to keep SSR static.
+export default function ModelsPage() {
+  return <ModelsHydratedContent />;
 }
 
-function normalizeModelsSearchParams(
-  input: Record<string, string | string[] | undefined>,
-) {
-  const normalized: Record<string, string> = {};
-
-  for (const [key, value] of Object.entries(input)) {
-    if (typeof value === "string") {
-      normalized[key] = value;
-      continue;
-    }
-
-    if (Array.isArray(value) && value.length > 0) {
-      normalized[key] = value[0] ?? "";
-    }
-  }
-
-  return normalized;
-}
-
-export default function ModelsPage({ searchParams }: ModelsPageProps) {
-  return <ModelsHydratedContent searchParams={searchParams} />;
-}
-
-async function ModelsHydratedContent({
-  searchParams,
-}: {
-  searchParams?: Promise<Record<string, string | string[] | undefined>>;
-}) {
-  const resolvedSearchParams = normalizeModelsSearchParams(
-    (await searchParams) ?? {},
-  );
-  const parsedSearch = modelsSearchParamsCache.parse(resolvedSearchParams);
+async function ModelsHydratedContent() {
+  const parsedSearch = modelsSearchParamsCache.parse({});
 
   const queryClient = new QueryClient();
   let firstPagePayload: Awaited<ReturnType<typeof getModelsPage>> | null =
