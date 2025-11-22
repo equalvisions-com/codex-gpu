@@ -727,7 +727,10 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
                 <div className="flex items-center gap-2">
                   {searchFilterField && isDesktopSearchOpen ? (
                     <div className="w-full">
-                      <DataTableFilterInput {...searchFilterField} />
+                      <DataTableFilterInput
+                        autoFocus={isDesktopSearchOpen}
+                        {...searchFilterField}
+                      />
                     </div>
                   ) : (
                     <Select
@@ -739,7 +742,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
                         { combo: "cmd+e", value: "/tools" },
                       ]}
                     >
-                      <SelectTrigger className="h-9 w-full justify-between">
+                      <SelectTrigger className="h-9 w-full justify-between rounded-lg bg-gradient-to-b from-muted/70 via-muted/40 to-background">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -764,7 +767,7 @@ export function ModelsDataTableInfinite<TData, TValue, TMeta>({
                       size="icon"
                       onClick={toggleDesktopSearch}
                       aria-pressed={isDesktopSearchOpen}
-                      className="shrink-0"
+                      className="shrink-0 rounded-full bg-gradient-to-b from-muted/70 via-muted/40 to-background"
                     >
                       <Search className="h-4 w-4" aria-hidden="true" />
                       <span className="sr-only">Search</span>

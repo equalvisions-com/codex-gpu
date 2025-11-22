@@ -8,7 +8,6 @@ import {
   SheetContent,
   SheetDescription,
   SheetHeader,
-  SheetFooter,
   SheetTitle,
 } from "@/components/custom/sheet";
 import { Button } from "@/components/ui/button";
@@ -191,20 +190,24 @@ export function DataTableSheetDetails({
             </SheetClose>
           </div>
           <div className="space-y-4">{children}</div>
-        </div>
-        <SheetFooter className="border-t border-border/60 bg-background p-4">
-          {deployHref ? (
-            <Button asChild className="w-full font-semibold">
-              <a href={deployHref} target="_blank" rel="noopener noreferrer">
+          <div className="mt-6 border-t border-border/60 pt-4">
+            {deployHref ? (
+              <Button asChild className="w-full font-semibold">
+                <a href={deployHref} target="_blank" rel="noopener noreferrer">
+                  Deploy
+                </a>
+              </Button>
+            ) : (
+              <Button
+                className="w-full font-semibold"
+                type="button"
+                disabled={!selectedRowKey}
+              >
                 Deploy
-              </a>
-            </Button>
-          ) : (
-            <Button className="w-full font-semibold" type="button" disabled={!selectedRowKey}>
-              Deploy
-            </Button>
-          )}
-        </SheetFooter>
+              </Button>
+            )}
+          </div>
+        </div>
       </SheetContent>
     </Sheet>
   );

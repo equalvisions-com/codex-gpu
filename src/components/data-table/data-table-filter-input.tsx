@@ -14,7 +14,8 @@ function getFilter(filterValue: unknown) {
 
 export function DataTableFilterInput<TData>({
   value: _value,
-}: DataTableInputFilterField<TData>) {
+  autoFocus,
+}: DataTableInputFilterField<TData> & { autoFocus?: boolean }) {
   const value = _value as string;
   const { columnFilters, setColumnFilters } = useDataTable();
   const filterValue = columnFilters.find((i) => i.id === value)?.value;
@@ -83,6 +84,7 @@ export function DataTableFilterInput<TData>({
           placeholder="Search"
           leading={<Search className="mt-[1px] h-4 w-4" />}
           containerClassName="h-9 rounded-lg"
+          autoFocus={autoFocus}
           className="placeholder:text-foreground/70 pr-20"
           name={value}
           id={value}
