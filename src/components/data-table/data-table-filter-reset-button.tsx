@@ -48,7 +48,7 @@ export function DataTableFilterResetButton<TData>({
   return (
     <Button
       variant="outline"
-      className="h-5 rounded-full px-1.5 py-1 font-mono text-[10px]"
+      className="h-5 rounded-full px-1.5 py-1 border border-border font-mono text-[10px]"
       onClick={(e) => {
         e.stopPropagation();
         const newFilters = columnFilters.filter(f => f.id !== value);
