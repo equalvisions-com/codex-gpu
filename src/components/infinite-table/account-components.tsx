@@ -153,7 +153,7 @@ export function UserMenu({
 
   if (shouldForceSignInButton) {
     const buttonClassName = cn(
-      "flex h-auto items-center gap-3 rounded-md pl-4 py-4 text-left text-sm font-medium text-foreground hover:text-accent-foreground",
+      "flex h-auto items-center gap-3 rounded-md p-0 text-left text-sm font-medium text-foreground hover:text-accent-foreground",
       showDetails
         ? "bg-transparent hover:bg-transparent"
         : gradientSurfaceClass,
