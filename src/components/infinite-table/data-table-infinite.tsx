@@ -717,7 +717,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                           <SelectItem
                             key={item.value}
                             value={item.value}
-                            className="gap-2"
+                            className="gap-2 cursor-pointer"
                             shortcut={item.shortcut}
                           >
                             <item.icon className="h-4 w-4" aria-hidden="true" />

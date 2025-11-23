@@ -43,7 +43,7 @@ export const columns: ColumnDef<ColumnSchema>[] = [
   {
     accessorKey: "provider",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Provider" />
+      <DataTableColumnHeader column={column} title="Provider" className="pl-0 pr-[12px]" />
     ),
     cell: ({ row }) => {
       const providerRaw = row.getValue<ColumnSchema["provider"]>("provider") ?? "";
@@ -78,11 +78,11 @@ export const columns: ColumnDef<ColumnSchema>[] = [
         </div>
       );
     },
-    size: 156,
-    minSize: 156,
+    size: 171,
+    minSize: 171,
     meta: {
-      cellClassName: "text-left min-w-[156px]",
-      headerClassName: "text-left min-w-[156px]",
+      cellClassName: "text-left min-w-[171px] pl-0",
+      headerClassName: "text-left min-w-[171px] pl-0",
     },
   },
   {
@@ -102,7 +102,7 @@ export const columns: ColumnDef<ColumnSchema>[] = [
     size: 275,
     minSize: 275,
     meta: {
-      cellClassName: "text-left overflow-hidden min-w-[275px]",
+      cellClassName: "text-left overflow-hidden min-w-[275px] pr-0",
       headerClassName: "text-left overflow-hidden min-w-[275px]",
     },
   },

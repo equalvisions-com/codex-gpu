@@ -34,7 +34,6 @@ export function useTableSearchState(
   const {
     sort,
     size: _size,
-    uuid,
     cursor: _cursor,
     observed_at: _observedAt,
     search: globalSearch,
@@ -64,8 +63,19 @@ export function useTableSearchState(
     return sort ? [sort] : [];
   }, [sort]);
 
-  const rowSelection = React.useMemo<RowSelectionState>(() => {
+  // Keep selection local so URL stays clean during client navigation.
+  const [rowSelection, setRowSelection] = React.useState<RowSelectionState>(() => {
     return search.uuid ? { [search.uuid]: true } : {};
+  });
+
+  // If a user lands on a shared link (uuid in URL), seed local selection once.
+  React.useEffect(() => {
+    const incomingUuid = search.uuid ?? null;
+    setRowSelection((previous) => {
+      const currentUuid = Object.keys(previous)[0] ?? null;
+      if (incomingUuid === currentUuid) return previous;
+      return incomingUuid ? { [incomingUuid]: true } : {};
+    });
   }, [search.uuid]);
 
   const previousFilterPayloadRef = React.useRef<Record<string, unknown> | null>(
@@ -120,21 +130,18 @@ export function useTableSearchState(
     [setSearch, sorting],
   );
 
-  const previousUuidRef = React.useRef<string>("__init__");
   const handleRowSelectionChange = React.useCallback<OnChangeFn<RowSelectionState>>(
     (updater) => {
-      const nextSelection =
-        typeof updater === "function" ? updater(rowSelection) : updater ?? {};
-      const selectedKeys = Object.keys(nextSelection ?? {});
-      const nextUuid = selectedKeys[0] ?? null;
-      const serializedUuid = nextUuid ?? "null";
-      if (previousUuidRef.current === serializedUuid) {
-        return;
-      }
-      previousUuidRef.current = serializedUuid;
-      setSearch({ uuid: nextUuid });
+      setRowSelection((previous) => {
+        const nextSelection =
+          typeof updater === "function" ? updater(previous) : updater ?? {};
+        const selectedKeys = Object.keys(nextSelection ?? {});
+        const nextUuid = selectedKeys[0];
+        // Enforce single selection state, matching table config
+        return nextUuid ? { [nextUuid]: true } : {};
+      });
     },
-    [rowSelection, setSearch],
+    [],
   );
 
   return {

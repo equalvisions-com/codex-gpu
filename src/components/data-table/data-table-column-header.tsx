@@ -43,6 +43,7 @@ export function DataTableColumnHeader<TData, TValue>({
       }}
       className={cn(
         "py-0 px-[12px] h-7 flex gap-[10px] items-center",
+        "hover:bg-transparent active:bg-transparent focus-visible:bg-transparent hover:text-foreground",
         centerTitle ? "relative justify-center" : "justify-between",
         className,
       )}

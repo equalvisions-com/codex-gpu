@@ -33,7 +33,6 @@ export function useModelsTableSearchState(
     start: _start,
     direction: _direction,
     cursor: _cursor,
-    uuid,
     search: globalSearch,
     ...filter
   } = search;
@@ -70,8 +69,19 @@ export function useModelsTableSearchState(
     return sort ? [sort] : [];
   }, [sort]);
 
-  const rowSelection = React.useMemo<RowSelectionState>(() => {
+  // Keep selection local so URL stays clean during client navigation.
+  const [rowSelection, setRowSelection] = React.useState<RowSelectionState>(() => {
     return search.uuid ? { [search.uuid]: true } : {};
+  });
+
+  // Seed local selection from a shared link (uuid in URL) without mutating the URL.
+  React.useEffect(() => {
+    const incomingUuid = search.uuid ?? null;
+    setRowSelection((previous) => {
+      const currentUuid = Object.keys(previous)[0] ?? null;
+      if (incomingUuid === currentUuid) return previous;
+      return incomingUuid ? { [incomingUuid]: true } : {};
+    });
   }, [search.uuid]);
 
   const previousFilterPayloadRef = React.useRef<Record<string, unknown> | null>(
@@ -152,21 +162,18 @@ export function useModelsTableSearchState(
     [setSearch, sorting],
   );
 
-  const previousUuidRef = React.useRef<string>("__init__");
   const handleRowSelectionChange = React.useCallback<OnChangeFn<RowSelectionState>>(
     (updater) => {
-      const nextSelection =
-        typeof updater === "function" ? updater(rowSelection) : updater ?? {};
-      const selectedKeys = Object.keys(nextSelection ?? {});
-      const nextUuid = selectedKeys[0] ?? null;
-      const serializedUuid = nextUuid ?? "null";
-      if (previousUuidRef.current === serializedUuid) {
-        return;
-      }
-      previousUuidRef.current = serializedUuid;
-      setSearch({ uuid: nextUuid });
+      setRowSelection((previous) => {
+        const nextSelection =
+          typeof updater === "function" ? updater(previous) : updater ?? {};
+        const selectedKeys = Object.keys(nextSelection ?? {});
+        const nextUuid = selectedKeys[0];
+        // Enforce single selection state, matching table config
+        return nextUuid ? { [nextUuid]: true } : {};
+      });
     },
-    [rowSelection, setSearch],
+    [],
   );
 
   return {
