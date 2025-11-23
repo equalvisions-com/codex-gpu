@@ -39,9 +39,6 @@ export function ModelCompareDialog({
       <DialogContent className="max-w-3xl bg-background p-4 sm:p-4 border border-border/60 [&>button:last-of-type]:right-4 [&>button:last-of-type]:top-4">
         <DialogHeader>
           <DialogTitle>Model Comparison</DialogTitle>
-          <DialogDescription>
-            Review metadata side by side and inspect historical throughput/latency.
-          </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 md:grid-cols-2">
           {rows.map((row, index) => {
@@ -49,13 +46,16 @@ export function ModelCompareDialog({
             return (
               <div
                 key={row.id ?? `model-compare-${index}`}
-                className="rounded-xl border border-border/60 bg-background/60 px-4 pt-4 pb-2 space-y-4"
+                className="rounded-xl border border-border/60 bg-background/80 px-4 pt-4 pb-2 space-y-4"
               >
                 <MemoizedDataTableSheetContent
                   table={table}
                   data={data}
                   filterFields={filterFields}
                   fields={sheetFields}
+                  metadata={{
+                    titleClassName: "text-base font-semibold leading-none tracking-tight mb-1",
+                  }}
                 />
               </div>
             );

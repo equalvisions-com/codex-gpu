@@ -189,7 +189,13 @@ export const sheetFields: SheetField<ModelsColumnSchema>[] = [
     hideLabel: true,
     fullRowValue: true,
     noPadding: true,
-    component: (row) => {
+    component: ({ metadata, ...row }) => {
+      const titleClassName =
+        typeof metadata === "object" &&
+        metadata &&
+        typeof (metadata as { titleClassName?: unknown }).titleClassName === "string"
+          ? (metadata as { titleClassName: string }).titleClassName
+          : undefined;
       const fallback = row.name ?? "N/A";
       const value = row.shortName ?? fallback;
       const authorLogo = getModelAuthorLogo(row.author);
@@ -210,7 +216,9 @@ export const sheetFields: SheetField<ModelsColumnSchema>[] = [
             <div className="h-10 w-10 shrink-0" />
           )}
           <div className="flex flex-col gap-0 leading-tight">
-            <h2 className="text-lg font-semibold leading-tight tracking-tight">{value || fallback}</h2>
+            <h2 className={cn("text-lg font-semibold leading-tight tracking-tight", titleClassName)}>
+              {value || fallback}
+            </h2>
             <p className="pb-4 text-sm text-foreground/70 leading-tight">{row.author ?? "N/A"}</p>
           </div>
         </div>
