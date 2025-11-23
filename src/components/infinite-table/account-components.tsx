@@ -136,7 +136,7 @@ export function UserMenu({
     return (
       <div
         className={cn(
-          "flex items-center gap-3 rounded-md px-4 py-4 pr-0",
+          "flex items-center gap-3 rounded-md p-0",
           fullWidth ? "w-full" : "w-auto",
           triggerClassName,
         )}
@@ -281,7 +281,7 @@ export function UserMenu({
             type="button"
             variant="ghost"
             className={cn(
-            "flex h-auto items-center gap-3 rounded-md pl-4 py-4 pr-0 text-left text-sm font-medium text-foreground hover:text-accent-foreground",
+            "flex h-auto items-center gap-3 p-0 text-left text-sm font-medium text-foreground hover:text-accent-foreground",
             showDetails
               ? "bg-transparent hover:bg-transparent"
               : cn(

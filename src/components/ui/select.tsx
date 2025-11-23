@@ -87,7 +87,7 @@ const SelectTrigger = React.forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      "flex h-10 w-full items-center justify-between rounded-md border bg-background pl-3 pr-2 py-2 text-sm data-[placeholder]:text-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
+      "flex h-10 w-full items-center justify-between rounded-md border bg-background pl-2.5 pr-2 py-2 text-sm data-[placeholder]:text-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
       className
     )}
     {...props}
@@ -255,7 +255,7 @@ const SelectItem = React.forwardRef<
       data-select-shortcut={normalizedShortcut ?? undefined}
       aria-keyshortcuts={displayShortcut ?? undefined}
       className={cn(
-        "relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-2 pr-2 text-sm outline-none hover:bg-muted hover:text-foreground data-[highlighted]:bg-muted data-[highlighted]:text-foreground data-[state=checked]:bg-transparent data-[state=checked]:text-foreground data-[state=checked]:font-medium data-[state=checked]:data-[highlighted]:bg-transparent data-[state=checked]:data-[highlighted]:text-foreground data-[state=checked]:data-[highlighted]:hover:bg-muted data-[state=checked]:data-[highlighted]:hover:text-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+        "relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-2 pr-2 text-sm outline-none hover:bg-muted hover:text-foreground data-[highlighted]:bg-muted data-[highlighted]:text-foreground data-[state=checked]:bg-transparent data-[state=checked]:text-foreground data-[state=checked]:data-[highlighted]:bg-transparent data-[state=checked]:data-[highlighted]:text-foreground data-[state=checked]:data-[highlighted]:hover:bg-muted data-[state=checked]:data-[highlighted]:hover:text-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         className
       )}
       {...props}

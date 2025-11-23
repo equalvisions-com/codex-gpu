@@ -683,14 +683,14 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     >
       <div className="flex flex-col gap-2 sm:gap-4">
         {headerSlot}
-        <div className="grid h-full grid-cols-1 gap-4 sm:grid-cols-[13rem_1fr] md:grid-cols-[18rem_1fr]">
+        <div className="grid h-full grid-cols-1 gap-0 sm:grid-cols-[13rem_1fr] md:grid-cols-[18rem_1fr]">
           <div
             className={cn(
               "hidden sm:flex h-[calc(100dvh-var(--total-padding-mobile))] sm:h-[100dvh] flex-col sticky top-0 self-start min-w-72 max-w-72 rounded-lg overflow-hidden"
             )}
           >
             <div className="flex h-full w-full flex-col">
-              <div className="mx-auto w-full max-w-full pl-4 pr-0 pt-4 mb-4 space-y-4">
+              <div className="mx-auto w-full max-w-full p-4 border-b border-border mb-4 space-y-4">
                 <div className="flex items-center gap-2">
                   {searchFilterField && isDesktopSearchOpen ? (
                     <div className="w-full">
@@ -752,11 +752,11 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                 ) : null}
               </div>
               <div className="flex-1 overflow-y-auto scrollbar-hide">
-                <div className="mx-auto w-full max-w-full pl-4 pr-0 py-0">
+                <div className="mx-auto w-full max-w-full px-4 pb-4">
                   <DataTableFilterControls showSearch={false} />
                 </div>
               </div>
-              <div className="flex-shrink-0 p-0">
+              <div className="flex-shrink-0 p-4 border-t border-border">
                 <UserMenu
                   user={accountUser}
                   onSignOut={accountOnSignOut}

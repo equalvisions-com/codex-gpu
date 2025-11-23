@@ -20,7 +20,7 @@ const InputWithAddons = React.forwardRef<
       )}
     >
       {leading ? (
-        <div className="py-2 pl-3 bg-background">
+        <div className="py-2 pl-2.5 bg-background">
           {leading}
         </div>
       ) : null}
