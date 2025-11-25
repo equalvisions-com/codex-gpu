@@ -53,9 +53,12 @@ export function useGlobalHotkeys(hotkeys: HotkeyConfig[]) {
     }));
 
     const handleKeydown = (event: KeyboardEvent) => {
+      const eventKey =
+        typeof event.key === "string" ? event.key.toLowerCase() : null;
+
       for (const hk of parsed) {
         const { key, meta, ctrl, shift, alt, mod } = hk.parsed;
-        if (!key || event.key.toLowerCase() !== key) continue;
+        if (!key || !eventKey || eventKey !== key) continue;
         if (meta && !event.metaKey) continue;
         if (!meta && !mod && event.metaKey) continue;
         if (ctrl && !event.ctrlKey) continue;

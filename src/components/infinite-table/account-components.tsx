@@ -487,15 +487,15 @@ export function UserMenu({
           ) : null}
         </DropdownMenuContent>
       </DropdownMenu>
-      <React.Suspense fallback={null}>
-        {isAuthenticated ? (
+      {isAuthenticated && isSettingsDialogOpen ? (
+        <React.Suspense fallback={null}>
           <LazySettingsDialog
             open={isSettingsDialogOpen}
             onOpenChange={setIsSettingsDialogOpen}
             user={user}
           />
-        ) : null}
-      </React.Suspense>
+        </React.Suspense>
+      ) : null}
     </div>
   );
 }

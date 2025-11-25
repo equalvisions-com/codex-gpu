@@ -701,7 +701,8 @@ export function SettingsDialog({ open, onOpenChange, user }: SettingsDialogProps
                                 <Input
                                   id="delete-password"
                                   type="password"
-                                  autoComplete="current-password"
+                                  name="delete-password"
+                                  autoComplete="new-password"
                                   value={deletePassword}
                                   onChange={(event) => setDeletePassword(event.target.value)}
                                   disabled={isDeleting}
