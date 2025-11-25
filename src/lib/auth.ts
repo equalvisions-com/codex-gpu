@@ -1,12 +1,12 @@
-import { betterAuth } from 'better-auth';
-import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { nextCookies } from 'better-auth/next-js';
-import { db } from '@/db/client';
-import * as authSchema from '@/db/auth-schema';
-import { sendVerificationEmail, sendPasswordResetEmail } from '@/lib/email';
+import { betterAuth } from "better-auth";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { nextCookies } from "better-auth/next-js";
+import { db } from "@/db/client";
+import * as authSchema from "@/db/auth-schema";
+import { sendVerificationEmail, sendPasswordResetEmail } from "@/lib/email";
 
 export const auth = betterAuth({
-  database: drizzleAdapter(db, { provider: 'pg', schema: authSchema }),
+  database: drizzleAdapter(db, { provider: "pg", schema: authSchema }),
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,
@@ -33,11 +33,16 @@ export const auth = betterAuth({
       maxAge: 60 * 5,
     },
   },
+  user: {
+    deleteUser: {
+      enabled: true,
+    },
+  },
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      prompt: 'select_account',
+      prompt: "select_account",
     },
     github: {
       clientId: process.env.GITHUB_CLIENT_ID!,

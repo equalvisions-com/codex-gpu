@@ -55,6 +55,12 @@ const gradientSurfaceClass =
 const dropdownMenuItemClassName =
   "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted hover:no-underline focus-visible:bg-muted focus-visible:text-accent-foreground";
 
+const LazySettingsDialog = React.lazy(() =>
+  import("./settings-dialog").then((module) => ({
+    default: module.SettingsDialog,
+  })),
+);
+
 export interface AccountUser {
   name?: string | null;
   email?: string | null;
@@ -108,6 +114,7 @@ export function UserMenu({
   const isSplitTrigger =
     !showDetails && !isAuthenticated && !shouldForceSignInButton;
   const secondaryText = isAuthenticated ? (email ?? "") : "Sign up or Sign in";
+  const [isSettingsDialogOpen, setIsSettingsDialogOpen] = React.useState(false);
 
   const handleSignInClick = React.useCallback(() => {
     onSignIn?.();
@@ -116,6 +123,12 @@ export function UserMenu({
   const handleSignUpClick = React.useCallback(() => {
     onSignUp?.();
   }, [onSignUp]);
+
+  React.useEffect(() => {
+    if (!isAuthenticated) {
+      setIsSettingsDialogOpen(false);
+    }
+  }, [isAuthenticated]);
 
   const triggerAriaLabel = !showDetails ? displayName : undefined;
 
@@ -412,14 +425,14 @@ export function UserMenu({
           {isAuthenticated ? (
             <>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link
-                  href="/settings"
-                  className={dropdownMenuItemClassName}
-                >
-                  <SettingsIcon className="h-4 w-4" />
-                  <span>Settings</span>
-                </Link>
+              <DropdownMenuItem
+                className={dropdownMenuItemClassName}
+                onSelect={() => {
+                  setIsSettingsDialogOpen(true);
+                }}
+              >
+                <SettingsIcon className="h-4 w-4" />
+                <span>Settings</span>
               </DropdownMenuItem>
             </>
           ) : null}
@@ -474,6 +487,15 @@ export function UserMenu({
           ) : null}
         </DropdownMenuContent>
       </DropdownMenu>
+      <React.Suspense fallback={null}>
+        {isAuthenticated ? (
+          <LazySettingsDialog
+            open={isSettingsDialogOpen}
+            onOpenChange={setIsSettingsDialogOpen}
+            user={user}
+          />
+        ) : null}
+      </React.Suspense>
     </div>
   );
 }
