@@ -1,13 +1,8 @@
 import type { Metadata } from "next";
-import * as React from "react";
-import {
-  HydrationBoundary,
-  QueryClient,
-  dehydrate,
-} from "@tanstack/react-query";
-import { ModelsClient } from "@/components/models-table/models-client";
-import { modelsDataOptions } from "@/components/models-table/models-query-options";
-import { modelsSearchParamsCache } from "@/components/models-table/models-search-params";
+import { HydratedInfinitePage } from "@/features/data-explorer/hydration/hydrated-infinite-page";
+import { ModelsClient } from "@/features/data-explorer/models/models-client";
+import { modelsDataOptions } from "@/features/data-explorer/models/models-query-options";
+import { modelsSearchParamsCache } from "@/features/data-explorer/models/models-search-params";
 import { getModelsPage } from "@/lib/models-loader";
 
 export const revalidate = 43200;
@@ -39,71 +34,16 @@ export async function generateMetadata(): Promise<Metadata> {
 // ISR-friendly route: we seed React Query with the default (unfiltered) data.
 // Client-side nuqs manages URL-bound filters after hydration to keep SSR static.
 export default function ModelsPage() {
-  return <ModelsHydratedContent />;
-}
-
-async function ModelsHydratedContent() {
-  const parsedSearch = modelsSearchParamsCache.parse({});
-
-  const queryClient = new QueryClient();
-  let firstPagePayload: Awaited<ReturnType<typeof getModelsPage>> | null =
-    null;
-
-  if (parsedSearch.bookmarks !== "true") {
-    try {
-      const infiniteOptions = modelsDataOptions(parsedSearch);
-      await queryClient.prefetchInfiniteQuery({
-        ...infiniteOptions,
-        queryFn: async ({ pageParam }) => {
-          const cursor =
-            typeof pageParam?.cursor === "number" ? pageParam.cursor : null;
-          const size =
-            (pageParam as { size?: number } | undefined)?.size ??
-            parsedSearch.size ??
-            50;
-          const result = await getModelsPage({
-            ...parsedSearch,
-            cursor,
-            size,
-            uuid: null,
-          });
-          if (!firstPagePayload && (cursor === null || cursor === 0)) {
-            firstPagePayload = result;
-          }
-          return result;
-        },
-      });
-    } catch (error) {
-      console.error("[ModelsPage] Failed to prefetch models data", {
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
-  }
-
-  const dehydratedState = dehydrate(queryClient);
-  const schemaMarkup = buildModelsSchema(firstPagePayload);
-
   return (
-    <HydrationBoundary state={dehydratedState}>
-      {schemaMarkup ? (
-        <script
-          type="application/ld+json"
-          suppressHydrationWarning
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(schemaMarkup).replace(/</g, "\\u003c"),
-          }}
-        />
-      ) : null}
-      <div
-        className="flex min-h-dvh w-full flex-col sm:flex-row pt-2 sm:p-0"
-        style={{
-          "--total-padding-mobile": "calc(0.5rem + 0.5rem)",
-          "--total-padding-desktop": "3rem",
-        } as React.CSSProperties}
-      >
-        <ModelsClient />
-      </div>
-    </HydrationBoundary>
+    <HydratedInfinitePage
+      parseSearch={() => modelsSearchParamsCache.parse({})}
+      getInfiniteOptions={modelsDataOptions}
+      fetchPage={getModelsPage}
+      shouldPrefetch={(search) => search.bookmarks !== "true"}
+      buildSchema={buildModelsSchema}
+      renderClient={ModelsClient}
+      logTag="ModelsPage"
+    />
   );
 }
 

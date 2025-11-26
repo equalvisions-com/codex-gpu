@@ -1,0 +1,716 @@
+"use client";
+
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/custom/accordion";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/custom/sheet";
+import { DataTableFilterControls } from "@/features/data-explorer/data-table/data-table-filter-controls";
+import { DataTableResetButton } from "@/features/data-explorer/data-table/data-table-reset-button";
+import { ModeToggle } from "@/components/theme/toggle-mode";
+import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  NavigationMenu,
+  NavigationMenuItem,
+  NavigationMenuList,
+} from "@/components/ui/navigation-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+import {
+  Bookmark,
+  EllipsisVertical,
+  LogIn,
+  LogOut,
+  Search,
+  Settings as SettingsIcon,
+  X,
+  Bot,
+  Server,
+  Wrench,
+} from "lucide-react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import * as React from "react";
+
+const gradientSurfaceClass =
+  "border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground hover:bg-gradient-to-b hover:from-muted/70 hover:via-muted/40 hover:to-background hover:text-accent-foreground";
+
+const dropdownMenuItemClassName =
+  "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted hover:no-underline focus-visible:bg-muted focus-visible:text-accent-foreground";
+
+const LazySettingsDialog = React.lazy(() =>
+  import("./settings-dialog").then((module) => ({
+    default: module.SettingsDialog,
+  })),
+);
+
+export interface AccountUser {
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+}
+
+interface UserMenuProps {
+  user: AccountUser | null | undefined;
+  onSignOut: () => void;
+  isSigningOut: boolean;
+  fullWidth?: boolean;
+  showDetails?: boolean;
+  triggerClassName?: string;
+  isAuthenticated?: boolean;
+  onSignIn?: () => void;
+  onSignUp?: () => void;
+  forceUnauthSignInButton?: boolean;
+  isLoading?: boolean;
+}
+
+export function UserMenu({
+  user,
+  onSignOut,
+  isSigningOut,
+  fullWidth = true,
+  showDetails = true,
+  triggerClassName,
+  isAuthenticated: isAuthenticatedProp,
+  onSignIn,
+  onSignUp,
+  forceUnauthSignInButton = false,
+  isLoading = false,
+}: UserMenuProps) {
+  const normalizedName = user?.name?.trim();
+  const email = user?.email ?? "";
+  const displayName = normalizedName || email || "Account";
+  const [imageLoaded, setImageLoaded] = React.useState(false);
+  const hasImage = Boolean(user?.image);
+  const avatarSizeClass = showDetails ? "h-9 w-9" : "h-9 w-9";
+  const avatarWrapperClass = avatarSizeClass;
+  const avatarImageClass = "h-full w-full rounded-full object-cover";
+  const inferredAuthenticated = Boolean(normalizedName || email || user?.image);
+  const isAuthenticated = isAuthenticatedProp ?? inferredAuthenticated;
+  const shouldRenderAvatar = (showDetails || hasImage) && user;
+  const hasSignInHandler = typeof onSignIn === "function";
+  const hasSignUpHandler = typeof onSignUp === "function";
+  const shouldForceSignInButton =
+    forceUnauthSignInButton &&
+    !isAuthenticated &&
+    (hasSignUpHandler || hasSignInHandler);
+  const isSplitTrigger =
+    !showDetails && !isAuthenticated && !shouldForceSignInButton;
+  const secondaryText = isAuthenticated ? (email ?? "") : "Sign up or Sign in";
+  const [isSettingsDialogOpen, setIsSettingsDialogOpen] = React.useState(false);
+
+  const handleSignInClick = React.useCallback(() => {
+    onSignIn?.();
+  }, [onSignIn]);
+
+  const handleSignUpClick = React.useCallback(() => {
+    onSignUp?.();
+  }, [onSignUp]);
+
+  React.useEffect(() => {
+    if (!isAuthenticated) {
+      setIsSettingsDialogOpen(false);
+    }
+  }, [isAuthenticated]);
+
+  const triggerAriaLabel = !showDetails ? displayName : undefined;
+
+  let triggerElement: React.ReactNode;
+
+  if (isLoading) {
+    if (!showDetails) {
+      return (
+        <Skeleton
+          className={cn(
+            "h-9 w-9 rounded-full",
+            fullWidth ? "w-full" : "w-9",
+            triggerClassName,
+          )}
+        />
+      );
+    }
+    return (
+      <div
+        className={cn(
+          "flex items-center gap-3 rounded-md p-0",
+          fullWidth ? "w-full" : "w-auto",
+          triggerClassName,
+        )}
+      >
+        <Skeleton className={cn("rounded-full", avatarSizeClass)} />
+        <div className="flex flex-1 flex-col gap-2">
+          <Skeleton className="h-4 w-24 rounded-md" />
+          <Skeleton className="h-3 w-36 rounded-md" />
+        </div>
+        <EllipsisVertical className="h-4 w-4 text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (shouldForceSignInButton) {
+    const buttonClassName = cn(
+      "flex h-auto items-center gap-3 rounded-md p-0 text-left text-sm font-medium text-foreground hover:text-accent-foreground",
+      showDetails
+        ? "bg-transparent hover:bg-transparent"
+        : gradientSurfaceClass,
+      fullWidth ? "w-full" : "w-auto",
+      !showDetails
+        ? "!gap-1.5 !rounded-md !px-2 !py-1.5 md:h-9 md:rounded-md"
+        : null,
+    );
+    const preferredActionLabel = hasSignUpHandler ? "Sign up" : "Sign in";
+    const ariaLabel = showDetails
+      ? undefined
+      : triggerAriaLabel ?? preferredActionLabel;
+    const primaryClickHandler = hasSignUpHandler
+      ? handleSignUpClick
+      : handleSignInClick;
+
+    triggerElement = (
+      <div
+        className={cn(
+          "flex items-center gap-2",
+          fullWidth ? "w-full" : "w-auto",
+          triggerClassName,
+        )}
+      >
+        <Button
+          type="button"
+          variant="ghost"
+          className={cn(
+            buttonClassName,
+            showDetails ? "justify-between" : "justify-start",
+            fullWidth && "flex-1",
+          )}
+          onClick={primaryClickHandler}
+          disabled={isSigningOut}
+          aria-label={ariaLabel}
+        >
+          {showDetails ? (
+            <>
+              <div
+                className={cn(
+                  "flex items-center justify-center rounded-full border border-border text-foreground/70",
+                  gradientSurfaceClass,
+                avatarSizeClass,
+              )}
+            >
+                <LogIn className="h-4 w-4" />
+              </div>
+              <div className="flex min-w-0 flex-1 flex-col text-left">
+                <span className="truncate text-sm font-semibold">{displayName}</span>
+                {secondaryText ? (
+                  <span className="truncate text-xs text-foreground/70">
+                    {secondaryText}
+                  </span>
+                ) : null}
+              </div>
+            </>
+          ) : (
+            <>
+              <LogIn className="h-4 w-4 text-foreground" />
+              <span className="sr-only">{preferredActionLabel}</span>
+            </>
+          )}
+        </Button>
+        <DropdownMenuTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            className="ml-auto flex h-9 w-9 justify-end px-0 hover:bg-transparent"
+            aria-label="Open account menu"
+            disabled={isSigningOut}
+          >
+            <EllipsisVertical className="h-4 w-4 text-foreground/70" />
+            <span className="sr-only">Open account menu</span>
+          </Button>
+        </DropdownMenuTrigger>
+      </div>
+    );
+  } else if (isSplitTrigger) {
+    triggerElement = (
+      <div
+        role="group"
+        aria-label="Account actions"
+        className={cn(
+          "flex items-center overflow-hidden",
+          triggerClassName,
+        )}
+      >
+        <Button
+          type="button"
+          variant="ghost"
+          className={cn(
+            "flex h-[38px] min-w-[76px] flex-1 items-center justify-center rounded-full rounded-r-none px-3 text-sm font-medium",
+            "border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground",
+            "border-r-0",
+          )}
+          onClick={handleSignUpClick}
+          disabled={isSigningOut}
+        >
+          Sign up
+        </Button>
+        <DropdownMenuTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            className={cn(
+              "flex h-[38px] w-9 items-center justify-center rounded-full rounded-l-none px-0",
+              "border border-border bg-background text-foreground hover:bg-muted/70",
+            )}
+            aria-label="Open account menu"
+            disabled={isSigningOut}
+          >
+            <EllipsisVertical className="h-4 w-4 text-foreground/80" />
+          </Button>
+        </DropdownMenuTrigger>
+      </div>
+    );
+  } else {
+    triggerElement = (
+      <DropdownMenuTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            className={cn(
+              "flex items-center text-sm font-medium text-foreground hover:text-accent-foreground",
+              showDetails
+                ? "h-auto gap-3 p-0 bg-transparent hover:bg-transparent"
+                : "h-9 w-9 justify-center rounded-full border border-border bg-background px-0 hover:bg-muted/70",
+              fullWidth && showDetails ? "w-full justify-start" : "w-auto",
+              triggerClassName,
+            )}
+          disabled={isSigningOut}
+          aria-label={triggerAriaLabel}
+        >
+          {shouldRenderAvatar ? (
+            <div className={cn("relative", avatarSizeClass)}>
+              {hasImage && !imageLoaded ? (
+                <Skeleton className={cn("rounded-full", avatarSizeClass)} />
+              ) : null}
+              <Avatar
+                className={cn(
+                  avatarWrapperClass,
+                  hasImage && !imageLoaded ? "opacity-0" : "opacity-100",
+                )}
+              >
+                {hasImage ? (
+                  <AvatarImage
+                    src={user!.image!}
+                    alt={displayName}
+                    onLoad={() => setImageLoaded(true)}
+                    onError={() => setImageLoaded(true)}
+                   className={avatarImageClass}
+                 />
+               ) : null}
+              </Avatar>
+            </div>
+          ) : null}
+          {!shouldRenderAvatar && !showDetails ? (
+            <div
+              className={cn(
+                "flex h-9 w-9 items-center justify-center rounded-full border border-border text-foreground/80",
+              )}
+            >
+              <LogIn className="h-4 w-4" />
+            </div>
+          ) : null}
+          {!showDetails ? null : (
+            <>
+              {showDetails ? (
+                <div className="flex min-w-0 flex-1 flex-col text-left">
+                  <span className="truncate text-sm font-semibold">{displayName}</span>
+                  {secondaryText ? (
+                    <span className="truncate text-xs text-foreground/70">
+                      {secondaryText}
+                    </span>
+                  ) : null}
+                </div>
+              ) : null}
+              {showDetails ? (
+                <EllipsisVertical className="h-4 w-4 text-foreground/70" />
+              ) : null}
+            </>
+          )}
+        </Button>
+      </DropdownMenuTrigger>
+    );
+  }
+
+  return (
+    <div>
+      <DropdownMenu>
+        {triggerElement}
+        <DropdownMenuContent
+          align="center"
+          className="w-60 mt-[4px] sm:mt-0 mr-2 sm:mr-0"
+        >
+          <div className="flex flex-col space-y-1">
+            {isAuthenticated ? (
+              <Accordion
+                type="single"
+                collapsible
+                className="-mx-2 w-[calc(100%+16px)] px-2"
+              >
+                <AccordionItem value="favorites" className="border-none">
+                  <AccordionTrigger className="flex w-full cursor-pointer select-none items-center justify-between gap-2 rounded-sm px-2 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted hover:no-underline focus-visible:bg-muted focus-visible:text-accent-foreground">
+                    <span className="flex items-center gap-2">
+                      <Bookmark className="h-4 w-4" />
+                      <span>Bookmarks</span>
+                    </span>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-0 pt-0 [&>div]:pb-0">
+                    <div className="relative flex flex-col gap-1 pl-[25px]">
+                      <span
+                        aria-hidden
+                        className="pointer-events-none absolute left-[15px] top-1 bottom-1 w-px bg-muted"
+                      />
+                      <DropdownMenuItem asChild className={cn(dropdownMenuItemClassName, "pl-2")}>
+                        <Link href="/llms?bookmarks=true">
+                          <span>LLMs</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild className={cn(dropdownMenuItemClassName, "pl-2")}>
+                        <Link href="/gpus?bookmarks=true">
+                          <span>GPUs</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            ) : null}
+          </div>
+          {isAuthenticated ? <DropdownMenuSeparator /> : null}
+          <DropdownMenuItem
+            asChild
+            onSelect={(event) => {
+              event.preventDefault();
+            }}
+            className={dropdownMenuItemClassName}
+          >
+            <ModeToggle appearance="menu" />
+          </DropdownMenuItem>
+          {isAuthenticated ? (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className={dropdownMenuItemClassName}
+                onSelect={() => {
+                  setIsSettingsDialogOpen(true);
+                }}
+              >
+                <SettingsIcon className="h-4 w-4" />
+                <span>Settings</span>
+              </DropdownMenuItem>
+            </>
+          ) : null}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            className={dropdownMenuItemClassName}
+            onSelect={() => {
+              if (isAuthenticated) {
+                if (!isSigningOut) {
+                  onSignOut();
+                }
+              } else {
+                onSignIn?.();
+              }
+            }}
+            disabled={isAuthenticated && isSigningOut}
+          >
+            {isAuthenticated ? (
+              <LogOut className="h-4 w-4" />
+            ) : (
+              <LogIn className="h-4 w-4" />
+            )}
+            <span>
+              {isAuthenticated
+                ? isSigningOut
+                  ? "Signing out..."
+                  : "Sign out"
+                : "Sign in"}
+            </span>
+          </DropdownMenuItem>
+          {isAuthenticated ? (
+            <>
+              <DropdownMenuSeparator className="sm:hidden" />
+              <DropdownMenuLabel className="flex items-center gap-2 pt-2 sm:hidden">
+                <Avatar className="h-8 w-8">
+                  {user?.image ? (
+                    <AvatarImage src={user.image} alt={displayName} />
+                  ) : null}
+                </Avatar>
+                <div className="flex min-w-0 flex-1 flex-col">
+                  <span className="truncate text-sm font-semibold">
+                    {displayName}
+                  </span>
+                  {email ? (
+                    <span className="truncate text-xs text-foreground/70">
+                      {email}
+                    </span>
+                  ) : null}
+                </div>
+              </DropdownMenuLabel>
+            </>
+          ) : null}
+        </DropdownMenuContent>
+      </DropdownMenu>
+      {isAuthenticated && isSettingsDialogOpen ? (
+        <React.Suspense fallback={null}>
+          <LazySettingsDialog
+            open={isSettingsDialogOpen}
+            onOpenChange={setIsSettingsDialogOpen}
+            user={user}
+          />
+        </React.Suspense>
+      ) : null}
+    </div>
+  );
+}
+
+interface SidebarPanelProps {
+  user: AccountUser | null | undefined;
+  isSigningOut: boolean;
+  onSignOut: () => void;
+  className?: string;
+  showUserMenuFooter?: boolean;
+  onSignIn?: () => void;
+  onSignUp?: () => void;
+  isAuthLoading?: boolean;
+}
+
+export function SidebarPanel({
+  user,
+  isSigningOut,
+  onSignOut,
+  className,
+  showUserMenuFooter = true,
+  onSignIn,
+  onSignUp,
+  isAuthLoading = false,
+}: SidebarPanelProps) {
+  const isAuthenticated = Boolean(user);
+  return (
+    <div className={cn("relative flex h-full flex-col", className)}>
+      <div className="scrollbar-hide flex-1 overflow-y-auto">
+        <div className="mx-auto w-full max-w-full">
+          <DataTableFilterControls />
+        </div>
+      </div>
+      {showUserMenuFooter ? (
+        <div className="flex-shrink-0 border-t border-border p-2">
+          <UserMenu
+            user={user}
+            onSignOut={onSignOut}
+            isSigningOut={isSigningOut}
+            onSignIn={onSignIn}
+            onSignUp={onSignUp}
+            forceUnauthSignInButton
+            isAuthenticated={isAuthenticated}
+            isLoading={isAuthLoading}
+          />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+interface MobileTopNavProps {
+  brandLabel?: string;
+  user: AccountUser | null;
+  onSignOut: () => void;
+  onSignIn: () => void;
+  onSignUp: () => void;
+  isSigningOut: boolean;
+  renderSidebar: () => React.ReactNode;
+  sheetTitle?: string;
+  isAuthLoading?: boolean;
+}
+
+export function MobileTopNav({
+  brandLabel = "Deploybase",
+  user,
+  onSignOut,
+  onSignIn,
+  onSignUp,
+  isSigningOut,
+  renderSidebar,
+  sheetTitle = "Search",
+  isAuthLoading = false,
+}: MobileTopNavProps) {
+  const brandLabelDisplay = brandLabel;
+  const pathname = usePathname() ?? "";
+  const router = useRouter();
+
+  const navItems = React.useMemo(
+    () => [
+      {
+        label: "LLMs",
+        value: "/llms",
+        isCurrent: pathname === "/" || pathname.startsWith("/llms"),
+        icon: Bot,
+        shortcut: "k",
+      },
+      {
+        label: "GPUs",
+        value: "/gpus",
+        isCurrent: pathname.startsWith("/gpus"),
+        icon: Server,
+        shortcut: "g",
+      },
+      {
+        label: "Tools",
+        value: "/tools",
+        isCurrent: pathname.startsWith("/tools"),
+        icon: Wrench,
+        shortcut: "e",
+      },
+    ],
+    [pathname],
+  );
+
+  const currentNavValue =
+    navItems.find((item) => item.isCurrent)?.value ?? "/llms";
+
+  const handleNavChange = React.useCallback(
+    (value: string) => {
+      if (!value) return;
+      if (value === pathname) return;
+      router.push(value);
+    },
+    [pathname, router],
+  );
+
+  return (
+    <NavigationMenu className="flex w-full max-w-none justify-between px-2 sm:hidden">
+      <NavigationMenuList className="grid w-full grid-cols-3 items-center gap-2">
+        {/*
+          <NavigationMenuItem className="mr-auto">
+            <NavigationMenuLink asChild>
+              <span className="select-none text-sm font-medium text-background">
+                {brandLabel}
+              </span>
+            </NavigationMenuLink>
+          </NavigationMenuItem>
+        */}
+        <NavigationMenuItem className="flex justify-start min-w-0">
+          <div className="flex items-center gap-2 h-9">
+            <Separator orientation="vertical" className="h-9 bg-border" />
+            <Select
+              value={currentNavValue}
+              onValueChange={handleNavChange}
+              hotkeys={[
+                { combo: "cmd+k", value: "/llms" },
+                { combo: "cmd+g", value: "/gpus" },
+                { combo: "cmd+e", value: "/tools" },
+              ]}
+            >
+              <SelectTrigger
+                className="h-9 w-[102px] min-w-[102px] justify-between rounded-lg"
+                aria-label={`${brandLabelDisplay} navigation`}
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {navItems.map((item) => (
+                  <SelectItem
+                    key={item.value}
+                    value={item.value}
+                    className="gap-2 cursor-pointer"
+                    shortcut={item.shortcut}
+                  >
+                    <item.icon className="h-4 w-4" aria-hidden="true" />
+                    {item.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </NavigationMenuItem>
+        <NavigationMenuItem
+          className="flex justify-center invisible pointer-events-none select-none"
+          aria-hidden="true"
+        >
+          <span className="sr-only">Spacer</span>
+        </NavigationMenuItem>
+        <NavigationMenuItem className="flex justify-end gap-2">
+          <UserMenu
+            user={user}
+            onSignOut={onSignOut}
+            onSignIn={onSignIn}
+            onSignUp={onSignUp}
+            isSigningOut={isSigningOut}
+            fullWidth={false}
+            showDetails={false}
+            isAuthenticated={Boolean(user)}
+            isLoading={isAuthLoading}
+          />
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 rounded-full border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground hover:text-accent-foreground"
+              >
+                <Search className="h-[18px] w-[18px] text-foreground" strokeWidth={1.5} />
+                <span className="sr-only">Toggle filters</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent
+              side="right"
+              className="overflow-y-auto p-0 sm:max-w-md"
+              hideClose
+            >
+              <SheetHeader className="sr-only">
+                <SheetTitle>{sheetTitle}</SheetTitle>
+                <SheetDescription>Filters and account options</SheetDescription>
+              </SheetHeader>
+              <div className="p-4">
+                <div className="mb-[14px] flex h-6 items-center justify-end gap-1">
+                  <DataTableResetButton />
+                  <Separator orientation="vertical" className="mx-1" />
+                  <SheetClose asChild>
+                    <Button size="icon" variant="ghost" className="h-6 w-6">
+                      <X className="h-5 w-5 text-accent-foreground" />
+                      <span className="sr-only">Close</span>
+                    </Button>
+                  </SheetClose>
+                </div>
+                {renderSidebar()}
+              </div>
+            </SheetContent>
+          </Sheet>
+        </NavigationMenuItem>
+      </NavigationMenuList>
+    </NavigationMenu>
+  );
+}

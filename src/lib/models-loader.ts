@@ -1,9 +1,9 @@
 import type {
   ModelsInfiniteQueryResponse,
   ModelsLogsMeta,
-} from "@/components/models-table/models-query-options";
-import type { ModelsColumnSchema } from "@/components/models-table/models-schema";
-import type { ModelsSearchParamsType } from "@/components/models-table/models-search-params";
+} from "@/features/data-explorer/models/models-query-options";
+import type { ModelsColumnSchema } from "@/features/data-explorer/models/models-schema";
+import type { ModelsSearchParamsType } from "@/features/data-explorer/models/models-search-params";
 import { modelsCache } from "@/lib/models-cache";
 import type { AIModel } from "@/types/models";
 import { unstable_cache } from "next/cache";

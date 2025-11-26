@@ -1,7 +1,7 @@
 import type { ModelFavoriteKey, ModelFavoritesRequest, ModelFavoritesResponse } from "@/types/model-favorites";
-import type { ModelsColumnSchema } from "@/components/models-table/models-schema";
-import type { ModelsInfiniteQueryResponse, ModelsLogsMeta } from "@/components/models-table/models-query-options";
-import { modelsSearchParamsSerializer } from "@/components/models-table/models-search-params";
+import type { ModelsColumnSchema } from "@/features/data-explorer/models/models-schema";
+import type { ModelsInfiniteQueryResponse, ModelsLogsMeta } from "@/features/data-explorer/models/models-query-options";
+import { modelsSearchParamsSerializer } from "@/features/data-explorer/models/models-search-params";
 import { MODEL_FAVORITES_API_TIMEOUT } from "./constants";
 
 export class ModelFavoritesAPIError extends Error {
