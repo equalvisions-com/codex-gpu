@@ -60,7 +60,7 @@ export function useTableSearchState(
   }, [filter, globalSearch]);
 
   const sorting = React.useMemo<SortingState>(() => {
-    return sort ? [sort] : [{ id: "provider", desc: false }];
+    return sort ? [sort] : [];
   }, [sort]);
 
   // Keep selection local so URL stays clean during client navigation.

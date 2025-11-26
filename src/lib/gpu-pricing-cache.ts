@@ -231,7 +231,7 @@ class GpuPricingCache {
 
       switch (id) {
         case 'provider':
-          orderByClause = buildProviderOrderBy(isDesc);
+          orderByClause = direction(gpuPricing.provider);
           break;
         case 'gpu_model':
           // JSONB field: gpu_model || item

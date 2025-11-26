@@ -570,7 +570,7 @@ class ModelsCache {
 
       switch (id) {
         case 'provider':
-          orderByClause = buildProviderOrderBy(isDesc);
+          orderByClause = direction(aiModels.provider);
           break;
         case 'name': {
           // Normalize to match client-side fallback: shortName -> name -> empty string
