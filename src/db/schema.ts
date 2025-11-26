@@ -144,6 +144,13 @@ export const gpuPricing = pgTable("gpu_pricing", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (table) => ({
   providerIndex: index("gpu_pricing_provider_idx").on(table.provider),
+  providerPriorityIndex: index("gpu_pricing_provider_priority_idx").on(
+    sql`(array_position(
+      ARRAY['coreweave','lambda','runpod','digitalocean','oracle','nebius','hyperstack','crusoe'],
+      lower(${table.provider})
+    ))`,
+    sql`lower(${table.provider})`,
+  ),
   observedAtIndex: index("gpu_pricing_observed_at_idx").on(table.observedAt),
   // GIN index for JSONB queries (filtering, sorting on data fields)
   dataIndex: index("gpu_pricing_data_idx").using("gin", table.data),

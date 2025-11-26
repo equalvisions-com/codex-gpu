@@ -7,6 +7,7 @@ import type { RowWithId } from "@/types/api";
 import { isArrayOfDates } from "@/lib/is-array";
 import { normalizeObservedAt } from "@/lib/normalize-observed-at";
 import { isSameDay } from "date-fns";
+import type { SQL } from "drizzle-orm";
 
 type GpuPricingRow = typeof gpuPricing.$inferSelect;
 
@@ -20,6 +21,36 @@ const PROVIDER_SORT_PRIORITY: Record<string, number> = {
   nebius: 6,
   hyperstack: 7,
   crusoe: 8,
+};
+const PROVIDER_SORT_ORDER = [
+  "coreweave",
+  "lambda",
+  "runpod",
+  "digitalocean",
+  "oracle",
+  "nebius",
+  "hyperstack",
+  "crusoe",
+];
+
+const PROVIDER_PRIORITY_ARRAY_SQL = sql.raw(
+  `ARRAY[${PROVIDER_SORT_ORDER.map((provider) => `'${provider}'`).join(", ")}]`,
+);
+
+const providerPriorityExpression = sql<number>`
+  COALESCE(
+    array_position(${PROVIDER_PRIORITY_ARRAY_SQL}, lower(${gpuPricing.provider})),
+    999
+  )
+`;
+
+const buildProviderOrderBy = (isDesc: boolean): SQL<unknown>[] => {
+  const direction = isDesc ? sql.raw("DESC") : sql.raw("ASC");
+  const providerNameExpr = sql`COALESCE(lower(${gpuPricing.provider}), '')`;
+  return [
+    sql`${providerPriorityExpression} ${direction}`,
+    sql`${providerNameExpr} ${direction}`,
+  ];
 };
 
 function toRowWithId(record: GpuPricingRow): RowWithId {
@@ -200,7 +231,7 @@ class GpuPricingCache {
 
       switch (id) {
         case 'provider':
-          orderByClause = direction(gpuPricing.provider);
+          orderByClause = buildProviderOrderBy(isDesc);
           break;
         case 'gpu_model':
           // JSONB field: gpu_model || item
@@ -236,11 +267,11 @@ class GpuPricingCache {
           break;
         default:
           // Default: sort by provider
-          orderByClause = asc(gpuPricing.provider);
+          orderByClause = buildProviderOrderBy(false);
       }
     } else {
       // Default: sort by provider
-      orderByClause = asc(gpuPricing.provider);
+      orderByClause = buildProviderOrderBy(false);
     }
 
     // Apply pagination
@@ -252,7 +283,7 @@ class GpuPricingCache {
       .select()
       .from(gpuPricing)
       .where(whereClause)
-      .orderBy(orderByClause)
+      .orderBy(...(Array.isArray(orderByClause) ? orderByClause : [orderByClause]))
       .limit(size)
       .offset(cursor);
 
