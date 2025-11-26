@@ -14,7 +14,7 @@ import { MobileTopNav } from "./account-components";
 const MINIMUM_MODEL_COLUMN_WIDTH = 200;
 
 // Extract title from header function by checking common patterns
-function getHeaderTitle(column: ReturnType<ReturnType<typeof useReactTable>["getVisibleLeafColumns"]>[0]): string {
+function getHeaderTitle(column: { id: string; columnDef: { header?: unknown } }): string {
   const header = column.columnDef.header;
   if (typeof header === "string") return header;
   
@@ -69,6 +69,8 @@ export function TableSkeleton() {
           <MobileTopNav
             user={null}
             onSignOut={() => {}}
+            onSignIn={() => {}}
+            onSignUp={() => {}}
             isSigningOut={false}
             renderSidebar={() => (
               <SidebarSkeleton filterFields={filterFields} showSearch={true} />
@@ -98,7 +100,7 @@ export function TableSkeleton() {
                           }}
                         >
                           {title ? (
-                            <DataTableColumnHeader table={table} column={column} title={title} />
+                            <DataTableColumnHeader column={column} title={title} />
                           ) : (
                             <div className="flex justify-center">
                               <div className="h-4 w-4" />

@@ -4,17 +4,10 @@ import * as React from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EllipsisVertical } from "lucide-react";
 import { DataTableFilterControls } from "@/features/data-explorer/data-table/data-table-filter-controls";
+import type { DataTableFilterField } from "@/features/data-explorer/data-table/types";
 
 interface SidebarSkeletonProps {
-  filterFields: Array<{
-    label: string;
-    value: string;
-    type: "checkbox" | "slider" | "input";
-    skeletonRows?: number;
-    defaultOpen?: boolean;
-    min?: number;
-    max?: number;
-  }>;
+  filterFields: DataTableFilterField<any>[];
   showSearch?: boolean;
   currentPage?: "gpus" | "llms" | "tools";
 }

@@ -9,7 +9,7 @@ import { modelsDataOptions } from "./models-query-options";
 import { getModelsPage } from "@/lib/models-loader";
 import { ModelsClient } from "./models-client";
 import { ModelsTableSkeleton } from "./models-table-skeleton";
-import { buildModelsSchema } from "./models-schema";
+import { buildModelsSchema } from "./build-models-schema";
 
 export async function ModelsDataStream() {
   const parsedSearch = modelsSearchParamsCache.parse({});
