@@ -1,7 +1,7 @@
-import type { InfiniteQueryResponse, LogsMeta } from "@/components/infinite-table/query-options";
-import type { ColumnSchema } from "@/components/infinite-table/schema";
-import { searchParamsCache } from "@/components/infinite-table/search-params";
-import type { SearchParamsType } from "@/components/infinite-table/search-params";
+import type { InfiniteQueryResponse, LogsMeta } from "@/features/data-explorer/table/query-options";
+import type { ColumnSchema } from "@/features/data-explorer/table/schema";
+import { searchParamsCache } from "@/features/data-explorer/table/search-params";
+import type { SearchParamsType } from "@/features/data-explorer/table/search-params";
 import { logger } from "@/lib/logger";
 import { getRequestLogContext } from "@/lib/request-log-context";
 import { getGpuPricingPage } from "@/lib/gpu-pricing-loader";

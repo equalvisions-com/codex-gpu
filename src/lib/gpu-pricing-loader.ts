@@ -1,6 +1,6 @@
-import type { InfiniteQueryResponse, LogsMeta } from "@/components/infinite-table/query-options";
-import type { ColumnSchema, FacetMetadataSchema } from "@/components/infinite-table/schema";
-import type { SearchParamsType } from "@/components/infinite-table/search-params";
+import type { InfiniteQueryResponse, LogsMeta } from "@/features/data-explorer/table/query-options";
+import type { ColumnSchema, FacetMetadataSchema } from "@/features/data-explorer/table/schema";
+import type { SearchParamsType } from "@/features/data-explorer/table/search-params";
 import { gpuPricingCache } from "@/lib/gpu-pricing-cache";
 import { unstable_cache } from "next/cache";
 import { createHash } from "crypto";

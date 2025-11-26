@@ -1,8 +1,8 @@
 import type { FavoritesResponse, FavoritesRequest, FavoriteKey } from "@/types/favorites";
 import { FAVORITES_API_TIMEOUT } from "./constants";
-import type { InfiniteQueryResponse, LogsMeta } from "@/components/infinite-table/query-options";
-import type { ColumnSchema } from "@/components/infinite-table/schema";
-import { searchParamsSerializer } from "@/components/infinite-table/search-params";
+import type { InfiniteQueryResponse, LogsMeta } from "@/features/data-explorer/table/query-options";
+import type { ColumnSchema } from "@/features/data-explorer/table/schema";
+import { searchParamsSerializer } from "@/features/data-explorer/table/search-params";
 
 /**
  * Custom error class for favorites API operations

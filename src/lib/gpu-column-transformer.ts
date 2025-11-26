@@ -1,4 +1,4 @@
-import type { ColumnSchema } from "@/components/infinite-table/schema";
+import type { ColumnSchema } from "@/features/data-explorer/table/schema";
 import type { RowWithId } from "@/types/api";
 
 export function mapGpuRowToColumnSchema(row: RowWithId): ColumnSchema {

@@ -1,5 +1,5 @@
 import type { AIModel } from "@/types/models";
-import type { ModelsColumnSchema } from "@/components/models-table/models-schema";
+import type { ModelsColumnSchema } from "@/features/data-explorer/models/models-schema";
 
 export function toModelsColumnRow(model: AIModel): ModelsColumnSchema {
   return {
