@@ -260,7 +260,7 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
             )}
           />
         }
-        mobileHeaderOffset="38px"
+        mobileHeaderOffset="36px"
       />
     </>
   );

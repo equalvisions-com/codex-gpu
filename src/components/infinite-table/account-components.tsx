@@ -149,8 +149,8 @@ export function UserMenu({
       return (
         <Skeleton
           className={cn(
-            "h-[38px] w-[68px] rounded-md",
-            fullWidth ? "w-full" : "w-[68px]",
+            "h-9 w-9 rounded-full",
+            fullWidth ? "w-full" : "w-9",
             triggerClassName,
           )}
         />
@@ -311,12 +311,7 @@ export function UserMenu({
           aria-label={triggerAriaLabel}
         >
           {shouldRenderAvatar ? (
-            <div
-              className={cn(
-                "relative overflow-hidden rounded-full border border-border",
-                avatarSizeClass,
-              )}
-            >
+            <div className={cn("relative", avatarSizeClass)}>
               {hasImage && !imageLoaded ? (
                 <Skeleton className={cn("rounded-full", avatarSizeClass)} />
               ) : null}
@@ -639,7 +634,7 @@ export function MobileTopNav({
               ]}
             >
               <SelectTrigger
-                className="h-9 w-full justify-between rounded-lg"
+                className="h-9 w-[102px] min-w-[102px] justify-between rounded-lg"
                 aria-label={`${brandLabelDisplay} navigation`}
               >
                 <SelectValue />

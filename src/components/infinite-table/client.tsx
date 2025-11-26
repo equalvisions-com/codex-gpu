@@ -267,7 +267,7 @@ export function Client({ initialFavoriteKeys, isFavoritesMode }: ClientProps = {
             )}
           />
         }
-        mobileHeaderOffset="38px"
+        mobileHeaderOffset="36px"
       />
     </>
   );

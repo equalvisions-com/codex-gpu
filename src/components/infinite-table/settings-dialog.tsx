@@ -373,7 +373,7 @@ export function SettingsDialog({ open, onOpenChange, user }: SettingsDialogProps
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-w-3xl flex-col gap-0 h-[520px] overflow-hidden rounded-xl border border-border/60 bg-background p-0 sm:p-0 [&>button:last-of-type]:top-4 [&>button:last-of-type]:right-4 sm:[&>button:last-of-type]:top-6 sm:[&>button:last-of-type]:right-6">
+      <DialogContent className="flex max-w-3xl flex-col gap-0 h-auto min-h-[492px] sm:h-[520px] overflow-hidden rounded-lg border border-border/60 bg-background p-0 sm:p-0 [&>button:last-of-type]:top-4 [&>button:last-of-type]:right-4 sm:[&>button:last-of-type]:top-6 sm:[&>button:last-of-type]:right-6">
         <DialogHeader className="sr-only">
           <DialogTitle>Settings</DialogTitle>
         </DialogHeader>
@@ -390,7 +390,7 @@ export function SettingsDialog({ open, onOpenChange, user }: SettingsDialogProps
                       type="button"
                       onClick={() => setActiveItem(item.value)}
                       className={[
-                        "flex w-full items-center gap-3 rounded-lg border px-3.5 py-2.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none",
+                        "flex w-full items-center gap-2 rounded-lg border px-2.5 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none",
                         "text-foreground hover:text-foreground hover:border-border/70 hover:bg-gradient-to-b hover:from-muted/70 hover:via-muted/40 hover:to-background",
                         isActive
                           ? "border-border/70 bg-gradient-to-b from-muted/70 via-muted/40 to-background text-foreground"
@@ -409,9 +409,9 @@ export function SettingsDialog({ open, onOpenChange, user }: SettingsDialogProps
           <section className="col-span-12 h-full overflow-hidden bg-background sm:col-span-8">
             <div className="flex h-full flex-col">
               <div className="px-4 py-4 sm:px-6 sm:pt-6 sm:pb-0">
-                <div className="hidden items-center gap-2 text-sm text-muted-foreground sm:flex">
+                <div className="hidden items-center gap-2 text-sm text-foreground/70 sm:flex">
                   <span className="text-foreground/70">Settings</span>
-                  <ChevronRight className="h-3 w-3 text-muted-foreground" aria-hidden />
+                  <ChevronRight className="h-3 w-3 text-foreground/70" aria-hidden />
                   <span className="font-medium text-foreground">{activeLabel}</span>
                 </div>
                 <div className="space-y-3 sm:hidden">
@@ -419,7 +419,7 @@ export function SettingsDialog({ open, onOpenChange, user }: SettingsDialogProps
                     Settings
                   </p>
                   <Select value={activeItem} onValueChange={setActiveItem}>
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="w-full border-border/60">
                       <SelectValue placeholder="Select section" />
                     </SelectTrigger>
                     <SelectContent align="start">
@@ -442,10 +442,10 @@ export function SettingsDialog({ open, onOpenChange, user }: SettingsDialogProps
                 <div className="px-4 pb-4 pt-0 sm:px-6 sm:py-6">
                   {activeItem === "profile" ? (
                     <div className="space-y-4 sm:space-y-6">
-                      <div className="rounded-xl border border-border/60 bg-muted/10 p-4 shadow-sm shadow-black/5 sm:p-6">
+                      <div className="rounded-lg border border-border/60 bg-muted/10 p-4 shadow-sm shadow-black/5 sm:p-6">
                         <div className="space-y-1">
                           <div className="text-sm font-semibold text-foreground">Profile</div>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-sm text-foreground/70">
                             Manage your profile details and preferences.
                           </p>
                         </div>
@@ -476,7 +476,7 @@ export function SettingsDialog({ open, onOpenChange, user }: SettingsDialogProps
                                   disabled={isSavingProfile}
                                 />
                               ) : (
-                                <p className="text-sm text-muted-foreground">
+                                <p className="text-sm text-foreground/70">
                                   {profileName || ""}
                                 </p>
                               )}
@@ -498,7 +498,7 @@ export function SettingsDialog({ open, onOpenChange, user }: SettingsDialogProps
                           </div>
                           <div className="space-y-1 py-4">
                             <Label>Email</Label>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-sm text-foreground/70">
                               {displayEmail || "Not set"}
                             </p>
                           </div>
@@ -511,7 +511,7 @@ export function SettingsDialog({ open, onOpenChange, user }: SettingsDialogProps
                               </div>
                             ) : null}
                             {!accountsQuery.isLoading && !accountsQuery.isError && displayConnectedAccounts.length === 0 ? (
-                              <p className="text-sm text-muted-foreground">None</p>
+                              <p className="text-sm text-foreground/70">None</p>
                             ) : null}
                             {!accountsQuery.isLoading && !accountsQuery.isError && displayConnectedAccounts.length > 0 ? (
                               <div className="space-y-1.5">
@@ -520,7 +520,7 @@ export function SettingsDialog({ open, onOpenChange, user }: SettingsDialogProps
                                   return (
                                     <p
                                       key={`${account.providerId}:${account.accountId || "default"}`}
-                                      className="text-sm text-muted-foreground"
+                                      className="text-sm text-foreground/70"
                                     >
                                       {label}
                                     </p>
@@ -545,13 +545,13 @@ export function SettingsDialog({ open, onOpenChange, user }: SettingsDialogProps
                 {activeItem === "security" ? (
                   <div className="space-y-4 sm:space-y-6">
                     {isPasswordChangeAllowed ? (
-                      <div className="rounded-xl border border-border/60 bg-muted/10 p-4 shadow-sm shadow-black/5 sm:p-6">
+                      <div className="rounded-lg border border-border/60 bg-muted/10 p-4 shadow-sm shadow-black/5 sm:p-6">
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                           <div className="space-y-1">
                             <div className="text-sm font-semibold text-foreground">
                               Change password
                             </div>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-sm text-foreground/70">
                               Update the password associated with your account.
                             </p>
                           </div>
@@ -610,7 +610,7 @@ export function SettingsDialog({ open, onOpenChange, user }: SettingsDialogProps
                               />
                               <div className="space-y-1 text-sm">
                                 <span className="font-medium text-foreground">Revoke other sessions</span>
-                                <p className="text-muted-foreground">
+                                <p className="text-foreground/70">
                                   Sign out on all other devices after the password changes.
                                 </p>
                               </div>
@@ -648,13 +648,13 @@ export function SettingsDialog({ open, onOpenChange, user }: SettingsDialogProps
                         ) : null}
                       </div>
                     ) : null}
-                    <div className="rounded-xl border border-border/60 bg-muted/10 p-4 shadow-sm shadow-black/5 sm:p-6">
+                    <div className="rounded-lg border border-border/60 bg-muted/10 p-4 shadow-sm shadow-black/5 sm:p-6">
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div className="space-y-1">
                           <div className="text-sm font-semibold text-foreground">
                             Session management
                           </div>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-sm text-foreground/70">
                             Sign out from all other devices and keep this session active.
                           </p>
                         </div>
@@ -674,13 +674,13 @@ export function SettingsDialog({ open, onOpenChange, user }: SettingsDialogProps
                         <p className="mt-3 text-sm text-emerald-500">{revokeSessionsMessage}</p>
                       ) : null}
                     </div>
-                    <div className="rounded-xl border border-destructive/60 bg-destructive/5 p-4 shadow-sm shadow-black/5 sm:p-6">
+                    <div className="rounded-lg border border-destructive/60 bg-destructive/5 p-4 shadow-sm shadow-black/5 sm:p-6">
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div className="space-y-1">
                           <div className="text-sm font-semibold text-foreground">
                             Delete account
                           </div>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-sm text-foreground/70">
                             Permanently remove your account and all associated data.
                           </p>
                         </div>
@@ -729,11 +729,11 @@ export function SettingsDialog({ open, onOpenChange, user }: SettingsDialogProps
 
                 {activeItem === "appearance" ? (
                   <div className="space-y-4 sm:space-y-6">
-                    <div className="rounded-xl border border-border/60 bg-muted/10 p-4 shadow-sm shadow-black/5 sm:p-6">
+                    <div className="rounded-lg border border-border/60 bg-muted/10 p-4 shadow-sm shadow-black/5 sm:p-6">
                       <div className="flex items-center justify-between gap-3">
                         <div className="space-y-1">
                           <div className="text-sm font-semibold text-foreground">Theme</div>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-sm text-foreground/70">
                             Switch between light, dark, or system.
                           </p>
                         </div>
@@ -745,20 +745,12 @@ export function SettingsDialog({ open, onOpenChange, user }: SettingsDialogProps
 
                 {activeItem === "notifications" ? (
                   <div className="space-y-4 sm:space-y-6">
-                    <div className="rounded-xl border border-border/60 bg-muted/10 p-4 shadow-sm shadow-black/5 sm:p-6">
-                      <div className="space-y-1">
-                        <div className="text-sm font-semibold text-foreground">
-                          Notifications
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          Control alerts and delivery preferences.
-                        </p>
-                      </div>
-                      <div className="mt-5 space-y-4 text-sm">
+                    <div className="rounded-lg border border-border/60 bg-muted/10 p-4 shadow-sm shadow-black/5 sm:p-6">
+                      <div className="space-y-4 text-sm">
                         <div className="flex items-center justify-between gap-3">
                           <div className="space-y-1">
-                            <Label>Subscribe to newsletter</Label>
-                            <p className="text-muted-foreground">Get product updates and insights.</p>
+                            <Label className="text-sm font-semibold text-foreground">Subscribe to newsletter</Label>
+                            <p className="text-foreground/70">Get product updates and insights.</p>
                           </div>
                           <Switch
                             checked={isNewsletterSubscribed}
