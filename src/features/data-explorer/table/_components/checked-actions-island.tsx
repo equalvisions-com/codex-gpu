@@ -13,7 +13,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ColumnSchema } from "@/features/data-explorer/table/schema";
 import type { InfiniteQueryResponse, LogsMeta } from "@/features/data-explorer/table/query-options";
 import type { FavoriteKey } from "@/types/favorites";
-import { stableGpuKey } from "@/features/data-explorer/table/stable-key";
+import { stableGpuKey } from "@/features/data-explorer/stable-keys";
 import { 
   FAVORITES_QUERY_KEY, 
   FAVORITES_BROADCAST_CHANNEL,
