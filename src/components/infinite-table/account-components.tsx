@@ -31,9 +31,15 @@ import {
 import {
   NavigationMenu,
   NavigationMenuItem,
-  NavigationMenuLink,
   NavigationMenuList,
 } from "@/components/ui/navigation-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -45,8 +51,12 @@ import {
   Search,
   Settings as SettingsIcon,
   X,
+  Bot,
+  Server,
+  Wrench,
 } from "lucide-react";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
 
 const gradientSurfaceClass =
@@ -99,7 +109,7 @@ export function UserMenu({
   const displayName = normalizedName || email || "Account";
   const [imageLoaded, setImageLoaded] = React.useState(false);
   const hasImage = Boolean(user?.image);
-  const avatarSizeClass = showDetails ? "h-9 w-9" : "h-6 w-6";
+  const avatarSizeClass = showDetails ? "h-9 w-9" : "h-9 w-9";
   const avatarWrapperClass = avatarSizeClass;
   const avatarImageClass = "h-full w-full rounded-full object-cover";
   const inferredAuthenticated = Boolean(normalizedName || email || user?.image);
@@ -273,16 +283,12 @@ export function UserMenu({
             variant="ghost"
             className={cn(
               "flex h-[38px] w-9 items-center justify-center rounded-full rounded-l-none px-0",
-              "border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground",
+              "border border-border bg-background text-foreground hover:bg-muted/70",
             )}
             aria-label="Open account menu"
             disabled={isSigningOut}
           >
-            <span className="relative flex w-[18px] items-center justify-center text-foreground">
-              <span className="absolute h-px w-3 -translate-y-1 rounded-full bg-current" />
-              <span className="absolute h-px w-3 rounded-full bg-current" />
-              <span className="absolute h-px w-3 translate-y-1 rounded-full bg-current" />
-            </span>
+            <EllipsisVertical className="h-4 w-4 text-foreground/80" />
           </Button>
         </DropdownMenuTrigger>
       </div>
@@ -294,24 +300,23 @@ export function UserMenu({
             type="button"
             variant="ghost"
             className={cn(
-            "flex h-auto items-center gap-3 p-0 text-left text-sm font-medium text-foreground hover:text-accent-foreground",
-            showDetails
-              ? "bg-transparent hover:bg-transparent"
-              : cn(
-                  gradientSurfaceClass,
-                  "hover:bg-transparent",
-                ),
-            fullWidth ? "w-full justify-start" : "w-auto justify-center",
-            !showDetails
-              ? "!gap-2 !rounded-md !px-2 !h-[38px] md:rounded-md"
-              : null,
-            triggerClassName,
-          )}
+              "flex items-center text-sm font-medium text-foreground hover:text-accent-foreground",
+              showDetails
+                ? "h-auto gap-3 p-0 bg-transparent hover:bg-transparent"
+                : "h-9 w-9 justify-center rounded-full border border-border bg-background px-0 hover:bg-muted/70",
+              fullWidth && showDetails ? "w-full justify-start" : "w-auto",
+              triggerClassName,
+            )}
           disabled={isSigningOut}
           aria-label={triggerAriaLabel}
         >
           {shouldRenderAvatar ? (
-            <div className={cn("relative", avatarSizeClass)}>
+            <div
+              className={cn(
+                "relative overflow-hidden rounded-full border border-border",
+                avatarSizeClass,
+              )}
+            >
               {hasImage && !imageLoaded ? (
                 <Skeleton className={cn("rounded-full", avatarSizeClass)} />
               ) : null}
@@ -333,36 +338,32 @@ export function UserMenu({
               </Avatar>
             </div>
           ) : null}
-          {!shouldRenderAvatar && showDetails && !isAuthenticated ? (
+          {!shouldRenderAvatar && !showDetails ? (
             <div
               className={cn(
-                "flex items-center justify-center rounded-full border border-border text-foreground/70",
-                avatarSizeClass,
+                "flex h-9 w-9 items-center justify-center rounded-full border border-border text-foreground/80",
               )}
             >
               <LogIn className="h-4 w-4" />
             </div>
           ) : null}
-          {showDetails ? (
-            <div className="flex min-w-0 flex-1 flex-col text-left">
-              <span className="truncate text-sm font-semibold">{displayName}</span>
-              {secondaryText ? (
-                <span className="truncate text-xs text-foreground/70">
-                  {secondaryText}
-                </span>
+          {!showDetails ? null : (
+            <>
+              {showDetails ? (
+                <div className="flex min-w-0 flex-1 flex-col text-left">
+                  <span className="truncate text-sm font-semibold">{displayName}</span>
+                  {secondaryText ? (
+                    <span className="truncate text-xs text-foreground/70">
+                      {secondaryText}
+                    </span>
+                  ) : null}
+                </div>
               ) : null}
-            </div>
-          ) : null}
-          {showDetails ? (
-            <EllipsisVertical className="h-4 w-4 text-foreground/70" />
-          ) : null}
-          {!showDetails ? (
-            <span className="relative flex w-[18px] items-center justify-center text-foreground">
-              <span className="absolute h-px w-3 -translate-y-1 rounded-full bg-current" />
-              <span className="absolute h-px w-3 rounded-full bg-current" />
-              <span className="absolute h-px w-3 translate-y-1 rounded-full bg-current" />
-            </span>
-          ) : null}
+              {showDetails ? (
+                <EllipsisVertical className="h-4 w-4 text-foreground/70" />
+              ) : null}
+            </>
+          )}
         </Button>
       </DropdownMenuTrigger>
     );
@@ -570,17 +571,113 @@ export function MobileTopNav({
   sheetTitle = "Search",
   isAuthLoading = false,
 }: MobileTopNavProps) {
+  const brandLabelDisplay = brandLabel;
+  const pathname = usePathname() ?? "";
+  const router = useRouter();
+
+  const navItems = React.useMemo(
+    () => [
+      {
+        label: "LLMs",
+        value: "/llms",
+        isCurrent: pathname === "/" || pathname.startsWith("/llms"),
+        icon: Bot,
+        shortcut: "k",
+      },
+      {
+        label: "GPUs",
+        value: "/gpus",
+        isCurrent: pathname.startsWith("/gpus"),
+        icon: Server,
+        shortcut: "g",
+      },
+      {
+        label: "Tools",
+        value: "/tools",
+        isCurrent: pathname.startsWith("/tools"),
+        icon: Wrench,
+        shortcut: "e",
+      },
+    ],
+    [pathname],
+  );
+
+  const currentNavValue =
+    navItems.find((item) => item.isCurrent)?.value ?? "/llms";
+
+  const handleNavChange = React.useCallback(
+    (value: string) => {
+      if (!value) return;
+      if (value === pathname) return;
+      router.push(value);
+    },
+    [pathname, router],
+  );
+
   return (
     <NavigationMenu className="flex w-full max-w-none justify-between px-2 sm:hidden">
-      <NavigationMenuList className="flex w-full items-center gap-2">
-        <NavigationMenuItem className="mr-auto">
-          <NavigationMenuLink asChild>
-            <span className="select-none text-sm font-medium text-background">
-              {brandLabel}
-            </span>
-          </NavigationMenuLink>
+      <NavigationMenuList className="grid w-full grid-cols-3 items-center gap-2">
+        {/*
+          <NavigationMenuItem className="mr-auto">
+            <NavigationMenuLink asChild>
+              <span className="select-none text-sm font-medium text-background">
+                {brandLabel}
+              </span>
+            </NavigationMenuLink>
+          </NavigationMenuItem>
+        */}
+        <NavigationMenuItem className="flex justify-start min-w-0">
+          <div className="flex items-center gap-2 h-9">
+            <Separator orientation="vertical" className="h-9 bg-border" />
+            <Select
+              value={currentNavValue}
+              onValueChange={handleNavChange}
+              hotkeys={[
+                { combo: "cmd+k", value: "/llms" },
+                { combo: "cmd+g", value: "/gpus" },
+                { combo: "cmd+e", value: "/tools" },
+              ]}
+            >
+              <SelectTrigger
+                className="h-9 w-full justify-between rounded-lg"
+                aria-label={`${brandLabelDisplay} navigation`}
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {navItems.map((item) => (
+                  <SelectItem
+                    key={item.value}
+                    value={item.value}
+                    className="gap-2 cursor-pointer"
+                    shortcut={item.shortcut}
+                  >
+                    <item.icon className="h-4 w-4" aria-hidden="true" />
+                    {item.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </NavigationMenuItem>
-        <NavigationMenuItem>
+        <NavigationMenuItem
+          className="flex justify-center invisible pointer-events-none select-none"
+          aria-hidden="true"
+        >
+          <span className="sr-only">Spacer</span>
+        </NavigationMenuItem>
+        <NavigationMenuItem className="flex justify-end gap-2">
+          <UserMenu
+            user={user}
+            onSignOut={onSignOut}
+            onSignIn={onSignIn}
+            onSignUp={onSignUp}
+            isSigningOut={isSigningOut}
+            fullWidth={false}
+            showDetails={false}
+            isAuthenticated={Boolean(user)}
+            isLoading={isAuthLoading}
+          />
           <Sheet>
             <SheetTrigger asChild>
               <Button
@@ -617,19 +714,6 @@ export function MobileTopNav({
               </div>
             </SheetContent>
           </Sheet>
-        </NavigationMenuItem>
-        <NavigationMenuItem>
-          <UserMenu
-            user={user}
-            onSignOut={onSignOut}
-            onSignIn={onSignIn}
-            onSignUp={onSignUp}
-            isSigningOut={isSigningOut}
-            fullWidth={false}
-            showDetails={false}
-            isAuthenticated={Boolean(user)}
-            isLoading={isAuthLoading}
-          />
         </NavigationMenuItem>
       </NavigationMenuList>
     </NavigationMenu>
