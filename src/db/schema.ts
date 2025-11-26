@@ -66,6 +66,21 @@ export const aiModels = pgTable("ai_models", {
     "gin",
     sql`to_tsvector('english', coalesce(${table.name}, '') || ' ' || coalesce(${table.description}, ''))`
   ),
+  providerPriorityIndex: index("ai_models_provider_priority_idx").on(
+    sql`(array_position(
+      ARRAY[
+        'Azure','Google Vertex','Groq','Together','Fireworks','OpenAI','Anthropic','Google AI Studio',
+        'Amazon Bedrock','Mistral','Cohere','xAI','Perplexity','DeepSeek','Cerebras',
+        'SambaNova','DeepInfra','Cloudflare','NVIDIA','Alibaba','MoonshotAI','BaseTen','Nebius',
+        'Crusoe','Friendli','Hyperbolic','MiniMax','AI21','SiliconFlow','Novita','Inflection',
+        'Venice','Chutes','Z.AI','Weights and Biases','Phala','AtlasCloud','Parasail',
+        'NCompass','Inception','Relace','Morph','Infermatic','AionLabs','Mancer','NextBit',
+        'Liquid','OpenInference','GMICloud','Switchpoint','Featherless','Avian','Stealth'
+      ],
+      ${table.provider}
+    ))`,
+    sql`lower(${table.provider})`,
+  ),
   // Composite index for default sorting (provider, short_name)
   providerNameIndex: index("ai_models_provider_name_idx").on(table.provider, table.shortName),
   // GIN index for pricing queries

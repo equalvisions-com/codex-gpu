@@ -3,6 +3,7 @@ import { aiModels, userModelFavorites } from "@/db/schema";
 import { eq, sql, inArray, and, or, ilike, between, asc, desc } from "drizzle-orm";
 import type { AIModel, ModelScrapeResult } from "@/types/models";
 import type { ModelsSearchParamsType } from "@/components/models-table/models-search-params";
+import type { SQL } from "drizzle-orm";
 
 // Import sort priorities from route file (shared constants)
 const PROVIDER_SORT_PRIORITY: Record<string, number> = {
@@ -118,6 +119,67 @@ const AUTHOR_SORT_PRIORITY: Record<string, number> = {
   'TheDrummer': 53,
 };
 
+// Sorting-specific provider priority (keep separate from filter priority map)
+const PROVIDER_SORT_ORDER = [
+  "Anthropic",
+  "Perplexity",
+  "xAI",
+  "OpenAI",
+  "Z.AI",
+  "Cohere",
+  "Mistral",
+  "Google Vertex",
+  "BaseTen",
+  "DeepSeek",
+  "MoonshotAI",
+  "NVIDIA",
+  "Google AI Studio",
+  "Amazon Bedrock",
+  "Cloudflare",
+  "Groq",
+  "Alibaba",
+  "Azure",
+  "Nebius",
+  "Crusoe", 
+  "Cerebras",
+  "AtlasCloud",
+  "Together",
+  "Chutes",
+  "Weights and Biases",
+  "Fireworks",
+  "SambaNova",
+  "DeepInfra",
+  "Friendli",
+  "Hyperbolic",
+  "MiniMax",
+  "AI21",
+  "SiliconFlow",
+  "Novita",
+  "Inflection",
+  "Venice",
+  "Phala",
+  "Parasail",
+  "NCompass",
+  "Inception",
+  "Relace",
+  "Morph",
+  "Infermatic",
+  "AionLabs",
+  "Mancer",
+  "NextBit",
+  "Liquid",
+  "OpenInference",
+  "GMICloud",
+  "Switchpoint",
+  "Featherless",
+  "Avian",
+  "Stealth",
+];
+
+const PROVIDER_PRIORITY_ARRAY_SQL = sql.raw(
+  `ARRAY[${PROVIDER_SORT_ORDER.map((provider) => `'${provider.replace(/'/g, "''")}'`).join(", ")}]`,
+);
+
 const parseNullableNumber = (value: unknown): number | null => {
   if (value === null || value === undefined) {
     return null;
@@ -148,6 +210,22 @@ const computeModalityScore = (
     }
   }
   return unique.size;
+};
+
+const providerPriorityExpression = sql<number>`
+  COALESCE(
+    array_position(${PROVIDER_PRIORITY_ARRAY_SQL}, ${aiModels.provider}),
+    999
+  )
+`;
+
+const buildProviderOrderBy = (isDesc: boolean): SQL<unknown>[] => {
+  const direction = isDesc ? sql.raw("DESC") : sql.raw("ASC");
+  const providerNameExpr = sql`COALESCE(lower(${aiModels.provider}), '')`;
+  return [
+    sql`${providerPriorityExpression} ${direction}`,
+    sql`${providerNameExpr} ${direction}`,
+  ];
 };
 
 type AIModelRow = typeof aiModels.$inferSelect;
@@ -492,7 +570,7 @@ class ModelsCache {
 
       switch (id) {
         case 'provider':
-          orderByClause = direction(aiModels.provider);
+          orderByClause = buildProviderOrderBy(isDesc);
           break;
         case 'name': {
           // Normalize to match client-side fallback: shortName -> name -> empty string
@@ -529,11 +607,11 @@ class ModelsCache {
         }
         default:
           // Default: sort by provider
-          orderByClause = asc(aiModels.provider);
+          orderByClause = buildProviderOrderBy(false);
       }
     } else {
       // Default: sort by provider
-      orderByClause = asc(aiModels.provider);
+      orderByClause = buildProviderOrderBy(false);
     }
 
     // Apply pagination
@@ -545,7 +623,7 @@ class ModelsCache {
       .select()
       .from(aiModels)
       .where(whereClause)
-      .orderBy(orderByClause)
+      .orderBy(...(Array.isArray(orderByClause) ? orderByClause : [orderByClause]))
       .limit(size)
       .offset(cursor);
 
