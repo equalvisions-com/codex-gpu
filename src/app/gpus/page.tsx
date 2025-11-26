@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
-import { GpuDataStreamWithSuspense } from "@/features/data-explorer/table/gpu-data-stream";
+import { Suspense } from "react";
+import { GpuDataStreamInner } from "@/features/data-explorer/table/gpu-data-stream";
+import { TableSkeletonServer } from "@/features/data-explorer/table/table-skeleton-server";
 
 export const revalidate = 43200;
 const GPU_META_TITLE = "GPU Pricing Explorer | Deploybase";
@@ -31,8 +33,8 @@ export async function generateMetadata(): Promise<Metadata> {
 // data streams in with Suspense boundaries. Skeletons show while data loads.
 export default function GpusPage() {
   return (
-    <>
-      <GpuDataStreamWithSuspense />
-    </>
+    <Suspense fallback={<TableSkeletonServer />}>
+      <GpuDataStreamInner />
+    </Suspense>
   );
 }

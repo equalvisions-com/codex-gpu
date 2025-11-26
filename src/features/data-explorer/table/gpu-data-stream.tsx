@@ -11,7 +11,7 @@ import { Client } from "./client";
 import { TableSkeleton } from "./table-skeleton";
 import { buildGpuSchema } from "./gpu-schema";
 
-async function GpuDataStreamInner() {
+export async function GpuDataStreamInner() {
   const parsedSearch = searchParamsCache.parse({});
   const queryClient = new QueryClient();
 
@@ -61,11 +61,4 @@ async function GpuDataStreamInner() {
   );
 }
 
-export function GpuDataStreamWithSuspense() {
-  return (
-    <Suspense fallback={<TableSkeleton />}>
-      <GpuDataStreamInner />
-    </Suspense>
-  );
-}
 

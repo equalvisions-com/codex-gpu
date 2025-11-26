@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
-import { ModelsDataStreamWithSuspense } from "@/features/data-explorer/models/models-data-stream";
+import { Suspense } from "react";
+import { ModelsDataStreamInner } from "@/features/data-explorer/models/models-data-stream";
+import { ModelsTableSkeletonServer } from "@/features/data-explorer/models/models-table-skeleton-server";
 
 export const revalidate = 43200;
 const LLMS_META_TITLE = "LLM Benchmark Explorer | Deploybase";
@@ -31,8 +33,8 @@ export async function generateMetadata(): Promise<Metadata> {
 // data streams in with Suspense boundaries. Skeletons show while data loads.
 export default function ModelsPage() {
   return (
-    <>
-      <ModelsDataStreamWithSuspense />
-    </>
+    <Suspense fallback={<ModelsTableSkeletonServer />}>
+      <ModelsDataStreamInner />
+    </Suspense>
   );
 }
