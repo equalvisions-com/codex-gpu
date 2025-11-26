@@ -12,7 +12,7 @@ import { FavoritesNotice } from "@/features/data-explorer/table/_components/favo
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ModelsColumnSchema } from "./models-schema";
 import type { ModelFavoriteKey } from "@/types/model-favorites";
-import { stableModelKey } from "./stable-key";
+import { stableModelKey } from "@/features/data-explorer/stable-keys";
 import type { ModelsInfiniteQueryResponse, ModelsLogsMeta } from "./models-query-options";
 import {
   MODEL_FAVORITES_QUERY_KEY,

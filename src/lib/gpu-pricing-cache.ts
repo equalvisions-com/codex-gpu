@@ -1,7 +1,7 @@
 import { db } from "@/db/client";
 import { gpuPricing, userFavorites } from "@/db/schema";
 import { eq, sql, inArray, and, or, ilike, between, asc, desc } from "drizzle-orm";
-import { stableGpuKey } from "@/features/data-explorer/table/stable-key";
+import { stableGpuKey } from "@/features/data-explorer/stable-keys";
 import type { SearchParamsType } from "@/features/data-explorer/table/search-params";
 import type { RowWithId } from "@/types/api";
 import { isArrayOfDates } from "@/lib/is-array";
