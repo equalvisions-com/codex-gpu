@@ -1,11 +1,29 @@
 import {
   QueryClient,
+  QueryCache,
+  MutationCache,
   defaultShouldDehydrateQuery,
   isServer,
 } from "@tanstack/react-query";
 
 function makeQueryClient() {
   return new QueryClient({
+    queryCache: new QueryCache({
+      onError: (error, query) => {
+        console.error("[React Query] Query error", {
+          queryKey: query.queryKey,
+          message: error.message,
+        });
+      },
+    }),
+    mutationCache: new MutationCache({
+      onError: (error, _variables, _context, mutation) => {
+        console.error("[React Query] Mutation error", {
+          mutationKey: mutation.options.mutationKey,
+          message: error.message,
+        });
+      },
+    }),
     defaultOptions: {
       queries: {
         staleTime: 10 * 60 * 1000, // 10 minutes
