@@ -334,7 +334,7 @@ export function SettingsDialog({ open, onOpenChange, user }: SettingsDialogProps
   const hasEmailPasswordAccount = React.useMemo(
     () =>
       connectedAccounts.some((account) => passwordProviderIds.includes(account.providerId)),
-    [connectedAccounts, passwordProviderIds],
+    [connectedAccounts],
   );
   const isPasswordChangeAllowed = accountsQuery.isSuccess && hasEmailPasswordAccount;
 

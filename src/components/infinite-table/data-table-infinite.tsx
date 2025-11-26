@@ -42,7 +42,6 @@ const LazyGpuSheetCharts = React.lazy(() =>
     default: module.GpuSheetCharts,
   })),
 );
-import { filterFields, sheetFields } from "./constants";
 import { UserMenu, type AccountUser } from "./account-components";
 import { usePathname, useRouter } from "next/navigation";
 import { Bot, Search, Server, Wrench } from "lucide-react";
@@ -61,13 +60,21 @@ const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max);
 const ESTIMATED_ROW_HEIGHT_PX = 41;
 
-// Note: chart groupings could be added later if needed
-export type DataTableMeta<TMeta> = TMeta & {
-  facets?: Record<string, any>;
-  initialFavoriteKeys?: FavoriteKey[];
+export type NavItem = {
+  label: string;
+  value: string;
+  icon: React.ComponentType<{ className?: string }>;
+  shortcut?: string;
+  isCurrent?: boolean;
 };
 
-interface DataTableInfiniteProps<TData, TValue, TMeta> {
+// Note: chart groupings could be added later if needed
+export type DataTableMeta<TMeta, TFavorite = FavoriteKey> = TMeta & {
+  facets?: Record<string, any>;
+  initialFavoriteKeys?: TFavorite[];
+};
+
+interface DataTableInfiniteProps<TData, TValue, TMeta, TFavorite> {
   columns: ColumnDef<TData, TValue>[];
   getRowClassName?: (row: Row<TData>) => string;
   // REMINDER: make sure to pass the correct id to access the rows
@@ -85,7 +92,7 @@ interface DataTableInfiniteProps<TData, TValue, TMeta> {
   onRowSelectionChange: OnChangeFn<RowSelectionState>;
   filterFields?: DataTableFilterField<TData>[];
   sheetFields?: SheetField<TData, TMeta>[];
-  meta: DataTableMeta<TMeta>;
+  meta: DataTableMeta<TMeta, TFavorite>;
   isFetching?: boolean;
   isLoading?: boolean;
   isFetchingNextPage?: boolean;
@@ -109,9 +116,14 @@ interface DataTableInfiniteProps<TData, TValue, TMeta> {
   };
   headerSlot?: React.ReactNode;
   mobileHeaderOffset?: string;
+  navItems?: NavItem[];
+  renderCheckedActions?: (
+    meta: DataTableMeta<TMeta, TFavorite>,
+  ) => React.ReactNode;
+  renderSheetCharts?: (row: Row<TData> | null) => React.ReactNode;
 }
 
-export function DataTableInfinite<TData, TValue, TMeta>({
+export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>({
   columns,
   getRowClassName,
   getRowId,
@@ -140,7 +152,10 @@ export function DataTableInfinite<TData, TValue, TMeta>({
   account,
   headerSlot,
   mobileHeaderOffset,
-}: DataTableInfiniteProps<TData, TValue, TMeta>) {
+  navItems,
+  renderCheckedActions,
+  renderSheetCharts,
+}: DataTableInfiniteProps<TData, TValue, TMeta, TFavorite>) {
   // Independent checkbox-only state (does not control the details pane)
   const [checkedRows, setCheckedRows] = React.useState<Record<string, boolean>>({});
   const missingRowIdWarningRef = React.useRef(false);
@@ -208,34 +223,25 @@ export function DataTableInfinite<TData, TValue, TMeta>({
       [searchFieldId],
     ),
   );
-  const navItems = React.useMemo(
-    () => [
-      {
-        label: "LLMs",
-        value: "/llms",
-        isCurrent: pathname === "/" || pathname.startsWith("/llms"),
-        icon: Bot,
-        shortcut: "k",
-      },
-      {
-        label: "GPUs",
-        value: "/gpus",
-        isCurrent: pathname.startsWith("/gpus"),
-        icon: Server,
-        shortcut: "g",
-      },
-      {
-        label: "Tools",
-        value: "/tools",
-        isCurrent: pathname.startsWith("/tools"),
-        icon: Wrench,
-        shortcut: "e",
-      },
-    ],
-    [pathname],
-  );
+  const resolvedNavItems = React.useMemo(() => {
+    const baseItems = navItems ?? [
+      { label: "LLMs", value: "/llms", icon: Bot, shortcut: "k" },
+      { label: "GPUs", value: "/gpus", icon: Server, shortcut: "g" },
+      { label: "Tools", value: "/tools", icon: Wrench, shortcut: "e" },
+    ];
+
+    return baseItems.map((item) => {
+      const isCurrent =
+        typeof item.isCurrent === "boolean"
+          ? item.isCurrent
+          : pathname === "/"
+            ? item.value === "/llms"
+            : pathname.startsWith(item.value);
+      return { ...item, isCurrent };
+    });
+  }, [navItems, pathname]);
   const currentNavValue =
-    navItems.find((item) => item.isCurrent)?.value ?? "/llms";
+    resolvedNavItems.find((item) => item.isCurrent)?.value ?? "/llms";
   const handleNavChange = React.useCallback(
     (value: string) => {
       if (!value) return;
@@ -598,7 +604,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
       visibleLeafColumns
         .filter((column) => column.id !== "gpu_model")
         .reduce((acc, column) => acc + column.getSize(), 0),
-    [visibleLeafColumns, columnSizing]
+    [visibleLeafColumns]
   );
 
   const selectedRow = React.useMemo(() => {
@@ -659,6 +665,19 @@ export function DataTableInfinite<TData, TValue, TMeta>({
     [meta.facets]
   );
 
+  const checkedActions = React.useMemo(() => {
+    if (renderCheckedActions) {
+      return renderCheckedActions(meta);
+    }
+    return (
+      <CheckedActionsIsland
+        initialFavoriteKeys={
+          (meta.initialFavoriteKeys as FavoriteKey[] | undefined) ?? undefined
+        }
+      />
+    );
+  }, [meta, renderCheckedActions]);
+
   return (
     <DataTableProvider
       table={table}
@@ -713,7 +732,7 @@ export function DataTableInfinite<TData, TValue, TMeta>({
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {navItems.map((item) => (
+                        {resolvedNavItems.map((item) => (
                           <SelectItem
                             key={item.value}
                             value={item.value}
@@ -1066,17 +1085,23 @@ export function DataTableInfinite<TData, TValue, TMeta>({
             metadata={meta}
           />
           <div className="border-t border-border/60 pt-4">
-          {selectedRow?.original ? (
-            <React.Suspense
-              fallback={<div className="h-[240px] animate-pulse rounded-lg bg-muted" />}
-            >
-              <LazyGpuSheetCharts stableKey={(selectedRow.original as any)?.stable_key} />
-            </React.Suspense>
-          ) : null}
+            {renderSheetCharts ? (
+              renderSheetCharts(selectedRow ?? null)
+            ) : selectedRow?.original ? (
+              <React.Suspense
+                fallback={
+                  <div className="h-[240px] animate-pulse rounded-lg bg-muted" />
+                }
+              >
+                <LazyGpuSheetCharts
+                  stableKey={(selectedRow.original as any)?.stable_key}
+                />
+              </React.Suspense>
+            ) : null}
           </div>
         </div>
       </DataTableSheetDetails>
-      <CheckedActionsIsland initialFavoriteKeys={(meta as any)?.initialFavoriteKeys} />
+      {checkedActions}
     </DataTableProvider>
   );
 }

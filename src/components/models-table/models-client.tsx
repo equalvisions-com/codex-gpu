@@ -7,16 +7,20 @@ import { useAuth } from "@/providers/auth-client-provider";
 import { useAuthDialog } from "@/providers/auth-dialog-provider";
 import { modelsColumns } from "./models-columns";
 import { modelsDataOptions } from "./models-query-options";
-import { ModelsDataTableInfinite, type ModelsDataTableMeta } from "./models-data-table-infinite";
 import { filterFields as defaultFilterFields, sheetFields } from "./models-constants";
 import type { ModelsColumnSchema, ModelsFacetMetadataSchema } from "./models-schema";
 import type { ModalitiesDirection } from "./modalities-filter";
 import type { ModelFavoriteKey } from "@/types/model-favorites";
 import { MobileTopNav, SidebarPanel, type AccountUser } from "../infinite-table/account-components";
+import {
+  DataTableInfinite,
+  type DataTableMeta,
+} from "../infinite-table/data-table-infinite";
 import { getFavoritesBroadcastId } from "@/lib/model-favorites/broadcast";
 import { MODEL_FAVORITES_QUERY_KEY } from "@/lib/model-favorites/constants";
 import { useModelsTableSearchState } from "./hooks/use-models-table-search-state";
 import { useModelsFavoritesState } from "./hooks/use-models-favorites-state";
+import { ModelsCheckedActionsIsland } from "./models-checked-actions-island";
 
 interface ModelsClientProps {
   initialFavoriteKeys?: ModelFavoriteKey[];
@@ -24,6 +28,11 @@ interface ModelsClientProps {
 }
 
 const LazyFavoritesRuntime = React.lazy(() => import("./models-favorites-runtime"));
+const LazyModelSheetCharts = React.lazy(() =>
+  import("./model-sheet-charts").then((module) => ({
+    default: module.ModelSheetCharts,
+  })),
+);
 
 export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsClientProps = {}) {
   const contentRef = React.useRef<HTMLTableSectionElement>(null);
@@ -131,7 +140,7 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
     ? favoritesSnapshot?.favoriteKeysFromRows ?? []
     : initialFavoriteKeys;
 
-  const metadata: ModelsDataTableMeta<Record<string, unknown>> = {
+  const metadata: DataTableMeta<Record<string, unknown>, ModelFavoriteKey> = {
     ...(lastPage?.meta?.metadata ?? {}),
     initialFavoriteKeys: effectiveFavoriteKeys,
   };
@@ -202,7 +211,7 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
           />
         </React.Suspense>
       ) : null}
-      <ModelsDataTableInfinite
+      <DataTableInfinite
         key={`models-table-${effectiveFavoritesMode ? "favorites" : "all"}`}
         columns={modelsColumns}
         data={flatData}
@@ -261,6 +270,35 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
           />
         }
         mobileHeaderOffset="36px"
+        renderSheetCharts={(row) => {
+          const selectedModel = row?.original as ModelsColumnSchema | undefined;
+          if (!selectedModel?.permaslug || !selectedModel?.endpointId) {
+            return null;
+          }
+
+          return (
+            <React.Suspense
+              fallback={
+                <div className="grid gap-4">
+                  <div className="h-[240px] animate-pulse rounded-lg bg-muted" />
+                  <div className="h-[240px] animate-pulse rounded-lg bg-muted" />
+                </div>
+              }
+            >
+              <LazyModelSheetCharts
+                permaslug={selectedModel.permaslug}
+                endpointId={selectedModel.endpointId}
+                provider={selectedModel?.provider}
+                throughput={selectedModel?.throughput}
+              />
+            </React.Suspense>
+          );
+        }}
+        renderCheckedActions={(meta) => (
+          <ModelsCheckedActionsIsland
+            initialFavoriteKeys={meta.initialFavoriteKeys}
+          />
+        )}
       />
     </>
   );

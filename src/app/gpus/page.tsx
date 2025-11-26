@@ -1,10 +1,5 @@
 import type { Metadata } from "next";
-import * as React from "react";
-import {
-  HydrationBoundary,
-  QueryClient,
-  dehydrate,
-} from "@tanstack/react-query";
+import { HydratedInfinitePage } from "@/components/data-pages/hydrated-infinite-page";
 import { Client } from "@/components/infinite-table/client";
 import { dataOptions } from "@/components/infinite-table/query-options";
 import { searchParamsCache } from "@/components/infinite-table/search-params";
@@ -41,71 +36,16 @@ export async function generateMetadata(): Promise<Metadata> {
 // stays static while the table fetches as needed after hydration.
 
 export default function GpusPage() {
-  return <GpusHydratedContent />;
-}
-
-async function GpusHydratedContent() {
-  const parsedSearch = searchParamsCache.parse({});
-
-  const queryClient = new QueryClient();
-  let firstPagePayload: Awaited<ReturnType<typeof getGpuPricingPage>> | null =
-    null;
-
-  if (parsedSearch.bookmarks !== "true") {
-    try {
-      const infiniteOptions = dataOptions(parsedSearch);
-      await queryClient.prefetchInfiniteQuery({
-        ...infiniteOptions,
-        queryFn: async ({ pageParam }) => {
-          const cursor =
-            typeof pageParam?.cursor === "number" ? pageParam.cursor : null;
-          const size =
-            (pageParam as { size?: number } | undefined)?.size ??
-            parsedSearch.size ??
-            50;
-          const result = await getGpuPricingPage({
-            ...parsedSearch,
-            cursor,
-            size,
-            uuid: null,
-          });
-          if (!firstPagePayload && (cursor === null || cursor === 0)) {
-            firstPagePayload = result;
-          }
-          return result;
-        },
-      });
-    } catch (error) {
-      console.error("[GpusPage] Failed to prefetch GPU data", {
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
-  }
-
-  const dehydratedState = dehydrate(queryClient);
-  const schemaMarkup = buildGpuSchema(firstPagePayload);
-
   return (
-    <HydrationBoundary state={dehydratedState}>
-      {schemaMarkup ? (
-        <script
-          type="application/ld+json"
-          suppressHydrationWarning
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(schemaMarkup).replace(/</g, "\\u003c"),
-          }}
-        />
-      ) : null}
-      <div
-        className="flex min-h-dvh w-full flex-col sm:flex-row pt-2 sm:p-0"
-        style={{
-          "--total-padding-mobile": "calc(0.5rem + 0.5rem)",
-          "--total-padding-desktop": "3rem",
-        } as React.CSSProperties}
-      >
-        <Client />
-      </div>
-    </HydrationBoundary>
+    <HydratedInfinitePage
+      parseSearch={() => searchParamsCache.parse({})}
+      getInfiniteOptions={dataOptions}
+      fetchPage={getGpuPricingPage}
+      shouldPrefetch={(search) => search.bookmarks !== "true"}
+      buildSchema={buildGpuSchema}
+      renderClient={Client}
+      logTag="GpusPage"
+    />
   );
 }
 
