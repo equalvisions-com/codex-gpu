@@ -1,0 +1,189 @@
+import type { Metadata } from "next";
+import { HydratedInfinitePage } from "@/features/data-explorer/hydration/hydrated-infinite-page";
+import { ModelsClient } from "@/features/data-explorer/models/models-client";
+import { modelsDataOptions } from "@/features/data-explorer/models/models-query-options";
+import { modelsSearchParamsCache } from "@/features/data-explorer/models/models-search-params";
+import { getModelsPage } from "@/lib/models-loader";
+
+export const revalidate = 43200;
+const LLMS_META_TITLE = "LLM Benchmark Explorer | Deploybase";
+const LLMS_META_DESCRIPTION =
+  "Filter and benchmark large language models by latency, throughput, modality support, and pricing using our interactive table experience.";
+const SHARED_OG_IMAGE = "/assets/data-table-infinite.png";
+
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    title: LLMS_META_TITLE,
+    description: LLMS_META_DESCRIPTION,
+    openGraph: {
+      title: LLMS_META_TITLE,
+      description: LLMS_META_DESCRIPTION,
+      url: "/llms",
+      images: [SHARED_OG_IMAGE],
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: LLMS_META_TITLE,
+      description: LLMS_META_DESCRIPTION,
+      images: [SHARED_OG_IMAGE],
+    },
+  };
+}
+
+// ISR-friendly route: we seed React Query with the default (unfiltered) data.
+// Client-side nuqs manages URL-bound filters after hydration to keep SSR static.
+export default function ModelsPage() {
+  return (
+    <HydratedInfinitePage
+      parseSearch={() => modelsSearchParamsCache.parse({})}
+      getInfiniteOptions={modelsDataOptions}
+      fetchPage={getModelsPage}
+      shouldPrefetch={(search) => search.bookmarks !== "true"}
+      buildSchema={buildModelsSchema}
+      renderClient={ModelsClient}
+      logTag="ModelsPage"
+    />
+  );
+}
+
+function buildModelsSchema(
+  payload: Awaited<ReturnType<typeof getModelsPage>> | null,
+) {
+  if (!payload || !payload.data?.length) {
+    return null;
+  }
+
+  const items = payload.data.slice(0, 50).map((model) => {
+
+    const inputPricePerMillion = parsePricePerMillion(model.promptPrice);
+    const outputPricePerMillion = parsePricePerMillion(
+      model.completionPrice,
+    );
+
+    const additionalProperty: Array<{
+      "@type": "PropertyValue";
+      name: string;
+      value: string | number;
+    }> = [];
+
+    if (typeof model.contextLength === "number") {
+      additionalProperty.push({
+        "@type": "PropertyValue",
+        name: "Context Length",
+        value: model.contextLength,
+      });
+    }
+
+    if (model.slug) {
+      additionalProperty.push({
+        "@type": "PropertyValue",
+        name: "Model ID",
+        value: model.slug,
+      });
+    }
+
+    if (model.inputModalities && model.inputModalities.length > 0) {
+      additionalProperty.push({
+        "@type": "PropertyValue",
+        name: "Input Modalities",
+        value: model.inputModalities.join(", "),
+      });
+    }
+
+    if (model.outputModalities && model.outputModalities.length > 0) {
+      additionalProperty.push({
+        "@type": "PropertyValue",
+        name: "Output Modalities",
+        value: model.outputModalities.join(", "),
+      });
+    }
+
+    if (inputPricePerMillion !== null) {
+      additionalProperty.push({
+        "@type": "PropertyValue",
+        name: "Prompt Price (USD / 1M tokens)",
+        value: inputPricePerMillion,
+      });
+    }
+
+    if (outputPricePerMillion !== null) {
+      additionalProperty.push({
+        "@type": "PropertyValue",
+        name: "Output Price (USD / 1M tokens)",
+        value: outputPricePerMillion,
+      });
+    }
+
+    if (typeof model.throughput === "number") {
+      additionalProperty.push({
+        "@type": "PropertyValue",
+        name: "Throughput (tok/s)",
+        value: Number(model.throughput.toFixed(2)),
+      });
+    }
+
+    return {
+      "@type": "DataFeedItem",
+      dateModified: model.scrapedAt,
+      item: {
+        "@type": "SoftwareApplication",
+        name: model.name ?? model.shortName ?? model.slug,
+        applicationCategory: "AI language model",
+        operatingSystem: "Cloud",
+        description: model.description,
+        provider: model.provider
+          ? {
+              "@type": "Organization",
+              name: model.provider,
+            }
+          : undefined,
+        author: model.author
+          ? {
+              "@type": "Organization",
+              name: model.author,
+            }
+          : undefined,
+        softwareVersion: model.modelVersionGroupId ?? undefined,
+        additionalProperty: additionalProperty.length
+          ? additionalProperty
+          : undefined,
+        url:
+          model.id && process.env.NEXT_PUBLIC_SITE_URL
+            ? `${process.env.NEXT_PUBLIC_SITE_URL}/llms?uuid=${normalizeModelId(
+                model.id,
+              )}`
+            : undefined,
+      },
+    };
+  });
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "DataFeed",
+    name: "LLM Benchmark Feed",
+    dateModified: new Date().toISOString(),
+    dataFeedElement: items,
+  };
+}
+
+function parsePricePerMillion(value: unknown) {
+  if (typeof value === "number") {
+    return Number.isFinite(value)
+      ? Number((value * 1_000_000).toFixed(6))
+      : null;
+  }
+  if (typeof value === "string") {
+    const numeric = Number(value);
+    return Number.isFinite(numeric)
+      ? Number((numeric * 1_000_000).toFixed(6))
+      : null;
+  }
+  return null;
+}
+
+function normalizeModelId(value: unknown) {
+  return String(value ?? "")
+    .trim()
+    .replace(/\s+/g, "/");
+}

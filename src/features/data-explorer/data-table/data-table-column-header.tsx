@@ -1,0 +1,77 @@
+import type { Column } from "@tanstack/react-table";
+import { ArrowUpDown } from "lucide-react";
+
+import { Button, type ButtonProps } from "@/components/ui/button";
+
+import { cn } from "@/lib/utils";
+
+interface DataTableColumnHeaderProps<TData, TValue> extends ButtonProps {
+  column: Column<TData, TValue>;
+  title: string;
+  centerTitle?: boolean;
+  titleClassName?: string;
+}
+
+export function DataTableColumnHeader<TData, TValue>({
+  column,
+  title,
+  className,
+  centerTitle,
+  titleClassName,
+  ...props
+}: DataTableColumnHeaderProps<TData, TValue>) {
+  if (!column.getCanSort()) {
+    return (
+      <div
+        className={cn(
+          className,
+          centerTitle && "text-center",
+          titleClassName,
+        )}
+      >
+        {title}
+      </div>
+    );
+  }
+
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={() => {
+        column.toggleSorting(undefined);
+      }}
+      className={cn(
+        "py-0 px-[12px] h-7 flex gap-[10px] items-center",
+        "hover:bg-transparent active:bg-transparent focus-visible:bg-transparent hover:text-foreground",
+        centerTitle ? "relative justify-center" : "justify-between",
+        className,
+      )}
+      {...props}
+    >
+      <span
+        className={cn(
+          centerTitle && "pointer-events-none",
+          titleClassName,
+        )}
+      >
+        {title}
+      </span>
+      <span
+        className={cn(
+          "flex items-center",
+          centerTitle && "absolute right-0 top-1/2 -translate-y-1/2",
+        )}
+      >
+        <ArrowUpDown
+          className={cn(
+            "h-3.5 w-3.5 transition-colors",
+            column.getIsSorted()
+              ? "text-accent-foreground"
+              : "text-foreground/70",
+          )}
+        />
+      </span>
+    </Button>
+  );
+}

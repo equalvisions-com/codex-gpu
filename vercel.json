@@ -1,0 +1,21 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    {
+      "path": "/api/jobs/scrape-models",
+      "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/jobs/scrape",
+      "schedule": "5 7 * * *"
+    },
+    {
+      "path": "/api/jobs/scrape-throughput",
+      "schedule": "10 7 * * *"
+    },
+    {
+      "path": "/api/jobs/scrape-latency",
+      "schedule": "15 7 * * *"
+    }
+  ]
+}
