@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import { ModelsDataStreamInner } from "@/features/data-explorer/models/models-data-stream";
 
 export const revalidate = 43200;
 const LLMS_META_TITLE = "LLM Benchmark Explorer | Deploybase";
@@ -27,5 +29,9 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default function ModelsPage() {
-  return <div />;
+  return (
+    <Suspense fallback={null}>
+      <ModelsDataStreamInner />
+    </Suspense>
+  );
 }
