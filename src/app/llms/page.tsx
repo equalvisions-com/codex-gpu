@@ -30,5 +30,9 @@ export async function generateMetadata(): Promise<Metadata> {
 // ISR-friendly route with streaming: static shell renders immediately,
 // data streams in with Suspense boundaries. Skeletons show while data loads.
 export default function ModelsPage() {
-  return <ModelsDataStreamWithSuspense />;
+  return (
+    <>
+      <ModelsDataStreamWithSuspense />
+    </>
+  );
 }

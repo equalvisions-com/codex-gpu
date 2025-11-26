@@ -11,7 +11,7 @@ import { ModelsClient } from "./models-client";
 import { ModelsTableSkeleton } from "./models-table-skeleton";
 import { buildModelsSchema } from "./build-models-schema";
 
-export async function ModelsDataStream() {
+async function ModelsDataStreamInner() {
   const parsedSearch = modelsSearchParamsCache.parse({});
   const queryClient = new QueryClient();
 
@@ -64,7 +64,7 @@ export async function ModelsDataStream() {
 export function ModelsDataStreamWithSuspense() {
   return (
     <Suspense fallback={<ModelsTableSkeleton />}>
-      <ModelsDataStream />
+      <ModelsDataStreamInner />
     </Suspense>
   );
 }
