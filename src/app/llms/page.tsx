@@ -1,7 +1,4 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
-import { ModelsDataStreamInner } from "@/features/data-explorer/models/models-data-stream";
-import { ModelsTableSkeletonServer } from "@/features/data-explorer/models/models-table-skeleton-server";
 
 export const revalidate = 43200;
 const LLMS_META_TITLE = "LLM Benchmark Explorer | Deploybase";
@@ -29,12 +26,6 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-// ISR-friendly route with streaming: static shell renders immediately,
-// data streams in with Suspense boundaries. Skeletons show while data loads.
 export default function ModelsPage() {
-  return (
-    <Suspense fallback={<ModelsTableSkeletonServer />}>
-      <ModelsDataStreamInner />
-    </Suspense>
-  );
+  return <div />;
 }

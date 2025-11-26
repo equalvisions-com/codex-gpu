@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import {
   HydrationBoundary,
   QueryClient,
@@ -8,7 +7,6 @@ import { searchParamsCache } from "./search-params";
 import { dataOptions } from "./query-options";
 import { getGpuPricingPage } from "@/lib/gpu-pricing-loader";
 import { Client } from "./client";
-import { TableSkeleton } from "./table-skeleton";
 import { buildGpuSchema } from "./gpu-schema";
 
 export async function GpuDataStreamInner() {
