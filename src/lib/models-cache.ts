@@ -2,7 +2,7 @@ import { db } from "@/db/client";
 import { aiModels, userModelFavorites } from "@/db/schema";
 import { eq, sql, inArray, and, or, ilike, between, asc, desc } from "drizzle-orm";
 import type { AIModel, ModelScrapeResult } from "@/types/models";
-import type { ModelsSearchParamsType } from "@/components/models-table/models-search-params";
+import type { ModelsSearchParamsType } from "@/features/data-explorer/models/models-search-params";
 import type { SQL } from "drizzle-orm";
 
 // Import sort priorities from route file (shared constants)

@@ -1,7 +1,7 @@
-import type { ModelsInfiniteQueryResponse, ModelsLogsMeta } from "@/components/models-table/models-query-options";
-import type { ModelsColumnSchema } from "@/components/models-table/models-schema";
-import { modelsSearchParamsCache } from "@/components/models-table/models-search-params";
-import type { ModelsSearchParamsType } from "@/components/models-table/models-search-params";
+import type { ModelsInfiniteQueryResponse, ModelsLogsMeta } from "@/features/data-explorer/models/models-query-options";
+import type { ModelsColumnSchema } from "@/features/data-explorer/models/models-schema";
+import { modelsSearchParamsCache } from "@/features/data-explorer/models/models-search-params";
+import type { ModelsSearchParamsType } from "@/features/data-explorer/models/models-search-params";
 import { logger } from "@/lib/logger";
 import { getRequestLogContext } from "@/lib/request-log-context";
 import { getModelsPage } from "@/lib/models-loader";

@@ -4,7 +4,7 @@ import { gpuPricing } from "@/db/schema";
 import type { ProviderResult, PriceRow, ProviderSnapshot, Provider } from "@/types/pricing";
 import type { RowWithId } from "@/types/api";
 import { and, eq, sql } from "drizzle-orm";
-import { stableGpuKey } from "@/components/infinite-table/stable-key";
+import { stableGpuKey } from "@/features/data-explorer/table/stable-key";
 import { gpuPriceHistoryStore, type GpuPriceSampleInput } from "@/lib/gpu-price-history-store";
 import { normalizeObservedAt } from "@/lib/normalize-observed-at";
 

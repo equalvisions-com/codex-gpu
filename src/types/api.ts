@@ -1,3 +1,3 @@
-import type { ColumnSchema } from "@/components/infinite-table/schema";
+import type { ColumnSchema } from "@/features/data-explorer/table/schema";
 
 export type RowWithId = ColumnSchema & { uuid: string };

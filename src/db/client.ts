@@ -1,5 +1,5 @@
-import postgres from 'postgres';
-import { drizzle } from 'drizzle-orm/postgres-js';  // uses postgres.js driver under the hood
+import postgres from "postgres";
+import { drizzle } from "drizzle-orm/postgres-js"; // uses postgres.js driver under the hood
 
 declare global {
   // eslint-disable-next-line no-var
@@ -9,11 +9,22 @@ declare global {
 }
 
 const connectionString = process.env.DATABASE_URL;
-if (!connectionString) {
-  throw new Error('DATABASE_URL is not set');
+const isProduction = process.env.NODE_ENV === "production";
+
+const missingDatabaseProxy = <T extends object>() =>
+  new Proxy({} as T, {
+    get() {
+      throw new Error("DATABASE_URL is not set");
+    },
+    apply() {
+      throw new Error("DATABASE_URL is not set");
+    },
+  });
+
+if (!connectionString && !isProduction) {
+  console.warn("[db] DATABASE_URL is not set; database client is disabled.");
 }
 
-const isProduction = process.env.NODE_ENV === "production";
 const shouldEnforceSSL =
   process.env.DATABASE_SSL === "true" ||
   process.env.DATABASE_SSL === "require" ||
@@ -22,13 +33,23 @@ const shouldEnforceSSL =
 const rejectUnauthorized =
   process.env.DATABASE_SSL_REJECT_UNAUTHORIZED === "false" ? false : true;
 
-const sql = globalThis.__DRIZZLE_SQL__ ?? postgres(connectionString, {
-  max: 10, // maximum number of connections your app uses
-  prepare: false, // disable prepared statements (safer behind PgBouncer)
-  ssl: shouldEnforceSSL ? { rejectUnauthorized } : undefined,
-});
+const sql = connectionString
+  ? globalThis.__DRIZZLE_SQL__ ??
+    postgres(connectionString, {
+      max: 10, // maximum number of connections your app uses
+      prepare: false, // disable prepared statements (safer behind PgBouncer)
+      ssl: shouldEnforceSSL ? { rejectUnauthorized } : undefined,
+    })
+  : missingDatabaseProxy<ReturnType<typeof postgres>>();
 
-if (process.env.NODE_ENV !== 'production') globalThis.__DRIZZLE_SQL__ = sql;
+if (!isProduction && connectionString) {
+  globalThis.__DRIZZLE_SQL__ = sql;
+}
 
-export const db = globalThis.__DRIZZLE_DB__ ?? drizzle(sql);
-if (process.env.NODE_ENV !== 'production') globalThis.__DRIZZLE_DB__ = db;
+export const db = connectionString
+  ? globalThis.__DRIZZLE_DB__ ?? drizzle(sql)
+  : missingDatabaseProxy<ReturnType<typeof drizzle>>();
+
+if (!isProduction && connectionString) {
+  globalThis.__DRIZZLE_DB__ = db;
+}
