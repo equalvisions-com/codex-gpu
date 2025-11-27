@@ -28,30 +28,18 @@ export async function ModelsDataStreamInner({
     uuid: null,
   });
 
-  // Prefetch for React Query hydration - reuse firstPagePayload for initial page
-  await queryClient.prefetchInfiniteQuery({
-    ...modelsDataOptions(parsedSearch),
-    queryFn: async ({ pageParam }) => {
-      const cursor =
-        typeof pageParam?.cursor === "number" ? pageParam.cursor : null;
-      const size =
-        (pageParam as { size?: number } | undefined)?.size ??
-        parsedSearch.size ??
-        50;
-      
-      // Reuse the already-fetched first page payload
-      if (cursor === null || cursor === 0) {
-        return firstPagePayload;
-      }
-      
-      // Fetch subsequent pages
-      return getModelsPage({
-        ...parsedSearch,
-        cursor,
-        size,
-        uuid: null,
-      });
-    },
+  // Get query options to ensure exact queryKey match with client
+  const queryOptions = modelsDataOptions(parsedSearch);
+  const initialPageParam = queryOptions.initialPageParam;
+
+  // Set first page data directly using setQueryData for exact structure match
+  // This ensures the queryKey and data structure match exactly what the client expects
+  // Reuses firstPagePayload to avoid double fetching
+  // Using setQueryData instead of prefetchInfiniteQuery ensures exact consistency
+  // with the client's queryFn while maintaining optimization
+  queryClient.setQueryData(queryOptions.queryKey, {
+    pages: [firstPagePayload],
+    pageParams: [initialPageParam],
   });
 
   const dehydratedState = dehydrate(queryClient);
