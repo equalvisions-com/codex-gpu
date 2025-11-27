@@ -121,8 +121,8 @@ export async function POST(request: NextRequest) {
       .onConflictDoNothing();
 
     try {
-      revalidateTag(getModelFavoritesCacheTag(session.user.id));
-      revalidateTag("model-favorites"); // Invalidate favorites rows cache
+      revalidateTag(getModelFavoritesCacheTag(session.user.id), 'max');
+      revalidateTag("model-favorites", 'max'); // Invalidate favorites rows cache
       revalidatePath("/api/models/favorites/rows"); // Invalidate route cache for Vercel edge/CDN
     } catch (revalidateError) {
       console.error("[POST /api/models/favorites] Cache revalidation failed", {
@@ -196,8 +196,8 @@ export async function DELETE(request: NextRequest) {
       );
 
     try {
-      revalidateTag(getModelFavoritesCacheTag(session.user.id));
-      revalidateTag("model-favorites"); // Invalidate favorites rows cache
+      revalidateTag(getModelFavoritesCacheTag(session.user.id), 'max');
+      revalidateTag("model-favorites", 'max'); // Invalidate favorites rows cache
       revalidatePath("/api/models/favorites/rows"); // Invalidate route cache for Vercel edge/CDN
     } catch (revalidateError) {
       console.error("[DELETE /api/models/favorites] Cache revalidation failed", {

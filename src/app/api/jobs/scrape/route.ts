@@ -37,12 +37,12 @@ export async function POST(request: NextRequest) {
     // This ensures all cached queries (getCachedFacets, getCachedGpusFiltered) 
     // are refreshed with the new scraped data
     // Also invalidates favorites cache since favorites JOIN with gpuPricing
-    revalidateTag("pricing");
-    revalidateTag("favorites");
+    revalidateTag("pricing", 'max');
+    revalidateTag("favorites", 'max');
     await Promise.all([
       revalidatePath("/api"),
       ...touchedStableKeys.map((stableKey) =>
-        revalidateTag(`gpu-price-history:${stableKey}`),
+        revalidateTag(`gpu-price-history:${stableKey}`, 'max'),
       ),
     ]);
     await revalidateCorePages();
@@ -118,12 +118,12 @@ export async function GET(request: NextRequest) {
       // This ensures all cached queries (getCachedFacets, getCachedGpusFiltered) 
       // are refreshed with the new scraped data
       // Also invalidates favorites cache since favorites JOIN with gpuPricing
-      revalidateTag("pricing");
-      revalidateTag("favorites");
+      revalidateTag("pricing", 'max');
+      revalidateTag("favorites", 'max');
       await Promise.all([
         revalidatePath("/api"),
         ...touchedStableKeys.map((stableKey) =>
-          revalidateTag(`gpu-price-history:${stableKey}`),
+          revalidateTag(`gpu-price-history:${stableKey}`, 'max'),
         ),
       ]);
       await revalidateCorePages();

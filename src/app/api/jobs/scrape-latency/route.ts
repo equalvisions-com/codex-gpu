@@ -17,7 +17,7 @@ async function runLatencyScrape(limit?: number) {
   if (result.touchedPermaslugs.length > 0) {
     await Promise.all(
       result.touchedPermaslugs.map((permaslug) =>
-        revalidateTag(`model-latency:${permaslug}`),
+        revalidateTag(`model-latency:${permaslug}`, 'max'),
       ),
     );
   }

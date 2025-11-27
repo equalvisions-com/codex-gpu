@@ -32,8 +32,8 @@ export async function POST(request: NextRequest) {
     // - 'models' tag: invalidates getCachedFacets and getCachedModelsFiltered (main table)
     // - 'model-favorites' tag: invalidates getCachedFavoriteModelsFiltered (favorites table)
     //   (favorites cache includes model data via JOIN, so it must be invalidated too)
-    revalidateTag('models');
-    revalidateTag('model-favorites');
+    revalidateTag('models', 'max');
+    revalidateTag('model-favorites', 'max');
     await Promise.all([
       revalidatePath('/api'),
       revalidatePath('/api/models'),
@@ -96,8 +96,8 @@ export async function GET(request: NextRequest) {
       // - 'models' tag: invalidates getCachedFacets and getCachedModelsFiltered (main table)
       // - 'model-favorites' tag: invalidates getCachedFavoriteModelsFiltered (favorites table)
       //   (favorites cache includes model data via JOIN, so it must be invalidated too)
-      revalidateTag('models');
-      revalidateTag('model-favorites');
+      revalidateTag('models', 'max');
+      revalidateTag('model-favorites', 'max');
       await Promise.all([
         revalidatePath('/api'),
         revalidatePath('/api/models'),

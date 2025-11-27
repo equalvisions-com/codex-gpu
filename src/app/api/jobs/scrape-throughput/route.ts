@@ -18,7 +18,7 @@ async function runThroughputScrape(limit?: number) {
   if (result.touchedPermaslugs.length > 0) {
     await Promise.all(
       result.touchedPermaslugs.map((permaslug) =>
-        revalidateTag(`model-throughput:${permaslug}`),
+        revalidateTag(`model-throughput:${permaslug}`, 'max'),
       ),
     );
   }
