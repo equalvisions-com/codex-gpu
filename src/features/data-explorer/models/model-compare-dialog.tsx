@@ -12,11 +12,17 @@ import type { Row, Table as TanstackTable } from "@tanstack/react-table";
 import { MemoizedDataTableSheetContent } from "@/features/data-explorer/data-table/data-table-sheet/data-table-sheet-content";
 import { filterFields, sheetFields } from "./models-constants";
 import type { ModelsColumnSchema } from "./models-schema";
+// Use next/dynamic with ssr: false for truly client-only lazy loading
+// This prevents any SSR/prefetching and ensures components only load when dialog is opened
+import dynamic from "next/dynamic";
 
-const LazyModelComparisonCharts = React.lazy(() =>
-  import("./model-comparison-charts").then((module) => ({
+const LazyModelComparisonCharts = dynamic(
+  () => import("./model-comparison-charts").then((module) => ({
     default: module.ModelComparisonCharts,
   })),
+  {
+    ssr: false, // Client-only - only loads when compare dialog is opened
+  },
 );
 
 interface ModelCompareDialogProps {
@@ -66,16 +72,8 @@ export function ModelCompareDialog({
             </div>
           ) : null}
           <div className="md:col-span-2 space-y-4">
-            <React.Suspense
-              fallback={
-                <div className="grid gap-4">
-                  <div className="h-[260px] animate-pulse rounded-xl bg-muted" />
-                  <div className="h-[260px] animate-pulse rounded-xl bg-muted" />
-                </div>
-              }
-            >
-              <LazyModelComparisonCharts rows={rows} dialogOpen={open} />
-            </React.Suspense>
+            {/* Removed React.Suspense wrapper as next/dynamic handles it */}
+            <LazyModelComparisonCharts rows={rows} dialogOpen={open} />
           </div>
         </div>
       </DialogContent>

@@ -116,7 +116,6 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
   
   // Optimize client-side navigation: use cached data for instant rendering
   // initialData: Persists to cache, skips loading state, marks data as fresh
-  // placeholderData: Shows immediately but doesn't persist (fallback only)
   // Docs: https://tanstack.com/query/v5/docs/framework/react/guides/initial-query-data
   type QueryData = InfiniteData<ModelsInfiniteQueryResponse<ModelsColumnSchema[], ModelsLogsMeta>, { cursor: number | null; size: number }>;
   const cachedData = queryClient.getQueryData<QueryData>(queryOptions.queryKey);
@@ -137,10 +136,8 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
     // Use cached data as initialData for client-side navigation
     // This persists to cache and skips loading state for instant rendering
     // HydrationBoundary handles server-side hydration automatically
-    initialData: cachedData,
-    // placeholderData as fallback for when initialData isn't available
-    // Shows cached data immediately during transitions
-    placeholderData: cachedData,
+    // Only set initialData if cached data exists (avoids redundant placeholderData)
+    ...(cachedData ? { initialData: cachedData } : {}),
   });
 
   const baseFlatData = React.useMemo(() => {

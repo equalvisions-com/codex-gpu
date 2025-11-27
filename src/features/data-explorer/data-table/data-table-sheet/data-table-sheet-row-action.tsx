@@ -24,6 +24,7 @@ import { CalendarClock } from "lucide-react";
 import { endOfHour } from "date-fns";
 import { cn } from "@/lib/utils";
 import { DataTableFilterField } from "../types";
+import { useDataTable } from "../data-table-provider";
 
 interface DataTableSheetRowActionProps<
   TData,
@@ -50,8 +51,33 @@ export function DataTableSheetRowAction<
 }: DataTableSheetRowActionProps<TData, TFields>) {
   const field = filterFields.find((field) => field.value === fieldValue);
   const column = table.getColumn(fieldValue.toString());
+  const { columnFilters, setColumnFilters } = useDataTable<TData, unknown>();
 
   if (!field || !column) return null;
+
+  // Helper function to update filters using controlled state (TanStack Table best practice for manual filtering)
+  const updateFilter = (newValue: unknown) => {
+    const filterId = String(fieldValue);
+    const existingFilter = columnFilters.find((f) => f.id === filterId);
+    
+    if (newValue === undefined || newValue === null) {
+      // Remove filter if value is null/undefined
+      setColumnFilters(columnFilters.filter((f) => f.id !== filterId));
+      return;
+    }
+
+    if (existingFilter) {
+      // Update existing filter
+      setColumnFilters(
+        columnFilters.map((f) =>
+          f.id === filterId ? { ...f, value: newValue } : f
+        )
+      );
+    } else {
+      // Add new filter
+      setColumnFilters([...columnFilters, { id: filterId, value: newValue }]);
+    }
+  };
 
   function renderOptions() {
     if (!field) return null;
@@ -60,15 +86,16 @@ export function DataTableSheetRowAction<
         return (
           <DropdownMenuItem
             onClick={() => {
-              // FIXME:
-              const filterValue = column?.getFilterValue() as
+              // Use controlled state instead of column API (TanStack Table best practice for manual filtering)
+              const filterValue = columnFilters.find((f) => f.id === String(fieldValue))?.value as
                 | undefined
                 | Array<unknown>;
-              const newValue = filterValue?.includes(value)
-                ? filterValue
-                : [...(filterValue || []), value];
+              const currentValues = Array.isArray(filterValue) ? filterValue : [];
+              const newValue = currentValues.includes(value)
+                ? currentValues.filter((v) => v !== value)
+                : [...currentValues, value];
 
-              column?.setFilterValue(newValue);
+              updateFilter(newValue.length > 0 ? newValue : undefined);
             }}
           >
             <Search />
@@ -77,7 +104,7 @@ export function DataTableSheetRowAction<
         );
       case "input":
         return (
-          <DropdownMenuItem onClick={() => column?.setFilterValue(value)}>
+          <DropdownMenuItem onClick={() => updateFilter(value)}>
             <Search />
             Include
           </DropdownMenuItem>
@@ -86,20 +113,20 @@ export function DataTableSheetRowAction<
         return (
           <DropdownMenuGroup>
             <DropdownMenuItem
-              onClick={() => column?.setFilterValue([0, value])}
+              onClick={() => updateFilter([0, value])}
             >
               {/* FIXME: change icon as it is not clear */}
               <ChevronLeft />
               Less or equal than
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={() => column?.setFilterValue([value, 5000])}
+              onClick={() => updateFilter([value, 5000])}
             >
               {/* FIXME: change icon as it is not clear */}
               <ChevronRight />
               Greater or equal than
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => column?.setFilterValue([value])}>
+            <DropdownMenuItem onClick={() => updateFilter([value])}>
               <Equal />
               Equal to
             </DropdownMenuItem>
@@ -109,7 +136,7 @@ export function DataTableSheetRowAction<
         const date = new Date(value);
         return (
           <DropdownMenuGroup>
-            <DropdownMenuItem onClick={() => column?.setFilterValue([date])}>
+            <DropdownMenuItem onClick={() => updateFilter([date])}>
               <CalendarSearch />
               Exact timestamp
             </DropdownMenuItem>
@@ -117,7 +144,7 @@ export function DataTableSheetRowAction<
               onClick={() => {
                 const start = startOfHour(date);
                 const end = endOfHour(date);
-                column?.setFilterValue([start, end]);
+                updateFilter([start, end]);
               }}
             >
               <CalendarClock />
@@ -127,7 +154,7 @@ export function DataTableSheetRowAction<
               onClick={() => {
                 const start = startOfDay(date);
                 const end = endOfDay(date);
-                column?.setFilterValue([start, end]);
+                updateFilter([start, end]);
               }}
             >
               <CalendarDays />
