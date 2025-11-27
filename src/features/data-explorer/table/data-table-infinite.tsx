@@ -45,6 +45,7 @@ const LazyGpuSheetCharts = React.lazy(() =>
 );
 import { UserMenu, type AccountUser } from "./account-components";
 import { usePathname, useRouter } from "next/navigation";
+import Link from "next/link";
 import { Bot, Search, Server, Wrench } from "lucide-react";
 import type { FavoriteKey } from "@/types/favorites";
 import { useGlobalHotkeys } from "@/hooks/use-global-hotkeys";
@@ -251,13 +252,23 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
     resolvedNavItems.find((item) => item.isCurrent)?.value ?? "/llms";
   const handleNavChange = React.useCallback(
     (value: string) => {
+      // Link components handle navigation automatically with View Transitions
+      // This callback is only needed for hotkeys and Select UI state sync
+      // The Select value is controlled by currentNavValue (from pathname), so it updates automatically
       if (!value) return;
       if (value === pathname) return;
-      // Wrap navigation in startTransition for smooth transitions
-      // Works with experimental.viewTransition: true in next.config.mjs
-      startTransition(() => {
-        router.push(value);
-      });
+      // For hotkeys, we still need programmatic navigation
+      if (typeof document !== "undefined" && "startViewTransition" in document) {
+        (document as any).startViewTransition(() => {
+          startTransition(() => {
+            router.push(value);
+          });
+        });
+      } else {
+        startTransition(() => {
+          router.push(value);
+        });
+      }
     },
     [pathname, router],
   );
@@ -746,9 +757,12 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
                             value={item.value}
                             className="gap-2 cursor-pointer"
                             shortcut={item.shortcut}
+                            asChild
                           >
-                            <item.icon className="h-4 w-4" aria-hidden="true" />
-                            {item.label}
+                            <Link href={item.value}>
+                              <item.icon className="h-4 w-4" aria-hidden="true" />
+                              {item.label}
+                            </Link>
                           </SelectItem>
                         ))}
                       </SelectContent>

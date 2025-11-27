@@ -602,13 +602,23 @@ export function MobileTopNav({
 
   const handleNavChange = React.useCallback(
     (value: string) => {
+      // Link components handle navigation automatically with View Transitions
+      // This callback is only needed for hotkeys and Select UI state sync
+      // The Select value is controlled by currentNavValue (from pathname), so it updates automatically
       if (!value) return;
       if (value === pathname) return;
-      // Wrap navigation in startTransition for smooth transitions
-      // Works with experimental.viewTransition: true in next.config.mjs
-      React.startTransition(() => {
-        router.push(value);
-      });
+      // For hotkeys, we still need programmatic navigation
+      if (typeof document !== "undefined" && "startViewTransition" in document) {
+        (document as any).startViewTransition(() => {
+          React.startTransition(() => {
+            router.push(value);
+          });
+        });
+      } else {
+        React.startTransition(() => {
+          router.push(value);
+        });
+      }
     },
     [pathname, router],
   );
@@ -650,9 +660,12 @@ export function MobileTopNav({
                     value={item.value}
                     className="gap-2 cursor-pointer"
                     shortcut={item.shortcut}
+                    asChild
                   >
-                    <item.icon className="h-4 w-4" aria-hidden="true" />
-                    {item.label}
+                    <Link href={item.value}>
+                      <item.icon className="h-4 w-4" aria-hidden="true" />
+                      {item.label}
+                    </Link>
                   </SelectItem>
                 ))}
               </SelectContent>
