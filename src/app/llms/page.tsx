@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import { ModelsDataStreamInner } from "@/features/data-explorer/models/models-data-stream";
 
 const LLMS_META_TITLE = "LLM Benchmark Explorer | Deploybase";
@@ -28,15 +27,12 @@ export function generateMetadata(): Metadata {
 }
 
 // Page shell is static and prerendered with PPR
-// Only the Suspense-wrapped dynamic content streams
+// Route-level loading.tsx handles Suspense boundary automatically
+// This allows View Transitions to work properly (no blank screen)
 export default function ModelsPage({
   searchParams,
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  return (
-    <Suspense fallback={null}>
-      <ModelsDataStreamInner searchParams={searchParams} />
-    </Suspense>
-  );
+  return <ModelsDataStreamInner searchParams={searchParams} />;
 }

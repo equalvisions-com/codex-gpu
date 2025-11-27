@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import { GpuDataStreamInner } from "@/features/data-explorer/table/gpu-data-stream";
 
 const GPU_META_TITLE = "GPU Pricing Explorer | Deploybase";
@@ -28,15 +27,12 @@ export function generateMetadata(): Metadata {
 }
 
 // Page shell is static and prerendered with PPR
-// Only the Suspense-wrapped dynamic content streams
+// Route-level loading.tsx handles Suspense boundary automatically
+// This allows View Transitions to work properly (no blank screen)
 export default function GpusPage({
   searchParams,
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  return (
-    <Suspense fallback={null}>
-      <GpuDataStreamInner searchParams={searchParams} />
-    </Suspense>
-  );
+  return <GpuDataStreamInner searchParams={searchParams} />;
 }
