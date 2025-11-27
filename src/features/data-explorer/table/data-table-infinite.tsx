@@ -757,9 +757,12 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
                             value={item.value}
                             className="gap-2 cursor-pointer"
                             shortcut={item.shortcut}
-                            asChild
+                            onSelect={(e) => {
+                              // Prevent default Select behavior - Link will handle navigation
+                              e.preventDefault();
+                            }}
                           >
-                            <Link href={item.value}>
+                            <Link href={item.value} className="flex items-center gap-2 w-full">
                               <item.icon className="h-4 w-4" aria-hidden="true" />
                               {item.label}
                             </Link>
