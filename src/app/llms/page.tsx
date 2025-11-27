@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { ModelsDataStreamInner } from "@/features/data-explorer/models/models-data-stream";
+import { DataStreamLoading } from "@/features/data-explorer/table/data-stream-loading";
 
 export const revalidate = 43200;
+export const dynamic = "auto";
+export const fetchCache = "default";
 const LLMS_META_TITLE = "LLM Benchmark Explorer | Deploybase";
 const LLMS_META_DESCRIPTION =
   "Filter and benchmark large language models by latency, throughput, modality support, and pricing using our interactive table experience.";
@@ -30,7 +33,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default function ModelsPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<DataStreamLoading />}>
       <ModelsDataStreamInner />
     </Suspense>
   );

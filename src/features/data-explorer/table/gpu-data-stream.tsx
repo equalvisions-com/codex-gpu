@@ -1,6 +1,5 @@
 import {
   HydrationBoundary,
-  QueryClient,
   dehydrate,
 } from "@tanstack/react-query";
 import { searchParamsCache } from "./search-params";
@@ -8,12 +7,13 @@ import { dataOptions } from "./query-options";
 import { getGpuPricingPage } from "@/lib/gpu-pricing-loader";
 import { Client } from "./client";
 import { buildGpuSchema } from "./gpu-schema";
+import { getQueryClient } from "@/providers/get-query-client";
 
 export async function GpuDataStreamInner() {
   const parsedSearch = searchParamsCache.parse({});
-  const queryClient = new QueryClient();
+  const queryClient = getQueryClient();
 
-  // Fetch data - this will stream in
+  // Fetch data once - reuse for both schema and React Query hydration
   const firstPagePayload = await getGpuPricingPage({
     ...parsedSearch,
     cursor: null,
@@ -21,7 +21,7 @@ export async function GpuDataStreamInner() {
     uuid: null,
   });
 
-  // Prefetch for React Query hydration
+  // Prefetch for React Query hydration - reuse firstPagePayload for initial page
   await queryClient.prefetchInfiniteQuery({
     ...dataOptions(parsedSearch),
     queryFn: async ({ pageParam }) => {
@@ -31,6 +31,13 @@ export async function GpuDataStreamInner() {
         (pageParam as { size?: number } | undefined)?.size ??
         parsedSearch.size ??
         50;
+      
+      // Reuse the already-fetched first page payload
+      if (cursor === null || cursor === 0) {
+        return firstPagePayload;
+      }
+      
+      // Fetch subsequent pages
       return getGpuPricingPage({
         ...parsedSearch,
         cursor,

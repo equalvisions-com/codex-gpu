@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { GpuDataStreamInner } from "@/features/data-explorer/table/gpu-data-stream";
+import { DataStreamLoading } from "@/features/data-explorer/table/data-stream-loading";
 
 export const revalidate = 43200;
+export const dynamic = "auto";
+export const fetchCache = "default";
 const GPU_META_TITLE = "GPU Pricing Explorer | Deploybase";
 const GPU_META_DESCRIPTION =
   "Compare hourly GPU prices, VRAM, and provider availability with our infinite data table powered by TanStack Table, nuqs, and shadcn/ui.";
@@ -30,7 +33,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default function GpusPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<DataStreamLoading />}>
       <GpuDataStreamInner />
     </Suspense>
   );
