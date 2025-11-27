@@ -1,4 +1,5 @@
 import * as React from "react";
+import { ArrowUpDown } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -12,15 +13,15 @@ import { cn } from "@/lib/utils";
 
 // Models table column structure matching modelsColumnOrder from models-constants.tsx
 const MODELS_COLUMNS = [
-  { id: "blank", title: "", width: 45, minWidth: 45, align: "center" },
-  { id: "provider", title: "Provider", width: 171, minWidth: 171, align: "left" },
-  { id: "name", title: "Model", width: 275, minWidth: 275, align: "left" },
-  { id: "inputPrice", title: "Prompt", width: 150, minWidth: 150, align: "right" },
-  { id: "outputPrice", title: "Output", width: 150, minWidth: 150, align: "right" },
-  { id: "contextLength", title: "Context", width: 150, minWidth: 150, align: "right" },
-  { id: "maxCompletionTokens", title: "Max Output", width: 150, minWidth: 150, align: "right" },
-  { id: "throughput", title: "Throughput", width: 150, minWidth: 150, align: "right" },
-  { id: "modalities", title: "Modality", width: 150, minWidth: 150, align: "right" },
+  { id: "blank", title: "", width: 45, minWidth: 45, align: "center", sortable: false },
+  { id: "provider", title: "Provider", width: 171, minWidth: 171, align: "left", sortable: true },
+  { id: "name", title: "Model", width: 275, minWidth: 275, align: "left", sortable: true },
+  { id: "inputPrice", title: "Prompt", width: 150, minWidth: 150, align: "right", sortable: true },
+  { id: "outputPrice", title: "Output", width: 150, minWidth: 150, align: "right", sortable: true },
+  { id: "contextLength", title: "Context", width: 150, minWidth: 150, align: "right", sortable: true },
+  { id: "maxCompletionTokens", title: "Max Output", width: 150, minWidth: 150, align: "right", sortable: true },
+  { id: "throughput", title: "Throughput", width: 150, minWidth: 150, align: "right", sortable: true },
+  { id: "modalities", title: "Modality", width: 150, minWidth: 150, align: "right", sortable: true },
 ];
 
 const SKELETON_ROW_COUNT = 50;
@@ -120,18 +121,37 @@ export function ModelsTableSkeleton() {
                             <div className="flex items-center justify-center h-full">
                               <Skeleton className="h-4 w-4 rounded-sm" />
                             </div>
-                          ) : column.id === "provider" ? (
-                            <div className="pl-0 pr-[12px] h-7 flex items-center">
-                              <Skeleton className="h-4 w-20" />
-                            </div>
-                          ) : column.align === "right" ? (
-                            <div className="px-[12px] h-7 flex items-center justify-end">
-                              <Skeleton className="h-4 w-20" />
-                            </div>
+                          ) : column.sortable ? (
+                            column.id === "provider" ? (
+                              <div className="pl-0 pr-[12px] h-7 flex items-center gap-[10px] text-sm font-medium text-foreground">
+                                <span>{column.title}</span>
+                                <ArrowUpDown className="h-3.5 w-3.5 text-foreground/70" />
+                              </div>
+                            ) : column.align === "right" ? (
+                              <div className="px-[12px] h-7 flex items-center justify-end gap-[10px] text-sm font-medium text-foreground">
+                                <span>{column.title}</span>
+                                <ArrowUpDown className="h-3.5 w-3.5 text-foreground/70" />
+                              </div>
+                            ) : (
+                              <div className="px-[12px] h-7 flex items-center gap-[10px] text-sm font-medium text-foreground">
+                                <span>{column.title}</span>
+                                <ArrowUpDown className="h-3.5 w-3.5 text-foreground/70" />
+                              </div>
+                            )
                           ) : (
-                            <div className="px-[12px] h-7 flex items-center">
-                              <Skeleton className="h-4 w-20" />
-                            </div>
+                            column.id === "provider" ? (
+                              <div className="pl-0 pr-[12px] h-7 flex items-center text-sm font-medium text-foreground">
+                                {column.title}
+                              </div>
+                            ) : column.align === "right" ? (
+                              <div className="px-[12px] h-7 flex items-center justify-end text-sm font-medium text-foreground">
+                                {column.title}
+                              </div>
+                            ) : (
+                              <div className="px-[12px] h-7 flex items-center text-sm font-medium text-foreground">
+                                {column.title}
+                              </div>
+                            )
                           )}
                         </TableHead>
                       );

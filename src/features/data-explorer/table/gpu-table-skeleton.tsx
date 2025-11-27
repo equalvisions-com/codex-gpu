@@ -1,4 +1,5 @@
 import * as React from "react";
+import { ArrowUpDown } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -12,15 +13,15 @@ import { cn } from "@/lib/utils";
 
 // GPU table column structure matching gpuColumnOrder from constants.tsx
 const GPU_COLUMNS = [
-  { id: "blank", title: "", width: 45, minWidth: 45, align: "center" },
-  { id: "provider", title: "Provider", width: 171, minWidth: 171, align: "left" },
-  { id: "gpu_model", title: "Model", width: 275, minWidth: 275, align: "left" },
-  { id: "price_hour_usd", title: "Price", width: 150, minWidth: 150, align: "right" },
-  { id: "gpu_count", title: "GPUs", width: 150, minWidth: 150, align: "right" },
-  { id: "vram_gb", title: "VRAM", width: 150, minWidth: 150, align: "right" },
-  { id: "vcpus", title: "vCPUs", width: 150, minWidth: 150, align: "right" },
-  { id: "system_ram_gb", title: "RAM", width: 150, minWidth: 150, align: "right" },
-  { id: "type", title: "Config", width: 150, minWidth: 150, align: "right" },
+  { id: "blank", title: "", width: 45, minWidth: 45, align: "center", sortable: false },
+  { id: "provider", title: "Provider", width: 171, minWidth: 171, align: "left", sortable: true },
+  { id: "gpu_model", title: "Model", width: 275, minWidth: 275, align: "left", sortable: true },
+  { id: "price_hour_usd", title: "Price", width: 150, minWidth: 150, align: "right", sortable: true },
+  { id: "gpu_count", title: "GPUs", width: 150, minWidth: 150, align: "right", sortable: true },
+  { id: "vram_gb", title: "VRAM", width: 150, minWidth: 150, align: "right", sortable: true },
+  { id: "vcpus", title: "vCPUs", width: 150, minWidth: 150, align: "right", sortable: true },
+  { id: "system_ram_gb", title: "RAM", width: 150, minWidth: 150, align: "right", sortable: true },
+  { id: "type", title: "Config", width: 150, minWidth: 150, align: "right", sortable: true },
 ];
 
 const SKELETON_ROW_COUNT = 50;
@@ -120,18 +121,37 @@ export function GpuTableSkeleton() {
                             <div className="flex items-center justify-center h-full">
                               <Skeleton className="h-4 w-4 rounded-sm" />
                             </div>
-                          ) : column.id === "provider" ? (
-                            <div className="pl-0 pr-[12px] h-7 flex items-center">
-                              <Skeleton className="h-4 w-20" />
-                            </div>
-                          ) : column.align === "right" ? (
-                            <div className="px-[12px] h-7 flex items-center justify-end">
-                              <Skeleton className="h-4 w-20" />
-                            </div>
+                          ) : column.sortable ? (
+                            column.id === "provider" ? (
+                              <div className="pl-0 pr-[12px] h-7 flex items-center gap-[10px] text-sm font-medium text-foreground">
+                                <span>{column.title}</span>
+                                <ArrowUpDown className="h-3.5 w-3.5 text-foreground/70" />
+                              </div>
+                            ) : column.align === "right" ? (
+                              <div className="px-[12px] h-7 flex items-center justify-end gap-[10px] text-sm font-medium text-foreground">
+                                <span>{column.title}</span>
+                                <ArrowUpDown className="h-3.5 w-3.5 text-foreground/70" />
+                              </div>
+                            ) : (
+                              <div className="px-[12px] h-7 flex items-center gap-[10px] text-sm font-medium text-foreground">
+                                <span>{column.title}</span>
+                                <ArrowUpDown className="h-3.5 w-3.5 text-foreground/70" />
+                              </div>
+                            )
                           ) : (
-                            <div className="px-[12px] h-7 flex items-center">
-                              <Skeleton className="h-4 w-20" />
-                            </div>
+                            column.id === "provider" ? (
+                              <div className="pl-0 pr-[12px] h-7 flex items-center text-sm font-medium text-foreground">
+                                {column.title}
+                              </div>
+                            ) : column.align === "right" ? (
+                              <div className="px-[12px] h-7 flex items-center justify-end text-sm font-medium text-foreground">
+                                {column.title}
+                              </div>
+                            ) : (
+                              <div className="px-[12px] h-7 flex items-center text-sm font-medium text-foreground">
+                                {column.title}
+                              </div>
+                            )
                           )}
                         </TableHead>
                       );
