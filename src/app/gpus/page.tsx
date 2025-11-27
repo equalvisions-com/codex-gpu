@@ -5,7 +5,6 @@ import { DataStreamLoading } from "@/features/data-explorer/table/data-stream-lo
 
 export const revalidate = 43200;
 export const dynamic = "auto";
-export const fetchCache = "default";
 const GPU_META_TITLE = "GPU Pricing Explorer | Deploybase";
 const GPU_META_DESCRIPTION =
   "Compare hourly GPU prices, VRAM, and provider availability with our infinite data table powered by TanStack Table, nuqs, and shadcn/ui.";

@@ -5,7 +5,6 @@ import { DataStreamLoading } from "@/features/data-explorer/table/data-stream-lo
 
 export const revalidate = 43200;
 export const dynamic = "auto";
-export const fetchCache = "default";
 const LLMS_META_TITLE = "LLM Benchmark Explorer | Deploybase";
 const LLMS_META_DESCRIPTION =
   "Filter and benchmark large language models by latency, throughput, modality support, and pricing using our interactive table experience.";
