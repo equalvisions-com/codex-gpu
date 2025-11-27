@@ -31,10 +31,16 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function GpusPage() {
+export default async function GpusPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const params = await searchParams;
+  
   return (
     <Suspense fallback={<DataStreamLoading />}>
-      <GpuDataStreamInner />
+      <GpuDataStreamInner searchParams={params} />
     </Suspense>
   );
 }

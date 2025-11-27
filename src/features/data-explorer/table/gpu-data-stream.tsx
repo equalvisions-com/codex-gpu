@@ -9,8 +9,12 @@ import { Client } from "./client";
 import { buildGpuSchema } from "./gpu-schema";
 import { getQueryClient } from "@/providers/get-query-client";
 
-export async function GpuDataStreamInner() {
-  const parsedSearch = searchParamsCache.parse({});
+export async function GpuDataStreamInner({
+  searchParams,
+}: {
+  searchParams: { [key: string]: string | string[] | undefined };
+}) {
+  const parsedSearch = searchParamsCache.parse(searchParams);
   const queryClient = getQueryClient();
 
   // Fetch data once - reuse for both schema and React Query hydration

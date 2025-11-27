@@ -31,10 +31,16 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function ModelsPage() {
+export default async function ModelsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const params = await searchParams;
+  
   return (
     <Suspense fallback={<DataStreamLoading />}>
-      <ModelsDataStreamInner />
+      <ModelsDataStreamInner searchParams={params} />
     </Suspense>
   );
 }
