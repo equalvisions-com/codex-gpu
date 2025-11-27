@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { ModelsDataStreamInner } from "@/features/data-explorer/models/models-data-stream";
-import { DataStreamLoading } from "@/features/data-explorer/table/data-stream-loading";
+import { ModelsTableSkeleton } from "@/features/data-explorer/models/models-table-skeleton";
 
 const LLMS_META_TITLE = "LLM Benchmark Explorer | Deploybase";
 const LLMS_META_DESCRIPTION =
@@ -36,7 +36,7 @@ export default function ModelsPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   return (
-    <Suspense fallback={<DataStreamLoading />}>
+    <Suspense fallback={<ModelsTableSkeleton />}>
       <ModelsDataStreamInner searchParams={searchParams} />
     </Suspense>
   );
