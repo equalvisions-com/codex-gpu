@@ -1,9 +1,20 @@
 "use client";
 
 import { QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import type * as React from "react";
 import { getQueryClient } from "./get-query-client";
+// Lazy load devtools to reduce initial bundle size
+import dynamic from "next/dynamic";
+
+const ReactQueryDevtools = dynamic(
+  () =>
+    import("@tanstack/react-query-devtools").then((mod) => ({
+      default: mod.ReactQueryDevtools,
+    })),
+  {
+    ssr: false, // Devtools are client-only
+  },
+);
 
 export function ReactQueryProvider({
   children,

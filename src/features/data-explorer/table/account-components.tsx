@@ -58,6 +58,9 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
+// Use next/dynamic with ssr: false for truly client-only lazy loading
+// This prevents any SSR/prefetching and ensures components only load when dialog is opened
+import dynamic from "next/dynamic";
 
 const gradientSurfaceClass =
   "border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground hover:bg-gradient-to-b hover:from-muted/70 hover:via-muted/40 hover:to-background hover:text-accent-foreground";
@@ -65,10 +68,13 @@ const gradientSurfaceClass =
 const dropdownMenuItemClassName =
   "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted hover:no-underline focus-visible:bg-muted focus-visible:text-accent-foreground";
 
-const LazySettingsDialog = React.lazy(() =>
-  import("./settings-dialog").then((module) => ({
+const LazySettingsDialog = dynamic(
+  () => import("./settings-dialog").then((module) => ({
     default: module.SettingsDialog,
   })),
+  {
+    ssr: false, // Client-only - only loads when settings dialog is opened
+  },
 );
 
 export interface AccountUser {
@@ -484,13 +490,11 @@ export function UserMenu({
         </DropdownMenuContent>
       </DropdownMenu>
       {isAuthenticated && isSettingsDialogOpen ? (
-        <React.Suspense fallback={null}>
-          <LazySettingsDialog
-            open={isSettingsDialogOpen}
-            onOpenChange={setIsSettingsDialogOpen}
-            user={user}
-          />
-        </React.Suspense>
+        <LazySettingsDialog
+          open={isSettingsDialogOpen}
+          onOpenChange={setIsSettingsDialogOpen}
+          user={user}
+        />
       ) : null}
     </div>
   );

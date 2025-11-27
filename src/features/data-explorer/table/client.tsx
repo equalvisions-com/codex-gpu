@@ -23,13 +23,18 @@ import { MobileTopNav, SidebarPanel, type AccountUser } from "./account-componen
 import { FAVORITES_QUERY_KEY } from "@/lib/favorites/constants";
 import { useTableSearchState } from "./hooks/use-table-search-state";
 import { useFavoritesState } from "./hooks/use-favorites-state";
+// Use next/dynamic with ssr: false for truly client-only lazy loading
+// This prevents any SSR/prefetching and ensures components only load when rendered
+import dynamic from "next/dynamic";
 
 interface ClientProps {
   initialFavoriteKeys?: string[];
   isFavoritesMode?: boolean;
 }
 
-const LazyFavoritesRuntime = React.lazy(() => import("./favorites-runtime"));
+const LazyFavoritesRuntime = dynamic(() => import("./favorites-runtime"), {
+  ssr: false, // Client-only - never SSR or prefetch
+});
 
 export function Client({ initialFavoriteKeys, isFavoritesMode }: ClientProps = {}) {
   const contentRef = React.useRef<HTMLTableSectionElement>(null);
@@ -222,16 +227,14 @@ export function Client({ initialFavoriteKeys, isFavoritesMode }: ClientProps = {
   return (
     <>
       {shouldHydrateFavorites ? (
-        <React.Suspense fallback={null}>
-          <LazyFavoritesRuntime
-            search={search}
-            isActive={effectiveFavoritesMode}
-            session={session}
-            authPending={authPending}
-            onStateChange={handleFavoritesSnapshot}
-            broadcastId={broadcastId}
-          />
-        </React.Suspense>
+        <LazyFavoritesRuntime
+          search={search}
+          isActive={effectiveFavoritesMode}
+          session={session}
+          authPending={authPending}
+          onStateChange={handleFavoritesSnapshot}
+          broadcastId={broadcastId}
+        />
       ) : null}
       <DataTableInfinite
         key={`table-${effectiveFavoritesMode ? "favorites" : "all"}`}

@@ -37,10 +37,17 @@ import { flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-tabl
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { RowSkeletons } from "./_components/row-skeletons";
 import { CheckedActionsIsland } from "./_components/checked-actions-island";
-const LazyGpuSheetCharts = React.lazy(() =>
-  import("./gpu-sheet-charts").then((module) => ({
+// Use next/dynamic with ssr: false for truly client-only lazy loading
+// This prevents any SSR/prefetching and ensures components only load when sheet is opened
+import dynamic from "next/dynamic";
+
+const LazyGpuSheetCharts = dynamic(
+  () => import("./gpu-sheet-charts").then((module) => ({
     default: module.GpuSheetCharts,
   })),
+  {
+    ssr: false, // Client-only - only loads when sheet is opened
+  },
 );
 import { UserMenu, type AccountUser } from "./account-components";
 import { usePathname, useRouter } from "next/navigation";
@@ -1118,15 +1125,9 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
             {renderSheetCharts ? (
               renderSheetCharts(selectedRow ?? null)
             ) : selectedRow?.original ? (
-              <React.Suspense
-                fallback={
-                  <div className="h-[240px] animate-pulse rounded-lg bg-muted" />
-                }
-              >
-                <LazyGpuSheetCharts
-                  stableKey={(selectedRow.original as any)?.stable_key}
-                />
-              </React.Suspense>
+              <LazyGpuSheetCharts
+                stableKey={(selectedRow.original as any)?.stable_key}
+              />
             ) : null}
           </div>
         </div>

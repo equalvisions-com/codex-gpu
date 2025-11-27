@@ -32,11 +32,21 @@ interface ModelsClientProps {
   isFavoritesMode?: boolean;
 }
 
-const LazyFavoritesRuntime = React.lazy(() => import("./models-favorites-runtime"));
-const LazyModelSheetCharts = React.lazy(() =>
-  import("./model-sheet-charts").then((module) => ({
+// Use next/dynamic with ssr: false for truly client-only lazy loading
+// This prevents any SSR/prefetching and ensures components only load when rendered
+import dynamic from "next/dynamic";
+
+const LazyFavoritesRuntime = dynamic(() => import("./models-favorites-runtime"), {
+  ssr: false, // Client-only - never SSR or prefetch
+});
+
+const LazyModelSheetCharts = dynamic(
+  () => import("./model-sheet-charts").then((module) => ({
     default: module.ModelSheetCharts,
   })),
+  {
+    ssr: false, // Client-only - only loads when sheet is opened
+  },
 );
 
 export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsClientProps = {}) {
@@ -221,16 +231,14 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
   return (
     <>
       {shouldHydrateFavorites ? (
-        <React.Suspense fallback={null}>
-          <LazyFavoritesRuntime
-            search={search}
-            isActive={effectiveFavoritesMode}
-            session={session}
-            authPending={authPending}
-            broadcastId={broadcastId}
-            onStateChange={handleFavoritesSnapshot}
-          />
-        </React.Suspense>
+        <LazyFavoritesRuntime
+          search={search}
+          isActive={effectiveFavoritesMode}
+          session={session}
+          authPending={authPending}
+          broadcastId={broadcastId}
+          onStateChange={handleFavoritesSnapshot}
+        />
       ) : null}
       <DataTableInfinite
         key={`models-table-${effectiveFavoritesMode ? "favorites" : "all"}`}
@@ -300,21 +308,12 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
           }
 
           return (
-            <React.Suspense
-              fallback={
-                <div className="grid gap-4">
-                  <div className="h-[240px] animate-pulse rounded-lg bg-muted" />
-                  <div className="h-[240px] animate-pulse rounded-lg bg-muted" />
-                </div>
-              }
-            >
-              <LazyModelSheetCharts
-                permaslug={selectedModel.permaslug}
-                endpointId={selectedModel.endpointId}
-                provider={selectedModel?.provider}
-                throughput={selectedModel?.throughput}
-              />
-            </React.Suspense>
+            <LazyModelSheetCharts
+              permaslug={selectedModel.permaslug}
+              endpointId={selectedModel.endpointId}
+              provider={selectedModel?.provider}
+              throughput={selectedModel?.throughput}
+            />
           );
         }}
         renderCheckedActions={(meta) => (
