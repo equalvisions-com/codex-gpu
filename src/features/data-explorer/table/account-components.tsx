@@ -604,7 +604,11 @@ export function MobileTopNav({
     (value: string) => {
       if (!value) return;
       if (value === pathname) return;
-      router.push(value);
+      // Wrap navigation in startTransition for smooth transitions
+      // Works with experimental.viewTransition: true in next.config.mjs
+      React.startTransition(() => {
+        router.push(value);
+      });
     },
     [pathname, router],
   );

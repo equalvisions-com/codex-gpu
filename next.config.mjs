@@ -6,6 +6,10 @@ const nextConfig = {
   experimental: {
     // REMINDER: new React compiler to memoize components automatically
     reactCompiler: true,
+    // Enable View Transitions API for smooth cross-fade navigation
+    // This provides smooth transitions between pages (e.g., /llms <-> /gpus)
+    // EXPERIMENTAL: Test thoroughly - may have edge cases
+    viewTransition: true,
   },
   async redirects() {
     return [

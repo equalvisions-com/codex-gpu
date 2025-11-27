@@ -22,6 +22,7 @@ import type {
 import { cn } from "@/lib/utils";
 import { type FetchNextPageOptions } from "@tanstack/react-query";
 import * as React from "react";
+import { startTransition } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import type {
   ColumnDef,
@@ -252,7 +253,11 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
     (value: string) => {
       if (!value) return;
       if (value === pathname) return;
-      router.push(value);
+      // Wrap navigation in startTransition for smooth transitions
+      // Works with experimental.viewTransition: true in next.config.mjs
+      startTransition(() => {
+        router.push(value);
+      });
     },
     [pathname, router],
   );
