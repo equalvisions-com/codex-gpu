@@ -602,23 +602,13 @@ export function MobileTopNav({
 
   const handleNavChange = React.useCallback(
     (value: string) => {
-      // Link components handle navigation automatically with View Transitions
-      // This callback is only needed for hotkeys and Select UI state sync
-      // The Select value is controlled by currentNavValue (from pathname), so it updates automatically
+      // Link components handle click navigation automatically
+      // This callback is only needed for hotkeys (Cmd+K, Cmd+G, Cmd+E)
       if (!value) return;
       if (value === pathname) return;
-      // For hotkeys, we still need programmatic navigation
-      if (typeof document !== "undefined" && "startViewTransition" in document) {
-        (document as any).startViewTransition(() => {
-          React.startTransition(() => {
-            router.push(value);
-          });
-        });
-      } else {
-        React.startTransition(() => {
-          router.push(value);
-        });
-      }
+      React.startTransition(() => {
+        router.push(value);
+      });
     },
     [pathname, router],
   );
