@@ -101,6 +101,13 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
     });
   }, [clearFavoriteQueries, router, signOut]);
 
+  const queryOptions = React.useMemo(() => modelsDataOptions(search), [search]);
+  
+  // Use cached data as initialData to skip loading state on client navigation
+  // This follows TanStack Query best practices: initialData persists to cache and skips loading state
+  // Docs: https://tanstack.com/query/v5/docs/framework/react/guides/initial-query-data
+  const cachedData = queryClient.getQueryData(queryOptions.queryKey);
+  
   const {
     data,
     isFetching,
@@ -112,8 +119,11 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
     error,
     refetch,
   } = useInfiniteQuery({
-    ...modelsDataOptions(search),
+    ...queryOptions,
     enabled: !effectiveFavoritesMode,
+    // Use cached data as initialData - persists to cache and skips loading state
+    // This prevents showing loading state when navigating to already-visited pages
+    initialData: cachedData as typeof data,
   });
 
   const baseFlatData = React.useMemo(() => {
