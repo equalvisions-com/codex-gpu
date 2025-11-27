@@ -1,13 +1,24 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
-import { GpuDataStreamInner } from "@/features/data-explorer/table/gpu-data-stream";
+import * as React from "react";
+import {
+  HydrationBoundary,
+  QueryClient,
+  dehydrate,
+} from "@tanstack/react-query";
+import { Client } from "@/features/data-explorer/table/client";
+import { dataOptions } from "@/features/data-explorer/table/query-options";
+import { searchParamsCache } from "@/features/data-explorer/table/search-params";
+import { getGpuPricingPage } from "@/lib/gpu-pricing-loader";
+import { buildGpuSchema } from "@/features/data-explorer/table/gpu-schema";
+
+export const revalidate = 43200;
 
 const GPU_META_TITLE = "GPU Pricing Explorer | Deploybase";
 const GPU_META_DESCRIPTION =
   "Compare hourly GPU prices, VRAM, and provider availability with our infinite data table powered by TanStack Table, nuqs, and shadcn/ui.";
 const SHARED_OG_IMAGE = "/assets/data-table-infinite.png";
 
-export function generateMetadata(): Metadata {
+export async function generateMetadata(): Promise<Metadata> {
   return {
     title: GPU_META_TITLE,
     description: GPU_META_DESCRIPTION,
@@ -27,16 +38,68 @@ export function generateMetadata(): Metadata {
   };
 }
 
-// Page shell is static and prerendered with PPR
-// Only the Suspense-wrapped dynamic content streams
-export default function GpusPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
+// ISR-friendly route: we seed React Query with the default (unfiltered) data.
+// Client-side nuqs manages URL-bound filters after hydration to keep SSR static.
+export default function GpusPage() {
+  return <GpusHydratedContent />;
+}
+
+async function GpusHydratedContent() {
+  const parsedSearch = searchParamsCache.parse({});
+  // Use new QueryClient for ISR - each page render gets fresh client
+  // This is correct for server-side prefetching per TanStack Query docs
+  const queryClient = new QueryClient();
+  let firstPagePayload: Awaited<ReturnType<typeof getGpuPricingPage>> | null =
+    null;
+
+  if (parsedSearch.bookmarks !== "true") {
+    try {
+      const infiniteOptions = dataOptions(parsedSearch);
+      // Prefetch using loader directly (more performant for ISR - no HTTP overhead)
+      // Client will use API routes for subsequent pagination
+      await queryClient.prefetchInfiniteQuery({
+        ...infiniteOptions,
+        queryFn: async ({ pageParam }) => {
+          const cursor =
+            typeof pageParam?.cursor === "number" ? pageParam.cursor : null;
+          const size =
+            (pageParam as { size?: number } | undefined)?.size ??
+            parsedSearch.size ??
+            50;
+          const result = await getGpuPricingPage({
+            ...parsedSearch,
+            cursor,
+            size,
+            uuid: null,
+          });
+          if (!firstPagePayload && (cursor === null || cursor === 0)) {
+            firstPagePayload = result;
+          }
+          return result;
+        },
+      });
+    } catch (error) {
+      console.error("[GpusPage] Failed to prefetch GPU data", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  const dehydratedState = dehydrate(queryClient);
+  const schemaMarkup = buildGpuSchema(firstPagePayload);
+
   return (
-    <Suspense fallback={null}>
-      <GpuDataStreamInner searchParams={searchParams} />
-    </Suspense>
+    <HydrationBoundary state={dehydratedState}>
+      {schemaMarkup ? (
+        <script
+          type="application/ld+json"
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(schemaMarkup).replace(/</g, "\\u003c"),
+          }}
+        />
+      ) : null}
+      <Client />
+    </HydrationBoundary>
   );
 }

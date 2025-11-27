@@ -5,6 +5,7 @@ import { gpuPricingCache } from "@/lib/gpu-pricing-cache";
 import { unstable_cache } from "next/cache";
 import { createHash } from "crypto";
 import { mapGpuRowToColumnSchema } from "@/lib/gpu-column-transformer";
+import { STANDARD_CACHE_TTL } from "@/lib/cache/constants";
 
 const CACHE_SIZE_LIMIT_BYTES = 2 * 1024 * 1024; // 2MB
 
@@ -16,7 +17,7 @@ const getCachedFacets = unstable_cache(
   },
   ["pricing:facets"],
   {
-    revalidate: 43200,
+    revalidate: STANDARD_CACHE_TTL,
     tags: ["pricing"],
   },
 );
@@ -62,7 +63,7 @@ async function getCachedGpusFiltered(search: SearchParamsType) {
     },
     ["pricing:filtered", hashSearchParams(search)],
     {
-      revalidate: 43200,
+      revalidate: STANDARD_CACHE_TTL,
       tags: ["pricing"],
     },
   );

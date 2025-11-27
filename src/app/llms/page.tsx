@@ -1,13 +1,24 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
-import { ModelsDataStreamInner } from "@/features/data-explorer/models/models-data-stream";
+import * as React from "react";
+import {
+  HydrationBoundary,
+  QueryClient,
+  dehydrate,
+} from "@tanstack/react-query";
+import { ModelsClient } from "@/features/data-explorer/models/models-client";
+import { modelsDataOptions } from "@/features/data-explorer/models/models-query-options";
+import { modelsSearchParamsCache } from "@/features/data-explorer/models/models-search-params";
+import { getModelsPage } from "@/lib/models-loader";
+import { buildModelsSchema } from "@/features/data-explorer/models/build-models-schema";
+
+export const revalidate = 43200;
 
 const LLMS_META_TITLE = "LLM Benchmark Explorer | Deploybase";
 const LLMS_META_DESCRIPTION =
   "Filter and benchmark large language models by latency, throughput, modality support, and pricing using our interactive table experience.";
 const SHARED_OG_IMAGE = "/assets/data-table-infinite.png";
 
-export function generateMetadata(): Metadata {
+export async function generateMetadata(): Promise<Metadata> {
   return {
     title: LLMS_META_TITLE,
     description: LLMS_META_DESCRIPTION,
@@ -27,16 +38,68 @@ export function generateMetadata(): Metadata {
   };
 }
 
-// Page shell is static and prerendered with PPR
-// Only the Suspense-wrapped dynamic content streams
-export default function ModelsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
+// ISR-friendly route: we seed React Query with the default (unfiltered) data.
+// Client-side nuqs manages URL-bound filters after hydration to keep SSR static.
+export default function ModelsPage() {
+  return <ModelsHydratedContent />;
+}
+
+async function ModelsHydratedContent() {
+  const parsedSearch = modelsSearchParamsCache.parse({});
+  // Use new QueryClient for ISR - each page render gets fresh client
+  // This is correct for server-side prefetching per TanStack Query docs
+  const queryClient = new QueryClient();
+  let firstPagePayload: Awaited<ReturnType<typeof getModelsPage>> | null =
+    null;
+
+  if (parsedSearch.bookmarks !== "true") {
+    try {
+      const infiniteOptions = modelsDataOptions(parsedSearch);
+      // Prefetch using loader directly (more performant for ISR - no HTTP overhead)
+      // Client will use API routes for subsequent pagination
+      await queryClient.prefetchInfiniteQuery({
+        ...infiniteOptions,
+        queryFn: async ({ pageParam }) => {
+          const cursor =
+            typeof pageParam?.cursor === "number" ? pageParam.cursor : null;
+          const size =
+            (pageParam as { size?: number } | undefined)?.size ??
+            parsedSearch.size ??
+            50;
+          const result = await getModelsPage({
+            ...parsedSearch,
+            cursor,
+            size,
+            uuid: null,
+          });
+          if (!firstPagePayload && (cursor === null || cursor === 0)) {
+            firstPagePayload = result;
+          }
+          return result;
+        },
+      });
+    } catch (error) {
+      console.error("[ModelsPage] Failed to prefetch models data", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  const dehydratedState = dehydrate(queryClient);
+  const schemaMarkup = buildModelsSchema(firstPagePayload);
+
   return (
-    <Suspense fallback={null}>
-      <ModelsDataStreamInner searchParams={searchParams} />
-    </Suspense>
+    <HydrationBoundary state={dehydratedState}>
+      {schemaMarkup ? (
+        <script
+          type="application/ld+json"
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(schemaMarkup).replace(/</g, "\\u003c"),
+          }}
+        />
+      ) : null}
+      <ModelsClient />
+    </HydrationBoundary>
   );
 }

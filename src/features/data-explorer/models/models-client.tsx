@@ -104,9 +104,9 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
 
   const queryOptions = React.useMemo(() => modelsDataOptions(search), [search]);
   
-  // Use cached data for immediate rendering on client navigation
-  // placeholderData shows cached data immediately while server streams in
-  // initialData persists to cache and skips loading state
+  // Optimize client-side navigation: use cached data for instant rendering
+  // initialData: Persists to cache, skips loading state, marks data as fresh
+  // placeholderData: Shows immediately but doesn't persist (fallback only)
   // Docs: https://tanstack.com/query/v5/docs/framework/react/guides/initial-query-data
   type QueryData = InfiniteData<ModelsInfiniteQueryResponse<ModelsColumnSchema[], ModelsLogsMeta>, { cursor: number | null; size: number }>;
   const cachedData = queryClient.getQueryData<QueryData>(queryOptions.queryKey);
@@ -124,11 +124,12 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
   } = useInfiniteQuery({
     ...queryOptions,
     enabled: !effectiveFavoritesMode,
-    // Use cached data as initialData - persists to cache and skips loading state
-    // This prevents showing loading state when navigating to already-visited pages
+    // Use cached data as initialData for client-side navigation
+    // This persists to cache and skips loading state for instant rendering
+    // HydrationBoundary handles server-side hydration automatically
     initialData: cachedData,
-    // Use cached data as placeholderData - shows immediately on client navigation
-    // This prevents blank screen during Suspense fallback when React Query has cached data
+    // placeholderData as fallback for when initialData isn't available
+    // Shows cached data immediately during transitions
     placeholderData: cachedData,
   });
 

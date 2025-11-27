@@ -5,6 +5,7 @@ import {
   defaultShouldDehydrateQuery,
   isServer,
 } from "@tanstack/react-query";
+import { STANDARD_CACHE_TTL } from "@/lib/cache/constants";
 
 function makeQueryClient() {
   return new QueryClient({
@@ -26,9 +27,15 @@ function makeQueryClient() {
     }),
     defaultOptions: {
       queries: {
-        staleTime: 10 * 60 * 1000, // 10 minutes
+        // Align staleTime with ISR cache window (12 hours)
+        // Data is considered fresh for 12 hours, matching server-side cache
+        staleTime: STANDARD_CACHE_TTL * 1000, // 12 hours in milliseconds
+        // Keep data in cache longer (24 hours) to support instant navigation
+        // This matches the server-side cache invalidation strategy
+        gcTime: STANDARD_CACHE_TTL * 2 * 1000, // 24 hours in milliseconds
         // Follow TanStack Query guidance: automatically refetch stale data
         // when the tab regains focus so long-lived sessions stay fresh.
+        // Individual queries can override this (e.g., table queries set to false)
         refetchOnWindowFocus: true,
       },
       dehydrate: {

@@ -8,6 +8,7 @@ import { modelsCache } from "@/lib/models-cache";
 import type { AIModel } from "@/types/models";
 import { unstable_cache } from "next/cache";
 import { createHash } from "crypto";
+import { STANDARD_CACHE_TTL } from "@/lib/cache/constants";
 
 const CACHE_SIZE_LIMIT_BYTES = 2 * 1024 * 1024; // 2MB
 
@@ -17,7 +18,7 @@ const getCachedFacets = unstable_cache(
   },
   ["models:facets"],
   {
-    revalidate: 43200,
+    revalidate: STANDARD_CACHE_TTL,
     tags: ["models"],
   },
 );
@@ -63,7 +64,7 @@ async function getCachedModelsFiltered(search: ModelsSearchParamsType) {
     },
     ["models:filtered", hashModelSearchParams(search)],
     {
-      revalidate: 43200,
+      revalidate: STANDARD_CACHE_TTL,
       tags: ["models"],
     },
   );
