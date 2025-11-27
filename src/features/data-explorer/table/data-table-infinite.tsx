@@ -729,6 +729,16 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
                     <Select
                       value={currentNavValue}
                       onValueChange={handleNavChange}
+                      onOpenChange={(open) => {
+                        // Prefetch all nav routes when Select opens
+                        if (open) {
+                          resolvedNavItems.forEach((item) => {
+                            if (item.value !== pathname) {
+                              router.prefetch(item.value);
+                            }
+                          });
+                        }
+                      }}
                       hotkeys={[
                         { combo: "cmd+k", value: "/llms" },
                         { combo: "cmd+g", value: "/gpus" },
@@ -750,7 +760,7 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
                               e.preventDefault();
                             }}
                           >
-                            <Link href={item.value} className="flex items-center gap-2 w-full">
+                            <Link href={item.value} prefetch={true} className="flex items-center gap-2 w-full">
                               <item.icon className="h-4 w-4" aria-hidden="true" />
                               {item.label}
                             </Link>
