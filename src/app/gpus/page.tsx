@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { GpuDataStreamInner } from "@/features/data-explorer/table/gpu-data-stream";
-import { GpuTableSkeleton } from "@/features/data-explorer/table/gpu-table-skeleton";
 
 const GPU_META_TITLE = "GPU Pricing Explorer | Deploybase";
 const GPU_META_DESCRIPTION =
@@ -36,7 +35,7 @@ export default function GpusPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   return (
-    <Suspense fallback={<GpuTableSkeleton />}>
+    <Suspense fallback={null}>
       <GpuDataStreamInner searchParams={searchParams} />
     </Suspense>
   );
