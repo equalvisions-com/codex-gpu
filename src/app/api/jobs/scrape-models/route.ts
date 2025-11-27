@@ -5,8 +5,6 @@ import { logger } from '@/lib/logger';
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { isAuthorizedCronRequest } from '@/lib/cron-auth';
 
-export const dynamic = 'force-dynamic';
-export const maxDuration = 30; // Allow up to 30 seconds for scraping
 const CORE_PAGE_PATHS = ["/", "/gpus", "/llms", "/tools"];
 
 async function revalidateCorePages() {

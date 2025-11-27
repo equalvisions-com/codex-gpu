@@ -4,8 +4,6 @@ import { modelsThroughputScraper } from "@/lib/providers/models-throughput-scrap
 import { logger } from "@/lib/logger";
 import { isAuthorizedCronRequest } from "@/lib/cron-auth";
 
-export const dynamic = "force-dynamic";
-export const maxDuration = 60;
 const CORE_PAGE_PATHS = ["/", "/gpus", "/llms", "/tools"];
 
 async function revalidateCorePages() {

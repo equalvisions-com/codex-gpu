@@ -6,8 +6,6 @@ import { logger } from "@/lib/logger";
 import { getRequestLogContext } from "@/lib/request-log-context";
 import { getModelsPage } from "@/lib/models-loader";
 
-export const dynamic = "force-dynamic";
-
 export async function GET(req: Request): Promise<Response> {
   try {
     const logContext = getRequestLogContext(req);

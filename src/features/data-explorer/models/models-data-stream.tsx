@@ -9,12 +9,15 @@ import { ModelsClient } from "./models-client";
 import { buildModelsSchema } from "./build-models-schema";
 import { getQueryClient } from "@/providers/get-query-client";
 
+// This component becomes dynamic when it accesses searchParams
+// The parent page shell remains static and prerendered
 export async function ModelsDataStreamInner({
   searchParams,
 }: {
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const parsedSearch = modelsSearchParamsCache.parse(searchParams);
+  const params = await searchParams;
+  const parsedSearch = modelsSearchParamsCache.parse(params);
   const queryClient = getQueryClient();
 
   // Fetch data once - reuse for both schema and React Query hydration

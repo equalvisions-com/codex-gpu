@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { unstable_cache } from "next/cache";
 import { gpuPriceHistoryCache } from "@/lib/gpu-price-history-cache";
-
-export const revalidate = 43200;
+import { STANDARD_CACHE_TTL } from "@/lib/cache/constants";
 
 const getCachedHistory = (stableKey: string) =>
   unstable_cache(
     async () => gpuPriceHistoryCache.getSeries(stableKey),
     ["gpu-price-history", stableKey],
     {
-      revalidate: 43200,
+      revalidate: STANDARD_CACHE_TTL,
       tags: [`gpu-price-history:${stableKey}`],
     },
   )();

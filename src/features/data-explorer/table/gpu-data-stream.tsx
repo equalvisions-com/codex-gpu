@@ -9,12 +9,15 @@ import { Client } from "./client";
 import { buildGpuSchema } from "./gpu-schema";
 import { getQueryClient } from "@/providers/get-query-client";
 
+// This component becomes dynamic when it accesses searchParams
+// The parent page shell remains static and prerendered
 export async function GpuDataStreamInner({
   searchParams,
 }: {
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const parsedSearch = searchParamsCache.parse(searchParams);
+  const params = await searchParams;
+  const parsedSearch = searchParamsCache.parse(params);
   const queryClient = getQueryClient();
 
   // Fetch data once - reuse for both schema and React Query hydration

@@ -11,6 +11,7 @@ import { toModelsColumnRow } from "@/lib/models/transformers";
 import { unstable_cache } from "next/cache";
 import { createHash } from "crypto";
 import type { AIModel } from "@/types/models";
+import { STANDARD_CACHE_TTL } from "@/lib/cache/constants";
 
 const CACHE_SIZE_LIMIT_BYTES = 2 * 1024 * 1024; // 2MB
 
@@ -20,7 +21,7 @@ const getCachedFacets = unstable_cache(
   },
   ["models:facets"],
   {
-    revalidate: 43200,
+    revalidate: STANDARD_CACHE_TTL,
     tags: ["models"],
   },
 );
@@ -58,7 +59,7 @@ async function getCachedFavoriteModelsFiltered(userId: string, search: ModelsSea
     },
     buildModelFavoritesCacheKey(userId, search),
     {
-      revalidate: 43200,
+      revalidate: STANDARD_CACHE_TTL,
       tags: ["model-favorites"],
     },
   );

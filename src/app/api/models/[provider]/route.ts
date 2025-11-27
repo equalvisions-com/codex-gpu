@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { modelsCache } from "@/lib/models-cache";
 
-export const revalidate = 43200;
-
 // GET /api/models/[provider] - Returns models for a specific provider
 export async function GET(request: NextRequest, { params }: { params: Promise<{ provider: string }> }) {
   try {

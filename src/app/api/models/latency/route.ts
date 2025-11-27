@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { unstable_cache } from "next/cache";
 import { modelLatencyCache } from "@/lib/models-latency-cache";
-
-export const revalidate = 43200;
+import { STANDARD_CACHE_TTL } from "@/lib/cache/constants";
 
 const getCachedLatency = (permaslug: string) =>
   unstable_cache(
     async () => modelLatencyCache.getSeriesGrouped(permaslug),
     ["model-latency", permaslug],
     {
-      revalidate: 43200,
+      revalidate: STANDARD_CACHE_TTL,
       tags: [`model-latency:${permaslug}`],
     },
   )();
