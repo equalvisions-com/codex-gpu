@@ -104,8 +104,9 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
 
   const queryOptions = React.useMemo(() => modelsDataOptions(search), [search]);
   
-  // Use cached data as initialData to skip loading state on client navigation
-  // This follows TanStack Query best practices: initialData persists to cache and skips loading state
+  // Use cached data for immediate rendering on client navigation
+  // placeholderData shows cached data immediately while server streams in
+  // initialData persists to cache and skips loading state
   // Docs: https://tanstack.com/query/v5/docs/framework/react/guides/initial-query-data
   type QueryData = InfiniteData<ModelsInfiniteQueryResponse<ModelsColumnSchema[], ModelsLogsMeta>, { cursor: number | null; size: number }>;
   const cachedData = queryClient.getQueryData<QueryData>(queryOptions.queryKey);
@@ -126,6 +127,9 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
     // Use cached data as initialData - persists to cache and skips loading state
     // This prevents showing loading state when navigating to already-visited pages
     initialData: cachedData,
+    // Use cached data as placeholderData - shows immediately on client navigation
+    // This prevents blank screen during Suspense fallback when React Query has cached data
+    placeholderData: cachedData,
   });
 
   const baseFlatData = React.useMemo(() => {
