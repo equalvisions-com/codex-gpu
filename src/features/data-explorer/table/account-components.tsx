@@ -604,11 +604,10 @@ export function MobileTopNav({
     (value: string) => {
       // Link components handle click navigation automatically
       // This callback is only needed for hotkeys (Cmd+K, Cmd+G, Cmd+E)
+      // Using blocking navigation (no startTransition) to prevent blink/flash
       if (!value) return;
       if (value === pathname) return;
-      React.startTransition(() => {
-        router.push(value);
-      });
+      router.push(value);
     },
     [pathname, router],
   );

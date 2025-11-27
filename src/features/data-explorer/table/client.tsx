@@ -104,7 +104,7 @@ export function Client({ initialFavoriteKeys, isFavoritesMode }: ClientProps = {
   // Docs: https://tanstack.com/query/v5/docs/framework/react/guides/initial-query-data
   type QueryData = InfiniteData<InfiniteQueryResponse<ColumnSchema[], LogsMeta>, { cursor: number | null; size: number }>;
   const cachedData = queryClient.getQueryData<QueryData>(queryOptions.queryKey);
-  
+
   const {
     data,
     isFetching,

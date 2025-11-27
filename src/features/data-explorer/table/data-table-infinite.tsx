@@ -22,7 +22,6 @@ import type {
 import { cn } from "@/lib/utils";
 import { type FetchNextPageOptions } from "@tanstack/react-query";
 import * as React from "react";
-import { startTransition } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import type {
   ColumnDef,
@@ -254,11 +253,10 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
     (value: string) => {
       // Link components handle click navigation automatically
       // This callback is only needed for hotkeys (Cmd+K, Cmd+G, Cmd+E)
+      // Using blocking navigation (no startTransition) to prevent blink/flash
       if (!value) return;
       if (value === pathname) return;
-      startTransition(() => {
-        router.push(value);
-      });
+      router.push(value);
     },
     [pathname, router],
   );

@@ -110,7 +110,7 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
   // Docs: https://tanstack.com/query/v5/docs/framework/react/guides/initial-query-data
   type QueryData = InfiniteData<ModelsInfiniteQueryResponse<ModelsColumnSchema[], ModelsLogsMeta>, { cursor: number | null; size: number }>;
   const cachedData = queryClient.getQueryData<QueryData>(queryOptions.queryKey);
-  
+
   const {
     data,
     isFetching,
