@@ -1,12 +1,13 @@
 "use client";
 
-import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/providers/auth-client-provider";
 import { useAuthDialog } from "@/providers/auth-dialog-provider";
 import { modelsColumns } from "./models-columns";
 import { modelsDataOptions } from "./models-query-options";
+import type { ModelsInfiniteQueryResponse, ModelsLogsMeta } from "./models-query-options";
 import {
   filterFields as defaultFilterFields,
   modelsColumnOrder,
@@ -106,7 +107,8 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
   // Use cached data as initialData to skip loading state on client navigation
   // This follows TanStack Query best practices: initialData persists to cache and skips loading state
   // Docs: https://tanstack.com/query/v5/docs/framework/react/guides/initial-query-data
-  const cachedData = queryClient.getQueryData(queryOptions.queryKey);
+  type QueryData = InfiniteData<ModelsInfiniteQueryResponse<ModelsColumnSchema[], ModelsLogsMeta>, { cursor: number | null; size: number }>;
+  const cachedData = queryClient.getQueryData<QueryData>(queryOptions.queryKey);
   
   const {
     data,
@@ -123,7 +125,7 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
     enabled: !effectiveFavoritesMode,
     // Use cached data as initialData - persists to cache and skips loading state
     // This prevents showing loading state when navigating to already-visited pages
-    initialData: cachedData as typeof data,
+    initialData: cachedData,
   });
 
   const baseFlatData = React.useMemo(() => {
