@@ -9,16 +9,16 @@ import {
   TableRow,
 } from "@/components/custom/table";
 import { Button } from "@/components/ui/button";
-import { DataTableProvider } from "@/features/data-explorer/data-table/data-table-provider";
-import { DataTableFilterControls } from "@/features/data-explorer/data-table/data-table-filter-controls";
-import { DataTableFilterInput } from "@/features/data-explorer/data-table/data-table-filter-input";
-import { MemoizedDataTableSheetContent } from "@/features/data-explorer/data-table/data-table-sheet/data-table-sheet-content";
-import { DataTableSheetDetails } from "@/features/data-explorer/data-table/data-table-sheet/data-table-sheet-details";
+import { DataTableProvider } from "@/components/data-table/data-table-provider";
+import { DataTableFilterControls } from "@/components/data-table/data-table-filter-controls";
+import { DataTableFilterInput } from "@/components/data-table/data-table-filter-input";
+import { MemoizedDataTableSheetContent } from "@/components/data-table/data-table-sheet/data-table-sheet-content";
+import { DataTableSheetDetails } from "@/components/data-table/data-table-sheet/data-table-sheet-details";
 import type {
   DataTableFilterField,
   SheetField,
   DataTableInputFilterField,
-} from "@/features/data-explorer/data-table/types";
+} from "@/components/data-table/types";
 import { cn } from "@/lib/utils";
 import { type FetchNextPageOptions } from "@tanstack/react-query";
 import * as React from "react";
@@ -37,21 +37,14 @@ import { flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-tabl
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { RowSkeletons } from "./_components/row-skeletons";
 import { CheckedActionsIsland } from "./_components/checked-actions-island";
-// Use next/dynamic with ssr: false for truly client-only lazy loading
-// This prevents any SSR/prefetching and ensures components only load when sheet is opened
-import dynamic from "next/dynamic";
-
-const LazyGpuSheetCharts = dynamic(
-  () => import("./gpu-sheet-charts").then((module) => ({
+const LazyGpuSheetCharts = React.lazy(() =>
+  import("./gpu-sheet-charts").then((module) => ({
     default: module.GpuSheetCharts,
   })),
-  {
-    ssr: false, // Client-only - only loads when sheet is opened
-  },
 );
+import { filterFields, sheetFields } from "./constants";
 import { UserMenu, type AccountUser } from "./account-components";
 import { usePathname, useRouter } from "next/navigation";
-import Link from "next/link";
 import { Bot, Search, Server, Wrench } from "lucide-react";
 import type { FavoriteKey } from "@/types/favorites";
 import { useGlobalHotkeys } from "@/hooks/use-global-hotkeys";
@@ -68,33 +61,18 @@ const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max);
 const ESTIMATED_ROW_HEIGHT_PX = 41;
 
-export type NavItem = {
-  label: string;
-  value: string;
-  icon: React.ComponentType<{ className?: string }>;
-  shortcut?: string;
-  isCurrent?: boolean;
-};
-
-const DEFAULT_NAV_ITEMS: NavItem[] = [
-  { label: "LLMs", value: "/llms", icon: Bot, shortcut: "k" },
-  { label: "GPUs", value: "/gpus", icon: Server, shortcut: "g" },
-  { label: "Tools", value: "/tools", icon: Wrench, shortcut: "e" },
-];
-
 // Note: chart groupings could be added later if needed
-export type DataTableMeta<TMeta, TFavorite = FavoriteKey> = TMeta & {
+export type DataTableMeta<TMeta> = TMeta & {
   facets?: Record<string, any>;
-  initialFavoriteKeys?: TFavorite[];
+  initialFavoriteKeys?: FavoriteKey[];
 };
 
-interface DataTableInfiniteProps<TData, TValue, TMeta, TFavorite> {
+interface DataTableInfiniteProps<TData, TValue, TMeta> {
   columns: ColumnDef<TData, TValue>[];
   getRowClassName?: (row: Row<TData>) => string;
   // REMINDER: make sure to pass the correct id to access the rows
   getRowId?: TableOptions<TData>["getRowId"];
   data: TData[];
-  columnOrder?: string[];
   // Number of skeleton rows to render while loading
   skeletonRowCount?: number;
   // Number of skeleton rows to render while loading the next page
@@ -107,7 +85,7 @@ interface DataTableInfiniteProps<TData, TValue, TMeta, TFavorite> {
   onRowSelectionChange: OnChangeFn<RowSelectionState>;
   filterFields?: DataTableFilterField<TData>[];
   sheetFields?: SheetField<TData, TMeta>[];
-  meta: DataTableMeta<TMeta, TFavorite>;
+  meta: DataTableMeta<TMeta>;
   isFetching?: boolean;
   isLoading?: boolean;
   isFetchingNextPage?: boolean;
@@ -131,20 +109,13 @@ interface DataTableInfiniteProps<TData, TValue, TMeta, TFavorite> {
   };
   headerSlot?: React.ReactNode;
   mobileHeaderOffset?: string;
-  navItems?: NavItem[];
-  renderCheckedActions?: (
-    meta: DataTableMeta<TMeta, TFavorite>,
-  ) => React.ReactNode;
-  renderSheetCharts?: (row: Row<TData> | null) => React.ReactNode;
-  primaryColumnId?: string;
 }
 
-export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>({
+export function DataTableInfinite<TData, TValue, TMeta>({
   columns,
   getRowClassName,
   getRowId,
   data,
-  columnOrder,
   skeletonRowCount = 50,
   skeletonNextPageRowCount,
   columnFilters,
@@ -169,11 +140,7 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
   account,
   headerSlot,
   mobileHeaderOffset,
-  navItems,
-  renderCheckedActions,
-  renderSheetCharts,
-  primaryColumnId = "gpu_model",
-}: DataTableInfiniteProps<TData, TValue, TMeta, TFavorite>) {
+}: DataTableInfiniteProps<TData, TValue, TMeta>) {
   // Independent checkbox-only state (does not control the details pane)
   const [checkedRows, setCheckedRows] = React.useState<Record<string, boolean>>({});
   const missingRowIdWarningRef = React.useRef(false);
@@ -241,26 +208,36 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
       [searchFieldId],
     ),
   );
-  const resolvedNavItems = React.useMemo(() => {
-    const baseItems: NavItem[] = navItems ?? DEFAULT_NAV_ITEMS;
-
-    return baseItems.map((item) => {
-      const isCurrent =
-        typeof item.isCurrent === "boolean"
-          ? item.isCurrent
-          : pathname === "/"
-            ? item.value === "/llms"
-            : pathname.startsWith(item.value);
-      return { ...item, isCurrent };
-    });
-  }, [navItems, pathname]);
+  const navItems = React.useMemo(
+    () => [
+      {
+        label: "LLMs",
+        value: "/llms",
+        isCurrent: pathname === "/" || pathname.startsWith("/llms"),
+        icon: Bot,
+        shortcut: "k",
+      },
+      {
+        label: "GPUs",
+        value: "/gpus",
+        isCurrent: pathname.startsWith("/gpus"),
+        icon: Server,
+        shortcut: "g",
+      },
+      {
+        label: "Tools",
+        value: "/tools",
+        isCurrent: pathname.startsWith("/tools"),
+        icon: Wrench,
+        shortcut: "e",
+      },
+    ],
+    [pathname],
+  );
   const currentNavValue =
-    resolvedNavItems.find((item) => item.isCurrent)?.value ?? "/llms";
+    navItems.find((item) => item.isCurrent)?.value ?? "/llms";
   const handleNavChange = React.useCallback(
     (value: string) => {
-      // Link components handle click navigation automatically
-      // This callback is only needed for hotkeys (Cmd+K, Cmd+G, Cmd+E)
-      // Using blocking navigation (no startTransition) to prevent blink/flash
       if (!value) return;
       if (value === pathname) return;
       router.push(value);
@@ -268,8 +245,8 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
     [pathname, router],
   );
   const mobileHeightClass = mobileHeaderOffset
-    ? "h-[calc(100dvh-var(--mobile-header-offset))] sm:h-full"
-    : "h-[100dvh] sm:h-full";
+    ? "h-[calc(100dvh-var(--total-padding-mobile)-var(--mobile-header-offset))]"
+    : "h-[calc(100dvh-var(--total-padding-mobile))]";
   const mobileHeightStyle = React.useMemo(() => {
     if (!mobileHeaderOffset) return undefined;
     const trimmed = mobileHeaderOffset.replace(/\s+/g, "");
@@ -400,7 +377,17 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
     manualSorting: true,
     manualPagination: true,
     initialState: {
-      ...(columnOrder ? { columnOrder } : {}),
+      columnOrder: [
+        "blank",
+        "provider",
+        "gpu_model",
+        "price_hour_usd",
+        "gpu_count",
+        "vram_gb",
+        "vcpus",
+        "system_ram_gb",
+        "type",
+      ],
       // Initialize from URL state (TanStack Table best practice)
       columnFilters,
       sorting,
@@ -413,7 +400,6 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
       columnFilters,
       sorting,
       rowSelection,
-      ...(columnOrder ? { columnOrder } : {}),
     },
     enableMultiRowSelection: false,
     enableColumnResizing: true,
@@ -440,10 +426,6 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
   const rows = table.getRowModel().rows;
   const columnSizing = table.getState().columnSizing;
   const visibleLeafColumns = table.getVisibleLeafColumns();
-  const primaryColumn = React.useMemo(
-    () => table.getColumn(primaryColumnId),
-    [primaryColumnId, table],
-  );
   const overscan = React.useMemo(() => {
     if (!rows.length) return derivedOverscan;
     return Math.min(Math.max(1, derivedOverscan), rows.length);
@@ -542,9 +524,7 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
       return;
     }
 
-    const headerElement = primaryColumnId
-      ? getHeaderRef(primaryColumnId).current
-      : null;
+    const headerElement = getHeaderRef("gpu_model").current;
     if (!headerElement) {
       return;
     }
@@ -587,23 +567,23 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
         cancelAnimationFrame(frame);
       }
     };
-  }, [getHeaderRef, primaryColumnId]);
+  }, [getHeaderRef]);
 
   const minimumModelColumnWidth = React.useMemo(
-    () => primaryColumn?.columnDef.minSize ?? 275,
-    [primaryColumn],
+    () => table.getColumn("gpu_model")?.columnDef.minSize ?? 275,
+    [table]
   );
   const modelColumnDefaultSize = React.useMemo(
-    () => primaryColumn?.columnDef.size ?? 275,
-    [primaryColumn],
+    () => table.getColumn("gpu_model")?.columnDef.size ?? 275,
+    [table]
   );
 
   // Helper to get model column width style
   const getModelColumnWidth = React.useCallback((columnId: string, currentSize: number) => {
-    if (!primaryColumnId || columnId !== primaryColumnId || !primaryColumn) {
+    if (columnId !== "gpu_model") {
       return `${currentSize}px`;
     }
-
+    
     // Once resized, always use pixel width (prevents jumping when hitting min size)
     if (modelColumnHasBeenResizedRef.current) {
       return `${currentSize}px`;
@@ -611,14 +591,14 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
     
     // Use "auto" for flex growth only when never resized and at default size
     return currentSize === modelColumnDefaultSize ? "auto" : `${currentSize}px`;
-  }, [modelColumnDefaultSize, primaryColumn, primaryColumnId]);
+  }, [modelColumnDefaultSize]);
 
   const fixedColumnsWidth = React.useMemo(
     () =>
       visibleLeafColumns
-        .filter((column) => column.id !== primaryColumnId)
+        .filter((column) => column.id !== "gpu_model")
         .reduce((acc, column) => acc + column.getSize(), 0),
-    [primaryColumnId, visibleLeafColumns],
+    [visibleLeafColumns, columnSizing]
   );
 
   const selectedRow = React.useMemo(() => {
@@ -679,19 +659,6 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
     [meta.facets]
   );
 
-  const checkedActions = React.useMemo(() => {
-    if (renderCheckedActions) {
-      return renderCheckedActions(meta);
-    }
-    return (
-      <CheckedActionsIsland
-        initialFavoriteKeys={
-          (meta.initialFavoriteKeys as FavoriteKey[] | undefined) ?? undefined
-        }
-      />
-    );
-  }, [meta, renderCheckedActions]);
-
   return (
     <DataTableProvider
       table={table}
@@ -714,14 +681,9 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
       getFacetedUniqueValues={getFacetedUniqueValues}
       getFacetedMinMaxValues={getFacetedMinMaxValues}
     >
-      <div className="flex flex-col gap-2 sm:gap-0">
-        <div className="fixed top-0 left-0 right-0 z-50 bg-background py-2 sm:static sm:z-auto sm:py-0">
-          {headerSlot}
-        </div>
-        <div className={cn(
-          "grid h-full grid-cols-1 gap-0 sm:grid-cols-[13rem_1fr] md:grid-cols-[18rem_1fr]",
-          "pt-[var(--mobile-header-offset)] sm:pt-0"
-        )} style={mobileHeightStyle}>
+      <div className="flex flex-col gap-2 sm:gap-4">
+        {headerSlot}
+        <div className="grid h-full grid-cols-1 gap-0 sm:grid-cols-[13rem_1fr] md:grid-cols-[18rem_1fr]">
           <div
             className={cn(
               "hidden sm:flex h-[calc(100dvh-var(--total-padding-mobile))] sm:h-[100dvh] flex-col sticky top-0 self-start min-w-72 max-w-72 rounded-lg overflow-hidden"
@@ -741,16 +703,6 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
                     <Select
                       value={currentNavValue}
                       onValueChange={handleNavChange}
-                      onOpenChange={(open) => {
-                        // Prefetch all nav routes when Select opens
-                        if (open) {
-                          resolvedNavItems.forEach((item) => {
-                            if (item.value !== pathname) {
-                              router.prefetch(item.value);
-                            }
-                          });
-                        }
-                      }}
                       hotkeys={[
                         { combo: "cmd+k", value: "/llms" },
                         { combo: "cmd+g", value: "/gpus" },
@@ -761,21 +713,15 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {resolvedNavItems.map((item) => (
+                        {navItems.map((item) => (
                           <SelectItem
                             key={item.value}
                             value={item.value}
                             className="gap-2 cursor-pointer"
                             shortcut={item.shortcut}
-                            onSelect={(e) => {
-                              // Prevent default Select behavior - Link will handle navigation
-                              e.preventDefault();
-                            }}
                           >
-                            <Link href={item.value} prefetch={true} className="flex items-center gap-2 w-full">
-                              <item.icon className="h-4 w-4" aria-hidden="true" />
-                              {item.label}
-                            </Link>
+                            <item.icon className="h-4 w-4" aria-hidden="true" />
+                            {item.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -858,9 +804,7 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
                     className={cn("bg-muted")}
                   >
                     {headerGroup.headers.map((header) => {
-                      const isModelColumn = primaryColumnId
-                        ? header.id === primaryColumnId
-                        : false;
+                      const isModelColumn = header.id === "gpu_model";
                       const headerRef = getHeaderRef(header.id);
                       
                       // Custom resize handler that captures the actual rendered width when using "auto"
@@ -933,7 +877,7 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
                           style={{
                             width: getModelColumnWidth(header.id, header.getSize()),
                             minWidth:
-                              isModelColumn
+                              header.id === "gpu_model"
                                 ? `${minimumModelColumnWidth}px`
                                 : header.column.columnDef.minSize,
                           }}
@@ -1016,7 +960,6 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
                     table={table}
                     rows={skeletonRowCount}
                     modelColumnWidth={`${minimumModelColumnWidth}px`}
-                    primaryColumnId={primaryColumnId}
                   />
                 ) : rows.length ? (
                   <>
@@ -1030,7 +973,6 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
                             checked={checkedRows[row.id] ?? false}
                             data-index={index}
                             getModelColumnWidth={getModelColumnWidth}
-                            primaryColumnId={primaryColumnId}
                           />
                         </React.Fragment>
                       ))
@@ -1039,7 +981,6 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
                         table={table}
                         rows={Math.min(rows.length || skeletonRowCount, 50)}
                         modelColumnWidth={`${minimumModelColumnWidth}px`}
-                        primaryColumnId={primaryColumnId}
                       />
                     ) : (
                       <>
@@ -1064,7 +1005,6 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
                                 data-index={virtualItem.index}
                                 ref={rowVirtualizer.measureElement}
                                 getModelColumnWidth={getModelColumnWidth}
-                                primaryColumnId={primaryColumnId}
                               />
                             </React.Fragment>
                           );
@@ -1089,7 +1029,6 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
                             : Math.max(overscan * 2, 20)
                         }
                         modelColumnWidth={`${minimumModelColumnWidth}px`}
-                        primaryColumnId={primaryColumnId}
                       />
                     )}
                   </>
@@ -1127,17 +1066,17 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
             metadata={meta}
           />
           <div className="border-t border-border/60 pt-4">
-            {renderSheetCharts ? (
-              renderSheetCharts(selectedRow ?? null)
-            ) : selectedRow?.original ? (
-              <LazyGpuSheetCharts
-                stableKey={(selectedRow.original as any)?.stable_key}
-              />
-            ) : null}
+          {selectedRow?.original ? (
+            <React.Suspense
+              fallback={<div className="h-[240px] animate-pulse rounded-lg bg-muted" />}
+            >
+              <LazyGpuSheetCharts stableKey={(selectedRow.original as any)?.stable_key} />
+            </React.Suspense>
+          ) : null}
           </div>
         </div>
       </DataTableSheetDetails>
-      {checkedActions}
+      <CheckedActionsIsland initialFavoriteKeys={(meta as any)?.initialFavoriteKeys} />
     </DataTableProvider>
   );
 }
@@ -1156,7 +1095,6 @@ function Row<TData>({
   "data-index": dataIndex,
   ref: measureRef,
   getModelColumnWidth,
-  primaryColumnId,
 }: {
   row: Row<TData>;
   table: TTable<TData>;
@@ -1167,7 +1105,6 @@ function Row<TData>({
   "data-index"?: number;
   ref?: React.Ref<HTMLTableRowElement>;
   getModelColumnWidth?: (columnId: string, currentSize: number) => string;
-  primaryColumnId?: string;
 }) {
   const canHover =
     typeof window !== "undefined" &&
@@ -1176,17 +1113,10 @@ function Row<TData>({
       ? true
       : undefined;
 
-  const columnMeta = React.useMemo(() => {
-    if (!primaryColumnId) return null;
-    const column = table.getColumn(primaryColumnId);
-    if (!column) return null;
-    return {
-      minSize: column.columnDef.minSize ?? 275,
-      size: column.columnDef.size ?? 275,
-    };
-  }, [primaryColumnId, table]);
-  const minimumModelColumnWidth = columnMeta?.minSize ?? 275;
-  const modelColumnDefaultSize = columnMeta?.size ?? 275;
+  const minimumModelColumnWidth =
+    table.getColumn("gpu_model")?.columnDef.minSize ?? 275;
+  const modelColumnDefaultSize =
+    table.getColumn("gpu_model")?.columnDef.size ?? 275;
 
   return (
     <TableRow
@@ -1219,9 +1149,7 @@ function Row<TData>({
         const stopPropagation = (e: any) => {
           e.stopPropagation();
         };
-        const isModelColumn = primaryColumnId
-          ? cell.column.id === primaryColumnId
-          : false;
+        const isModelColumn = cell.column.id === "gpu_model";
         return (
           <TableCell
             key={cell.id}
@@ -1240,7 +1168,7 @@ function Row<TData>({
                 ? getModelColumnWidth(cell.column.id, cell.column.getSize())
                 : `${cell.column.getSize()}px`,
               minWidth:
-                isModelColumn
+                cell.column.id === "gpu_model"
                   ? `${minimumModelColumnWidth}px`
                   : cell.column.columnDef.minSize,
             }}
@@ -1309,4 +1237,580 @@ function getErrorMessage(error: unknown) {
   } catch {
     return "Request failed.";
   }
+}
+---
+
+"use client";
+
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
+import * as React from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/providers/auth-client-provider";
+import { useAuthDialog } from "@/providers/auth-dialog-provider";
+import { columns } from "./columns";
+import { filterFields as defaultFilterFields, sheetFields } from "./constants";
+import { DataTableInfinite } from "./data-table-infinite";
+import type { DataTableMeta } from "./data-table-infinite";
+import { dataOptions } from "./query-options";
+import type { RowWithId } from "@/types/api";
+import type { ColumnSchema, FacetMetadataSchema } from "./schema";
+// Inline notices handle favorites feedback; no toasts here.
+import { getFavoritesBroadcastId } from "@/lib/favorites/broadcast";
+import { MobileTopNav, SidebarPanel, type AccountUser } from "./account-components";
+import { FAVORITES_QUERY_KEY } from "@/lib/favorites/constants";
+import { useTableSearchState } from "./hooks/use-table-search-state";
+import { useFavoritesState } from "./hooks/use-favorites-state";
+
+interface ClientProps {
+  initialFavoriteKeys?: string[];
+  isFavoritesMode?: boolean;
+}
+
+const LazyFavoritesRuntime = React.lazy(() => import("./favorites-runtime"));
+
+export function Client({ initialFavoriteKeys, isFavoritesMode }: ClientProps = {}) {
+  const contentRef = React.useRef<HTMLTableSectionElement>(null);
+  const {
+    search,
+    columnFilters,
+    sorting,
+    rowSelection,
+    handleColumnFiltersChange,
+    handleSortingChange,
+    handleRowSelectionChange,
+  } = useTableSearchState(defaultFilterFields);
+  const bookmarksFlag = search.bookmarks === "true";
+  const effectiveFavoritesMode =
+    typeof isFavoritesMode === "boolean" ? isFavoritesMode : bookmarksFlag;
+  const queryClient = useQueryClient();
+  const router = useRouter();
+  const { session, signOut, isPending: authPending } = useAuth();
+  const { showSignIn, showSignUp } = useAuthDialog();
+  const [isSigningOut, startSignOutTransition] = React.useTransition();
+  const accountUser = (session?.user ?? null) as AccountUser | null;
+  const broadcastId = React.useMemo(() => getFavoritesBroadcastId(), []);
+
+  const clearFavoriteQueries = React.useCallback(() => {
+    queryClient.removeQueries({ queryKey: FAVORITES_QUERY_KEY });
+    queryClient.removeQueries({ queryKey: ["favorites", "rows"], exact: false });
+  }, [queryClient]);
+
+  const handleSignIn = React.useCallback(() => {
+    if (!showSignIn) return;
+    const callbackUrl =
+      typeof window !== "undefined"
+        ? `${window.location.pathname}${window.location.search}`
+        : "/";
+    showSignIn({ callbackUrl });
+  }, [showSignIn]);
+
+  const handleSignUp = React.useCallback(() => {
+    if (!showSignUp) return;
+    const callbackUrl =
+      typeof window !== "undefined"
+        ? `${window.location.pathname}${window.location.search}`
+        : "/";
+    showSignUp({ callbackUrl });
+  }, [showSignUp]);
+
+  const handleSignOut = React.useCallback(() => {
+    startSignOutTransition(async () => {
+      try {
+        await signOut();
+      } finally {
+        clearFavoriteQueries();
+        router.refresh();
+      }
+    });
+  }, [clearFavoriteQueries, router, signOut]);
+
+  const { favoritesSnapshot, handleFavoritesSnapshot, shouldHydrateFavorites } =
+    useFavoritesState({
+      initialFavoriteKeys,
+      effectiveFavoritesMode,
+      queryClient,
+    });
+  const noopAsync = React.useCallback(async () => {}, []);
+
+
+  const {
+    data,
+    isFetching,
+    isLoading,
+    isFetchingNextPage,
+    fetchNextPage,
+    hasNextPage,
+    isError,
+    error,
+    refetch,
+  } = useInfiniteQuery({
+    ...dataOptions(search),
+    enabled: !effectiveFavoritesMode,
+  });
+
+  const baseFlatData = React.useMemo(() => {
+    return (data?.pages?.flatMap((page) => page.data ?? []) as RowWithId[]) ?? ([] as RowWithId[]);
+  }, [data?.pages]);
+  const baseLastPage = data?.pages?.[data?.pages.length - 1];
+
+  const favoritesFlatData = favoritesSnapshot?.flatData ?? [];
+  const favoritesLastPage = favoritesSnapshot?.lastPage;
+
+  const flatData = effectiveFavoritesMode ? favoritesFlatData : baseFlatData;
+  const lastPage = effectiveFavoritesMode ? favoritesLastPage : baseLastPage;
+  const facetsFromPage = lastPage?.meta?.facets;
+  const effectiveFavoriteKeys = effectiveFavoritesMode
+    ? favoritesSnapshot?.favoriteKeysFromRows ?? []
+    : initialFavoriteKeys;
+  
+  const metadata: DataTableMeta<Record<string, unknown>> = {
+    ...(lastPage?.meta?.metadata ?? {}),
+    initialFavoriteKeys: effectiveFavoriteKeys,
+  };
+
+  const tableIsFetching = effectiveFavoritesMode
+    ? favoritesSnapshot?.isFetching ?? false
+    : isFetching;
+  const tableIsLoading = effectiveFavoritesMode
+    ? favoritesSnapshot?.isFavoritesLoading ?? true
+    : isLoading;
+  const tableIsFetchingNextPage = effectiveFavoritesMode
+    ? favoritesSnapshot?.isFetchingNextPage ?? false
+    : isFetchingNextPage;
+  const tableFetchNextPage = effectiveFavoritesMode
+    ? favoritesSnapshot?.fetchNextPage ?? noopAsync
+    : fetchNextPage;
+  const tableHasNextPage = effectiveFavoritesMode
+    ? favoritesSnapshot?.hasNextPage ?? false
+    : hasNextPage;
+  const tableIsError = effectiveFavoritesMode ? false : isError;
+  const tableError = effectiveFavoritesMode ? null : error;
+  const tableRetry = effectiveFavoritesMode ? noopAsync : refetch;
+  const facetsRef = React.useRef<Record<string, FacetMetadataSchema> | undefined>(undefined);
+  React.useEffect(() => {
+    if (facetsFromPage && Object.keys(facetsFromPage).length) {
+      facetsRef.current = facetsFromPage;
+    }
+  }, [facetsFromPage]);
+  const stableFacets = React.useMemo(() => {
+    if (facetsFromPage && Object.keys(facetsFromPage).length) {
+      return facetsFromPage;
+    }
+    return facetsRef.current ?? {};
+  }, [facetsFromPage]);
+  const castFacets = stableFacets as Record<string, FacetMetadataSchema> | undefined;
+
+  // REMINDER: filter metadata is hydrated from the API so checkboxes/sliders stay accurate
+  const filterFields = React.useMemo(() => {
+    return defaultFilterFields.map((field) => {
+      const facetsField = castFacets?.[field.value];
+      if (!facetsField) return field;
+      if (field.options && field.options.length > 0) return field;
+
+      // REMINDER: if no options are set, we need to set them via the API
+      // Filter rows to ensure they have the expected structure (same as models table)
+      // Check if rows exists and is an array before processing
+      if (!facetsField.rows || !Array.isArray(facetsField.rows)) {
+        return field;
+      }
+
+      const options = facetsField.rows
+        .filter((row) => row && typeof row === "object" && "value" in row)
+        .map(({ value }) => {
+          const label = value == null ? "Unknown" : String(value);
+          return { label, value };
+        });
+
+      if (field.type === "slider") {
+        return {
+          ...field,
+          min: facetsField.min ?? field.min,
+          max: facetsField.max ?? field.max,
+          options, // Use API-generated options for sliders
+        };
+      }
+
+      // Only set options for checkbox fields, not input fields
+      if (field.type === "checkbox") {
+        return { ...field, options };
+      }
+
+      return field;
+    });
+  }, [castFacets]);
+
+  const previousFilterPayloadRef = React.useRef<Record<string, unknown> | null>(null);
+  return (
+    <>
+      {shouldHydrateFavorites ? (
+        <React.Suspense fallback={null}>
+          <LazyFavoritesRuntime
+            search={search}
+            isActive={effectiveFavoritesMode}
+            session={session}
+            authPending={authPending}
+            onStateChange={handleFavoritesSnapshot}
+            broadcastId={broadcastId}
+          />
+        </React.Suspense>
+      ) : null}
+      <DataTableInfinite
+        key={`table-${effectiveFavoritesMode ? "favorites" : "all"}`}
+        columns={columns}
+        data={flatData}
+        skeletonRowCount={50}
+        skeletonNextPageRowCount={undefined}
+        columnFilters={columnFilters}
+        onColumnFiltersChange={handleColumnFiltersChange}
+        sorting={sorting}
+        onSortingChange={handleSortingChange}
+        rowSelection={rowSelection}
+        onRowSelectionChange={handleRowSelectionChange}
+        meta={{ ...metadata, facets: castFacets }}
+        filterFields={filterFields}
+        sheetFields={sheetFields}
+        isFetching={tableIsFetching}
+        isLoading={tableIsLoading}
+        isFetchingNextPage={tableIsFetchingNextPage}
+        fetchNextPage={tableFetchNextPage}
+        hasNextPage={tableHasNextPage}
+        isError={tableIsError}
+        error={tableError}
+        onRetry={tableRetry}
+        getRowClassName={() => "opacity-100"}
+        getRowId={(row) => row.uuid}
+        renderSheetTitle={(props) => props.row?.original.uuid}
+        focusTargetRef={contentRef}
+        account={{
+          user: accountUser,
+          onSignOut: handleSignOut,
+          isSigningOut,
+          onSignIn: handleSignIn,
+          onSignUp: handleSignUp,
+          isLoading: authPending,
+        }}
+        headerSlot={
+          <MobileTopNav
+            user={accountUser}
+            onSignOut={handleSignOut}
+            onSignIn={handleSignIn}
+            onSignUp={handleSignUp}
+            isSigningOut={isSigningOut}
+            isAuthLoading={authPending}
+            renderSidebar={() => (
+              <SidebarPanel
+                user={accountUser}
+                onSignOut={handleSignOut}
+                isSigningOut={isSigningOut}
+                className="flex-1"
+                showUserMenuFooter={false}
+                isAuthLoading={authPending}
+              />
+            )}
+          />
+        }
+        mobileHeaderOffset="36px"
+      />
+    </>
+  );
+}
+
+
+---
+
+"use client";
+
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
+import * as React from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/providers/auth-client-provider";
+import { useAuthDialog } from "@/providers/auth-dialog-provider";
+import { modelsColumns } from "./models-columns";
+import { modelsDataOptions } from "./models-query-options";
+import { ModelsDataTableInfinite, type ModelsDataTableMeta } from "./models-data-table-infinite";
+import { filterFields as defaultFilterFields, sheetFields } from "./models-constants";
+import type { ModelsColumnSchema, ModelsFacetMetadataSchema } from "./models-schema";
+import type { ModalitiesDirection } from "./modalities-filter";
+import type { ModelFavoriteKey } from "@/types/model-favorites";
+import { MobileTopNav, SidebarPanel, type AccountUser } from "../infinite-table/account-components";
+import { getFavoritesBroadcastId } from "@/lib/model-favorites/broadcast";
+import { MODEL_FAVORITES_QUERY_KEY } from "@/lib/model-favorites/constants";
+import { useModelsTableSearchState } from "./hooks/use-models-table-search-state";
+import { useModelsFavoritesState } from "./hooks/use-models-favorites-state";
+
+interface ModelsClientProps {
+  initialFavoriteKeys?: ModelFavoriteKey[];
+  isFavoritesMode?: boolean;
+}
+
+const LazyFavoritesRuntime = React.lazy(() => import("./models-favorites-runtime"));
+
+export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsClientProps = {}) {
+  const contentRef = React.useRef<HTMLTableSectionElement>(null);
+  const {
+    search,
+    columnFilters,
+    sorting,
+    rowSelection,
+    handleColumnFiltersChange,
+    handleSortingChange,
+    handleRowSelectionChange,
+  } = useModelsTableSearchState(defaultFilterFields);
+  const bookmarksFlag = search.bookmarks === "true";
+  const effectiveFavoritesMode =
+    typeof isFavoritesMode === "boolean" ? isFavoritesMode : bookmarksFlag;
+  const queryClient = useQueryClient();
+  const router = useRouter();
+  const { session, signOut, isPending: authPending } = useAuth();
+  const { showSignIn, showSignUp } = useAuthDialog();
+  const [isSigningOut, startSignOutTransition] = React.useTransition();
+  const accountUser = (session?.user ?? null) as AccountUser | null;
+  const broadcastId = React.useMemo(() => getFavoritesBroadcastId(), []);
+  const clearFavoriteQueries = React.useCallback(() => {
+    queryClient.removeQueries({ queryKey: MODEL_FAVORITES_QUERY_KEY });
+    queryClient.removeQueries({ queryKey: ["model-favorites", "rows"], exact: false });
+  }, [queryClient]);
+
+  const { favoritesSnapshot, handleFavoritesSnapshot, shouldHydrateFavorites } =
+    useModelsFavoritesState({
+      initialFavoriteKeys,
+      effectiveFavoritesMode,
+      queryClient,
+    });
+  const noopAsync = React.useCallback(async () => {}, []);
+
+  const handleSignIn = React.useCallback(() => {
+    if (!showSignIn) return;
+    const callbackUrl =
+      typeof window !== "undefined"
+        ? `${window.location.pathname}${window.location.search}`
+        : "/";
+    showSignIn({ callbackUrl });
+  }, [showSignIn]);
+
+  const handleSignUp = React.useCallback(() => {
+    if (!showSignUp) return;
+    const callbackUrl =
+      typeof window !== "undefined"
+        ? `${window.location.pathname}${window.location.search}`
+        : "/";
+    showSignUp({ callbackUrl });
+  }, [showSignUp]);
+
+  const handleSignOut = React.useCallback(() => {
+    startSignOutTransition(async () => {
+      try {
+        await signOut();
+      } finally {
+        clearFavoriteQueries();
+        router.refresh();
+      }
+    });
+  }, [clearFavoriteQueries, router, signOut]);
+
+  const {
+    data,
+    isFetching,
+    isLoading,
+    isFetchingNextPage,
+    fetchNextPage,
+    hasNextPage,
+    isError,
+    error,
+    refetch,
+  } = useInfiniteQuery({
+    ...modelsDataOptions(search),
+    enabled: !effectiveFavoritesMode,
+  });
+
+  const baseFlatData = React.useMemo(() => {
+    return (data?.pages?.flatMap((page) => page.data ?? []) as ModelsColumnSchema[]) ?? ([] as ModelsColumnSchema[]);
+  }, [data?.pages]);
+
+  const baseLastPage = data?.pages?.[data?.pages.length - 1];
+  const favoritesFlatData = favoritesSnapshot?.flatData ?? [];
+  const favoritesLastPage = favoritesSnapshot?.lastPage;
+
+  const flatData = effectiveFavoritesMode ? favoritesFlatData : baseFlatData;
+  const lastPage = effectiveFavoritesMode ? favoritesLastPage : baseLastPage;
+  const rawFacets = lastPage?.meta?.facets;
+  const facetsRef = React.useRef<Record<string, ModelsFacetMetadataSchema> | undefined>(undefined);
+  React.useEffect(() => {
+    if (rawFacets && Object.keys(rawFacets).length) {
+      facetsRef.current = rawFacets;
+    }
+  }, [rawFacets]);
+  const stableFacets = React.useMemo(() => {
+    if (rawFacets && Object.keys(rawFacets).length) {
+      return rawFacets;
+    }
+    return facetsRef.current ?? {};
+  }, [rawFacets]);
+  const castFacets = stableFacets as Record<string, ModelsFacetMetadataSchema> | undefined;
+  const effectiveFavoriteKeys = effectiveFavoritesMode
+    ? favoritesSnapshot?.favoriteKeysFromRows ?? []
+    : initialFavoriteKeys;
+
+  const metadata: ModelsDataTableMeta<Record<string, unknown>> = {
+    ...(lastPage?.meta?.metadata ?? {}),
+    initialFavoriteKeys: effectiveFavoriteKeys,
+  };
+
+  const tableIsFetching = effectiveFavoritesMode
+    ? favoritesSnapshot?.isFetching ?? false
+    : isFetching;
+  const tableIsLoading = effectiveFavoritesMode
+    ? favoritesSnapshot?.isFavoritesLoading ?? true
+    : isLoading;
+  const tableIsFetchingNextPage = effectiveFavoritesMode
+    ? favoritesSnapshot?.isFetchingNextPage ?? false
+    : isFetchingNextPage;
+  const tableFetchNextPage =
+    effectiveFavoritesMode && favoritesSnapshot?.fetchNextPage
+      ? favoritesSnapshot.fetchNextPage
+      : effectiveFavoritesMode
+        ? noopAsync
+        : fetchNextPage;
+  const tableHasNextPage = effectiveFavoritesMode
+    ? favoritesSnapshot?.hasNextPage ?? false
+    : hasNextPage;
+  const tableIsError = effectiveFavoritesMode ? false : isError;
+  const tableError = effectiveFavoritesMode ? null : error;
+  const tableRetry = effectiveFavoritesMode ? noopAsync : refetch;
+
+  const filterFields = React.useMemo(() => {
+    return defaultFilterFields.map((field) => {
+      const facetsField = castFacets?.[field.value];
+      if (!facetsField) return field;
+      if (field.options && field.options.length > 0) return field;
+
+      const options = facetsField.rows
+        .filter((row) => row && typeof row === "object" && "value" in row)
+        .map(({ value }) => {
+          const label = value == null ? "Unknown" : String(value);
+          return { label, value };
+        });
+
+      if (field.type === "slider") {
+        return {
+          ...field,
+          min: facetsField.min ?? field.min,
+          max: facetsField.max ?? field.max,
+          options,
+        };
+      }
+
+      if (field.type === "checkbox") {
+        return { ...field, options };
+      }
+
+      return field;
+    });
+  }, [castFacets]);
+
+  return (
+    <>
+      {shouldHydrateFavorites ? (
+        <React.Suspense fallback={null}>
+          <LazyFavoritesRuntime
+            search={search}
+            isActive={effectiveFavoritesMode}
+            session={session}
+            authPending={authPending}
+            broadcastId={broadcastId}
+            onStateChange={handleFavoritesSnapshot}
+          />
+        </React.Suspense>
+      ) : null}
+      <ModelsDataTableInfinite
+        key={`models-table-${effectiveFavoritesMode ? "favorites" : "all"}`}
+        columns={modelsColumns}
+        data={flatData}
+        skeletonRowCount={50}
+        skeletonNextPageRowCount={undefined}
+        columnFilters={columnFilters}
+        onColumnFiltersChange={handleColumnFiltersChange}
+        sorting={sorting}
+        onSortingChange={handleSortingChange}
+        rowSelection={rowSelection}
+        onRowSelectionChange={handleRowSelectionChange}
+        meta={{ ...metadata, facets: castFacets }}
+        filterFields={filterFields}
+        sheetFields={sheetFields}
+        isFetching={tableIsFetching}
+        isLoading={tableIsLoading}
+        isFetchingNextPage={tableIsFetchingNextPage}
+        fetchNextPage={tableFetchNextPage}
+        hasNextPage={tableHasNextPage}
+        isError={tableIsError}
+        error={tableError}
+        onRetry={tableRetry}
+        renderSheetTitle={({ row }) => {
+          if (!row) return "AI Model Details";
+          const model = row.original as ModelsColumnSchema;
+          return model.shortName || model.name || "Model Details";
+        }}
+        getRowId={(row) => row.id}
+        focusTargetRef={contentRef}
+        account={{
+          user: accountUser,
+          onSignOut: handleSignOut,
+          isSigningOut,
+          onSignIn: handleSignIn,
+          onSignUp: handleSignUp,
+          isLoading: authPending,
+        }}
+        headerSlot={
+          <MobileTopNav
+            user={accountUser}
+            onSignOut={handleSignOut}
+            onSignIn={handleSignIn}
+            onSignUp={handleSignUp}
+            isSigningOut={isSigningOut}
+            isAuthLoading={authPending}
+            renderSidebar={() => (
+              <SidebarPanel
+                user={accountUser}
+                onSignOut={handleSignOut}
+                isSigningOut={isSigningOut}
+                className="flex-1"
+                showUserMenuFooter={false}
+                isAuthLoading={authPending}
+              />
+            )}
+          />
+        }
+        mobileHeaderOffset="36px"
+      />
+    </>
+  );
+}
+
+function areSearchPayloadsEqual(
+  previous: Record<string, unknown> | null,
+  next: Record<string, unknown>,
+) {
+  if (!previous) return false;
+  const previousKeys = Object.keys(previous);
+  const nextKeys = Object.keys(next);
+  if (previousKeys.length !== nextKeys.length) return false;
+
+  for (const key of nextKeys) {
+    if (!previousKeys.includes(key)) return false;
+    if (!isLooseEqual(previous[key], next[key])) return false;
+  }
+
+  return true;
+}
+
+function isLooseEqual(a: unknown, b: unknown) {
+  if (Object.is(a, b)) return true;
+  if (typeof a === "object" && a !== null && typeof b === "object" && b !== null) {
+    try {
+      return JSON.stringify(a) === JSON.stringify(b);
+    } catch {
+      return false;
+    }
+  }
+  return false;
 }

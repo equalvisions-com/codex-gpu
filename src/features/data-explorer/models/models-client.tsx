@@ -296,7 +296,7 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
             )}
           />
         }
-        mobileHeaderOffset="36px"
+        mobileHeaderOffset="52px"
         primaryColumnId="name"
         renderSheetCharts={(row) => {
           const selectedModel = row?.original as ModelsColumnSchema | undefined;
