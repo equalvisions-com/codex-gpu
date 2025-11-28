@@ -623,7 +623,7 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
       visibleLeafColumns
         .filter((column) => column.id !== primaryColumnId)
         .reduce((acc, column) => acc + column.getSize(), 0),
-    [primaryColumnId, visibleLeafColumns],
+    [primaryColumnId, visibleLeafColumns, columnSizing],
   );
 
   const selectedRow = React.useMemo(() => {
