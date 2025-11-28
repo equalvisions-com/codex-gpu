@@ -788,15 +788,6 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
                     </Button>
                   ) : null}
                 </div>
-                {searchFilterField ? (
-                  <>
-                    <div className="flex items-center gap-2 sm:hidden">
-                      <div className="flex-1">
-                        <DataTableFilterInput {...searchFilterField} />
-                      </div>
-                    </div>
-                  </>
-                ) : null}
               </div>
               <div className="flex-1 overflow-y-auto scrollbar-hide">
                 <div className="mx-auto w-full max-w-full px-4 pb-4">
