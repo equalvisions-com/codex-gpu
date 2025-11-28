@@ -268,8 +268,8 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
     [pathname, router],
   );
   const mobileHeightClass = mobileHeaderOffset
-    ? "h-[calc(100dvh-var(--mobile-header-offset))] sm:h-full"
-    : "h-[100dvh] sm:h-full";
+    ? "h-[calc(100dvh-var(--total-padding-mobile)-var(--mobile-header-offset))]"
+    : "h-[calc(100dvh-var(--total-padding-mobile))]";
   const mobileHeightStyle = React.useMemo(() => {
     if (!mobileHeaderOffset) return undefined;
     const trimmed = mobileHeaderOffset.replace(/\s+/g, "");
@@ -714,10 +714,8 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
       getFacetedUniqueValues={getFacetedUniqueValues}
       getFacetedMinMaxValues={getFacetedMinMaxValues}
     >
-      <div className="flex flex-col">
-        <div className="sticky top-0 z-50 bg-background py-2 sm:static sm:z-auto sm:py-0">
-          {headerSlot}
-        </div>
+      <div className="flex flex-col gap-2 sm:gap-4">
+        {headerSlot}
         <div className="grid h-full grid-cols-1 gap-0 sm:grid-cols-[13rem_1fr] md:grid-cols-[18rem_1fr]">
           <div
             className={cn(

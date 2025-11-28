@@ -289,7 +289,7 @@ export function Client({ initialFavoriteKeys, isFavoritesMode }: ClientProps = {
             )}
           />
         }
-        mobileHeaderOffset="52px"
+        mobileHeaderOffset="36px"
         primaryColumnId="gpu_model"
       />
     </>
