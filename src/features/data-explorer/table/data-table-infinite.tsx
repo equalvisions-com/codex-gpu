@@ -268,8 +268,8 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
     [pathname, router],
   );
   const mobileHeightClass = mobileHeaderOffset
-    ? "h-[calc(100vh-var(--mobile-header-offset))] sm:h-full"
-    : "h-[100vh] sm:h-full";
+    ? "h-[calc(100dvh-var(--mobile-header-offset))] sm:h-full"
+    : "h-[100dvh] sm:h-full";
   const mobileHeightStyle = React.useMemo(() => {
     if (!mobileHeaderOffset) return undefined;
     const trimmed = mobileHeaderOffset.replace(/\s+/g, "");
@@ -293,10 +293,9 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
       spacedChars.push(char);
     }
     const normalized = spacedChars.join("").replace(/\s{2,}/g, " ").trim();
-    // Safari needs the value without calc() wrapper for better compatibility
     const offsetValue = normalized.startsWith("calc(")
-      ? normalized.replace(/^calc\(|\)$/g, "")
-      : normalized;
+      ? normalized
+      : `calc(${normalized})`;
     return {
       "--mobile-header-offset": offsetValue,
     } as React.CSSProperties;
@@ -715,14 +714,11 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
       getFacetedUniqueValues={getFacetedUniqueValues}
       getFacetedMinMaxValues={getFacetedMinMaxValues}
     >
-      <div className="flex flex-col gap-2 sm:gap-0">
-        <div className="fixed top-0 left-0 right-0 z-50 bg-background py-2 sm:static sm:z-auto sm:py-0">
+      <div className="flex flex-col">
+        <div className="sticky top-0 z-50 bg-background py-2 sm:static sm:z-auto sm:py-0">
           {headerSlot}
         </div>
-        <div className={cn(
-          "grid h-full grid-cols-1 gap-0 sm:grid-cols-[13rem_1fr] md:grid-cols-[18rem_1fr]",
-          "pt-[var(--mobile-header-offset)] sm:pt-0"
-        )} style={mobileHeightStyle}>
+        <div className="grid h-full grid-cols-1 gap-0 sm:grid-cols-[13rem_1fr] md:grid-cols-[18rem_1fr]">
           <div
             className={cn(
               "hidden sm:flex h-[calc(100dvh-var(--total-padding-mobile))] sm:h-[100dvh] flex-col sticky top-0 self-start min-w-72 max-w-72 rounded-lg overflow-hidden"
