@@ -12,7 +12,6 @@ export function DataTableFilterResetButton<TData>({
   const value = _value as string;
   const filterValue = columnFilters.find((f) => f.id === value)?.value;
 
-  // TODO: check if we could useMemo
   // For range filters (arrays with exactly 2 numbers), count as 1 filter
   // For multi-select filters (arrays with different structure), count array length
   const filters = (() => {

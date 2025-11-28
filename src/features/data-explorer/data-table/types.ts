@@ -1,6 +1,5 @@
 import type { JSX } from "react";
 
-// TODO: we could type the value(!) especially when using enums
 export type Option = {
   label: string;
   value: string | boolean | number | undefined;
@@ -67,9 +66,7 @@ export type DataTableFilterField<TData> =
 export type SheetField<TData, TMeta = Record<string, unknown>> = {
   id: keyof TData;
   label: string;
-  // FIXME: rethink that! I dont think we need this as there is no input type
-  // REMINDER: readonly if we only want to copy the value (e.g. uuid)
-  // TODO: we might have some values that are not in the data but can be computed
+  // "readonly" displays the value; other types enable filter actions via dropdown
   type: "readonly" | "input" | "checkbox" | "slider" | "timerange";
   component?: (
     // REMINDER: this is used to pass additional data like the `InfiniteQueryMeta`

@@ -49,10 +49,7 @@ export function DataTableFilterCheckbox<TData>({
     <div className="grid gap-2">
       <ScrollArea className="max-h-[149px]">
         <div className="space-y-1">
-          {filterOptions
-            // TODO: we shoudn't sort the options here, instead filterOptions should be sorted by default
-            // .sort((a, b) => a.label.localeCompare(b.label))
-            ?.map((option, index) => {
+          {filterOptions?.map((option, index) => {
               const checked = filters.includes(option.value);
               const shouldCapitalizeModalities =
                 value === "inputModalities" || value === "outputModalities" || value === "modalities";
