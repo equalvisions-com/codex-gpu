@@ -225,9 +225,9 @@ export function UserMenu({
                 className={cn(
                   "flex items-center justify-center rounded-full border border-border text-foreground/70",
                   gradientSurfaceClass,
-                avatarSizeClass,
-              )}
-            >
+                  avatarSizeClass,
+                )}
+              >
                 <LogIn className="h-4 w-4" />
               </div>
               <div className="flex min-w-0 flex-1 flex-col text-left">
@@ -651,7 +651,7 @@ export function MobileTopNav({
               ]}
             >
               <SelectTrigger
-                className="h-9 w-[102px] min-w-[102px] justify-between rounded-lg"
+                className="h-9 w-[102px] min-w-[102px] justify-between rounded-lg shadow-sm"
                 aria-label={`${brandLabelDisplay} navigation`}
               >
                 <SelectValue />

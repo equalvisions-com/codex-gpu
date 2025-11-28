@@ -2,8 +2,23 @@
 
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { SheetLineChart } from "@/components/charts/sheet-line-chart";
+import dynamic from "next/dynamic";
 import { formatThroughputDisplay } from "./models-constants";
+
+const ChartSkeleton = () => (
+  <div className="h-36 w-full rounded-md border border-border/60 bg-muted/20" />
+);
+
+const SheetLineChart = dynamic(
+  () =>
+    import("@/components/charts/sheet-line-chart").then(
+      (mod) => mod.SheetLineChart,
+    ),
+  {
+    ssr: false,
+    loading: () => <ChartSkeleton />,
+  },
+);
 
 type TimeseriesPoint = { observedAt: string };
 

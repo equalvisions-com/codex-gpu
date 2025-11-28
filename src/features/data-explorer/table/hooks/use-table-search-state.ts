@@ -106,7 +106,10 @@ export function useTableSearchState(
       }
 
       previousFilterPayloadRef.current = searchPayload;
-      setSearch(searchPayload);
+      setSearch((previous) => ({
+        ...previous,
+        ...searchPayload,
+      }));
     },
     [columnFilters, filterFields, setSearch],
   );
@@ -125,7 +128,10 @@ export function useTableSearchState(
         return;
       }
       previousSortParamRef.current = serialized;
-      setSearch({ sort: sortEntry ?? null });
+      setSearch((previous) => ({
+        ...previous,
+        sort: sortEntry ?? null,
+      }));
     },
     [setSearch, sorting],
   );

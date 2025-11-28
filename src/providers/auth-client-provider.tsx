@@ -20,12 +20,24 @@ interface AuthClientProviderProps {
 
 export function AuthClientProvider({ initialSession, children }: AuthClientProviderProps) {
   const { data, isPending, refetch } = authClient.useSession();
+  const stableSessionRef = React.useRef<Session | null>(initialSession);
+
+  React.useEffect(() => {
+    if (typeof data !== "undefined") {
+      stableSessionRef.current = (data ?? null) as Session | null;
+      return;
+    }
+    if (typeof data === "undefined" && initialSession) {
+      stableSessionRef.current = initialSession;
+    }
+  }, [data, initialSession]);
+
   const session = React.useMemo<Session | null>(() => {
     if (isPending) {
-      return initialSession;
+      return stableSessionRef.current;
     }
     return (data ?? null) as Session | null;
-  }, [data, initialSession, isPending]);
+  }, [data, isPending]);
 
   const value = React.useMemo<AuthContextValue>(
     () => ({

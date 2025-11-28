@@ -493,6 +493,10 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
     enabled: virtualizationEnabled,
   });
 
+  const measureVirtualRow = virtualizationEnabled
+    ? rowVirtualizer.measureElement
+    : undefined;
+
   // Get virtual items (cached to avoid multiple calls)
   const virtualItems = rowVirtualizer.getVirtualItems();
   const totalSize = rowVirtualizer.getTotalSize();
@@ -525,6 +529,7 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
   // Track if model column has been manually resized - persists across renders
   // Once resized, column should always use pixel width (never revert to "auto")
   const modelColumnHasBeenResizedRef = React.useRef<boolean>(false);
+  const pendingModelColumnResizeRef = React.useRef<boolean>(false);
   
   // Stable ref map for header elements - created once, persists across renders
   const headerRefsMap = React.useRef<Map<string, React.RefObject<HTMLTableCellElement | null>>>(new Map());
@@ -752,7 +757,7 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
                         { combo: "cmd+e", value: "/tools" },
                       ]}
                     >
-                      <SelectTrigger className="h-9 w-full justify-between rounded-lg">
+                      <SelectTrigger className="h-9 w-full justify-between rounded-lg shadow-sm">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -783,7 +788,7 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
                       size="icon"
                       onClick={toggleDesktopSearch}
                       aria-pressed={isDesktopSearchOpen}
-                      className="shrink-0 rounded-lg bg-gradient-to-b from-muted/70 via-muted/40 to-background"
+                      className="shrink-0 rounded-lg bg-gradient-to-b from-muted/70 via-muted/40 to-background shadow-sm"
                     >
                       <Search className="h-4 w-4" aria-hidden="true" />
                       <span className="sr-only">Search</span>
@@ -874,11 +879,16 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
                           return;
                         }
 
+                        if (pendingModelColumnResizeRef.current) {
+                          return;
+                        }
+
                         const columnSizing = table.getState().columnSizing;
                         const hasBeenResized = header.id in columnSizing || modelColumnHasBeenResizedRef.current;
 
                         if (!hasBeenResized && header.getSize() === modelColumnDefaultSize) {
                           modelColumnHasBeenResizedRef.current = true;
+                          pendingModelColumnResizeRef.current = true;
 
                           const fallbackSize = header.getSize();
                           const measuredWidth = modelColumnMeasuredWidthRef.current ?? fallbackSize;
@@ -902,9 +912,11 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
                           requestAnimationFrame(() => {
                             const handler = header.getResizeHandler();
                             if (!handler) {
+                              pendingModelColumnResizeRef.current = false;
                               return;
                             }
                             handler(syntheticEvent);
+                            pendingModelColumnResizeRef.current = false;
                           });
 
                           e.preventDefault();
@@ -1057,7 +1069,7 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
                                 selected={row.getIsSelected()}
                                 checked={checkedRows[row.id] ?? false}
                                 data-index={virtualItem.index}
-                                ref={rowVirtualizer.measureElement}
+                                ref={measureVirtualRow}
                                 getModelColumnWidth={getModelColumnWidth}
                                 primaryColumnId={primaryColumnId}
                               />

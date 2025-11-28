@@ -2,7 +2,22 @@
 
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { SheetLineChart } from "@/components/charts/sheet-line-chart";
+import dynamic from "next/dynamic";
+
+const ChartSkeleton = () => (
+  <div className="h-36 w-full rounded-md border border-border/60 bg-muted/20" />
+);
+
+const SheetLineChart = dynamic(
+  () =>
+    import("@/components/charts/sheet-line-chart").then(
+      (mod) => mod.SheetLineChart,
+    ),
+  {
+    ssr: false,
+    loading: () => <ChartSkeleton />,
+  },
+);
 
 const MS_IN_DAY = 1000 * 60 * 60 * 24;
 const PRICE_WINDOW_DAYS = 30;

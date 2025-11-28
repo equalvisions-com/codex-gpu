@@ -101,13 +101,20 @@ export function Client({ initialFavoriteKeys, isFavoritesMode }: ClientProps = {
   const noopAsync = React.useCallback(async () => {}, []);
 
 
-  const queryOptions = React.useMemo(() => dataOptions(search), [search]);
+  const queryOptions = React.useMemo(() => {
+    return {
+      ...dataOptions(search),
+      staleTime: 60 * 1000,
+      gcTime: 5 * 60 * 1000,
+    };
+  }, [search]);
   
   // Optimize client-side navigation: use cached data for instant rendering
   // initialData: Persists to cache, skips loading state, marks data as fresh
   // Docs: https://tanstack.com/query/v5/docs/framework/react/guides/initial-query-data
   type QueryData = InfiniteData<InfiniteQueryResponse<ColumnSchema[], LogsMeta>, { cursor: number | null; size: number }>;
   const cachedData = queryClient.getQueryData<QueryData>(queryOptions.queryKey);
+  const cachedState = queryClient.getQueryState(queryOptions.queryKey);
 
   const {
     data,
@@ -126,7 +133,12 @@ export function Client({ initialFavoriteKeys, isFavoritesMode }: ClientProps = {
     // This persists to cache and skips loading state for instant rendering
     // HydrationBoundary handles server-side hydration automatically
     // Only set initialData if cached data exists (avoids redundant placeholderData)
-    ...(cachedData ? { initialData: cachedData } : {}),
+    ...(cachedData
+      ? {
+          initialData: cachedData,
+          initialDataUpdatedAt: cachedState?.dataUpdatedAt,
+        }
+      : {}),
   });
 
   const baseFlatData = React.useMemo(() => {

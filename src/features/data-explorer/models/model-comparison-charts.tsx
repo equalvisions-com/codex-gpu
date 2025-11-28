@@ -4,8 +4,23 @@ import * as React from "react";
 import type { Row } from "@tanstack/react-table";
 import type { ModelsColumnSchema } from "./models-schema";
 import { useQueries } from "@tanstack/react-query";
-import { SheetLineChart } from "@/components/charts/sheet-line-chart";
 import { ChartLegend } from "@/components/charts/chart-legend";
+import dynamic from "next/dynamic";
+
+const ChartSkeleton = () => (
+  <div className="h-36 w-full rounded-md border border-border/60 bg-muted/20" />
+);
+
+const SheetLineChart = dynamic(
+  () =>
+    import("@/components/charts/sheet-line-chart").then(
+      (mod) => mod.SheetLineChart,
+    ),
+  {
+    ssr: false,
+    loading: () => <ChartSkeleton />,
+  },
+);
 
 type TimeseriesPoint = { observedAt: string };
 
