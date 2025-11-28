@@ -268,8 +268,8 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
     [pathname, router],
   );
   const mobileHeightClass = mobileHeaderOffset
-    ? "h-[calc(100dvh-var(--mobile-header-offset))] sm:h-full"
-    : "h-[100dvh] sm:h-full";
+    ? "h-[calc(100vh-var(--mobile-header-offset))] sm:h-full"
+    : "h-[100vh] sm:h-full";
   const mobileHeightStyle = React.useMemo(() => {
     if (!mobileHeaderOffset) return undefined;
     const trimmed = mobileHeaderOffset.replace(/\s+/g, "");
@@ -293,9 +293,10 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
       spacedChars.push(char);
     }
     const normalized = spacedChars.join("").replace(/\s{2,}/g, " ").trim();
+    // Safari needs the value without calc() wrapper for better compatibility
     const offsetValue = normalized.startsWith("calc(")
-      ? normalized
-      : `calc(${normalized})`;
+      ? normalized.replace(/^calc\(|\)$/g, "")
+      : normalized;
     return {
       "--mobile-header-offset": offsetValue,
     } as React.CSSProperties;
