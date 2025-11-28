@@ -436,6 +436,8 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
   const rows = table.getRowModel().rows;
   const columnSizing = table.getState().columnSizing;
   const visibleLeafColumns = table.getVisibleLeafColumns();
+  // Stable key for column sizing - only changes when actual sizes change (not on every render)
+  const columnSizingKey = JSON.stringify(columnSizing);
   const primaryColumn = React.useMemo(
     () => table.getColumn(primaryColumnId),
     [primaryColumnId, table],
@@ -619,7 +621,8 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
       visibleLeafColumns
         .filter((column) => column.id !== primaryColumnId)
         .reduce((acc, column) => acc + column.getSize(), 0),
-    [primaryColumnId, visibleLeafColumns, columnSizing],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- columnSizingKey is a stable string derived from columnSizing
+    [primaryColumnId, visibleLeafColumns, columnSizingKey],
   );
 
   const selectedRow = React.useMemo(() => {
