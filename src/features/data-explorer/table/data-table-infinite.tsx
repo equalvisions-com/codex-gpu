@@ -51,7 +51,6 @@ const LazyGpuSheetCharts = dynamic(
 );
 import { UserMenu, type AccountUser } from "./account-components";
 import { usePathname, useRouter } from "next/navigation";
-import Link from "next/link";
 import { Bot, Search, Server, Wrench } from "lucide-react";
 import type { FavoriteKey } from "@/types/favorites";
 import { useGlobalHotkeys } from "@/hooks/use-global-hotkeys";
@@ -258,9 +257,6 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
     resolvedNavItems.find((item) => item.isCurrent)?.value ?? "/llms";
   const handleNavChange = React.useCallback(
     (value: string) => {
-      // Link components handle click navigation automatically
-      // This callback is only needed for hotkeys (Cmd+K, Cmd+G, Cmd+E)
-      // Using blocking navigation (no startTransition) to prevent blink/flash
       if (!value) return;
       if (value === pathname) return;
       router.push(value);
@@ -757,7 +753,7 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
                         { combo: "cmd+e", value: "/tools" },
                       ]}
                     >
-                      <SelectTrigger className="h-9 w-full justify-between rounded-lg shadow-sm">
+                      <SelectTrigger className="h-9 w-full justify-between rounded-lg shadow-sm" aria-label="Page navigation">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -767,15 +763,9 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
                             value={item.value}
                             className="gap-2 cursor-pointer"
                             shortcut={item.shortcut}
-                            onSelect={(e) => {
-                              // Prevent default Select behavior - Link will handle navigation
-                              e.preventDefault();
-                            }}
                           >
-                            <Link href={item.value} prefetch={true} className="flex items-center gap-2 w-full">
-                              <item.icon className="h-4 w-4" aria-hidden="true" />
-                              {item.label}
-                            </Link>
+                            <item.icon className="h-4 w-4" aria-hidden="true" />
+                            {item.label}
                           </SelectItem>
                         ))}
                       </SelectContent>

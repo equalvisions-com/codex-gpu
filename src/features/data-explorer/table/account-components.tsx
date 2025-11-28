@@ -606,9 +606,6 @@ export function MobileTopNav({
 
   const handleNavChange = React.useCallback(
     (value: string) => {
-      // Link components handle click navigation automatically
-      // This callback is only needed for hotkeys (Cmd+K, Cmd+G, Cmd+E)
-      // Using blocking navigation (no startTransition) to prevent blink/flash
       if (!value) return;
       if (value === pathname) return;
       router.push(value);
@@ -663,15 +660,9 @@ export function MobileTopNav({
                     value={item.value}
                     className="gap-2 cursor-pointer"
                     shortcut={item.shortcut}
-                    onSelect={(e) => {
-                      // Prevent default Select behavior - Link will handle navigation
-                      e.preventDefault();
-                    }}
                   >
-                    <Link href={item.value} prefetch={true} className="flex items-center gap-2 w-full">
-                      <item.icon className="h-4 w-4" aria-hidden="true" />
-                      {item.label}
-                    </Link>
+                    <item.icon className="h-4 w-4" aria-hidden="true" />
+                    {item.label}
                   </SelectItem>
                 ))}
               </SelectContent>
