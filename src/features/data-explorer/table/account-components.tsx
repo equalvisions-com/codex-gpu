@@ -595,7 +595,7 @@ export function MobileTopNav({
               ]}
             >
               <SelectTrigger
-                className="h-9 w-[102px] min-w-[102px] justify-between rounded-lg shadow-sm"
+                className="h-9 w-[102px] min-w-[102px] justify-between rounded-full shadow-sm bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground hover:text-accent-foreground"
                 aria-label={`${brandLabelDisplay} navigation`}
               >
                 <SelectValue />
