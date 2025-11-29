@@ -8,6 +8,9 @@ import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { AuthProvider } from "@/providers/auth-provider";
 import { AuthDialogProvider } from "@/providers/auth-dialog-provider";
+import { Analytics } from '@vercel/analytics/next';
+import { SpeedInsights } from '@vercel/speed-insights/next';
+
 
 const TITLE = "Deploybase";
 const DESCRIPTION =
@@ -91,6 +94,8 @@ export default function RootLayout({
                   <AuthDialogProvider>
                     <main id="content" className="flex min-h-[100dvh] flex-col">
                       {children}
+                      <SpeedInsights />
+                      <Analytics />
                     </main>
                   </AuthDialogProvider>
                 </Suspense>
