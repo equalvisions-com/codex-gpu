@@ -17,7 +17,6 @@ import {
 } from "@/components/custom/sheet";
 import { DataTableFilterControls } from "@/features/data-explorer/data-table/data-table-filter-controls";
 import { DataTableResetButton } from "@/features/data-explorer/data-table/data-table-reset-button";
-import { ModeToggle } from "@/components/theme/toggle-mode";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -49,6 +48,7 @@ import {
   LogIn,
   LogOut,
   Search,
+  UserPlus,
   Settings as SettingsIcon,
   X,
   Bot,
@@ -127,8 +127,6 @@ export function UserMenu({
     forceUnauthSignInButton &&
     !isAuthenticated &&
     (hasSignUpHandler || hasSignInHandler);
-  const isSplitTrigger =
-    !showDetails && !isAuthenticated && !shouldForceSignInButton;
   const secondaryText = isAuthenticated ? (email ?? "") : "Sign up or Sign in";
   const [isSettingsDialogOpen, setIsSettingsDialogOpen] = React.useState(false);
 
@@ -140,12 +138,6 @@ export function UserMenu({
     onSignUp?.();
   }, [onSignUp]);
 
-  React.useEffect(() => {
-    if (!isAuthenticated) {
-      setIsSettingsDialogOpen(false);
-    }
-  }, [isAuthenticated]);
-
   const triggerAriaLabel = !showDetails ? displayName : undefined;
 
   let triggerElement: React.ReactNode;
@@ -156,7 +148,6 @@ export function UserMenu({
         <Skeleton
           className={cn(
             "h-9 w-9 rounded-full",
-            fullWidth ? "w-full" : "w-9",
             triggerClassName,
           )}
         />
@@ -260,45 +251,6 @@ export function UserMenu({
         </DropdownMenuTrigger>
       </div>
     );
-  } else if (isSplitTrigger) {
-    triggerElement = (
-      <div
-        role="group"
-        aria-label="Account actions"
-        className={cn(
-          "flex items-center overflow-hidden",
-          triggerClassName,
-        )}
-      >
-        <Button
-          type="button"
-          variant="ghost"
-          className={cn(
-            "flex h-[38px] min-w-[76px] flex-1 items-center justify-center rounded-full rounded-r-none px-3 text-sm font-medium",
-            "border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground",
-            "border-r-0",
-          )}
-          onClick={handleSignUpClick}
-          disabled={isSigningOut}
-        >
-          Sign up
-        </Button>
-        <DropdownMenuTrigger asChild>
-          <Button
-            type="button"
-            variant="ghost"
-            className={cn(
-              "flex h-[38px] w-9 items-center justify-center rounded-full rounded-l-none px-0",
-              "border border-border bg-background text-foreground hover:bg-muted/70",
-            )}
-            aria-label="Open account menu"
-            disabled={isSigningOut}
-          >
-            <EllipsisVertical className="h-4 w-4 text-foreground/80" />
-          </Button>
-        </DropdownMenuTrigger>
-      </div>
-    );
   } else {
     triggerElement = (
       <DropdownMenuTrigger asChild>
@@ -309,8 +261,9 @@ export function UserMenu({
               "flex items-center text-sm font-medium text-foreground hover:text-accent-foreground",
               showDetails
                 ? "h-auto gap-3 p-0 bg-transparent hover:bg-transparent"
-                : "h-9 w-9 justify-center rounded-full border border-border bg-background px-0 hover:bg-muted/70",
-              fullWidth && showDetails ? "w-full justify-start" : "w-auto",
+                : "!h-9 !w-9 justify-center rounded-full px-0",
+              !showDetails && !shouldRenderAvatar && "border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground hover:text-accent-foreground shadow-sm",
+              showDetails && (fullWidth ? "w-full justify-start" : "w-auto"),
               triggerClassName,
             )}
           disabled={isSigningOut}
@@ -340,13 +293,7 @@ export function UserMenu({
             </div>
           ) : null}
           {!shouldRenderAvatar && !showDetails ? (
-            <div
-              className={cn(
-                "flex h-9 w-9 items-center justify-center rounded-full border border-border text-foreground/80",
-              )}
-            >
-              <LogIn className="h-4 w-4" />
-            </div>
+            <EllipsisVertical className="h-4 w-4 text-foreground/80" />
           ) : null}
           {!showDetails ? null : (
             <>
@@ -414,30 +361,15 @@ export function UserMenu({
               </Accordion>
             ) : null}
           </div>
-          {isAuthenticated ? <DropdownMenuSeparator /> : null}
           <DropdownMenuItem
-            asChild
-            onSelect={(event) => {
-              event.preventDefault();
-            }}
             className={dropdownMenuItemClassName}
+            onSelect={() => {
+              setIsSettingsDialogOpen(true);
+            }}
           >
-            <ModeToggle appearance="menu" />
+            <SettingsIcon className="h-4 w-4" />
+            <span>Settings</span>
           </DropdownMenuItem>
-          {isAuthenticated ? (
-            <>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className={dropdownMenuItemClassName}
-                onSelect={() => {
-                  setIsSettingsDialogOpen(true);
-                }}
-              >
-                <SettingsIcon className="h-4 w-4" />
-                <span>Settings</span>
-              </DropdownMenuItem>
-            </>
-          ) : null}
           <DropdownMenuSeparator />
           <DropdownMenuItem
             className={dropdownMenuItemClassName}
@@ -465,6 +397,20 @@ export function UserMenu({
                 : "Sign in"}
             </span>
           </DropdownMenuItem>
+          {!isAuthenticated ? (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className={dropdownMenuItemClassName}
+                onSelect={() => {
+                  onSignUp?.();
+                }}
+              >
+                <UserPlus className="h-4 w-4" />
+                <span>Sign up</span>
+              </DropdownMenuItem>
+            </>
+          ) : null}
           {isAuthenticated ? (
             <>
               <DropdownMenuSeparator className="sm:hidden" />
@@ -489,11 +435,12 @@ export function UserMenu({
           ) : null}
         </DropdownMenuContent>
       </DropdownMenu>
-      {isAuthenticated && isSettingsDialogOpen ? (
+      {isSettingsDialogOpen ? (
         <LazySettingsDialog
           open={isSettingsDialogOpen}
           onOpenChange={setIsSettingsDialogOpen}
           user={user}
+          isAuthenticated={isAuthenticated}
         />
       ) : null}
     </div>
@@ -693,7 +640,7 @@ export function MobileTopNav({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 rounded-full border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground hover:text-accent-foreground"
+                className="h-9 w-9 rounded-full border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground hover:text-accent-foreground shadow-sm"
               >
                 <Search className="h-[18px] w-[18px] text-foreground" strokeWidth={1.5} />
                 <span className="sr-only">Toggle filters</span>

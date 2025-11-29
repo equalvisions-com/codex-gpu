@@ -25,6 +25,7 @@ interface SettingsDialogProps {
     email?: string | null;
     image?: string | null;
   } | null;
+  isAuthenticated?: boolean;
 }
 
 const navItems = [
@@ -35,9 +36,13 @@ const navItems = [
 ];
 const passwordProviderIds = ["email", "credentials", "credential", "password"];
 
-export function SettingsDialog({ open, onOpenChange, user }: SettingsDialogProps) {
+export function SettingsDialog({ open, onOpenChange, user, isAuthenticated = true }: SettingsDialogProps) {
   const router = useRouter();
-  const [activeItem, setActiveItem] = React.useState(navItems[0].value);
+  const filteredNavItems = React.useMemo(
+    () => isAuthenticated ? navItems : navItems.filter((item) => item.value === "appearance"),
+    [isAuthenticated]
+  );
+  const [activeItem, setActiveItem] = React.useState(filteredNavItems[0].value);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
   const [deleteError, setDeleteError] = React.useState<string | null>(null);
   const [isDeleting, setIsDeleting] = React.useState(false);
@@ -57,7 +62,7 @@ export function SettingsDialog({ open, onOpenChange, user }: SettingsDialogProps
   const [deletePassword, setDeletePassword] = React.useState("");
   const isMounted = React.useRef(true);
   const activeLabel =
-    navItems.find((item) => item.value === activeItem)?.label ?? "Settings";
+    filteredNavItems.find((item) => item.value === activeItem)?.label ?? "Settings";
 
   const initialName = user?.name?.trim() ?? "";
   const displayEmail = user?.email?.trim() ?? "";
@@ -76,7 +81,7 @@ export function SettingsDialog({ open, onOpenChange, user }: SettingsDialogProps
     }
     if (open) return;
     closeResetTimeout.current = setTimeout(() => {
-      setActiveItem(navItems[0].value);
+      setActiveItem(filteredNavItems[0].value);
       setIsDeleteDialogOpen(false);
       setDeleteError(null);
       setIsEditingProfile(false);
@@ -104,7 +109,7 @@ export function SettingsDialog({ open, onOpenChange, user }: SettingsDialogProps
         closeResetTimeout.current = null;
       }
     };
-  }, [open, initialName]);
+  }, [open, initialName, filteredNavItems]);
   React.useEffect(() => {
     return () => {
       isMounted.current = false;
@@ -381,7 +386,7 @@ export function SettingsDialog({ open, onOpenChange, user }: SettingsDialogProps
           <aside className="col-span-4 hidden h-full border-r border-border/60 bg-muted/40 sm:block">
             <div className="h-full overflow-y-auto px-5 py-6">
               <div className="space-y-2">
-                {navItems.map((item) => {
+                {filteredNavItems.map((item) => {
                   const Icon = item.icon;
                   const isActive = activeItem === item.value;
                   return (
@@ -423,7 +428,7 @@ export function SettingsDialog({ open, onOpenChange, user }: SettingsDialogProps
                       <SelectValue placeholder="Select section" />
                     </SelectTrigger>
                     <SelectContent align="start">
-                      {navItems.map((item) => {
+                      {filteredNavItems.map((item) => {
                         const Icon = item.icon;
                         return (
                           <SelectItem key={item.value} value={item.value}>
