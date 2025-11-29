@@ -154,6 +154,7 @@ export const filterFields: DataTableFilterField<ModelsColumnSchema>[] = [
     value: "search",
     type: "input",
     defaultOpen: true,
+    placeholder: "Search LLMs",
   },
   {
     label: "Authors",

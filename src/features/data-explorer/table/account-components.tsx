@@ -62,11 +62,6 @@ import * as React from "react";
 // This prevents any SSR/prefetching and ensures components only load when dialog is opened
 import dynamic from "next/dynamic";
 
-const gradientSurfaceClass =
-  "border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground hover:bg-gradient-to-b hover:from-muted/70 hover:via-muted/40 hover:to-background hover:text-accent-foreground";
-
-const dropdownMenuItemClassName =
-  "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted hover:no-underline focus-visible:bg-muted focus-visible:text-accent-foreground";
 
 const LazySettingsDialog = dynamic(
   () => import("./settings-dialog").then((module) => ({
@@ -156,17 +151,19 @@ export function UserMenu({
     return (
       <div
         className={cn(
-          "flex items-center gap-3 rounded-md p-0",
+          "flex items-center gap-3 p-2 rounded-lg border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background shadow-sm",
           fullWidth ? "w-full" : "w-auto",
           triggerClassName,
         )}
       >
-        <Skeleton className={cn("rounded-full", avatarSizeClass)} />
-        <div className="flex flex-1 flex-col gap-2">
-          <Skeleton className="h-4 w-24 rounded-md" />
-          <Skeleton className="h-3 w-36 rounded-md" />
+        <Skeleton className={cn("rounded-full shrink-0", avatarSizeClass)} />
+        <div className="flex flex-1 flex-col gap-1.5 min-w-0">
+          <Skeleton className="h-4 w-20 rounded" />
+          <Skeleton className="h-3 w-32 rounded" />
         </div>
-        <EllipsisVertical className="h-4 w-4 text-muted-foreground" />
+        <div className="flex self-stretch items-center justify-center border-l border-border -mr-2 -my-2 w-7">
+          <EllipsisVertical className="h-4 w-4 text-foreground/70" />
+        </div>
       </div>
     );
   }
@@ -176,7 +173,7 @@ export function UserMenu({
       "flex h-auto items-center gap-3 rounded-md p-0 text-left text-sm font-medium text-foreground hover:text-accent-foreground",
       showDetails
         ? "bg-transparent hover:bg-transparent"
-        : gradientSurfaceClass,
+        : "border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground",
       fullWidth ? "w-full" : "w-auto",
       !showDetails
         ? "!gap-1.5 !rounded-md !px-2 !py-1.5 md:h-9 md:rounded-md"
@@ -190,7 +187,52 @@ export function UserMenu({
       ? handleSignUpClick
       : handleSignInClick;
 
-    triggerElement = (
+    triggerElement = showDetails ? (
+      <div
+        className={cn(
+          "flex items-center gap-3 p-2 rounded-lg border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background shadow-sm",
+          fullWidth ? "w-full" : "w-auto",
+          triggerClassName,
+        )}
+      >
+        <Button
+          type="button"
+          variant="ghost"
+          className="flex flex-1 items-center gap-2.5 h-auto p-0 bg-transparent hover:bg-transparent text-left text-sm font-medium text-foreground hover:text-accent-foreground focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 active:outline-none"
+          onClick={primaryClickHandler}
+          disabled={isSigningOut}
+          aria-label={ariaLabel}
+        >
+          <div
+            className={cn(
+              "flex items-center justify-center rounded-full border border-border bg-background shadow-sm text-foreground/70",
+              avatarSizeClass,
+            )}
+          >
+            <LogIn className="h-4 w-4" />
+          </div>
+          <div className="flex min-w-0 flex-1 flex-col text-left">
+            <span className="truncate text-sm font-semibold">{displayName}</span>
+            {secondaryText ? (
+              <span className="truncate text-xs text-foreground/70">
+                {secondaryText}
+              </span>
+            ) : null}
+          </div>
+        </Button>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            className="flex self-stretch items-center justify-center border-l border-border -mr-2 -my-2 w-7 hover:bg-muted/50 rounded-r-lg transition-colors focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 active:outline-none"
+            aria-label="Open account menu"
+            disabled={isSigningOut}
+          >
+            <EllipsisVertical className="h-4 w-4 text-foreground/70" />
+            <span className="sr-only">Open account menu</span>
+          </button>
+        </DropdownMenuTrigger>
+      </div>
+    ) : (
       <div
         className={cn(
           "flex items-center gap-2",
@@ -203,45 +245,21 @@ export function UserMenu({
           variant="ghost"
           className={cn(
             buttonClassName,
-            showDetails ? "justify-between" : "justify-start",
+            "justify-start",
             fullWidth && "flex-1",
           )}
           onClick={primaryClickHandler}
           disabled={isSigningOut}
           aria-label={ariaLabel}
         >
-          {showDetails ? (
-            <>
-              <div
-                className={cn(
-                  "flex items-center justify-center rounded-full border border-border text-foreground/70",
-                  gradientSurfaceClass,
-                  avatarSizeClass,
-                )}
-              >
-                <LogIn className="h-4 w-4" />
-              </div>
-              <div className="flex min-w-0 flex-1 flex-col text-left">
-                <span className="truncate text-sm font-semibold">{displayName}</span>
-                {secondaryText ? (
-                  <span className="truncate text-xs text-foreground/70">
-                    {secondaryText}
-                  </span>
-                ) : null}
-              </div>
-            </>
-          ) : (
-            <>
-              <LogIn className="h-4 w-4 text-foreground" />
-              <span className="sr-only">{preferredActionLabel}</span>
-            </>
-          )}
+          <LogIn className="h-4 w-4 text-foreground" />
+          <span className="sr-only">{preferredActionLabel}</span>
         </Button>
         <DropdownMenuTrigger asChild>
           <Button
             type="button"
             variant="ghost"
-            className="ml-auto flex h-9 w-9 justify-end px-0 hover:bg-transparent"
+            className="ml-auto flex h-9 w-9 justify-end px-0 hover:bg-transparent focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 active:outline-none"
             aria-label="Open account menu"
             disabled={isSigningOut}
           >
@@ -258,9 +276,9 @@ export function UserMenu({
             type="button"
             variant="ghost"
             className={cn(
-              "flex items-center text-sm font-medium text-foreground hover:text-accent-foreground",
+              "flex items-center text-sm font-medium text-foreground hover:text-accent-foreground focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 active:outline-none",
               showDetails
-                ? "h-auto gap-3 p-0 bg-transparent hover:bg-transparent"
+                ? "h-auto gap-3 p-2 rounded-lg border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background shadow-sm"
                 : "!h-9 !w-9 justify-center rounded-full px-0",
               !showDetails && !shouldRenderAvatar && "border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground hover:text-accent-foreground shadow-sm",
               showDetails && (fullWidth ? "w-full justify-start" : "w-auto"),
@@ -293,7 +311,7 @@ export function UserMenu({
             </div>
           ) : null}
           {!shouldRenderAvatar && !showDetails ? (
-            <EllipsisVertical className="h-4 w-4 text-foreground/80" />
+            <EllipsisVertical className="h-4 w-4 text-foreground/70" />
           ) : null}
           {!showDetails ? null : (
             <>
@@ -308,7 +326,9 @@ export function UserMenu({
                 </div>
               ) : null}
               {showDetails ? (
-                <EllipsisVertical className="h-4 w-4 text-foreground/70" />
+                <div className="flex self-stretch items-center justify-center border-l border-border -mr-2 -my-2 w-7">
+                  <EllipsisVertical className="h-4 w-4 text-foreground/70" />
+                </div>
               ) : null}
             </>
           )}
@@ -345,12 +365,12 @@ export function UserMenu({
                         aria-hidden
                         className="pointer-events-none absolute left-[15px] top-1 bottom-1 w-px bg-muted"
                       />
-                      <DropdownMenuItem asChild className={cn(dropdownMenuItemClassName, "pl-2")}>
+                      <DropdownMenuItem asChild className={"flex w-full items-center gap-2 rounded-sm px-2 py-1.5 pl-2 text-sm font-medium text-foreground transition-colors hover:bg-muted hover:no-underline focus-visible:bg-muted focus-visible:text-accent-foreground"}>
                         <Link href="/llms?bookmarks=true">
                           <span>LLMs</span>
                         </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem asChild className={cn(dropdownMenuItemClassName, "pl-2")}>
+                      <DropdownMenuItem asChild className={"flex w-full items-center gap-2 rounded-sm px-2 py-1.5 pl-2 text-sm font-medium text-foreground transition-colors hover:bg-muted hover:no-underline focus-visible:bg-muted focus-visible:text-accent-foreground"}>
                         <Link href="/gpus?bookmarks=true">
                           <span>GPUs</span>
                         </Link>
@@ -361,47 +381,46 @@ export function UserMenu({
               </Accordion>
             ) : null}
           </div>
-          <DropdownMenuItem
-            className={dropdownMenuItemClassName}
-            onSelect={() => {
-              setIsSettingsDialogOpen(true);
-            }}
-          >
-            <SettingsIcon className="h-4 w-4" />
-            <span>Settings</span>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            className={dropdownMenuItemClassName}
-            onSelect={() => {
-              if (isAuthenticated) {
-                if (!isSigningOut) {
-                  onSignOut();
-                }
-              } else {
-                onSignIn?.();
-              }
-            }}
-            disabled={isAuthenticated && isSigningOut}
-          >
-            {isAuthenticated ? (
-              <LogOut className="h-4 w-4" />
-            ) : (
-              <LogIn className="h-4 w-4" />
-            )}
-            <span>
-              {isAuthenticated
-                ? isSigningOut
-                  ? "Signing out..."
-                  : "Sign out"
-                : "Sign in"}
-            </span>
-          </DropdownMenuItem>
-          {!isAuthenticated ? (
+          {isAuthenticated ? (
             <>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                className={dropdownMenuItemClassName}
+                className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted hover:no-underline focus-visible:bg-muted focus-visible:text-accent-foreground"
+                onSelect={() => {
+                  setIsSettingsDialogOpen(true);
+                }}
+              >
+                <SettingsIcon className="h-4 w-4" />
+                <span>Settings</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted hover:no-underline focus-visible:bg-muted focus-visible:text-accent-foreground"
+                onSelect={() => {
+                  if (!isSigningOut) {
+                    onSignOut();
+                  }
+                }}
+                disabled={isSigningOut}
+              >
+                <LogOut className="h-4 w-4" />
+                <span>{isSigningOut ? "Signing out..." : "Sign out"}</span>
+              </DropdownMenuItem>
+            </>
+          ) : (
+            <>
+              <DropdownMenuItem
+                className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted hover:no-underline focus-visible:bg-muted focus-visible:text-accent-foreground"
+                onSelect={() => {
+                  onSignIn?.();
+                }}
+              >
+                <LogIn className="h-4 w-4" />
+                <span>Sign in</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted hover:no-underline focus-visible:bg-muted focus-visible:text-accent-foreground"
                 onSelect={() => {
                   onSignUp?.();
                 }}
@@ -409,12 +428,22 @@ export function UserMenu({
                 <UserPlus className="h-4 w-4" />
                 <span>Sign up</span>
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted hover:no-underline focus-visible:bg-muted focus-visible:text-accent-foreground"
+                onSelect={() => {
+                  setIsSettingsDialogOpen(true);
+                }}
+              >
+                <SettingsIcon className="h-4 w-4" />
+                <span>Settings</span>
+              </DropdownMenuItem>
             </>
-          ) : null}
+          )}
           {isAuthenticated ? (
             <>
               <DropdownMenuSeparator className="sm:hidden" />
-              <DropdownMenuLabel className="flex items-center gap-2 pt-2 sm:hidden">
+              <DropdownMenuLabel className="flex items-center gap-2 p-1 sm:hidden">
                 <Avatar className="h-8 w-8">
                   {user?.image ? (
                     <AvatarImage src={user.image} alt={displayName} />
@@ -528,21 +557,18 @@ export function MobileTopNav({
         value: "/llms",
         isCurrent: pathname === "/" || pathname.startsWith("/llms"),
         icon: Bot,
-        shortcut: "k",
       },
       {
         label: "GPUs",
         value: "/gpus",
         isCurrent: pathname.startsWith("/gpus"),
         icon: Server,
-        shortcut: "g",
       },
       {
         label: "Tools",
         value: "/tools",
         isCurrent: pathname.startsWith("/tools"),
         icon: Wrench,
-        shortcut: "e",
       },
     ],
     [pathname],
@@ -588,25 +614,20 @@ export function MobileTopNav({
                   });
                 }
               }}
-              hotkeys={[
-                { combo: "cmd+k", value: "/llms" },
-                { combo: "cmd+g", value: "/gpus" },
-                { combo: "cmd+e", value: "/tools" },
-              ]}
             >
               <SelectTrigger
-                className="h-9 w-[102px] min-w-[102px] justify-between rounded-full shadow-sm bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground hover:text-accent-foreground"
+                className="h-9 w-[102px] min-w-[102px] justify-between rounded-lg shadow-sm bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground hover:text-accent-foreground"
                 aria-label={`${brandLabelDisplay} navigation`}
               >
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent
+              className="mt-[4px] sm:mt-0">
                 {navItems.map((item) => (
                   <SelectItem
                     key={item.value}
                     value={item.value}
                     className="gap-2 cursor-pointer"
-                    shortcut={item.shortcut}
                   >
                     <item.icon className="h-4 w-4" aria-hidden="true" />
                     {item.label}

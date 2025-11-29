@@ -720,7 +720,7 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
     >
       <div className="flex flex-col gap-2 sm:gap-4">
         {headerSlot}
-        <div className="grid h-full grid-cols-1 gap-0 sm:grid-cols-[13rem_1fr] md:grid-cols-[18rem_1fr]">
+        <div className="grid h-full grid-cols-1 gap-0 sm:grid-cols-[18rem_1fr]">
           <div
             className={cn(
               "hidden sm:flex h-[calc(100dvh-var(--total-padding-mobile))] sm:h-[100dvh] flex-col sticky top-0 self-start min-w-72 max-w-72 rounded-lg overflow-hidden"
@@ -817,7 +817,7 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
             <div className={cn("z-0 flex flex-col", mobileHeightClass, "sm:h-[100dvh]")} style={mobileHeightStyle}>
               <div
                 className={cn(
-                  "border-0 md:border-l bg-background overflow-hidden flex-1 min-h-0 flex flex-col"
+                  "border-0 sm:border-l bg-background overflow-hidden flex-1 min-h-0 flex flex-col"
                 )}
               >
                 <Table

@@ -130,6 +130,7 @@ export const filterFields: DataTableFilterField<ColumnSchema>[] = [
     value: "search",
     type: "input",
     defaultOpen: true,
+    placeholder: "Search GPUs",
   },
   {
     label: "Models",

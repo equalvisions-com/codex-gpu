@@ -8,6 +8,7 @@ export type Option = {
 type Input = {
   type: "input";
   options?: Option[];
+  placeholder?: string;
 };
 
 type Checkbox = {

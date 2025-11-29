@@ -378,7 +378,7 @@ export function SettingsDialog({ open, onOpenChange, user, isAuthenticated = tru
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-w-3xl flex-col gap-0 h-auto min-h-[492px] sm:h-[520px] overflow-hidden rounded-lg border border-border/60 bg-background p-0 sm:p-0 [&>button:last-of-type]:top-4 [&>button:last-of-type]:right-4 sm:[&>button:last-of-type]:top-6 sm:[&>button:last-of-type]:right-6">
+      <DialogContent className="flex max-w-3xl flex-col gap-0 h-auto h-auto sm:h-[520px] overflow-hidden rounded-lg border border-border/60 bg-background p-0 sm:p-0 [&>button:last-of-type]:top-4 [&>button:last-of-type]:right-4 sm:[&>button:last-of-type]:top-6 sm:[&>button:last-of-type]:right-6">
         <DialogHeader className="sr-only">
           <DialogTitle>Settings</DialogTitle>
         </DialogHeader>

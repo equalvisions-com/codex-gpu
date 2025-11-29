@@ -15,6 +15,7 @@ function getFilter(filterValue: unknown) {
 export function DataTableFilterInput<TData>({
   value: _value,
   autoFocus,
+  placeholder = "Search",
 }: DataTableInputFilterField<TData> & { autoFocus?: boolean }) {
   const value = _value as string;
   const { columnFilters, setColumnFilters } = useDataTable();
@@ -81,7 +82,7 @@ export function DataTableFilterInput<TData>({
       <div className="relative">
         <InputWithAddons
           ref={inputRef}
-          placeholder="Search"
+          placeholder={placeholder}
           leading={<Search className="mt-[1px] h-4 w-4" />}
           containerClassName="h-9 rounded-lg"
           autoFocus={autoFocus}
