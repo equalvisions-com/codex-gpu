@@ -50,17 +50,11 @@ const LazyGpuSheetCharts = dynamic(
   },
 );
 import { UserMenu, type AccountUser } from "./account-components";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Bot, Search, Server, Wrench } from "lucide-react";
 import type { FavoriteKey } from "@/types/favorites";
 import { useGlobalHotkeys } from "@/hooks/use-global-hotkeys";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const noop = () => {};
 const clamp = (value: number, min: number, max: number) =>
@@ -75,7 +69,7 @@ export type NavItem = {
   isCurrent?: boolean;
 };
 
-const DEFAULT_NAV_ITEMS: NavItem[] = [
+export const DEFAULT_NAV_ITEMS: NavItem[] = [
   { label: "LLMs", value: "/llms", icon: Bot, shortcut: "k" },
   { label: "GPUs", value: "/gpus", icon: Server, shortcut: "g" },
   { label: "Tools", value: "/tools", icon: Wrench, shortcut: "e" },
@@ -131,6 +125,7 @@ interface DataTableInfiniteProps<TData, TValue, TMeta, TFavorite> {
   headerSlot?: React.ReactNode;
   mobileHeaderOffset?: string;
   navItems?: NavItem[];
+  activeNavValue?: string;
   renderCheckedActions?: (
     meta: DataTableMeta<TMeta, TFavorite>,
   ) => React.ReactNode;
@@ -169,6 +164,7 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
   headerSlot,
   mobileHeaderOffset,
   navItems,
+  activeNavValue,
   renderCheckedActions,
   renderSheetCharts,
   primaryColumnId = "gpu_model",
@@ -193,7 +189,6 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
   const accountOnSignIn = account?.onSignIn;
   const accountOnSignUp = account?.onSignUp;
   const accountIsLoading = account?.isLoading ?? false;
-  const pathname = usePathname() ?? "";
   const router = useRouter();
   const [isDesktopSearchOpen, setIsDesktopSearchOpen] = React.useState(false);
   const [containerHeight, setContainerHeight] = React.useState<number | null>(null);
@@ -222,7 +217,8 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
   }, []);
   React.useEffect(() => {
     setIsDesktopSearchOpen(false);
-  }, [pathname]);
+  }, [activeNavValue]);
+
   const searchFieldId =
     (searchFilterField?.value as string | undefined) ?? undefined;
   useGlobalHotkeys(
@@ -242,26 +238,24 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
   );
   const resolvedNavItems = React.useMemo(() => {
     const baseItems: NavItem[] = navItems ?? DEFAULT_NAV_ITEMS;
+    const inferredValueFromItems =
+      baseItems.find((item) => item.isCurrent)?.value ?? null;
+    const currentValue =
+      activeNavValue ?? inferredValueFromItems ?? baseItems[0]?.value ?? "/llms";
 
-    return baseItems.map((item) => {
-      const isCurrent =
-        typeof item.isCurrent === "boolean"
-          ? item.isCurrent
-          : pathname === "/"
-            ? item.value === "/llms"
-            : pathname.startsWith(item.value);
-      return { ...item, isCurrent };
-    });
-  }, [navItems, pathname]);
+    return baseItems.map((item) => ({
+      ...item,
+      isCurrent: item.value === currentValue,
+    }));
+  }, [activeNavValue, navItems]);
   const currentNavValue =
     resolvedNavItems.find((item) => item.isCurrent)?.value ?? "/llms";
   const handleNavChange = React.useCallback(
     (value: string) => {
       if (!value) return;
-      if (value === pathname) return;
       router.push(value);
     },
-    [pathname, router],
+    [router],
   );
   const mobileHeightClass = mobileHeaderOffset
     ? "h-[calc(100dvh-var(--total-padding-mobile)-var(--mobile-header-offset))]"
@@ -744,9 +738,7 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
                         // Prefetch all nav routes when Select opens
                         if (open) {
                           resolvedNavItems.forEach((item) => {
-                            if (item.value !== pathname) {
-                              router.prefetch(item.value);
-                            }
+                            router.prefetch(item.value);
                           });
                         }
                       }}

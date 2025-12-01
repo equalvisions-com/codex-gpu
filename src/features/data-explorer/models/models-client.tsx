@@ -26,6 +26,7 @@ import { MODEL_FAVORITES_QUERY_KEY } from "@/lib/model-favorites/constants";
 import { useModelsTableSearchState } from "./hooks/use-models-table-search-state";
 import { useModelsFavoritesState } from "./hooks/use-models-favorites-state";
 import { ModelsCheckedActionsIsland } from "./models-checked-actions-island";
+import { Bot, Server, Wrench } from "lucide-react";
 
 interface ModelsClientProps {
   initialFavoriteKeys?: ModelFavoriteKey[];
@@ -157,6 +158,16 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
       facetsRef.current = rawFacets;
     }
   }, [rawFacets]);
+
+  const navItems = React.useMemo(() => {
+    if (!effectiveFavoritesMode) return undefined;
+    return [
+      { label: "LLMs", value: "/llms", icon: Bot, isCurrent: true },
+      { label: "GPUs", value: "/gpus", icon: Server },
+      { label: "Tools", value: "/tools", icon: Wrench },
+    ];
+  }, [effectiveFavoritesMode]);
+
   const stableFacets = React.useMemo(() => {
     if (rawFacets && Object.keys(rawFacets).length) {
       return rawFacets;
@@ -241,6 +252,8 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
         key={`models-table-${effectiveFavoritesMode ? "favorites" : "all"}`}
         columns={modelsColumns}
         columnOrder={modelsColumnOrder}
+        activeNavValue="/llms"
+        navItems={navItems}
         data={flatData}
         skeletonRowCount={50}
         skeletonNextPageRowCount={undefined}

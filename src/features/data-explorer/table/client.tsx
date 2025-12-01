@@ -26,6 +26,7 @@ import { useFavoritesState } from "./hooks/use-favorites-state";
 // Use next/dynamic with ssr: false for truly client-only lazy loading
 // This prevents any SSR/prefetching and ensures components only load when rendered
 import dynamic from "next/dynamic";
+import { Bot, Server, Wrench } from "lucide-react";
 
 interface ClientProps {
   initialFavoriteKeys?: string[];
@@ -233,6 +234,16 @@ export function Client({ initialFavoriteKeys, isFavoritesMode }: ClientProps = {
   }, [castFacets]);
 
   const previousFilterPayloadRef = React.useRef<Record<string, unknown> | null>(null);
+
+  const navItems = React.useMemo(() => {
+    if (!effectiveFavoritesMode) return undefined;
+    return [
+      { label: "LLMs", value: "/llms", icon: Bot },
+      { label: "GPUs", value: "/gpus", icon: Server, isCurrent: true },
+      { label: "Tools", value: "/tools", icon: Wrench },
+    ];
+  }, [effectiveFavoritesMode]);
+
   return (
     <>
       {shouldHydrateFavorites ? (
@@ -250,6 +261,8 @@ export function Client({ initialFavoriteKeys, isFavoritesMode }: ClientProps = {
         columns={columns}
         data={flatData}
         columnOrder={gpuColumnOrder}
+        activeNavValue="/gpus"
+        navItems={navItems}
         skeletonRowCount={50}
         skeletonNextPageRowCount={undefined}
         columnFilters={columnFilters}

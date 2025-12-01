@@ -151,7 +151,7 @@ export function UserMenu({
     return (
       <div
         className={cn(
-          "flex items-center gap-3 p-2 rounded-lg border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background shadow-sm",
+          "flex items-center gap-3",
           fullWidth ? "w-full" : "w-auto",
           triggerClassName,
         )}
@@ -161,9 +161,7 @@ export function UserMenu({
           <Skeleton className="h-4 w-20 rounded" />
           <Skeleton className="h-3 w-32 rounded" />
         </div>
-        <div className="flex self-stretch items-center justify-center border-l border-border -mr-2 -my-2 w-7">
-          <EllipsisVertical className="h-4 w-4 text-foreground/70" />
-        </div>
+        <EllipsisVertical className="h-4 w-4 text-muted-foreground" />
       </div>
     );
   }
@@ -190,7 +188,7 @@ export function UserMenu({
     triggerElement = showDetails ? (
       <div
         className={cn(
-          "flex items-center gap-3 p-2 rounded-lg border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background shadow-sm",
+          "flex items-center gap-3",
           fullWidth ? "w-full" : "w-auto",
           triggerClassName,
         )}
@@ -198,14 +196,14 @@ export function UserMenu({
         <Button
           type="button"
           variant="ghost"
-          className="flex flex-1 items-center gap-2.5 h-auto p-0 bg-transparent hover:bg-transparent text-left text-sm font-medium text-foreground hover:text-accent-foreground focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 active:outline-none"
+          className="flex flex-1 items-center gap-3 h-auto p-0 bg-transparent hover:bg-transparent text-left text-sm font-medium text-foreground hover:text-accent-foreground focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 active:outline-none"
           onClick={primaryClickHandler}
           disabled={isSigningOut}
           aria-label={ariaLabel}
         >
           <div
             className={cn(
-              "flex items-center justify-center rounded-full border border-border bg-background shadow-sm text-foreground/70",
+              "flex items-center justify-center rounded-full border border-border bg-muted/50 text-foreground/70",
               avatarSizeClass,
             )}
           >
@@ -223,7 +221,7 @@ export function UserMenu({
         <DropdownMenuTrigger asChild>
           <button
             type="button"
-            className="flex self-stretch items-center justify-center border-l border-border -mr-2 -my-2 w-7 hover:bg-muted/50 rounded-r-lg transition-colors focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 active:outline-none"
+            className="flex items-center justify-center p-0 bg-transparent hover:bg-transparent focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 active:outline-none"
             aria-label="Open account menu"
             disabled={isSigningOut}
           >
@@ -278,7 +276,7 @@ export function UserMenu({
             className={cn(
               "flex items-center text-sm font-medium text-foreground hover:text-accent-foreground focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 active:outline-none",
               showDetails
-                ? "h-auto gap-3 p-2 rounded-lg border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background shadow-sm"
+                ? "h-auto gap-3 p-0 bg-transparent hover:bg-transparent"
                 : "!h-9 !w-9 justify-center rounded-full px-0",
               !showDetails && !shouldRenderAvatar && "border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground hover:text-accent-foreground shadow-sm",
               showDetails && (fullWidth ? "w-full justify-start" : "w-auto"),
@@ -326,9 +324,7 @@ export function UserMenu({
                 </div>
               ) : null}
               {showDetails ? (
-                <div className="flex self-stretch items-center justify-center border-l border-border -mr-2 -my-2 w-7">
-                  <EllipsisVertical className="h-4 w-4 text-foreground/70" />
-                </div>
+                <EllipsisVertical className="h-4 w-4 text-foreground/70" />
               ) : null}
             </>
           )}
