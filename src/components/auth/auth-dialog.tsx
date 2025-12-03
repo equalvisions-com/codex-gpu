@@ -33,6 +33,7 @@ interface AuthDialogProps {
   defaultEmail?: string;
   contentClassName?: string;
   bodyClassName?: string;
+  isCompleting?: boolean;
 }
 
 export function AuthDialog({
@@ -46,6 +47,7 @@ export function AuthDialog({
   defaultEmail,
   contentClassName,
   bodyClassName,
+  isCompleting = false,
 }: AuthDialogProps) {
   const seededEmail = React.useRef(false);
   const [view, setView] = React.useState<AuthView>(initialView);
@@ -58,6 +60,8 @@ export function AuthDialog({
   const [successMessage, setSuccessMessage] = React.useState<string | null>(null);
   const [resetEmailSent, setResetEmailSent] = React.useState(false);
   const { refetch } = useAuth();
+  const isLocked = pending || isCompleting;
+  const isLoading = isLocked;
   const defaultAvatarDataUrl = React.useMemo(() => {
     const randomColor = () => Math.floor(Math.random() * 256);
     const colorA = `rgb(${randomColor()},${randomColor()},${randomColor()})`;
@@ -108,7 +112,7 @@ export function AuthDialog({
       return {
         title: "Sign in",
         description: "Please sign in to continue",
-        cta: pending ? "Signing in…" : "Sign in",
+        cta: isLoading ? "Signing in…" : "Sign in",
         alternateLabel: "Don't have an account?",
         alternateAction: "Sign up",
       };
@@ -125,13 +129,13 @@ export function AuthDialog({
     }
 
     return {
-      title: "Create account",
-      description: "Please fill in the details to get started",
-      cta: pending ? "Creating…" : "Create account",
-      alternateLabel: "Already have an account?",
-      alternateAction: "Sign in",
-    };
-  }, [pending, view]);
+        title: "Create account",
+        description: "Please fill in the details to get started",
+        cta: pending ? "Creating…" : "Create account",
+        alternateLabel: "Already have an account?",
+        alternateAction: "Sign in",
+      };
+  }, [isLoading, pending, view]);
 
   const switchView = React.useCallback(
     (next: AuthView) => {
@@ -315,7 +319,7 @@ export function AuthDialog({
                   provider="google"
                   icon={Google}
                   pending={socialPending === "google"}
-                  disabled={socialPending !== null}
+                  disabled={socialPending !== null || isCompleting}
                   onClick={handleGoogle}
                   label="Continue with Google"
                 />
@@ -323,7 +327,7 @@ export function AuthDialog({
                   provider="github"
                   icon={Github}
                   pending={socialPending === "github"}
-                  disabled={socialPending !== null}
+                  disabled={socialPending !== null || isCompleting}
                   onClick={handleGithub}
                   label="Continue with GitHub"
                 />
@@ -331,7 +335,7 @@ export function AuthDialog({
                   provider="huggingface"
                   icon={HuggingFace}
                   pending={socialPending === "huggingface"}
-                  disabled={socialPending !== null}
+                  disabled={socialPending !== null || isCompleting}
                   onClick={handleHuggingFace}
                   label="Continue with Hugging Face"
                 />
@@ -362,12 +366,14 @@ export function AuthDialog({
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
+                  name="email"
                   type="email"
-                  autoComplete="email"
+                  autoComplete="username"
                   placeholder="email@example.com"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
                   required
+                  disabled={isLocked}
                 />
               </div>
 
@@ -387,16 +393,18 @@ export function AuthDialog({
                 </div>
                 <Input
                   id="password"
+                  name="password"
                   type="password"
                   autoComplete="current-password"
                   placeholder="••••••••"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   required
+                  disabled={isLocked}
                 />
               </div>
 
-              <Button type="submit" disabled={pending}>
+              <Button type="submit" disabled={isLocked}>
                 {copy.cta}
               </Button>
             </form>
@@ -406,16 +414,18 @@ export function AuthDialog({
                 <Label htmlFor="reset-email">Email</Label>
                 <Input
                   id="reset-email"
+                  name="email"
                   type="email"
                   autoComplete="email"
                   placeholder="email@example.com"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
                   required
+                  disabled={isLocked}
                 />
               </div>
 
-              <Button type="submit" disabled={pending}>
+              <Button type="submit" disabled={isLocked}>
                 {copy.cta}
               </Button>
             </form>
@@ -425,42 +435,48 @@ export function AuthDialog({
                 <Label htmlFor="name">Name</Label>
                 <Input
                   id="name"
+                  name="name"
                   type="text"
                   autoComplete="name"
                   placeholder="Name or organization"
                   required
                   value={name}
-                  onChange={(event) => setName(event.target.value)}
-                />
-              </div>
+                onChange={(event) => setName(event.target.value)}
+                disabled={isLocked}
+              />
+            </div>
 
               <div className="grid gap-2">
                 <Label htmlFor="signup-email">Email</Label>
                 <Input
                   id="signup-email"
+                  name="email"
                   type="email"
                   autoComplete="email"
                   placeholder="email@example.com"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
-                  required
-                />
-              </div>
+                required
+                disabled={isLocked}
+              />
+            </div>
 
               <div className="grid gap-2">
                 <Label htmlFor="signup-password">Password</Label>
                 <Input
                   id="signup-password"
+                  name="password"
                   type="password"
                   autoComplete="new-password"
                   placeholder="Minimum 8 characters"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
-                  required
-                />
-              </div>
+                required
+                disabled={isLocked}
+              />
+            </div>
 
-              <Button type="submit" disabled={pending}>
+              <Button type="submit" disabled={isLocked}>
                 {copy.cta}
               </Button>
             </form>

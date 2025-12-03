@@ -33,6 +33,7 @@ type DialogState = {
   callbackUrl: string;
   errorCallbackUrl?: string;
   defaultEmail?: string;
+  isCompleting: boolean;
 };
 
 const AuthDialogContext = React.createContext<AuthDialogContextValue | null>(null);
@@ -41,13 +42,14 @@ export function AuthDialogProvider({ children }: AuthDialogProviderProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const searchKey = searchParams.toString();
-  const [, startTransition] = React.useTransition();
+  const [isNavigating, startTransition] = React.useTransition();
   const [state, setState] = React.useState<DialogState>({
     open: false,
     view: "signIn",
     callbackUrl: "/",
     errorCallbackUrl: undefined,
     defaultEmail: undefined,
+    isCompleting: false,
   });
 
   const clearAuthQuery = React.useCallback(() => {
@@ -77,6 +79,7 @@ export function AuthDialogProvider({ children }: AuthDialogProviderProps) {
       callbackUrl: options?.callbackUrl ?? "/",
       errorCallbackUrl: options?.errorCallbackUrl,
       defaultEmail: options?.email,
+      isCompleting: false,
     });
   }, []);
 
@@ -86,6 +89,7 @@ export function AuthDialogProvider({ children }: AuthDialogProviderProps) {
         ...prev,
         open: false,
         defaultEmail: undefined,
+        isCompleting: false,
       }));
       if (!options?.preserveSearch) {
         clearAuthQuery();
@@ -128,6 +132,7 @@ export function AuthDialogProvider({ children }: AuthDialogProviderProps) {
   const handleOpenChange = React.useCallback(
     (nextOpen: boolean) => {
       if (!nextOpen) {
+        if (state.isCompleting) return;
         closeDialogInternal();
         return;
       }
@@ -136,12 +141,12 @@ export function AuthDialogProvider({ children }: AuthDialogProviderProps) {
         open: true,
       }));
     },
-    [closeDialogInternal]
+    [closeDialogInternal, state.isCompleting]
   );
 
   const handleComplete = React.useCallback(
     (destination: string) => {
-      closeDialogInternal({ preserveSearch: true });
+      setState((prev) => ({ ...prev, isCompleting: true }));
       const target = resolveDestination(destination);
       startTransition(() => {
         router.replace(target, { scroll: false });
@@ -157,6 +162,12 @@ export function AuthDialogProvider({ children }: AuthDialogProviderProps) {
       view: nextView,
     }));
   }, []);
+
+  React.useEffect(() => {
+    if (!state.isCompleting) return;
+    if (isNavigating) return;
+    closeDialogInternal({ preserveSearch: true });
+  }, [closeDialogInternal, isNavigating, state.isCompleting]);
 
   React.useEffect(() => {
     const params = new URLSearchParams(searchKey);
@@ -220,6 +231,7 @@ export function AuthDialogProvider({ children }: AuthDialogProviderProps) {
         callbackUrl={state.callbackUrl}
         errorCallbackUrl={state.errorCallbackUrl}
         defaultEmail={state.defaultEmail}
+        isCompleting={state.isCompleting}
       />
     </AuthDialogContext.Provider>
   );

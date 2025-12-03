@@ -20,33 +20,38 @@ interface AuthClientProviderProps {
 
 export function AuthClientProvider({ initialSession, children }: AuthClientProviderProps) {
   const { data, isPending, refetch } = authClient.useSession();
-  const stableSessionRef = React.useRef<Session | null>(initialSession);
+  const [localSession, setLocalSession] = React.useState<Session | null>(initialSession);
 
   React.useEffect(() => {
     if (typeof data !== "undefined") {
-      stableSessionRef.current = (data ?? null) as Session | null;
-      return;
+      setLocalSession((data ?? null) as Session | null);
     }
-    if (typeof data === "undefined" && initialSession) {
-      stableSessionRef.current = initialSession;
-    }
-  }, [data, initialSession]);
+  }, [data]);
 
   const session = React.useMemo<Session | null>(() => {
     if (isPending) {
-      return stableSessionRef.current;
+      return localSession;
     }
     return (data ?? null) as Session | null;
-  }, [data, isPending]);
+  }, [data, isPending, localSession]);
+
+  const handleSignOut = React.useCallback(
+    async (...args: Parameters<typeof authClient.signOut>) => {
+      const result = await authClient.signOut(...args);
+      setLocalSession(null);
+      return result;
+    },
+    []
+  );
 
   const value = React.useMemo<AuthContextValue>(
     () => ({
       session,
       isPending,
       refetch,
-      signOut: authClient.signOut,
+      signOut: handleSignOut,
     }),
-    [isPending, refetch, session]
+    [handleSignOut, isPending, refetch, session]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
