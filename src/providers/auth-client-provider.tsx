@@ -35,14 +35,11 @@ export function AuthClientProvider({ initialSession, children }: AuthClientProvi
     return (data ?? null) as Session | null;
   }, [data, isPending, localSession]);
 
-  const handleSignOut = React.useCallback(
-    async (...args: Parameters<typeof authClient.signOut>) => {
-      const result = await authClient.signOut(...args);
-      setLocalSession(null);
-      return result;
-    },
-    []
-  );
+  const handleSignOut = React.useCallback<typeof authClient.signOut>(async (...args) => {
+    const result = await authClient.signOut(...args);
+    setLocalSession(null);
+    return result;
+  }, []);
 
   const value = React.useMemo<AuthContextValue>(
     () => ({
