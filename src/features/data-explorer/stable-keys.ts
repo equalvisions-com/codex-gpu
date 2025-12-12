@@ -25,3 +25,20 @@ export function stableModelKey(
   const name = row.name?.toLowerCase().trim();
   return [provider, slug ?? name].filter(Boolean).join(":");
 }
+
+export function stableToolKey(
+  row: Partial<{
+    id: string;
+    name: string;
+    developer: string;
+    category: string;
+    license: string;
+  }>,
+): string {
+  if (row.id) return row.id;
+  const name = row.name?.toLowerCase().trim();
+  const developer = row.developer?.toLowerCase().trim();
+  const category = row.category?.toLowerCase().trim();
+  const license = row.license?.toLowerCase().trim();
+  return [name, developer, category, license].filter(Boolean).join(":");
+}

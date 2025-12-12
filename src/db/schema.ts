@@ -199,3 +199,53 @@ export const userModelFavorites = pgTable("user_model_favorites", {
   // CRITICAL: Index on modelId for JOIN performance with aiModels
   modelIdIndex: index("user_model_favorites_model_id_idx").on(table.modelId),
 }));
+
+// Tools table - stores imported tools data (static)
+export const tools = pgTable("tools", {
+  id: text("id").primaryKey(),
+  name: text("name"),
+  developer: text("developer"),
+  description: text("description"),
+  category: text("category"),
+  license: text("license"),
+  url: text("url"),
+  stack: text("stack"),
+  price: text("price"),
+  oss: text("oss"),
+  stableKey: text("stable_key"),
+}, (table) => ({
+  nameIndex: index("tools_name_idx").on(table.name),
+  developerIndex: index("tools_developer_idx").on(table.developer),
+  categoryIndex: index("tools_category_idx").on(table.category),
+  licenseIndex: index("tools_license_idx").on(table.license),
+  stackIndex: index("tools_stack_idx").on(table.stack),
+  priceIndex: index("tools_price_idx").on(table.price),
+  ossIndex: index("tools_oss_idx").on(table.oss),
+  stableKeyIndex: index("tools_stable_key_idx").on(table.stableKey),
+  // Full-text search on name/description (matches table search filter)
+  nameDescIndex: index("tools_name_desc_idx").using(
+    "gin",
+    sql`to_tsvector('english', coalesce(${table.name}, '') || ' ' || coalesce(${table.description}, ''))`
+  ),
+  // Trigram index for ILIKE search parity with other tables
+  nameDescTrgmIndex: index("tools_name_desc_trgm_idx").using(
+    "gin",
+    sql`(coalesce(${table.name}, '') || ' ' || coalesce(${table.description}, '')) gin_trgm_ops`
+  ),
+  // Composite sort helpers to mirror GPU/LLM default/provider sorts
+  developerNameIndex: index("tools_developer_name_idx").on(table.developer, table.name),
+  categoryNameIndex: index("tools_category_name_idx").on(table.category, table.name),
+}));
+
+// User tool favorites table
+export const userToolFavorites = pgTable("user_tool_favorites", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  toolId: text("tool_id").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  userToolUnique: uniqueIndex("user_tool_unique").on(table.userId, table.toolId),
+  toolIdIndex: index("user_tool_favorites_tool_id_idx").on(table.toolId),
+}));

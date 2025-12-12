@@ -36,6 +36,10 @@ export function RowSkeletons<TData>({
               ? id === primaryColumnId
               : id === "gpu_model" || id === "name";
             const cellClassName = column.columnDef.meta?.cellClassName;
+            const skeletonVariant = column.columnDef.meta?.skeletonVariant;
+            const defaultSkeletonAlignment = cellClassName?.includes("text-left")
+              ? "justify-start"
+              : "justify-end";
 
             return (
               <TableCell
@@ -61,7 +65,7 @@ export function RowSkeletons<TData>({
                   <div className="flex justify-center">
                     <Skeleton className="h-4 w-4 rounded-sm" />
                   </div>
-                ) : id === "provider" ? (
+                ) : id === "provider" || skeletonVariant === "provider" ? (
                   <div className="flex items-center gap-2">
                     <Skeleton className="h-5 w-5 rounded-full" />
                     <Skeleton className="h-4 w-[6rem]" />
@@ -69,7 +73,7 @@ export function RowSkeletons<TData>({
                 ) : isModelColumn ? (
                   <Skeleton className="h-4 w-36 sm:w-48" />
                 ) : (
-                  <div className="flex items-center justify-end">
+                  <div className={cn("flex items-center", defaultSkeletonAlignment)}>
                     <Skeleton className="h-4 w-16" />
                   </div>
                 )}

@@ -10,6 +10,7 @@ declare module "@tanstack/react-table" {
     headerClassName?: string;
     cellClassName?: string;
     label?: string;
+    skeletonVariant?: "provider";
   }
 
   // https://github.com/TanStack/table/discussions/4554

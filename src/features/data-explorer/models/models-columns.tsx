@@ -10,71 +10,7 @@ import { HoverCardPortal } from "@radix-ui/react-hover-card";
 import type { ColumnDef, SortingFn } from "@tanstack/react-table";
 import Image from "next/image";
 import type { ModelsColumnSchema } from "./models-schema";
-
-export const MODEL_PROVIDER_LOGOS: Record<
-  string,
-  {
-    src: string;
-    alt: string;
-  }
-> = {
-  Anthropic: { src: "/logos/Anthropic.svg", alt: "Anthropic" },
-  Alibaba: { src: "/logos/alibaba.png", alt: "Alibaba" },
-  "Amazon Bedrock": { src: "/logos/Bedrock.svg", alt: "Amazon Bedrock" },
-  AI21: { src: "/logos/ai21.png", alt: "AI21" },
-  AionLabs: { src: "/logos/aionlabs.png", alt: "AionLabs" },
-  AtlasCloud: { src: "/logos/atlascloud.png", alt: "AtlasCloud" },
-  Azure: { src: "/logos/Azure.svg", alt: "Azure" },
-  BaseTen: { src: "/logos/baseten.svg", alt: "BaseTen" },
-  Cerebras: { src: "/logos/cerebras.png", alt: "Cerebras" },
-  Chutes: { src: "/logos/chutes.png", alt: "Chutes" },
-  Cohere: { src: "/logos/Cohere.png", alt: "Cohere" },
-  Cloudflare: { src: "/logos/cloudflare.png", alt: "Cloudflare" },
-  Crusoe: { src: "/logos/crusoe.png", alt: "Crusoe" },
-  DeepSeek: { src: "/logos/deepseek.png", alt: "DeepSeek" },
-  DeepInfra: { src: "/logos/deepinfra.png", alt: "DeepInfra" },
-  Featherless: { src: "/logos/featherless.svg", alt: "Featherless" },
-  Fireworks: { src: "/logos/Fireworks.png", alt: "Fireworks" },
-  Friendli: { src: "/logos/friendli.png", alt: "Friendli" },
-  GMICloud: { src: "/logos/gmicloud.png", alt: "GMICloud" },
-  "Google AI Studio": { src: "/logos/GoogleAIStudio.png", alt: "Google AI Studio" },
-  Groq: { src: "/logos/groq.png", alt: "Groq" },
-  "Z.AI": { src: "/logos/zai.png", alt: "Z.AI" },
-  xAI: { src: "/logos/xai.png", alt: "xAI" },
-  Together: { src: "/logos/together.svg", alt: "Together" },
-  Perplexity: { src: "/logos/Perplexity.svg", alt: "Perplexity" },
-  "Weights and Biases": { src: "/logos/wandb.png", alt: "Weights and Biases" },
-  "Google Vertex": { src: "/logos/GoogleVertex.png", alt: "Google Vertex" },
-  Hyperbolic: { src: "/logos/hyperbolic.png", alt: "Hyperbolic" },
-  Meta: { src: "/logos/meta.png", alt: "Meta" },
-  Mistral: { src: "/logos/Mistral.png", alt: "Mistral" },
-  Inception: { src: "/logos/inception.png", alt: "Inception" },
-  OpenAI: { src: "/logos/openai.png", alt: "OpenAI" },
-  Nebius: { src: "/logos/nebius.png", alt: "Nebius" },
-  Novita: { src: "/logos/novita.jpeg", alt: "Novita" },
-  InferenceNet: { src: "/logos/inferencenet.png", alt: "InferenceNet" },
-  NVIDIA: { src: "/logos/nvidia.png", alt: "NVIDIA" },
-  Infermatic: { src: "/logos/infermatic.png", alt: "Infermatic" },
-  Inflection: { src: "/logos/inflection.png", alt: "Inflection" },
-  Liquid: { src: "/logos/liquid.png", alt: "Liquid" },
-  Mancer: { src: "/logos/mancer.svg", alt: "Mancer" },
-  MiniMax: { src: "/logos/minimax.png", alt: "MiniMax" },
-  OpenInference: { src: "/logos/openinference.png", alt: "OpenInference" },
-  Parasail: { src: "/logos/parasail.png", alt: "Parasail" },
-  Phala: { src: "/logos/phala.png", alt: "Phala" },
-  MoonshotAI: { src: "/logos/moonshot.png", alt: "Moonshot AI" },
-  NCompass: { src: "/logos/ncompass.png", alt: "nCompass" },
-  Morph: { src: "/logos/morph.png", alt: "Morph" },
-  NextBit: { src: "/logos/nextbit.png", alt: "NextBit" },
-  Relace: { src: "/logos/relace.png", alt: "Relace" },
-  SambaNova: { src: "/logos/sambanova.png", alt: "SambaNova" },
-  SiliconFlow: { src: "/logos/siliconflow.png", alt: "SiliconFlow" },
-  Switchpoint: { src: "/logos/switchpoint.png", alt: "Switchpoint" },
-  Targon: { src: "/logos/targon.svg", alt: "Targon" },
-  Venice: { src: "/logos/venice.png", alt: "Venice" },
-  Qwen: { src: "/logos/Qwen.png", alt: "Qwen" },
-  Google: { src: "/logos/google.svg", alt: "Google" },
-};
+import { getModelProviderLogo } from "./model-provider-logos";
 
 function RowCheckboxCell({ rowId }: { rowId: string }) {
   const { checkedRows, toggleCheckedRow } = useDataTable<ModelsColumnSchema, unknown>();
@@ -149,7 +85,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
     cell: ({ row }) => {
       const providerRaw = row.getValue<ModelsColumnSchema["provider"]>("provider") ?? "";
       const provider = typeof providerRaw === "string" ? providerRaw : "";
-      const logo = MODEL_PROVIDER_LOGOS[provider];
+      const logo = getModelProviderLogo(provider);
       const fallbackInitial = provider ? provider.charAt(0).toUpperCase() : "";
 
       return (

@@ -1109,15 +1109,23 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
             // REMINDER: this is used to pass additional data like the `InfiniteQueryMeta`
             metadata={meta}
           />
-          <div className="border-t border-border/60 pt-4">
-            {renderSheetCharts ? (
-              renderSheetCharts(selectedRow ?? null)
-            ) : selectedRow?.original ? (
-              <LazyGpuSheetCharts
-                stableKey={(selectedRow.original as any)?.stable_key}
-              />
-            ) : null}
-          </div>
+          {(() => {
+            const chartsNode = renderSheetCharts
+              ? renderSheetCharts(selectedRow ?? null)
+              : selectedRow?.original
+                ? (
+                    <LazyGpuSheetCharts stableKey={(selectedRow.original as any)?.stable_key} />
+                  )
+                : null;
+
+            if (!chartsNode) return null;
+
+            return (
+              <div className="border-t border-border/60 pt-4">
+                {chartsNode}
+              </div>
+            );
+          })()}
         </div>
       </DataTableSheetDetails>
       {checkedActions}

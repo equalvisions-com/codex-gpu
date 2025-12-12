@@ -4,7 +4,7 @@ import type { DataTableFilterField, SheetField } from "@/features/data-explorer/
 import type { ModelsColumnSchema } from "./models-schema";
 import Image from "next/image";
 import * as React from "react";
-import { MODEL_PROVIDER_LOGOS } from "./models-columns";
+import { MODEL_PROVIDER_LOGOS } from "./model-provider-logos";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 

@@ -7,23 +7,7 @@ import { useDataTable } from "@/features/data-explorer/data-table/data-table-pro
 import type { ColumnDef } from "@tanstack/react-table";
 import Image from "next/image";
 import type { ColumnSchema } from "./schema";
-
-export const PROVIDER_LOGOS: Record<
-  string,
-  {
-    src: string;
-    alt: string;
-  }
-> = {
-  coreweave: { src: "/logos/coreweave.png", alt: "CoreWeave" },
-  nebius: { src: "/logos/nebius.png", alt: "Nebius" },
-  hyperstack: { src: "/logos/hyperstack.png", alt: "Hyperstack" },
-  runpod: { src: "/logos/runpod.png", alt: "RunPod" },
-  lambda: { src: "/logos/lambda.png", alt: "Lambda" },
-  digitalocean: { src: "/logos/digitalocean.png", alt: "DigitalOcean" },
-  oracle: { src: "/logos/oracle.png", alt: "Oracle" },
-  crusoe: { src: "/logos/crusoe.png", alt: "Crusoe" },
-};
+import { getGpuProviderLogo } from "./provider-logos";
 
 function RowCheckboxCell({ rowId }: { rowId: string }) {
   const { checkedRows, toggleCheckedRow } = useDataTable<ColumnSchema, unknown>();
@@ -48,8 +32,7 @@ export const columns: ColumnDef<ColumnSchema>[] = [
     cell: ({ row }) => {
       const providerRaw = row.getValue<ColumnSchema["provider"]>("provider") ?? "";
       const provider = typeof providerRaw === "string" ? providerRaw : "";
-      const normalizedProvider = provider.toLowerCase();
-      const logo = PROVIDER_LOGOS[normalizedProvider];
+      const logo = getGpuProviderLogo(provider);
       const fallbackInitial = provider ? provider.charAt(0).toUpperCase() : "";
 
       return (

@@ -9,7 +9,7 @@ import { format } from "date-fns";
 import type { ColumnSchema } from "./schema";
 import Image from "next/image";
 import * as React from "react";
-import { PROVIDER_LOGOS } from "./columns";
+import { getGpuProviderLogo } from "./provider-logos";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
@@ -69,8 +69,7 @@ const LogoBadge = ({
 };
 
 const ProviderBadge = ({ provider }: { provider?: string | null }) => {
-  const normalizedProvider = provider?.toLowerCase() ?? "";
-  const logo = PROVIDER_LOGOS[normalizedProvider];
+  const logo = getGpuProviderLogo(provider ?? undefined);
   const fallbackInitial = provider ? provider.charAt(0).toUpperCase() : "";
   return (
     <div className="flex min-w-0 items-center gap-2">
