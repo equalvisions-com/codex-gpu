@@ -10,7 +10,6 @@ const toolsColumnSchema = z.object({
   license: z.string().nullable(),
   url: z.string().nullable(),
   stack: z.string().nullable(),
-  price: z.string().nullable(),
   oss: z.string().nullable(),
   stable_key: z.string().optional(),
 });
@@ -23,7 +22,6 @@ const toolsColumnFilterSchema = z.object({
   category: z.array(z.string()).optional(),
   license: z.array(z.string()).optional(),
   stack: z.array(z.string()).optional(),
-  price: z.array(z.string()).optional(),
   oss: z.array(z.string()).optional(),
   search: z.string().optional(),
 });

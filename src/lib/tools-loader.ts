@@ -68,7 +68,6 @@ function mapToColumnSchema(tool: Tool): ToolColumnSchema {
     license: tool.license,
     url: tool.url,
     stack: tool.stack,
-    price: tool.price,
     oss: tool.oss,
     stable_key: tool.stableKey || stableToolKeyFromTool(tool),
   };
@@ -123,7 +122,6 @@ export async function getToolsPage(
     license: facetsData.license,
     category: facetsData.category,
     stack: facetsData.stack,
-    price: facetsData.price,
     oss: facetsData.oss,
   };
 

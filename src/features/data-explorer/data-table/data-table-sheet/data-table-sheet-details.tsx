@@ -63,6 +63,17 @@ export function DataTableSheetDetails({
           : null;
     if (sourceUrl) return sourceUrl;
 
+    const directUrl =
+      typeof selectedRowData.url === "string"
+        ? selectedRowData.url
+        : typeof selectedRowData.URL === "string"
+          ? selectedRowData.URL
+          : null;
+    if (directUrl) {
+      if (/^https?:\/\//i.test(directUrl)) return directUrl;
+      return `https://${directUrl}`;
+    }
+
     const permaslug =
       typeof selectedRowData.permaslug === "string"
         ? selectedRowData.permaslug

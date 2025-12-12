@@ -7,7 +7,6 @@ export type Tool = {
   license: string | null;
   url: string | null;
   stack: string | null;
-  price: string | null;
   oss: string | null;
   stableKey?: string | null;
 };

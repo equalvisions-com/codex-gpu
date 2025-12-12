@@ -29,7 +29,6 @@ const mapRowToTool = (row: ToolRow): Tool => {
     license: parseNullableString(row.license),
     url: parseNullableString(row.url),
     stack: parseNullableString(row.stack),
-    price: parseNullableString(row.price),
     oss: parseNullableString(row.oss),
     stableKey: parseNullableString(row.stableKey),
   };
@@ -54,10 +53,6 @@ function buildToolFilterConditions(search: ToolsSearchParamsType) {
     conditions.push(inArray(tools.stack, search.stack));
   }
 
-  if (search.price && search.price.length > 0) {
-    conditions.push(inArray(tools.price, search.price));
-  }
-
   if (search.oss && search.oss.length > 0) {
     conditions.push(inArray(tools.oss, search.oss));
   }
@@ -73,7 +68,6 @@ function buildToolFilterConditions(search: ToolsSearchParamsType) {
         ilike(tools.license, term),
         ilike(tools.url, term),
         ilike(tools.stack, term),
-        ilike(tools.price, term),
         ilike(tools.oss, term),
       )!,
     );
@@ -127,9 +121,6 @@ class ToolsCache {
         case "stack":
           orderByClause = direction(tools.stack);
           break;
-        case "price":
-          orderByClause = direction(tools.price);
-          break;
         case "oss":
           orderByClause = direction(tools.oss);
           break;
@@ -182,11 +173,6 @@ class ToolsCache {
       .from(tools)
       .groupBy(tools.stack);
 
-    const priceRows = await db
-      .select({ value: tools.price, total: sql<number>`count(*)` })
-      .from(tools)
-      .groupBy(tools.price);
-
     const ossRows = await db
       .select({ value: tools.oss, total: sql<number>`count(*)` })
       .from(tools)
@@ -197,7 +183,6 @@ class ToolsCache {
       license: { rows: licenseRows.map((r) => ({ value: r.value, total: Number(r.total) })), total: totalCount },
       category: { rows: categoryRows.map((r) => ({ value: r.value, total: Number(r.total) })), total: totalCount },
       stack: { rows: stackRows.map((r) => ({ value: r.value, total: Number(r.total) })), total: totalCount },
-      price: { rows: priceRows.map((r) => ({ value: r.value, total: Number(r.total) })), total: totalCount },
       oss: { rows: ossRows.map((r) => ({ value: r.value, total: Number(r.total) })), total: totalCount },
     };
   }
@@ -276,7 +261,6 @@ class ToolsCache {
         license: tools.license,
         url: tools.url,
         stack: tools.stack,
-        price: tools.price,
         oss: tools.oss,
         stableKey: tools.stableKey,
       })

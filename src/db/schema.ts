@@ -210,7 +210,6 @@ export const tools = pgTable("tools", {
   license: text("license"),
   url: text("url"),
   stack: text("stack"),
-  price: text("price"),
   oss: text("oss"),
   stableKey: text("stable_key"),
 }, (table) => ({
@@ -219,7 +218,6 @@ export const tools = pgTable("tools", {
   categoryIndex: index("tools_category_idx").on(table.category),
   licenseIndex: index("tools_license_idx").on(table.license),
   stackIndex: index("tools_stack_idx").on(table.stack),
-  priceIndex: index("tools_price_idx").on(table.price),
   ossIndex: index("tools_oss_idx").on(table.oss),
   stableKeyIndex: index("tools_stable_key_idx").on(table.stableKey),
   // Full-text search on name/description (matches table search filter)

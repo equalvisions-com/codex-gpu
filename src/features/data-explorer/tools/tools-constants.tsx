@@ -55,13 +55,12 @@ const LogoBadge = ({
 export const toolsColumnOrder = [
   "blank",
   "name",
-  "category",
   "description",
-  "price",
-  "stack",
-  "oss",
-  "license",
+  "category",
   "developer",
+  "stack",
+  "license",
+  "oss",
 ] as const;
 
 export const filterFields: DataTableFilterField<ToolColumnSchema>[] = [
@@ -75,12 +74,6 @@ export const filterFields: DataTableFilterField<ToolColumnSchema>[] = [
   {
     label: "Developers",
     value: "developer",
-    type: "checkbox",
-    defaultOpen: true,
-  },
-  {
-    label: "Price",
-    value: "price",
     type: "checkbox",
     defaultOpen: true,
   },
@@ -167,22 +160,16 @@ export const sheetFields: SheetField<ToolColumnSchema>[] = [
       ),
   },
   {
-    id: "category",
-    label: "Category",
-    type: "readonly",
-    component: (row) => row.category || "N/A",
-  },
-  {
     id: "stack",
     label: "Stack",
     type: "readonly",
     component: (row) => row.stack || "N/A",
   },
   {
-    id: "price",
-    label: "Price",
+    id: "category",
+    label: "Category",
     type: "readonly",
-    component: (row) => row.price || "N/A",
+    component: (row) => row.category || "N/A",
   },
   {
     id: "oss",
