@@ -29,10 +29,10 @@ export function stableModelKey(
 export function stableToolKey(
   row: Partial<{
     id: string;
-    name: string;
-    developer: string;
-    category: string;
-    license: string;
+    name: string | null;
+    developer: string | null;
+    category: string | null;
+    license: string | null;
   }>,
 ): string {
   if (row.id) return row.id;
