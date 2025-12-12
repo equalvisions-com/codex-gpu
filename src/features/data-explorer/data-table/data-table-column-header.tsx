@@ -44,14 +44,13 @@ export function DataTableColumnHeader<TData, TValue>({
       className={cn(
         "py-0 px-[12px] h-7 flex gap-[10px] items-center",
         "hover:bg-transparent active:bg-transparent focus-visible:bg-transparent hover:text-foreground",
-        centerTitle ? "relative justify-center" : "justify-between",
+        centerTitle ? "justify-center" : "justify-between",
         className,
       )}
       {...props}
     >
       <span
         className={cn(
-          centerTitle && "pointer-events-none",
           titleClassName,
         )}
       >
@@ -60,7 +59,6 @@ export function DataTableColumnHeader<TData, TValue>({
       <span
         className={cn(
           "flex items-center",
-          centerTitle && "absolute right-0 top-1/2 -translate-y-1/2",
         )}
       >
         <ArrowUpDown

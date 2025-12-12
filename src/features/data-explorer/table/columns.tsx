@@ -61,11 +61,11 @@ export const columns: ColumnDef<ColumnSchema>[] = [
         </div>
       );
     },
-    size: 171,
-    minSize: 171,
+    size: 200,
+    minSize: 200,
     meta: {
-      cellClassName: "text-left min-w-[171px] pl-0",
-      headerClassName: "text-left min-w-[171px] pl-0",
+      cellClassName: "text-left min-w-[200px] pl-0",
+      headerClassName: "text-left min-w-[200px] pl-0",
     },
   },
   {
@@ -249,14 +249,17 @@ export const columns: ColumnDef<ColumnSchema>[] = [
   {
     accessorKey: "type",
     header: ({ column }) => (
-      <div className="flex justify-end">
-        <DataTableColumnHeader column={column} title="Config" />
-      </div>
+      <DataTableColumnHeader
+        column={column}
+        title="Config"
+        centerTitle
+        className="w-full"
+      />
     ),
     cell: ({ row }) => {
       const type = row.getValue<ColumnSchema["type"]>("type");
       return type ? (
-        <div className="flex justify-end">
+        <div className="flex justify-center">
           <span className="block text-[12px] border border-border/70 w-fit bg-background leading-[18px] rounded-sm h-[20px] px-[6px]">
             {type}
           </span>
@@ -268,8 +271,8 @@ export const columns: ColumnDef<ColumnSchema>[] = [
     size: 150,
     minSize: 150,
     meta: {
-      cellClassName: "text-right min-w-[150px]",
-      headerClassName: "text-right min-w-[150px]",
+      cellClassName: "text-center min-w-[150px]",
+      headerClassName: "text-center min-w-[150px]",
     },
   },
 ];

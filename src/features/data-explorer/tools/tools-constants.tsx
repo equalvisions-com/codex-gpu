@@ -56,11 +56,11 @@ export const toolsColumnOrder = [
   "blank",
   "name",
   "description",
-  "category",
   "developer",
   "stack",
   "license",
   "oss",
+  "category",
 ] as const;
 
 export const filterFields: DataTableFilterField<ToolColumnSchema>[] = [
@@ -72,6 +72,24 @@ export const filterFields: DataTableFilterField<ToolColumnSchema>[] = [
     placeholder: "Search tools",
   },
   {
+    label: "Categories",
+    value: "category",
+    type: "checkbox",
+    defaultOpen: true,
+  },
+  {
+    label: "Runtime",
+    value: "stack",
+    type: "checkbox",
+    defaultOpen: true,
+  },
+  {
+    label: "OSS",
+    value: "oss",
+    type: "checkbox",
+    defaultOpen: true,
+  },
+  {
     label: "Developers",
     value: "developer",
     type: "checkbox",
@@ -80,24 +98,6 @@ export const filterFields: DataTableFilterField<ToolColumnSchema>[] = [
   {
     label: "Licenses",
     value: "license",
-    type: "checkbox",
-    defaultOpen: true,
-  },
-  {
-    label: "Categories",
-    value: "category",
-    type: "checkbox",
-    defaultOpen: true,
-  },
-  {
-    label: "Stack",
-    value: "stack",
-    type: "checkbox",
-    defaultOpen: true,
-  },
-  {
-    label: "OSS",
-    value: "oss",
     type: "checkbox",
     defaultOpen: true,
   },

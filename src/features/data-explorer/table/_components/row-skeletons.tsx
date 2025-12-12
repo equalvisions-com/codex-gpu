@@ -39,7 +39,9 @@ export function RowSkeletons<TData>({
             const skeletonVariant = column.columnDef.meta?.skeletonVariant;
             const defaultSkeletonAlignment = cellClassName?.includes("text-left")
               ? "justify-start"
-              : "justify-end";
+              : cellClassName?.includes("text-center")
+                ? "justify-center"
+                : "justify-end";
 
             return (
               <TableCell

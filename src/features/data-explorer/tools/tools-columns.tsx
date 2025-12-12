@@ -118,14 +118,21 @@ export const toolsColumns: ColumnDef<ToolColumnSchema>[] = [
   },
   {
     accessorKey: "category",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Category" />,
+    header: ({ column }) => (
+      <DataTableColumnHeader
+        column={column}
+        title="Category"
+        centerTitle
+        className="w-full"
+      />
+    ),
     cell: ({ row }) => {
       const category = row.original.category;
       if (!category) {
-        return <span className="block truncate text-left text-muted-foreground">N/A</span>;
+        return <span className="block truncate text-center text-muted-foreground">N/A</span>;
       }
       return (
-        <div className="flex justify-start">
+        <div className="flex justify-center">
           <span className="block w-fit max-w-full truncate rounded-sm border border-border/70 bg-background px-[6px] text-[12px] leading-[18px] h-[20px]">
             {category}
           </span>
@@ -135,8 +142,8 @@ export const toolsColumns: ColumnDef<ToolColumnSchema>[] = [
     size: 211,
     minSize: 211,
     meta: {
-      cellClassName: "text-left min-w-[211px]",
-      headerClassName: "text-left min-w-[211px]",
+      cellClassName: "text-center min-w-[211px]",
+      headerClassName: "text-center min-w-[211px]",
     },
   },
   {
@@ -149,11 +156,11 @@ export const toolsColumns: ColumnDef<ToolColumnSchema>[] = [
       }
       return <span className="block truncate text-left">{developer}</span>;
     },
-    size: 200,
-    minSize: 200,
+    size: 160,
+    minSize: 160,
     meta: {
-      cellClassName: "text-left min-w-[200px]",
-      headerClassName: "text-left min-w-[200px]",
+      cellClassName: "text-left min-w-[160px]",
+      headerClassName: "text-left min-w-[160px]",
     },
   },
   {
@@ -166,11 +173,11 @@ export const toolsColumns: ColumnDef<ToolColumnSchema>[] = [
       }
       return <span className="block truncate text-left">{stack}</span>;
     },
-    size: 200,
-    minSize: 200,
+    size: 160,
+    minSize: 160,
     meta: {
-      cellClassName: "text-left min-w-[200px]",
-      headerClassName: "text-left min-w-[200px]",
+      cellClassName: "text-left min-w-[160px]",
+      headerClassName: "text-left min-w-[160px]",
     },
   },
   {
@@ -204,11 +211,11 @@ export const toolsColumns: ColumnDef<ToolColumnSchema>[] = [
       }
       return <span className="block truncate text-left">{license}</span>;
     },
-    size: 200,
-    minSize: 200,
+    size: 160,
+    minSize: 160,
     meta: {
-      cellClassName: "text-left min-w-[200px]",
-      headerClassName: "text-left min-w-[200px]",
+      cellClassName: "text-left min-w-[160px]",
+      headerClassName: "text-left min-w-[160px]",
     },
   },
 ];
