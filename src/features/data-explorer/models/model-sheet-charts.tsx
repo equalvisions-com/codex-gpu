@@ -144,8 +144,8 @@ export function ModelSheetCharts({
 
   const latencyDescription = latencyAverage != null
     ? `${latencyAverage.toLocaleString(undefined, {
-        maximumFractionDigits: 2,
-      })}s`
+      maximumFractionDigits: 2,
+    })}s`
     : "";
   const throughputDescription = React.useMemo(() => {
     const formatted = formatThroughputDisplay(throughput ?? null);
@@ -167,7 +167,7 @@ export function ModelSheetCharts({
       : "No latency samples yet.";
 
   return (
-    <div className="grid gap-4 border-t border-border/60 pt-4">
+    <div className="grid gap-4">
       <SheetLineChart
         title="Throughput"
         description={throughputDescription}

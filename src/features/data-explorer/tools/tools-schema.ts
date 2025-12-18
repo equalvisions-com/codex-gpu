@@ -21,8 +21,6 @@ export type ToolColumnSchema = z.infer<typeof toolsColumnSchema>;
 const toolsColumnFilterSchema = z.object({
   developer: z.array(z.string()).optional(),
   category: z.array(z.string()).optional(),
-  price: z.array(z.string()).optional(),
-  license: z.array(z.string()).optional(),
   stack: z.array(z.string()).optional(),
   oss: z.array(z.string()).optional(),
   search: z.string().optional(),

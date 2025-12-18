@@ -7,6 +7,7 @@ import Image from "next/image";
 import * as React from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getToolProviderLogo } from "./tool-provider-logos";
+import { ExternalLink } from "lucide-react";
 
 const LogoBadge = ({
   src,
@@ -77,12 +78,7 @@ export const filterFields: DataTableFilterField<ToolColumnSchema>[] = [
     type: "checkbox",
     defaultOpen: true,
   },
-  {
-    label: "Price",
-    value: "price",
-    type: "checkbox",
-    defaultOpen: true,
-  },
+
   {
     label: "Runtime",
     value: "stack",
@@ -101,12 +97,7 @@ export const filterFields: DataTableFilterField<ToolColumnSchema>[] = [
     type: "checkbox",
     defaultOpen: true,
   },
-  {
-    label: "Licenses",
-    value: "license",
-    type: "checkbox",
-    defaultOpen: true,
-  },
+
 ];
 
 export const sheetFields: SheetField<ToolColumnSchema>[] = [
@@ -131,7 +122,7 @@ export const sheetFields: SheetField<ToolColumnSchema>[] = [
             <h2 className={cn("text-lg font-semibold leading-tight tracking-tight")}>
               {row.name || "Unknown Tool"}
             </h2>
-            <p className="pb-4 text-sm text-foreground/70 leading-tight">
+            <p className="pb-3 text-sm text-foreground/70 leading-tight">
               {row.developer || "Unknown Developer"}
             </p>
           </div>
@@ -145,24 +136,13 @@ export const sheetFields: SheetField<ToolColumnSchema>[] = [
     type: "readonly",
     hideLabel: true,
     fullRowValue: true,
+    noPadding: true,
     component: (row) =>
       row.description ? (
-        <span className="text-sm text-foreground/90 leading-relaxed">{row.description}</span>
+        <span className="px-0 pt-0 pb-2 text-sm text-foreground/90 leading-relaxed">{row.description}</span>
       ) : (
         <span className="text-muted-foreground">N/A</span>
       ),
-  },
-  {
-    id: "stack",
-    label: "Stack",
-    type: "readonly",
-    component: (row) => row.stack || "N/A",
-  },
-  {
-    id: "price",
-    label: "Price",
-    type: "readonly",
-    component: (row) => row.price || "N/A",
   },
   {
     id: "category",
@@ -171,10 +151,16 @@ export const sheetFields: SheetField<ToolColumnSchema>[] = [
     component: (row) => row.category || "N/A",
   },
   {
-    id: "developer",
-    label: "Developer",
+    id: "stack",
+    label: "Runtime",
     type: "readonly",
-    component: (row) => row.developer || "N/A",
+    component: (row) => row.stack || "N/A",
+  },
+  {
+    id: "price",
+    label: "Price",
+    type: "readonly",
+    component: (row) => row.price || "N/A",
   },
   {
     id: "oss",
@@ -187,5 +173,24 @@ export const sheetFields: SheetField<ToolColumnSchema>[] = [
     label: "License",
     type: "readonly",
     component: (row) => row.license || "N/A",
+  },
+  {
+    id: "url",
+    label: "URL",
+    type: "readonly",
+    component: (row) =>
+      row.url ? (
+        <a
+          href={row.url}
+          target="_blank"
+          rel="noopener"
+          className="inline-flex items-center gap-1.5 text-primary hover:underline max-w-[354px]"
+        >
+          <span className="truncate">{row.url}</span>
+          <ExternalLink className="h-3.5 w-3.5 shrink-0 text-foreground/70" />
+        </a>
+      ) : (
+        "N/A"
+      ),
   },
 ] as const;

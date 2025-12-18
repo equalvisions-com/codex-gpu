@@ -206,7 +206,7 @@ export const toolsColumns: ColumnDef<ToolColumnSchema>[] = [
       }
       return (
         <div className="flex justify-start">
-          <span className="block max-w-full truncate text-[12px] border border-border/70 w-fit bg-background leading-[18px] rounded-sm h-[20px] px-[6px]">
+          <span className="block max-w-full truncate text-[12px] border border-border/70 w-fit bg-gradient-to-b from-muted/70 via-muted/40 to-background leading-[18px] rounded-sm h-[20px] px-[6px]">
             {category}
           </span>
         </div>

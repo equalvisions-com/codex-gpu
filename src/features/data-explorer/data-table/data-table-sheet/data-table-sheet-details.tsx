@@ -20,12 +20,14 @@ interface DataTableSheetDetailsProps {
   title?: React.ReactNode;
   titleClassName?: string;
   children?: React.ReactNode;
+  buttonLabel?: string;
 }
 
 export function DataTableSheetDetails({
   title,
   titleClassName,
   children,
+  buttonLabel = "Deploy",
 }: DataTableSheetDetailsProps) {
   const { table, rowSelection, isLoading } = useDataTable();
 
@@ -201,11 +203,11 @@ export function DataTableSheetDetails({
             </SheetClose>
           </div>
           <div className="space-y-4">{children}</div>
-          <div className="mt-6 border-t border-border/60 pt-4">
+          <div className="pt-4">
             {deployHref ? (
               <Button asChild className="w-full font-semibold">
                 <a href={deployHref} target="_blank" rel="noopener noreferrer">
-                  Deploy
+                  {buttonLabel}
                 </a>
               </Button>
             ) : (
@@ -214,7 +216,7 @@ export function DataTableSheetDetails({
                 type="button"
                 disabled={!selectedRowKey}
               >
-                Deploy
+                {buttonLabel}
               </Button>
             )}
           </div>

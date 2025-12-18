@@ -46,14 +46,6 @@ function buildToolFilterConditions(search: ToolsSearchParamsType) {
     conditions.push(inArray(tools.category, search.category));
   }
 
-  if (search.price && search.price.length > 0) {
-    conditions.push(inArray(tools.price, search.price));
-  }
-
-  if (search.license && search.license.length > 0) {
-    conditions.push(inArray(tools.license, search.license));
-  }
-
   if (search.stack && search.stack.length > 0) {
     conditions.push(inArray(tools.stack, search.stack));
   }
@@ -238,9 +230,6 @@ class ToolsCache {
           break;
         case "oss":
           orderByClause = direction(tools.oss);
-          break;
-        case "license":
-          orderByClause = direction(tools.license);
           break;
         default:
           orderByClause = defaultOrderBy;

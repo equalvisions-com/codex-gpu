@@ -282,7 +282,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
         <div className="flex justify-start">
           <HoverCard openDelay={0} closeDelay={0}>
             <HoverCardTrigger asChild>
-              <div className="text-[12px] border border-border/70 w-fit bg-background leading-[18px] rounded-sm h-[20px] px-[6px] text-left tracking-wide cursor-pointer">
+              <div className="text-[12px] border border-border/70 w-fit bg-gradient-to-b from-muted/70 via-muted/40 to-background leading-[18px] rounded-sm h-[20px] px-[6px] text-left tracking-wide cursor-pointer">
                 {label}
               </div>
             </HoverCardTrigger>

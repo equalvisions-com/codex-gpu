@@ -131,6 +131,8 @@ interface DataTableInfiniteProps<TData, TValue, TMeta, TFavorite> {
   ) => React.ReactNode;
   renderSheetCharts?: (row: Row<TData> | null) => React.ReactNode;
   primaryColumnId?: string;
+  sheetButtonLabel?: string;
+  sheetContentClassName?: string;
 }
 
 export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>({
@@ -168,6 +170,8 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
   renderCheckedActions,
   renderSheetCharts,
   primaryColumnId = "gpu_model",
+  sheetButtonLabel,
+  sheetContentClassName,
 }: DataTableInfiniteProps<TData, TValue, TMeta, TFavorite>) {
   // Independent checkbox-only state (does not control the details pane)
   const [checkedRows, setCheckedRows] = React.useState<Record<string, boolean>>({});
@@ -1098,6 +1102,7 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
       <DataTableSheetDetails
         title={renderSheetTitle({ row: selectedRow })}
         titleClassName="font-mono"
+        buttonLabel={sheetButtonLabel}
       >
         <div className="space-y-0">
           <MemoizedDataTableSheetContent
@@ -1105,6 +1110,7 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
             data={selectedRow?.original}
             filterFields={filterFields}
             fields={sheetFields}
+            className={sheetContentClassName}
             // Memoization can be added later if needed
             // REMINDER: this is used to pass additional data like the `InfiniteQueryMeta`
             metadata={meta}
