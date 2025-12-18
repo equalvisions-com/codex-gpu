@@ -7,6 +7,7 @@ const toolsColumnSchema = z.object({
   developer: z.string().nullable(),
   description: z.string().nullable(),
   category: z.string().nullable(),
+  price: z.string().nullable(),
   license: z.string().nullable(),
   url: z.string().nullable(),
   stack: z.string().nullable(),
@@ -20,6 +21,7 @@ export type ToolColumnSchema = z.infer<typeof toolsColumnSchema>;
 const toolsColumnFilterSchema = z.object({
   developer: z.array(z.string()).optional(),
   category: z.array(z.string()).optional(),
+  price: z.array(z.string()).optional(),
   license: z.array(z.string()).optional(),
   stack: z.array(z.string()).optional(),
   oss: z.array(z.string()).optional(),

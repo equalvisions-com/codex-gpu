@@ -56,7 +56,7 @@ import type { FavoriteKey } from "@/types/favorites";
 import { useGlobalHotkeys } from "@/hooks/use-global-hotkeys";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-const noop = () => {};
+const noop = () => { };
 const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max);
 const ESTIMATED_ROW_HEIGHT_PX = 41;
@@ -226,12 +226,12 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
       () =>
         searchFieldId
           ? [
-              {
-                combo: "mod+/",
-                handler: () => setIsDesktopSearchOpen((prev) => !prev),
-                allowWhenFocusedIds: [searchFieldId],
-              },
-            ]
+            {
+              combo: "mod+/",
+              handler: () => setIsDesktopSearchOpen((prev) => !prev),
+              allowWhenFocusedIds: [searchFieldId],
+            },
+          ]
           : [],
       [searchFieldId],
     ),
@@ -374,7 +374,7 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
         missingRowIdWarningRef.current = true;
         console.warn(
           "[DataTableInfinite] Falling back to index-based row ids. " +
-            "Pass `getRowId` or ensure each row has a stable `id` to keep favorites in sync.",
+          "Pass `getRowId` or ensure each row has a stable `id` to keep favorites in sync.",
         );
       }
 
@@ -522,10 +522,10 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
   // Once resized, column should always use pixel width (never revert to "auto")
   const modelColumnHasBeenResizedRef = React.useRef<boolean>(false);
   const pendingModelColumnResizeRef = React.useRef<boolean>(false);
-  
+
   // Stable ref map for header elements - created once, persists across renders
   const headerRefsMap = React.useRef<Map<string, React.RefObject<HTMLTableCellElement | null>>>(new Map());
-  
+
   // Get or create a ref for a specific header ID
   const getHeaderRef = React.useCallback((headerId: string): React.RefObject<HTMLTableCellElement | null> => {
     if (!headerRefsMap.current.has(headerId)) {
@@ -572,7 +572,7 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
         pending = false;
         updateMeasuredWidth(
           headerElement.offsetWidth ||
-            headerElement.getBoundingClientRect().width,
+          headerElement.getBoundingClientRect().width,
         );
       });
     };
@@ -605,7 +605,7 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
     if (modelColumnHasBeenResizedRef.current) {
       return `${currentSize}px`;
     }
-    
+
     // Use "auto" for flex growth only when never resized and at default size
     return currentSize === modelColumnDefaultSize ? "auto" : `${currentSize}px`;
   }, [modelColumnDefaultSize, primaryColumn, primaryColumnId]);
@@ -640,7 +640,7 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
       }
 
       const map = new Map<string, number>();
-      facetData.rows.forEach((row: any) => {
+      facetData.rows.forEach((row: { value: unknown; total: number }) => {
         if (row && typeof row === 'object' && 'value' in row && 'total' in row) {
           map.set(String(row.value), Number(row.total));
         }
@@ -661,7 +661,7 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
 
       // For numeric columns, find min/max values
       const numericValues: number[] = facetData.rows
-        .map((row: any) => {
+        .map((row: { value: unknown; total: number }) => {
           if (row && typeof row === 'object' && 'value' in row) {
             const num = Number(row.value);
             return isNaN(num) ? null : num;
@@ -827,267 +827,267 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
                     "h-full overscroll-x-none scrollbar-hide flex-1 min-h-0"
                   )}
                 >
-              <TableHeader className={cn("sticky top-0 z-50 bg-background")}>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow
-                    key={headerGroup.id}
-                    className={cn("bg-muted")}
-                  >
-                    {headerGroup.headers.map((header) => {
-                      const isModelColumn = primaryColumnId
-                        ? header.id === primaryColumnId
-                        : false;
-                      const headerRef = getHeaderRef(header.id);
-                      
-                      // Custom resize handler that captures the actual rendered width when using "auto"
-                      // Following React best practices: refs accessed only in event handlers, not during render
-                      // Production-ready: includes null checks, proper cleanup, and browser compatibility
-                      // Note: Regular function (not useCallback) because we're inside a map callback
-                      // This is fine - function is recreated per header but only executes on user interaction
-                      const handleResizeStart = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
-                        const resizeHandler = header.getResizeHandler();
-                        if (!resizeHandler) {
-                          return;
-                        }
+                  <TableHeader className={cn("sticky top-0 z-50 bg-background")}>
+                    {table.getHeaderGroups().map((headerGroup) => (
+                      <TableRow
+                        key={headerGroup.id}
+                        className={cn("bg-muted")}
+                      >
+                        {headerGroup.headers.map((header) => {
+                          const isModelColumn = primaryColumnId
+                            ? header.id === primaryColumnId
+                            : false;
+                          const headerRef = getHeaderRef(header.id);
 
-                        if (!isModelColumn) {
-                          resizeHandler(e);
-                          return;
-                        }
-
-                        if (pendingModelColumnResizeRef.current) {
-                          return;
-                        }
-
-                        const columnSizing = table.getState().columnSizing;
-                        const hasBeenResized = header.id in columnSizing || modelColumnHasBeenResizedRef.current;
-
-                        if (!hasBeenResized && header.getSize() === modelColumnDefaultSize) {
-                          modelColumnHasBeenResizedRef.current = true;
-                          pendingModelColumnResizeRef.current = true;
-
-                          const fallbackSize = header.getSize();
-                          const measuredWidth = modelColumnMeasuredWidthRef.current ?? fallbackSize;
-                          const widthToSet =
-                            measuredWidth && measuredWidth > 0
-                              ? Math.max(measuredWidth, fallbackSize, minimumModelColumnWidth)
-                              : Math.max(fallbackSize, minimumModelColumnWidth);
-
-                          const currentSizing = table.getState().columnSizing;
-                          table.setColumnSizing({
-                            ...currentSizing,
-                            [header.id]: widthToSet,
-                          });
-
-                          const syntheticEvent = {
-                            ...e,
-                            currentTarget: e.currentTarget,
-                            target: e.target,
-                          } as typeof e;
-
-                          requestAnimationFrame(() => {
-                            const handler = header.getResizeHandler();
-                            if (!handler) {
-                              pendingModelColumnResizeRef.current = false;
+                          // Custom resize handler that captures the actual rendered width when using "auto"
+                          // Following React best practices: refs accessed only in event handlers, not during render
+                          // Production-ready: includes null checks, proper cleanup, and browser compatibility
+                          // Note: Regular function (not useCallback) because we're inside a map callback
+                          // This is fine - function is recreated per header but only executes on user interaction
+                          const handleResizeStart = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
+                            const resizeHandler = header.getResizeHandler();
+                            if (!resizeHandler) {
                               return;
                             }
-                            handler(syntheticEvent);
-                            pendingModelColumnResizeRef.current = false;
-                          });
 
-                          e.preventDefault();
-                          e.stopPropagation();
-                          return;
-                        }
-
-                        modelColumnHasBeenResizedRef.current = true;
-                        resizeHandler(e);
-                      };
-                      
-                      return (
-                        <TableHead
-                          key={header.id}
-                          ref={headerRef}
-                          className={cn(
-                            "relative select-none truncate border-b border-border bg-background text-foreground [&>.cursor-col-resize]:last:opacity-0",
-                            header.column.columnDef.meta?.headerClassName,
-                          )}
-                          data-column-id={header.column.id}
-                          style={{
-                            width: getModelColumnWidth(header.id, header.getSize()),
-                            minWidth:
-                              isModelColumn
-                                ? `${minimumModelColumnWidth}px`
-                                : header.column.columnDef.minSize,
-                          }}
-                          aria-sort={
-                            header.column.getIsSorted() === "asc"
-                              ? "ascending"
-                              : header.column.getIsSorted() === "desc"
-                              ? "descending"
-                              : "none"
-                          }
-                        >
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(
-                                header.column.columnDef.header,
-                                header.getContext(),
-                              )}
-                          {header.column.getCanResize() && (
-                            <div
-                              onDoubleClick={() => {
-                                // Reset all resize tracking state
-                                modelColumnMeasuredWidthRef.current = null;
-                                modelColumnHasBeenResizedRef.current = false;
-                                // Clear the column from sizing state so it can return to "auto"
-                                const currentSizing = table.getState().columnSizing;
-                                const { [header.id]: _, ...restSizing } = currentSizing;
-                                table.setColumnSizing(restSizing);
-                                header.column.resetSize();
-                              }}
-                              onMouseDown={isModelColumn ? handleResizeStart : header.getResizeHandler()}
-                              onTouchStart={isModelColumn ? handleResizeStart : header.getResizeHandler()}
-                              className={cn(
-                                "user-select-none absolute -right-2 top-0 z-10 flex h-full w-4 cursor-col-resize touch-none justify-center",
-                                "before:absolute before:inset-y-0 before:w-px before:translate-x-px before:bg-border",
-                              )}
-                            />
-                          )}
-                        </TableHead>
-                      );
-                    })}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody
-                id="content"
-                tabIndex={-1}
-                ref={focusTargetRef}
-                className="outline-1 -outline-offset-1 outline-primary transition-colors focus-visible:outline"
-                // REMINDER: avoids scroll (skipping the table header) when using skip to content
-                style={{
-                  scrollMarginTop: "40px",
-                }}
-                aria-busy={Boolean(isLoading || (isFetching && !data.length))}
-                aria-live="polite"
-              >
-                {showErrorState ? (
-                  <TableRow>
-                    <TableCell colSpan={columns.length} className="py-10">
-                      <div className="flex flex-col gap-4 rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive-foreground sm:flex-row sm:items-center sm:justify-between">
-                        <div className="space-y-1">
-                          <p className="font-medium">We couldn’t load GPU rows.</p>
-                          <p className="text-muted-foreground">{errorMessage}</p>
-                        </div>
-                        <Button
-                          variant="outline"
-                          className="w-full sm:w-auto"
-                          onClick={() => {
-                            if (typeof onRetry === "function") {
-                              void onRetry();
+                            if (!isModelColumn) {
+                              resizeHandler(e);
+                              return;
                             }
-                          }}
-                        >
-                          Retry
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : isLoading || (isFetching && !data.length) ? (
-                  <RowSkeletons
-                    table={table}
-                    rows={skeletonRowCount}
-                    modelColumnWidth={`${minimumModelColumnWidth}px`}
-                    primaryColumnId={primaryColumnId}
-                  />
-                ) : rows.length ? (
-                  <>
-                    {!virtualizationEnabled && rows.length ? (
-                      rows.map((row, index) => (
-                        <React.Fragment key={row.id}>
-                          <MemoizedRow
-                            row={row}
-                            table={table}
-                            selected={row.getIsSelected()}
-                            checked={checkedRows[row.id] ?? false}
-                            data-index={index}
-                            getModelColumnWidth={getModelColumnWidth}
-                            primaryColumnId={primaryColumnId}
-                          />
-                        </React.Fragment>
-                      ))
-                    ) : virtualItems.length === 0 ? (
+
+                            if (pendingModelColumnResizeRef.current) {
+                              return;
+                            }
+
+                            const columnSizing = table.getState().columnSizing;
+                            const hasBeenResized = header.id in columnSizing || modelColumnHasBeenResizedRef.current;
+
+                            if (!hasBeenResized && header.getSize() === modelColumnDefaultSize) {
+                              modelColumnHasBeenResizedRef.current = true;
+                              pendingModelColumnResizeRef.current = true;
+
+                              const fallbackSize = header.getSize();
+                              const measuredWidth = modelColumnMeasuredWidthRef.current ?? fallbackSize;
+                              const widthToSet =
+                                measuredWidth && measuredWidth > 0
+                                  ? Math.max(measuredWidth, fallbackSize, minimumModelColumnWidth)
+                                  : Math.max(fallbackSize, minimumModelColumnWidth);
+
+                              const currentSizing = table.getState().columnSizing;
+                              table.setColumnSizing({
+                                ...currentSizing,
+                                [header.id]: widthToSet,
+                              });
+
+                              const syntheticEvent = {
+                                ...e,
+                                currentTarget: e.currentTarget,
+                                target: e.target,
+                              } as typeof e;
+
+                              requestAnimationFrame(() => {
+                                const handler = header.getResizeHandler();
+                                if (!handler) {
+                                  pendingModelColumnResizeRef.current = false;
+                                  return;
+                                }
+                                handler(syntheticEvent);
+                                pendingModelColumnResizeRef.current = false;
+                              });
+
+                              e.preventDefault();
+                              e.stopPropagation();
+                              return;
+                            }
+
+                            modelColumnHasBeenResizedRef.current = true;
+                            resizeHandler(e);
+                          };
+
+                          return (
+                            <TableHead
+                              key={header.id}
+                              ref={headerRef}
+                              className={cn(
+                                "relative select-none truncate border-b border-border bg-background text-foreground [&>.cursor-col-resize]:last:opacity-0",
+                                header.column.columnDef.meta?.headerClassName,
+                              )}
+                              data-column-id={header.column.id}
+                              style={{
+                                width: getModelColumnWidth(header.id, header.getSize()),
+                                minWidth:
+                                  isModelColumn
+                                    ? `${minimumModelColumnWidth}px`
+                                    : header.column.columnDef.minSize,
+                              }}
+                              aria-sort={
+                                header.column.getIsSorted() === "asc"
+                                  ? "ascending"
+                                  : header.column.getIsSorted() === "desc"
+                                    ? "descending"
+                                    : "none"
+                              }
+                            >
+                              {header.isPlaceholder
+                                ? null
+                                : flexRender(
+                                  header.column.columnDef.header,
+                                  header.getContext(),
+                                )}
+                              {header.column.getCanResize() && (
+                                <div
+                                  onDoubleClick={() => {
+                                    // Reset all resize tracking state
+                                    modelColumnMeasuredWidthRef.current = null;
+                                    modelColumnHasBeenResizedRef.current = false;
+                                    // Clear the column from sizing state so it can return to "auto"
+                                    const currentSizing = table.getState().columnSizing;
+                                    const { [header.id]: _, ...restSizing } = currentSizing;
+                                    table.setColumnSizing(restSizing);
+                                    header.column.resetSize();
+                                  }}
+                                  onMouseDown={isModelColumn ? handleResizeStart : header.getResizeHandler()}
+                                  onTouchStart={isModelColumn ? handleResizeStart : header.getResizeHandler()}
+                                  className={cn(
+                                    "user-select-none absolute -right-2 top-0 z-10 flex h-full w-4 cursor-col-resize touch-none justify-center",
+                                    "before:absolute before:inset-y-0 before:w-px before:translate-x-px before:bg-border",
+                                  )}
+                                />
+                              )}
+                            </TableHead>
+                          );
+                        })}
+                      </TableRow>
+                    ))}
+                  </TableHeader>
+                  <TableBody
+                    id="content"
+                    tabIndex={-1}
+                    ref={focusTargetRef}
+                    className="outline-1 -outline-offset-1 outline-primary transition-colors focus-visible:outline"
+                    // REMINDER: avoids scroll (skipping the table header) when using skip to content
+                    style={{
+                      scrollMarginTop: "40px",
+                    }}
+                    aria-busy={Boolean(isLoading || (isFetching && !data.length))}
+                    aria-live="polite"
+                  >
+                    {showErrorState ? (
+                      <TableRow>
+                        <TableCell colSpan={columns.length} className="py-10">
+                          <div className="flex flex-col gap-4 rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive-foreground sm:flex-row sm:items-center sm:justify-between">
+                            <div className="space-y-1">
+                              <p className="font-medium">We couldn’t load GPU rows.</p>
+                              <p className="text-muted-foreground">{errorMessage}</p>
+                            </div>
+                            <Button
+                              variant="outline"
+                              className="w-full sm:w-auto"
+                              onClick={() => {
+                                if (typeof onRetry === "function") {
+                                  void onRetry();
+                                }
+                              }}
+                            >
+                              Retry
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ) : isLoading || (isFetching && !data.length) ? (
                       <RowSkeletons
                         table={table}
-                        rows={Math.min(rows.length || skeletonRowCount, 50)}
+                        rows={skeletonRowCount}
                         modelColumnWidth={`${minimumModelColumnWidth}px`}
                         primaryColumnId={primaryColumnId}
                       />
-                    ) : (
+                    ) : rows.length ? (
                       <>
-                        {/* Virtual spacer for rows before visible range */}
-                        {virtualItems[0]?.index > 0 && (
-                          <tr aria-hidden style={{ height: `${virtualItems[0].start}px`, border: 0 }}>
-                            <td colSpan={columns.length} style={{ padding: 0, border: 0 }} />
-                          </tr>
-                        )}
-                        {/* Render only visible virtual items (reduces DOM size) */}
-                        {virtualItems.map((virtualItem) => {
-                          const row = rows[virtualItem.index];
-                          if (!row) return null;
-
-                          return (
-                            <React.Fragment key={virtualItem.key}>
+                        {!virtualizationEnabled && rows.length ? (
+                          rows.map((row, index) => (
+                            <React.Fragment key={row.id}>
                               <MemoizedRow
                                 row={row}
                                 table={table}
                                 selected={row.getIsSelected()}
                                 checked={checkedRows[row.id] ?? false}
-                                data-index={virtualItem.index}
-                                ref={measureVirtualRow}
+                                data-index={index}
                                 getModelColumnWidth={getModelColumnWidth}
                                 primaryColumnId={primaryColumnId}
                               />
                             </React.Fragment>
-                          );
-                        })}
-                        {/* Virtual spacer for rows after visible range */}
-                        {virtualItems[virtualItems.length - 1]?.index < rows.length - 1 && (
-                          <tr aria-hidden style={{ 
-                            height: `${totalSize - virtualItems[virtualItems.length - 1].end}px`, 
-                            border: 0 
-                          }}>
-                            <td colSpan={columns.length} style={{ padding: 0, border: 0 }} />
-                          </tr>
+                          ))
+                        ) : virtualItems.length === 0 ? (
+                          <RowSkeletons
+                            table={table}
+                            rows={Math.min(rows.length || skeletonRowCount, 50)}
+                            modelColumnWidth={`${minimumModelColumnWidth}px`}
+                            primaryColumnId={primaryColumnId}
+                          />
+                        ) : (
+                          <>
+                            {/* Virtual spacer for rows before visible range */}
+                            {virtualItems[0]?.index > 0 && (
+                              <tr aria-hidden style={{ height: `${virtualItems[0].start}px`, border: 0 }}>
+                                <td colSpan={columns.length} style={{ padding: 0, border: 0 }} />
+                              </tr>
+                            )}
+                            {/* Render only visible virtual items (reduces DOM size) */}
+                            {virtualItems.map((virtualItem) => {
+                              const row = rows[virtualItem.index];
+                              if (!row) return null;
+
+                              return (
+                                <React.Fragment key={virtualItem.key}>
+                                  <MemoizedRow
+                                    row={row}
+                                    table={table}
+                                    selected={row.getIsSelected()}
+                                    checked={checkedRows[row.id] ?? false}
+                                    data-index={virtualItem.index}
+                                    ref={measureVirtualRow}
+                                    getModelColumnWidth={getModelColumnWidth}
+                                    primaryColumnId={primaryColumnId}
+                                  />
+                                </React.Fragment>
+                              );
+                            })}
+                            {/* Virtual spacer for rows after visible range */}
+                            {virtualItems[virtualItems.length - 1]?.index < rows.length - 1 && (
+                              <tr aria-hidden style={{
+                                height: `${totalSize - virtualItems[virtualItems.length - 1].end}px`,
+                                border: 0
+                              }}>
+                                <td colSpan={columns.length} style={{ padding: 0, border: 0 }} />
+                              </tr>
+                            )}
+                          </>
+                        )}
+                        {(hasNextPage && (isFetchingNextPage || isPrefetching)) && (
+                          <RowSkeletons
+                            table={table}
+                            rows={
+                              typeof skeletonNextPageRowCount === "number"
+                                ? skeletonNextPageRowCount
+                                : Math.max(overscan * 2, 20)
+                            }
+                            modelColumnWidth={`${minimumModelColumnWidth}px`}
+                            primaryColumnId={primaryColumnId}
+                          />
                         )}
                       </>
+                    ) : (
+                      <React.Fragment>
+                        <TableRow>
+                          <TableCell
+                            colSpan={columns.length}
+                            className="h-24 text-center"
+                          >
+                            No results.
+                          </TableCell>
+                        </TableRow>
+                      </React.Fragment>
                     )}
-                    {(hasNextPage && (isFetchingNextPage || isPrefetching)) && (
-                      <RowSkeletons
-                        table={table}
-                        rows={
-                          typeof skeletonNextPageRowCount === "number"
-                            ? skeletonNextPageRowCount
-                            : Math.max(overscan * 2, 20)
-                        }
-                        modelColumnWidth={`${minimumModelColumnWidth}px`}
-                        primaryColumnId={primaryColumnId}
-                      />
-                    )}
-                  </>
-                ) : (
-                  <React.Fragment>
-                    <TableRow>
-                      <TableCell
-                        colSpan={columns.length}
-                        className="h-24 text-center"
-                      >
-                        No results.
-                      </TableCell>
-                    </TableRow>
-                  </React.Fragment>
-                )}
                   </TableBody>
                 </Table>
               </div>
@@ -1114,8 +1114,8 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
               ? renderSheetCharts(selectedRow ?? null)
               : selectedRow?.original
                 ? (
-                    <LazyGpuSheetCharts stableKey={(selectedRow.original as any)?.stable_key} />
-                  )
+                  <LazyGpuSheetCharts stableKey={(selectedRow.original as any)?.stable_key} />
+                )
                 : null;
 
             if (!chartsNode) return null;
@@ -1162,8 +1162,8 @@ function Row<TData>({
 }) {
   const canHover =
     typeof window !== "undefined" &&
-    window.matchMedia &&
-    window.matchMedia("(hover: hover) and (pointer: fine)").matches
+      window.matchMedia &&
+      window.matchMedia("(hover: hover) and (pointer: fine)").matches
       ? true
       : undefined;
 
@@ -1207,7 +1207,7 @@ function Row<TData>({
     >
       {row.getVisibleCells().map((cell) => {
         const isCheckboxCell = cell.column.id === "blank";
-        const stopPropagation = (e: any) => {
+        const stopPropagation = (e: React.SyntheticEvent) => {
           e.stopPropagation();
         };
         const isModelColumn = primaryColumnId
@@ -1227,7 +1227,7 @@ function Row<TData>({
               cell.column.columnDef.meta?.cellClassName,
             )}
             style={{
-              width: getModelColumnWidth 
+              width: getModelColumnWidth
                 ? getModelColumnWidth(cell.column.id, cell.column.getSize())
                 : `${cell.column.getSize()}px`,
               minWidth:

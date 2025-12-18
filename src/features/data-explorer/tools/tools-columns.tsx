@@ -34,7 +34,7 @@ export const toolsColumns: ColumnDef<ToolColumnSchema>[] = [
     enableHiding: false,
     enableResizing: false,
     cell: ({ row }) => {
-      const stop = (e: any) => e.stopPropagation();
+      const stop = (e: React.SyntheticEvent) => e.stopPropagation();
       return (
         <div
           className="flex h-full items-center justify-center"
@@ -67,7 +67,7 @@ export const toolsColumns: ColumnDef<ToolColumnSchema>[] = [
       return (
         <div className="flex min-w-0 items-center gap-2">
           <span className="relative flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border/40 bg-background">
-            {logo ? (
+            {logo && logo.src ? (
               <Image
                 src={logo.src}
                 alt=""
@@ -117,36 +117,6 @@ export const toolsColumns: ColumnDef<ToolColumnSchema>[] = [
     },
   },
   {
-    accessorKey: "category",
-    header: ({ column }) => (
-      <DataTableColumnHeader
-        column={column}
-        title="Category"
-        centerTitle
-        className="w-full"
-      />
-    ),
-    cell: ({ row }) => {
-      const category = row.original.category;
-      if (!category) {
-        return <span className="block truncate text-center text-muted-foreground">N/A</span>;
-      }
-      return (
-        <div className="flex justify-center">
-          <span className="block w-fit max-w-full truncate rounded-sm border border-border/70 bg-background px-[6px] text-[12px] leading-[18px] h-[20px]">
-            {category}
-          </span>
-        </div>
-      );
-    },
-    size: 211,
-    minSize: 211,
-    meta: {
-      cellClassName: "text-center min-w-[211px]",
-      headerClassName: "text-center min-w-[211px]",
-    },
-  },
-  {
     accessorKey: "developer",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Developer" />,
     cell: ({ row }) => {
@@ -156,16 +126,20 @@ export const toolsColumns: ColumnDef<ToolColumnSchema>[] = [
       }
       return <span className="block truncate text-left">{developer}</span>;
     },
-    size: 160,
-    minSize: 160,
+    size: 165,
+    minSize: 165,
     meta: {
-      cellClassName: "text-left min-w-[160px]",
-      headerClassName: "text-left min-w-[160px]",
+      cellClassName: "text-left min-w-[165px]",
+      headerClassName: "text-left min-w-[165px]",
     },
   },
   {
     accessorKey: "stack",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Runtime" />,
+    header: ({ column }) => (
+      <div className="flex justify-start">
+        <DataTableColumnHeader column={column} title="Runtime" />
+      </div>
+    ),
     cell: ({ row }) => {
       const stack = row.original.stack;
       if (!stack) {
@@ -173,37 +147,41 @@ export const toolsColumns: ColumnDef<ToolColumnSchema>[] = [
       }
       return <span className="block truncate text-left">{stack}</span>;
     },
-    size: 160,
-    minSize: 160,
+    size: 165,
+    minSize: 165,
     meta: {
-      cellClassName: "text-left min-w-[160px]",
-      headerClassName: "text-left min-w-[160px]",
+      cellClassName: "text-left min-w-[165px]",
+      headerClassName: "text-left min-w-[165px]",
     },
   },
   {
-    accessorKey: "oss",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="OSS" />,
+    accessorKey: "price",
+    header: ({ column }) => (
+      <div className="flex justify-start">
+        <DataTableColumnHeader column={column} title="Price" />
+      </div>
+    ),
     cell: ({ row }) => {
-      const oss = row.original.oss;
-      if (oss === null || oss === undefined) {
+      const price = row.original.price;
+      if (!price) {
         return <span className="block truncate text-left text-muted-foreground">N/A</span>;
       }
-      const displayOss = typeof oss === "string" ? oss.trim() : String(oss);
-      if (!displayOss) {
-        return <span className="block truncate text-left text-muted-foreground">N/A</span>;
-      }
-      return <span className="block truncate text-left">{displayOss}</span>;
+      return <span className="block truncate text-left">{price}</span>;
     },
-    size: 73,
-    minSize: 73,
+    size: 165,
+    minSize: 165,
     meta: {
-      cellClassName: "text-left min-w-[73px]",
-      headerClassName: "text-left min-w-[73px]",
+      cellClassName: "text-left min-w-[165px]",
+      headerClassName: "text-left min-w-[165px]",
     },
   },
   {
     accessorKey: "license",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="License" />,
+    header: ({ column }) => (
+      <div className="flex justify-start">
+        <DataTableColumnHeader column={column} title="License" />
+      </div>
+    ),
     cell: ({ row }) => {
       const license = row.original.license;
       if (!license) {
@@ -211,11 +189,34 @@ export const toolsColumns: ColumnDef<ToolColumnSchema>[] = [
       }
       return <span className="block truncate text-left">{license}</span>;
     },
-    size: 160,
-    minSize: 160,
+    size: 165,
+    minSize: 165,
     meta: {
-      cellClassName: "text-left min-w-[160px]",
-      headerClassName: "text-left min-w-[160px]",
+      cellClassName: "text-left min-w-[165px]",
+      headerClassName: "text-left min-w-[165px]",
+    },
+  },
+  {
+    accessorKey: "category",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Category" />,
+    cell: ({ row }) => {
+      const category = row.original.category;
+      if (!category) {
+        return <span className="block truncate text-left text-muted-foreground">N/A</span>;
+      }
+      return (
+        <div className="flex justify-start">
+          <span className="block max-w-full truncate text-[12px] border border-border/70 w-fit bg-background leading-[18px] rounded-sm h-[20px] px-[6px]">
+            {category}
+          </span>
+        </div>
+      );
+    },
+    size: 211,
+    minSize: 211,
+    meta: {
+      cellClassName: "text-left min-w-[211px]",
+      headerClassName: "text-left min-w-[211px]",
     },
   },
 ];

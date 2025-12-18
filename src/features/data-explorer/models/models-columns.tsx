@@ -56,7 +56,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
     enableHiding: false,
     enableResizing: false,
     cell: ({ row }) => {
-      const stop = (e: any) => e.stopPropagation();
+      const stop = (e: React.SyntheticEvent) => e.stopPropagation();
       return (
         <div
           className="flex h-full items-center justify-center"
@@ -175,11 +175,11 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
       );
     },
     filterFn: "inNumberRange",
-    size: 150,
-    minSize: 150,
+    size: 145,
+    minSize: 145,
     meta: {
-      cellClassName: "text-right min-w-[150px]",
-      headerClassName: "text-right min-w-[150px]",
+      cellClassName: "text-right min-w-[145px]",
+      headerClassName: "text-right min-w-[145px]",
     },
   },
   {
@@ -215,11 +215,11 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
     filterFn: "inNumberRange",
     enableSorting: true,
     sortingFn: "auto",
-    size: 150,
-    minSize: 150,
+    size: 145,
+    minSize: 145,
     meta: {
-      cellClassName: "text-right min-w-[150px]",
-      headerClassName: "text-right min-w-[150px]",
+      cellClassName: "text-right min-w-[145px]",
+      headerClassName: "text-right min-w-[145px]",
     },
   },
   {
@@ -242,23 +242,20 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
     },
     enableSorting: true,
     sortingFn: "auto",
-    size: 150,
-    minSize: 150,
+    size: 145,
+    minSize: 145,
     meta: {
-      cellClassName: "text-right min-w-[150px] tabular-nums",
-      headerClassName: "text-right min-w-[150px] tabular-nums",
+      cellClassName: "text-right min-w-[145px] tabular-nums",
+      headerClassName: "text-right min-w-[145px] tabular-nums",
     },
   },
   {
     id: "modalities",
     accessorKey: "inputModalities",
     header: ({ column }) => (
-      <DataTableColumnHeader
-        column={column}
-        title="Modality"
-        centerTitle
-        className="w-full"
-      />
+      <div className="flex justify-start">
+        <DataTableColumnHeader column={column} title="Modality" />
+      </div>
     ),
     cell: ({ row }) => {
       const inputModalities = row.original.inputModalities ?? [];
@@ -282,7 +279,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
       );
 
       return (
-        <div className="flex justify-center">
+        <div className="flex justify-start">
           <HoverCard openDelay={0} closeDelay={0}>
             <HoverCardTrigger asChild>
               <div className="text-[12px] border border-border/70 w-fit bg-background leading-[18px] rounded-sm h-[20px] px-[6px] text-left tracking-wide cursor-pointer">
@@ -306,11 +303,11 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
       );
     },
     enableSorting: true,
-    size: 150,
-    minSize: 150,
+    size: 145,
+    minSize: 145,
     meta: {
-      cellClassName: "text-center min-w-[150px]",
-      headerClassName: "text-center min-w-[150px]",
+      cellClassName: "text-left min-w-[145px]",
+      headerClassName: "text-left min-w-[145px]",
     },
   },
   {
@@ -340,11 +337,11 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
       );
     },
     filterFn: "inNumberRange",
-    size: 150,
-    minSize: 150,
+    size: 145,
+    minSize: 145,
     meta: {
-      cellClassName: "text-right min-w-[150px]",
-      headerClassName: "text-right min-w-[150px]",
+      cellClassName: "text-right min-w-[145px]",
+      headerClassName: "text-right min-w-[145px]",
     },
   },
   {
@@ -374,11 +371,11 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
       );
     },
     filterFn: "inNumberRange",
-    size: 150,
-    minSize: 150,
+    size: 145,
+    minSize: 145,
     meta: {
-      cellClassName: "text-right min-w-[150px]",
-      headerClassName: "text-right min-w-[150px]",
+      cellClassName: "text-right min-w-[145px]",
+      headerClassName: "text-right min-w-[145px]",
     },
   },
 ];

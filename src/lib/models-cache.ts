@@ -141,7 +141,7 @@ const PROVIDER_SORT_ORDER = [
   "Google Vertex",
   "Azure",
   "Groq",
-  "Crusoe", 
+  "Crusoe",
   "Cerebras",
   "Phala",
   "Hyperbolic",
@@ -231,7 +231,7 @@ const buildProviderOrderBy = (isDesc: boolean): SQL<unknown>[] => {
 type AIModelRow = typeof aiModels.$inferSelect;
 
 const mapRowToAIModel = (row: AIModelRow): AIModel => {
-  const pricingData = (row.pricing as Record<string, any>) || {};
+  const pricingData = (row.pricing as Record<string, unknown>) || {};
   const promptPrice = parseNullableNumber(
     row.promptPrice !== undefined ? row.promptPrice : pricingData?.prompt,
   );
@@ -258,7 +258,7 @@ const mapRowToAIModel = (row: AIModelRow): AIModel => {
     permaslug: row.permaslug || undefined,
     endpointId: row.endpointId || undefined,
     pricing: pricingData,
-    features: row.features as Record<string, any>,
+    features: row.features as Record<string, unknown>,
     provider: row.provider,
     throughput: parseNullableNumber(row.throughput),
     maxCompletionTokens: row.maxCompletionTokens ?? null,
@@ -271,7 +271,7 @@ const mapRowToAIModel = (row: AIModelRow): AIModel => {
 };
 
 function buildModelFilterConditions(search: ModelsSearchParamsType) {
-  const conditions: any[] = [];
+  const conditions: SQL<unknown>[] = [];
 
   if (search.provider && search.provider.length > 0) {
     conditions.push(inArray(aiModels.provider, search.provider));
@@ -651,7 +651,7 @@ class ModelsCache {
 
     // Build ORDER BY clause (same logic as getModelsFiltered)
     const defaultOrderBy = [desc(userModelFavorites.createdAt), asc(aiModels.provider)];
-    let orderByClause: any;
+    let orderByClause: SQL<unknown> | SQL<unknown>[] | undefined;
     if (search.sort) {
       const { id, desc: isDesc } = search.sort;
       const direction = isDesc ? desc : asc;

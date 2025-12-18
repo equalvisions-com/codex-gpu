@@ -202,11 +202,12 @@ export const userModelFavorites = pgTable("user_model_favorites", {
 
 // Tools table - stores imported tools data (static)
 export const tools = pgTable("tools", {
-  id: text("id").primaryKey(),
+  id: integer("id").primaryKey(),
   name: text("name"),
   developer: text("developer"),
   description: text("description"),
   category: text("category"),
+  price: text("price"),
   license: text("license"),
   url: text("url"),
   stack: text("stack"),
@@ -216,6 +217,7 @@ export const tools = pgTable("tools", {
   nameIndex: index("tools_name_idx").on(table.name),
   developerIndex: index("tools_developer_idx").on(table.developer),
   categoryIndex: index("tools_category_idx").on(table.category),
+  priceIndex: index("tools_price_idx").on(table.price),
   licenseIndex: index("tools_license_idx").on(table.license),
   stackIndex: index("tools_stack_idx").on(table.stack),
   ossIndex: index("tools_oss_idx").on(table.oss),
@@ -241,7 +243,7 @@ export const userToolFavorites = pgTable("user_tool_favorites", {
   userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
-  toolId: text("tool_id").notNull(),
+  toolId: integer("tool_id").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (table) => ({
   userToolUnique: uniqueIndex("user_tool_unique").on(table.userId, table.toolId),

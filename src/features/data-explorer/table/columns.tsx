@@ -100,7 +100,7 @@ export const columns: ColumnDef<ColumnSchema>[] = [
     enableHiding: false,
     enableResizing: false,
     cell: ({ row }) => {
-      const stop = (e: any) => e.stopPropagation();
+      const stop = (e: React.SyntheticEvent) => e.stopPropagation();
       return (
         <div className="flex items-center justify-center h-full" onClick={stop} onMouseDown={stop} onPointerDown={stop} onKeyDown={stop}>
           <RowCheckboxCell rowId={row.id} />
@@ -135,11 +135,11 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       );
     },
     filterFn: "inNumberRange",
-    size: 150,
-    minSize: 150,
+    size: 145,
+    minSize: 145,
     meta: {
-      headerClassName: "text-right min-w-[150px]",
-      cellClassName: "text-right min-w-[150px]",
+      headerClassName: "text-right min-w-[145px]",
+      cellClassName: "text-right min-w-[145px]",
     },
   },
   {
@@ -161,11 +161,11 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       );
     },
     filterFn: "inNumberRange",
-    size: 150,
-    minSize: 150,
+    size: 145,
+    minSize: 145,
     meta: {
-      cellClassName: "text-right min-w-[150px]",
-      headerClassName: "text-right min-w-[150px]",
+      cellClassName: "text-right min-w-[145px]",
+      headerClassName: "text-right min-w-[145px]",
     },
   },
   {
@@ -187,11 +187,11 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       );
     },
     filterFn: "inNumberRange",
-    size: 150,
-    minSize: 150,
+    size: 145,
+    minSize: 145,
     meta: {
-      cellClassName: "text-right min-w-[150px]",
-      headerClassName: "text-right min-w-[150px]",
+      cellClassName: "text-right min-w-[145px]",
+      headerClassName: "text-right min-w-[145px]",
     },
   },
   {
@@ -213,11 +213,11 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       );
     },
     filterFn: "inNumberRange",
-    size: 150,
-    minSize: 150,
+    size: 145,
+    minSize: 145,
     meta: {
-      cellClassName: "text-right min-w-[150px]",
-      headerClassName: "text-right min-w-[150px]",
+      cellClassName: "text-right min-w-[145px]",
+      headerClassName: "text-right min-w-[145px]",
     },
   },
   {
@@ -239,40 +239,37 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       );
     },
     filterFn: "inNumberRange",
-    size: 150,
-    minSize: 150,
+    size: 145,
+    minSize: 145,
     meta: {
-      cellClassName: "text-right min-w-[150px]",
-      headerClassName: "text-right min-w-[150px]",
+      cellClassName: "text-right min-w-[145px]",
+      headerClassName: "text-right min-w-[145px]",
     },
   },
   {
     accessorKey: "type",
     header: ({ column }) => (
-      <DataTableColumnHeader
-        column={column}
-        title="Config"
-        centerTitle
-        className="w-full"
-      />
+      <div className="flex justify-start">
+        <DataTableColumnHeader column={column} title="Config" />
+      </div>
     ),
     cell: ({ row }) => {
       const type = row.getValue<ColumnSchema["type"]>("type");
       return type ? (
-        <div className="flex justify-center">
+        <div className="flex justify-start">
           <span className="block text-[12px] border border-border/70 w-fit bg-background leading-[18px] rounded-sm h-[20px] px-[6px]">
             {type}
           </span>
         </div>
       ) : (
-        <span className="text-foreground/70">N/A</span>
+        <span className="block text-left text-foreground/70">N/A</span>
       );
     },
-    size: 150,
-    minSize: 150,
+    size: 145,
+    minSize: 145,
     meta: {
-      cellClassName: "text-center min-w-[150px]",
-      headerClassName: "text-center min-w-[150px]",
+      cellClassName: "text-left min-w-[145px]",
+      headerClassName: "text-left min-w-[145px]",
     },
   },
 ];

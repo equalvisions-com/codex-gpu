@@ -61,10 +61,7 @@ export function GpuCompareChart({
     return rows
       .map((row, index) => {
         const data = row.original as ColumnSchema;
-        const stableKey =
-          (data as any).stable_key ??
-          (data as any).stableKey ??
-          null;
+        const stableKey = data.stable_key ?? null;
         if (!stableKey) return null;
         const providerName = data.provider
           ? data.provider.charAt(0).toUpperCase() + data.provider.slice(1)

@@ -10,6 +10,19 @@ import { normalizeObservedAt } from "@/lib/normalize-observed-at";
 
 type GpuPricingRow = typeof gpuPricing.$inferSelect;
 
+// Helper type to access optional fields from PriceRow union
+type PriceRowFields = {
+  gpu_model?: string;
+  item?: string;
+  sku?: string;
+  gpu_count?: number;
+  vram_gb?: number;
+  type?: "Virtual Machine" | "Bare Metal" | "VM";
+  price_hour_usd?: number;
+  price_usd?: number;
+  price_month_usd?: number;
+};
+
 function computeRowId(provider: string, observedAt: string, row: PriceRow): string {
   const hashInput = JSON.stringify({ provider, observed_at: observedAt, row });
   return createHash("sha256").update(hashInput).digest("hex");
@@ -20,7 +33,7 @@ function toRowWithId(record: GpuPricingRow): RowWithId {
   const observedAtIso = normalizeObservedAt(record.observedAt);
   return {
     uuid: record.id,
-    ...(data as any),
+    ...data,
     provider: record.provider,
     observed_at: observedAtIso,
     stable_key: record.stableKey,
@@ -28,10 +41,11 @@ function toRowWithId(record: GpuPricingRow): RowWithId {
 }
 
 function getPriceUsd(row: PriceRow): number | null {
+  const rowData = row as PriceRowFields;
   const priceCandidates = [
-    (row as any).price_hour_usd,
-    (row as any).price_usd,
-    (row as any).price_month_usd,
+    rowData.price_hour_usd,
+    rowData.price_usd,
+    rowData.price_month_usd,
   ];
 
   for (const candidate of priceCandidates) {
@@ -83,15 +97,16 @@ class GpuPricingStore {
 
       for (const row of result.rows) {
         const id = computeRowId(result.provider, observedAtIso, row);
+        const rowData = row as PriceRowFields;
         const stableKey = stableGpuKey({
           provider: result.provider,
-          gpu_model: (row as any).gpu_model,
-          item: (row as any).item,
-          sku: (row as any).sku,
-          gpu_count: (row as any).gpu_count,
-          vram_gb: (row as any).vram_gb,
-          type: (row as any).type,
-        } as any);
+          gpu_model: rowData.gpu_model,
+          item: rowData.item,
+          sku: rowData.sku,
+          gpu_count: rowData.gpu_count,
+          vram_gb: rowData.vram_gb,
+          type: rowData.type === "Virtual Machine" ? "VM" : rowData.type,
+        });
 
         rowsToInsert.push({
           id,

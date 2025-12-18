@@ -1,10 +1,13 @@
 "use client";
 
 import type { DataTableSliderFilterField } from "./types";
+import type { ColumnFiltersState } from "@tanstack/react-table";
 import { Slider } from "@/components/custom/slider";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useDataTable } from "@/features/data-explorer/data-table/data-table-provider";
+
+type ColumnFilter = ColumnFiltersState[number];
 
 const PROMPT_PRICE_SLIDER_MIN = 0;
 const PROMPT_PRICE_SLIDER_MAX = 1;
@@ -378,7 +381,7 @@ function DataTableFilterSliderComponent<TData>({
       isUserInteractingRef.current = false;
     };
 
-    const otherFilters = columnFiltersRef.current.filter((f: any) => f.id !== value);
+    const otherFilters = columnFiltersRef.current.filter((f: ColumnFilter) => f.id !== value);
     const tolerance = Math.max(1e-12, sliderStep ?? (defaultMax - defaultMin) * 0.001);
 
     if (isPriceFilter) {
@@ -388,7 +391,7 @@ function DataTableFilterSliderComponent<TData>({
       const normalizedMin = 0;
 
       if (!isAtMax) {
-        const previous = columnFiltersRef.current.find((f: any) => f.id === value);
+        const previous = columnFiltersRef.current.find((f: ColumnFilter) => f.id === value);
         if (previous && Array.isArray(previous.value)) {
           const [prevMin, prevMax] = previous.value as (string | number)[];
           if (Number(prevMax) === Number(normalizedMax) && Number(prevMin) === Number(normalizedMin)) {
@@ -417,7 +420,7 @@ function DataTableFilterSliderComponent<TData>({
       const normalizedMin = sliderConfig.valueMin;
 
       if (!isAtMax) {
-        const previous = columnFiltersRef.current.find((f: any) => f.id === value);
+        const previous = columnFiltersRef.current.find((f: ColumnFilter) => f.id === value);
         if (previous && Array.isArray(previous.value)) {
           const [prevMin, prevMax] = previous.value as (string | number)[];
           if (Number(prevMax) === Number(boundedMax) && Number(prevMin) === Number(normalizedMin)) {
@@ -445,7 +448,7 @@ function DataTableFilterSliderComponent<TData>({
         : 0;
 
     if (!isAtMax) {
-      const previous = columnFiltersRef.current.find((f: any) => f.id === value);
+      const previous = columnFiltersRef.current.find((f: ColumnFilter) => f.id === value);
       if (previous && Array.isArray(previous.value)) {
         const [prevMin, prevMax] = previous.value as (string | number)[];
         if (Number(prevMax) === Number(maxValue) && Number(prevMin) === Number(normalizedMin)) {

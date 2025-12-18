@@ -65,6 +65,7 @@ function mapToColumnSchema(tool: Tool): ToolColumnSchema {
     developer: tool.developer,
     description: tool.description,
     category: tool.category,
+    price: tool.price,
     license: tool.license,
     url: tool.url,
     stack: tool.stack,
@@ -121,6 +122,7 @@ export async function getToolsPage(
     developer: facetsData.developer,
     license: facetsData.license,
     category: facetsData.category,
+    price: facetsData.price,
     stack: facetsData.stack,
     oss: facetsData.oss,
   };

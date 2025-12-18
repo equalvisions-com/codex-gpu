@@ -54,13 +54,13 @@ const buildProviderOrderBy = (isDesc: boolean): SQL<unknown>[] => {
 };
 
 function toRowWithId(record: GpuPricingRow): RowWithId {
-  const data = record.data as Record<string, any>;
+  const data = record.data as Record<string, unknown>;
   const observedAtIso = normalizeObservedAt(record.observedAt);
-  
+
   // Extract price fields (canonical: price_hour_usd || price_usd)
-  const priceHourUsd = typeof data.price_hour_usd === 'number' ? data.price_hour_usd : 
-                      typeof data.price_usd === 'number' ? data.price_usd : undefined;
-  
+  const priceHourUsd = typeof data.price_hour_usd === 'number' ? data.price_hour_usd :
+    typeof data.price_usd === 'number' ? data.price_usd : undefined;
+
   return {
     uuid: record.id,
     ...data,
@@ -72,7 +72,7 @@ function toRowWithId(record: GpuPricingRow): RowWithId {
 }
 
 function buildGpuFilterConditions(search: SearchParamsType) {
-  const conditions: any[] = [];
+  const conditions: SQL<unknown>[] = [];
 
   // Provider filter (array or string)
   if (search.provider) {
@@ -492,7 +492,7 @@ class GpuPricingCache {
 
     // Build ORDER BY clause (same logic as getGpusFiltered)
     const defaultOrderBy = [desc(userFavorites.createdAt), asc(gpuPricing.provider)];
-    let orderByClause: any;
+    let orderByClause: SQL<unknown> | SQL<unknown>[] | undefined;
     if (search.sort) {
       const { id, desc: isDesc } = search.sort;
       const direction = isDesc ? desc : asc;

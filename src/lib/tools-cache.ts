@@ -26,6 +26,7 @@ const mapRowToTool = (row: ToolRow): Tool => {
     developer: parseNullableString(row.developer),
     description: parseNullableString(row.description),
     category: parseNullableString(row.category),
+    price: parseNullableString(row.price),
     license: parseNullableString(row.license),
     url: parseNullableString(row.url),
     stack: parseNullableString(row.stack),
@@ -43,6 +44,10 @@ function buildToolFilterConditions(search: ToolsSearchParamsType) {
 
   if (search.category && search.category.length > 0) {
     conditions.push(inArray(tools.category, search.category));
+  }
+
+  if (search.price && search.price.length > 0) {
+    conditions.push(inArray(tools.price, search.price));
   }
 
   if (search.license && search.license.length > 0) {
@@ -65,6 +70,7 @@ function buildToolFilterConditions(search: ToolsSearchParamsType) {
         ilike(tools.description, term),
         ilike(tools.developer, term),
         ilike(tools.category, term),
+        ilike(tools.price, term),
         ilike(tools.license, term),
         ilike(tools.url, term),
         ilike(tools.stack, term),
@@ -88,13 +94,13 @@ class ToolsCache {
 
     const filterCount = whereClause
       ? Number(
-          (
-            await db
-              .select({ count: sql<number>`count(*)` })
-              .from(tools)
-              .where(whereClause)
-          )[0]?.count || 0,
-        )
+        (
+          await db
+            .select({ count: sql<number>`count(*)` })
+            .from(tools)
+            .where(whereClause)
+        )[0]?.count || 0,
+      )
       : totalCount;
 
     let orderByClause: SQL<unknown> | SQL<unknown>[];
@@ -118,6 +124,9 @@ class ToolsCache {
         case "category":
           orderByClause = direction(tools.category);
           break;
+        case "price":
+          orderByClause = direction(tools.price);
+          break;
         case "stack":
           orderByClause = direction(tools.stack);
           break;
@@ -125,10 +134,10 @@ class ToolsCache {
           orderByClause = direction(tools.oss);
           break;
         default:
-          orderByClause = buildNameOrder(false);
+          orderByClause = asc(tools.id);
       }
     } else {
-      orderByClause = buildNameOrder(false);
+      orderByClause = asc(tools.id);
     }
 
     const cursor = typeof search.cursor === "number" && search.cursor >= 0 ? search.cursor : 0;
@@ -178,12 +187,18 @@ class ToolsCache {
       .from(tools)
       .groupBy(tools.oss);
 
+    const priceRows = await db
+      .select({ value: tools.price, total: sql<number>`count(*)` })
+      .from(tools)
+      .groupBy(tools.price);
+
     return {
       developer: { rows: developerRows.map((r) => ({ value: r.value, total: Number(r.total) })), total: totalCount },
       license: { rows: licenseRows.map((r) => ({ value: r.value, total: Number(r.total) })), total: totalCount },
       category: { rows: categoryRows.map((r) => ({ value: r.value, total: Number(r.total) })), total: totalCount },
       stack: { rows: stackRows.map((r) => ({ value: r.value, total: Number(r.total) })), total: totalCount },
       oss: { rows: ossRows.map((r) => ({ value: r.value, total: Number(r.total) })), total: totalCount },
+      price: { rows: priceRows.map((r) => ({ value: r.value, total: Number(r.total) })), total: totalCount },
     };
   }
 
@@ -194,7 +209,7 @@ class ToolsCache {
     const filterConditions = buildToolFilterConditions(search);
     const defaultOrderBy = [desc(userToolFavorites.createdAt), asc(tools.name)];
 
-    let orderByClause: any;
+    let orderByClause: SQL<unknown> | SQL<unknown>[] | undefined;
     if (search.sort) {
       const { id, desc: isDesc } = search.sort;
       const direction = isDesc ? desc : asc;
@@ -214,6 +229,18 @@ class ToolsCache {
           break;
         case "category":
           orderByClause = direction(tools.category);
+          break;
+        case "price":
+          orderByClause = direction(tools.price);
+          break;
+        case "stack":
+          orderByClause = direction(tools.stack);
+          break;
+        case "oss":
+          orderByClause = direction(tools.oss);
+          break;
+        case "license":
+          orderByClause = direction(tools.license);
           break;
         default:
           orderByClause = defaultOrderBy;
@@ -258,6 +285,7 @@ class ToolsCache {
         developer: tools.developer,
         description: tools.description,
         category: tools.category,
+        price: tools.price,
         license: tools.license,
         url: tools.url,
         stack: tools.stack,
@@ -288,7 +316,7 @@ class ToolsCache {
     return rows.map(mapRowToTool);
   }
 
-  async getToolsByIds(ids: string[]): Promise<Tool[]> {
+  async getToolsByIds(ids: number[]): Promise<Tool[]> {
     if (!ids.length) return [];
     const unique = Array.from(new Set(ids));
     const rows = await db.select().from(tools).where(inArray(tools.id, unique));

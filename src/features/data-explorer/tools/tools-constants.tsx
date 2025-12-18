@@ -58,8 +58,8 @@ export const toolsColumnOrder = [
   "description",
   "developer",
   "stack",
+  "price",
   "license",
-  "oss",
   "category",
 ] as const;
 
@@ -74,6 +74,12 @@ export const filterFields: DataTableFilterField<ToolColumnSchema>[] = [
   {
     label: "Categories",
     value: "category",
+    type: "checkbox",
+    defaultOpen: true,
+  },
+  {
+    label: "Price",
+    value: "price",
     type: "checkbox",
     defaultOpen: true,
   },
@@ -121,15 +127,15 @@ export const sheetFields: SheetField<ToolColumnSchema>[] = [
             size={40}
             className="h-10 w-10 shrink-0"
           />
-        <div className="flex flex-col gap-0 leading-tight">
-          <h2 className={cn("text-lg font-semibold leading-tight tracking-tight")}>
-            {row.name || "Unknown Tool"}
-          </h2>
-          <p className="pb-4 text-sm text-foreground/70 leading-tight">
-            {row.developer || "Unknown Developer"}
-          </p>
+          <div className="flex flex-col gap-0 leading-tight">
+            <h2 className={cn("text-lg font-semibold leading-tight tracking-tight")}>
+              {row.name || "Unknown Tool"}
+            </h2>
+            <p className="pb-4 text-sm text-foreground/70 leading-tight">
+              {row.developer || "Unknown Developer"}
+            </p>
+          </div>
         </div>
-      </div>
       );
     },
   },
@@ -147,23 +153,16 @@ export const sheetFields: SheetField<ToolColumnSchema>[] = [
       ),
   },
   {
-    id: "license",
-    label: "License",
-    type: "readonly",
-    component: (row) =>
-      row.license ? (
-        <span className="inline-block rounded-sm border border-border/60 bg-background px-2 py-1 text-xs">
-          {row.license}
-        </span>
-      ) : (
-        "N/A"
-      ),
-  },
-  {
     id: "stack",
     label: "Stack",
     type: "readonly",
     component: (row) => row.stack || "N/A",
+  },
+  {
+    id: "price",
+    label: "Price",
+    type: "readonly",
+    component: (row) => row.price || "N/A",
   },
   {
     id: "category",
@@ -172,22 +171,21 @@ export const sheetFields: SheetField<ToolColumnSchema>[] = [
     component: (row) => row.category || "N/A",
   },
   {
-    id: "oss",
-    label: "OSS",
-    type: "readonly",
-    component: (row) =>
-      row.oss ? (
-        <span className="inline-block rounded-sm border border-border/60 bg-background px-2 py-1 text-xs">
-          {row.oss}
-        </span>
-      ) : (
-        "N/A"
-      ),
-  },
-  {
     id: "developer",
     label: "Developer",
     type: "readonly",
     component: (row) => row.developer || "N/A",
+  },
+  {
+    id: "oss",
+    label: "OSS",
+    type: "readonly",
+    component: (row) => row.oss || "N/A",
+  },
+  {
+    id: "license",
+    label: "License",
+    type: "readonly",
+    component: (row) => row.license || "N/A",
   },
 ] as const;

@@ -23,6 +23,7 @@ const parseAsSort = createParser({
 export const toolsSearchParamsParser = {
   developer: parseAsArrayOf(parseAsString, ARRAY_DELIMITER),
   category: parseAsArrayOf(parseAsString, ARRAY_DELIMITER),
+  price: parseAsArrayOf(parseAsString, ARRAY_DELIMITER),
   license: parseAsArrayOf(parseAsString, ARRAY_DELIMITER),
   stack: parseAsArrayOf(parseAsString, ARRAY_DELIMITER),
   oss: parseAsArrayOf(parseAsString, ARRAY_DELIMITER),
