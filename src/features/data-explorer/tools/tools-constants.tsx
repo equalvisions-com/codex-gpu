@@ -52,7 +52,7 @@ const LogoBadge = ({
   );
 };
 
-export const toolsColumnOrder = [
+export const toolsColumnOrder: string[] = [
   "blank",
   "name",
   "description",
@@ -61,7 +61,7 @@ export const toolsColumnOrder = [
   "price",
   "license",
   "category",
-] as const;
+];
 
 export const filterFields: DataTableFilterField<ToolColumnSchema>[] = [
   {

@@ -17,7 +17,7 @@ import {
 type UserToolFavoriteRow = {
   id: string;
   userId: string;
-  toolId: string;
+  toolId: number;
   createdAt: Date | null;
 };
 
@@ -45,7 +45,7 @@ export async function GET() {
           .from(userToolFavorites)
           .where(eq(userToolFavorites.userId, userId));
         const typedRows = rows as unknown as UserToolFavoriteRow[];
-        return (typedRows || []).map((r) => r.toolId as ToolFavoriteKey);
+        return (typedRows || []).map((r) => String(r.toolId) as ToolFavoriteKey);
       },
       ["tool-favorites:api", session.user.id],
       {
@@ -92,9 +92,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
     }
 
-    const toolIds = Array.from(new Set(parsed.data.toolIds)) as ToolFavoriteKey[];
+    const toolIds = Array.from(new Set(parsed.data.toolIds));
+    const numericToolIds = toolIds.map((id) => parseInt(id, 10)).filter((n) => !isNaN(n));
 
-    const favoritesToInsert = toolIds.map((toolId) => ({
+    if (numericToolIds.length === 0) {
+      return NextResponse.json({ error: "No valid tool IDs provided" }, { status: 400 });
+    }
+
+    const favoritesToInsert = numericToolIds.map((toolId) => ({
       id: crypto.randomUUID(),
       userId: session.user.id,
       toolId,
@@ -152,11 +157,16 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
     }
 
-    const toolIds = Array.from(new Set(parsed.data.toolIds)) as ToolFavoriteKey[];
+    const toolIds = Array.from(new Set(parsed.data.toolIds));
+    const numericToolIds = toolIds.map((id) => parseInt(id, 10)).filter((n) => !isNaN(n));
+
+    if (numericToolIds.length === 0) {
+      return NextResponse.json({ error: "No valid tool IDs provided" }, { status: 400 });
+    }
 
     await db
       .delete(userToolFavorites)
-      .where(and(eq(userToolFavorites.userId, session.user.id), inArray(userToolFavorites.toolId, toolIds)));
+      .where(and(eq(userToolFavorites.userId, session.user.id), inArray(userToolFavorites.toolId, numericToolIds)));
 
     try {
       revalidateTag(getToolFavoritesCacheTag(session.user.id), "max");

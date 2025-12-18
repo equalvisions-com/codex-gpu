@@ -28,14 +28,14 @@ export function stableModelKey(
 
 export function stableToolKey(
   row: Partial<{
-    id: string;
+    id: string | number;
     name: string | null;
     developer: string | null;
     category: string | null;
     license: string | null;
   }>,
 ): string {
-  if (row.id) return row.id;
+  if (row.id != null) return String(row.id);
   const name = row.name?.toLowerCase().trim();
   const developer = row.developer?.toLowerCase().trim();
   const category = row.category?.toLowerCase().trim();

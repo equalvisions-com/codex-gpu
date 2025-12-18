@@ -60,7 +60,7 @@ async function getCachedToolsFiltered(search: ToolsSearchParamsType) {
 
 function mapToColumnSchema(tool: Tool): ToolColumnSchema {
   return {
-    id: tool.id,
+    id: String(tool.id),
     name: tool.name,
     developer: tool.developer,
     description: tool.description,

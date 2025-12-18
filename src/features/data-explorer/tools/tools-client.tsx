@@ -101,7 +101,7 @@ export function ToolsClient({ initialFavoriteKeys, isFavoritesMode }: ToolsClien
       effectiveFavoritesMode,
       queryClient,
     });
-  const noopAsync = React.useCallback(async () => {}, []);
+  const noopAsync = React.useCallback(async () => { }, []);
 
   const queryOptions = React.useMemo(() => toolsDataOptions(search), [search]);
   type QueryData = InfiniteData<
@@ -126,9 +126,9 @@ export function ToolsClient({ initialFavoriteKeys, isFavoritesMode }: ToolsClien
     enabled: !effectiveFavoritesMode,
     ...(cachedData
       ? {
-          initialData: cachedData,
-          initialDataUpdatedAt: cachedState?.dataUpdatedAt,
-        }
+        initialData: cachedData,
+        initialDataUpdatedAt: cachedState?.dataUpdatedAt,
+      }
       : {}),
   });
 
@@ -233,7 +233,7 @@ export function ToolsClient({ initialFavoriteKeys, isFavoritesMode }: ToolsClien
       <DataTableInfinite
         key={`tools-table-${effectiveFavoritesMode ? "favorites" : "all"}`}
         columns={toolsColumns}
-        columnOrder={toolsColumnOrder as unknown as string[]}
+        columnOrder={toolsColumnOrder}
         activeNavValue="/tools"
         navItems={navItems}
         data={flatData}
@@ -257,7 +257,7 @@ export function ToolsClient({ initialFavoriteKeys, isFavoritesMode }: ToolsClien
         error={tableError}
         onRetry={tableRetry}
         renderSheetTitle={({ row }) => row?.original.name || "Tool Details"}
-        getRowId={(row) => row.id || row.stable_key || stableToolKey(row as any)}
+        getRowId={(row) => row.id || row.stable_key || stableToolKey(row)}
         focusTargetRef={contentRef}
         account={{
           user: accountUser,

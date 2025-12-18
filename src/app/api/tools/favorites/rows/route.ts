@@ -92,7 +92,7 @@ async function getFavoriteRowsDirect(
   const pageSize = Math.min(Math.max(1, search.size ?? 50), 200);
   return {
     data: filteredTools.map((tool) => ({
-      id: tool.id,
+      id: String(tool.id),
       name: tool.name,
       developer: tool.developer,
       description: tool.description,
@@ -159,7 +159,7 @@ export async function POST(request: NextRequest) {
     const rows = await toolsCache.getToolsByStableKeys(parsed.data.keys);
     return NextResponse.json({
       rows: rows.map((tool) => ({
-        id: tool.id,
+        id: String(tool.id),
         name: tool.name,
         developer: tool.developer,
         description: tool.description,
