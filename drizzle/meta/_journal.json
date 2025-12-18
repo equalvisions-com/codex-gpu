@@ -132,6 +132,27 @@
       "when": 1765568202224,
       "tag": "0018_living_lady_deathstrike",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1766091715131,
+      "tag": "0019_right_morlocks",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1766092376984,
+      "tag": "0020_pretty_gabe_jones",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1766092498069,
+      "tag": "0021_empty_proudstar",
+      "breakpoints": true
     }
   ]
 }

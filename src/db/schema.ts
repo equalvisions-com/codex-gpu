@@ -101,9 +101,7 @@ export const modelThroughputSamples = pgTable("model_throughput_samples", {
   scrapedAt: timestamp("scraped_at").defaultNow().notNull(),
 }, (table) => ({
   pk: primaryKey({ columns: [table.permaslug, table.endpointId, table.observedAt] }),
-  permaslugIdx: index("model_throughput_permaslug_idx").on(table.permaslug),
   endpointIdx: index("model_throughput_endpoint_idx").on(table.endpointId),
-  observedIdx: index("model_throughput_observed_idx").on(table.observedAt),
 }));
 
 export const modelLatencySamples = pgTable("model_latency_samples", {
@@ -114,9 +112,7 @@ export const modelLatencySamples = pgTable("model_latency_samples", {
   scrapedAt: timestamp("scraped_at").defaultNow().notNull(),
 }, (table) => ({
   pk: primaryKey({ columns: [table.permaslug, table.endpointId, table.observedAt] }),
-  permaslugIdx: index("model_latency_permaslug_idx").on(table.permaslug),
   endpointIdx: index("model_latency_endpoint_idx").on(table.endpointId),
-  observedIdx: index("model_latency_observed_idx").on(table.observedAt),
 }));
 
 export const gpuPriceSamples = pgTable("gpu_price_samples", {
@@ -127,7 +123,6 @@ export const gpuPriceSamples = pgTable("gpu_price_samples", {
   scrapedAt: timestamp("scraped_at").defaultNow().notNull(),
 }, (table) => ({
   pk: primaryKey({ columns: [table.stableKey, table.observedAt] }),
-  stableKeyIdx: index("gpu_price_samples_stable_key_idx").on(table.stableKey),
   providerIdx: index("gpu_price_samples_provider_idx").on(table.provider),
   observedIdx: index("gpu_price_samples_observed_idx").on(table.observedAt),
 }));
@@ -215,8 +210,6 @@ export const tools = pgTable("tools", {
   stableKey: text("stable_key"),
 }, (table) => ({
   nameIndex: index("tools_name_idx").on(table.name),
-  developerIndex: index("tools_developer_idx").on(table.developer),
-  categoryIndex: index("tools_category_idx").on(table.category),
   priceIndex: index("tools_price_idx").on(table.price),
   licenseIndex: index("tools_license_idx").on(table.license),
   stackIndex: index("tools_stack_idx").on(table.stack),
@@ -237,15 +230,15 @@ export const tools = pgTable("tools", {
   categoryNameIndex: index("tools_category_name_idx").on(table.category, table.name),
 }));
 
-// User tool favorites table
+// User tool favorites table - stores stable_key (not mutable id) for persistence across ranking changes
 export const userToolFavorites = pgTable("user_tool_favorites", {
   id: text("id").primaryKey(),
   userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
-  toolId: integer("tool_id").notNull(),
+  toolStableKey: text("tool_stable_key").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (table) => ({
-  userToolUnique: uniqueIndex("user_tool_unique").on(table.userId, table.toolId),
-  toolIdIndex: index("user_tool_favorites_tool_id_idx").on(table.toolId),
+  userToolUnique: uniqueIndex("user_tool_unique").on(table.userId, table.toolStableKey),
+  toolStableKeyIndex: index("user_tool_favorites_tool_stable_key_idx").on(table.toolStableKey),
 }));

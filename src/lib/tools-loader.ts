@@ -76,11 +76,11 @@ function mapToColumnSchema(tool: Tool): ToolColumnSchema {
 
 function stableToolKeyFromTool(tool: Tool) {
   return stableToolKey({
+    stable_key: tool.stableKey ?? null,
     id: tool.id,
-    name: tool.name ?? undefined,
-    developer: tool.developer ?? undefined,
-    category: tool.category ?? undefined,
-    license: tool.license ?? undefined,
+    name: tool.name ?? null,
+    developer: tool.developer ?? null,
+    category: tool.category ?? null,
   });
 }
 

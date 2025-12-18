@@ -257,7 +257,7 @@ export function ToolsClient({ initialFavoriteKeys, isFavoritesMode }: ToolsClien
         error={tableError}
         onRetry={tableRetry}
         renderSheetTitle={({ row }) => row?.original.name || "Tool Details"}
-        getRowId={(row) => row.id || row.stable_key || stableToolKey(row)}
+        getRowId={(row) => row.stable_key || stableToolKey(row)}
         focusTargetRef={contentRef}
         account={{
           user: accountUser,

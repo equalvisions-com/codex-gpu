@@ -17,7 +17,7 @@ import {
 type UserToolFavoriteRow = {
   id: string;
   userId: string;
-  toolId: number;
+  toolStableKey: string;
   createdAt: Date | null;
 };
 
@@ -45,7 +45,7 @@ export async function GET() {
           .from(userToolFavorites)
           .where(eq(userToolFavorites.userId, userId));
         const typedRows = rows as unknown as UserToolFavoriteRow[];
-        return (typedRows || []).map((r) => String(r.toolId) as ToolFavoriteKey);
+        return (typedRows || []).map((r) => r.toolStableKey as ToolFavoriteKey);
       },
       ["tool-favorites:api", session.user.id],
       {
@@ -83,6 +83,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // toolIds are now stable_key strings (not numeric IDs)
     const BodySchema = z.object({
       toolIds: z.array(z.string().min(1).max(256)).min(1).max(50),
     });
@@ -92,17 +93,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
     }
 
-    const toolIds = Array.from(new Set(parsed.data.toolIds));
-    const numericToolIds = toolIds.map((id) => parseInt(id, 10)).filter((n) => !isNaN(n));
+    const stableKeys = Array.from(new Set(parsed.data.toolIds));
 
-    if (numericToolIds.length === 0) {
-      return NextResponse.json({ error: "No valid tool IDs provided" }, { status: 400 });
+    if (stableKeys.length === 0) {
+      return NextResponse.json({ error: "No valid tool stable keys provided" }, { status: 400 });
     }
 
-    const favoritesToInsert = numericToolIds.map((toolId) => ({
+    const favoritesToInsert = stableKeys.map((stableKey) => ({
       id: crypto.randomUUID(),
       userId: session.user.id,
-      toolId,
+      toolStableKey: stableKey,
     }));
 
     await db.insert(userToolFavorites).values(favoritesToInsert).onConflictDoNothing();
@@ -148,6 +148,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
+    // toolIds are now stable_key strings (not numeric IDs)
     const BodySchema = z.object({
       toolIds: z.array(z.string().min(1).max(256)).min(1).max(50),
     });
@@ -157,16 +158,15 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
     }
 
-    const toolIds = Array.from(new Set(parsed.data.toolIds));
-    const numericToolIds = toolIds.map((id) => parseInt(id, 10)).filter((n) => !isNaN(n));
+    const stableKeys = Array.from(new Set(parsed.data.toolIds));
 
-    if (numericToolIds.length === 0) {
-      return NextResponse.json({ error: "No valid tool IDs provided" }, { status: 400 });
+    if (stableKeys.length === 0) {
+      return NextResponse.json({ error: "No valid tool stable keys provided" }, { status: 400 });
     }
 
     await db
       .delete(userToolFavorites)
-      .where(and(eq(userToolFavorites.userId, session.user.id), inArray(userToolFavorites.toolId, numericToolIds)));
+      .where(and(eq(userToolFavorites.userId, session.user.id), inArray(userToolFavorites.toolStableKey, stableKeys)));
 
     try {
       revalidateTag(getToolFavoritesCacheTag(session.user.id), "max");
@@ -191,3 +191,4 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+

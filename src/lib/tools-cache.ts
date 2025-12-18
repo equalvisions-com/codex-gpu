@@ -258,7 +258,7 @@ class ToolsCache {
     const [filteredCountResult] = await db
       .select({ count: sql<number>`count(*)` })
       .from(userToolFavorites)
-      .innerJoin(tools, eq(userToolFavorites.toolId, tools.id))
+      .innerJoin(tools, eq(userToolFavorites.toolStableKey, tools.stableKey))
       .where(whereClause);
 
     const filterCount = Number(filteredCountResult?.count || 0);
@@ -282,7 +282,7 @@ class ToolsCache {
         stableKey: tools.stableKey,
       })
       .from(userToolFavorites)
-      .innerJoin(tools, eq(userToolFavorites.toolId, tools.id))
+      .innerJoin(tools, eq(userToolFavorites.toolStableKey, tools.stableKey))
       .where(whereClause)
       .orderBy(...orderByClause)
       .limit(size)

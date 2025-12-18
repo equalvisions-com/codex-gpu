@@ -28,17 +28,19 @@ export function stableModelKey(
 
 export function stableToolKey(
   row: Partial<{
+    stable_key: string | null;
     id: string | number;
     name: string | null;
     developer: string | null;
     category: string | null;
-    license: string | null;
   }>,
 ): string {
-  if (row.id != null) return String(row.id);
+  // Prefer stable_key if present (DB column)
+  if (row.stable_key) return row.stable_key;
+  // Fallback to composite key for robustness
   const name = row.name?.toLowerCase().trim();
   const developer = row.developer?.toLowerCase().trim();
   const category = row.category?.toLowerCase().trim();
-  const license = row.license?.toLowerCase().trim();
-  return [name, developer, category, license].filter(Boolean).join(":");
+  return [name, developer, category].filter(Boolean).join(":");
 }
+
