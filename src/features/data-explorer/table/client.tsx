@@ -88,10 +88,15 @@ export function Client({ initialFavoriteKeys, isFavoritesMode }: ClientProps = {
         await signOut();
       } finally {
         clearFavoriteQueries();
-        router.refresh();
+        // Redirect to base path when signing out from bookmarks view
+        if (effectiveFavoritesMode) {
+          router.push("/gpus");
+        } else {
+          router.refresh();
+        }
       }
     });
-  }, [clearFavoriteQueries, router, signOut]);
+  }, [clearFavoriteQueries, effectiveFavoritesMode, router, signOut]);
 
   const { favoritesSnapshot, handleFavoritesSnapshot, shouldHydrateFavorites } =
     useFavoritesState({

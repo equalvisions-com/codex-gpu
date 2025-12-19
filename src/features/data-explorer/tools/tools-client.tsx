@@ -90,10 +90,15 @@ export function ToolsClient({ initialFavoriteKeys, isFavoritesMode }: ToolsClien
         await signOut();
       } finally {
         clearFavoriteQueries();
-        router.refresh();
+        // Redirect to base path when signing out from bookmarks view
+        if (effectiveFavoritesMode) {
+          router.push("/tools");
+        } else {
+          router.refresh();
+        }
       }
     });
-  }, [clearFavoriteQueries, router, signOut]);
+  }, [clearFavoriteQueries, effectiveFavoritesMode, router, signOut]);
 
   const { favoritesSnapshot, handleFavoritesSnapshot, shouldHydrateFavorites } =
     useToolsFavoritesState({

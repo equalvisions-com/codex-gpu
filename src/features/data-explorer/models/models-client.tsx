@@ -108,10 +108,15 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
         await signOut();
       } finally {
         clearFavoriteQueries();
-        router.refresh();
+        // Redirect to base path when signing out from bookmarks view
+        if (effectiveFavoritesMode) {
+          router.push("/llms");
+        } else {
+          router.refresh();
+        }
       }
     });
-  }, [clearFavoriteQueries, router, signOut]);
+  }, [clearFavoriteQueries, effectiveFavoritesMode, router, signOut]);
 
   const queryOptions = React.useMemo(() => modelsDataOptions(search), [search]);
 
