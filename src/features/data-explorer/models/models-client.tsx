@@ -82,7 +82,7 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
       effectiveFavoritesMode,
       queryClient,
     });
-  const noopAsync = React.useCallback(async () => {}, []);
+  const noopAsync = React.useCallback(async () => { }, []);
 
   const handleSignIn = React.useCallback(() => {
     if (!showSignIn) return;
@@ -114,7 +114,7 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
   }, [clearFavoriteQueries, router, signOut]);
 
   const queryOptions = React.useMemo(() => modelsDataOptions(search), [search]);
-  
+
   // Optimize client-side navigation: use cached data for instant rendering
   // initialData: Persists to cache, skips loading state, marks data as fresh
   // Docs: https://tanstack.com/query/v5/docs/framework/react/guides/initial-query-data
@@ -326,6 +326,7 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
             />
           );
         }}
+        getRowHref={(row) => row.permaslug ? `https://openrouter.ai/models/${row.permaslug}` : null}
         renderCheckedActions={(meta) => (
           <ModelsCheckedActionsIsland
             initialFavoriteKeys={meta.initialFavoriteKeys}

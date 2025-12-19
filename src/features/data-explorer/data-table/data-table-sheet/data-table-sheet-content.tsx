@@ -57,7 +57,7 @@ function DataTableSheetContent<TData, TMeta>({
           field.className,
         );
         const valueClasses = cn(
-          "flex w-full items-center font-mono",
+          "flex w-full min-w-0 items-center font-mono",
           field.fullRowValue || !showLabel
             ? "justify-start text-left"
             : "justify-end text-right",
@@ -75,10 +75,20 @@ function DataTableSheetContent<TData, TMeta>({
                   </dt>
                 ) : null}
                 <dd className={valueClasses}>
-                  {Component ? (
-                    <Component {...data} metadata={metadata} />
+                  {field.truncate ? (
+                    <span className="truncate block w-full">
+                      {Component ? (
+                        <Component {...data} metadata={metadata} />
+                      ) : (
+                        value
+                      )}
+                    </span>
                   ) : (
-                    value
+                    Component ? (
+                      <Component {...data} metadata={metadata} />
+                    ) : (
+                      value
+                    )
                   )}
                 </dd>
               </div>

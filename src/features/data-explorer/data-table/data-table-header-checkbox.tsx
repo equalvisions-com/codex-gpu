@@ -6,7 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useDataTable } from "./data-table-provider";
 
 export function DataTableHeaderCheckbox() {
-  const { table, checkedRows, setCheckedRows } = useDataTable<any, unknown>();
+  const { table, checkedRows, setCheckedRows } = useDataTable<unknown, unknown>();
 
   const rows = table.getRowModel().rows;
   const rowIds = React.useMemo(() => rows.map((row) => row.id), [rows]);
@@ -26,15 +26,15 @@ export function DataTableHeaderCheckbox() {
     (_state: CheckedState) => {
       const shouldCheck = !(allChecked || someChecked);
       setCheckedRows((previous) => {
+        // When unchecking, clear ALL checked rows (not just visible ones)
+        // This fixes the virtualization bug where scrolled-out rows weren't being unselected
+        if (!shouldCheck) {
+          return {};
+        }
+        // When checking, add all visible rows
         const nextState = { ...previous };
-        if (shouldCheck) {
-          for (const id of rowIds) {
-            nextState[id] = true;
-          }
-        } else {
-          for (const id of rowIds) {
-            delete nextState[id];
-          }
+        for (const id of rowIds) {
+          nextState[id] = true;
         }
         return nextState;
       });

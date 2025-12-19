@@ -81,4 +81,6 @@ export type SheetField<TData, TMeta = Record<string, unknown>> = {
   hideLabel?: boolean;
   fullRowValue?: boolean;
   noPadding?: boolean;
+  /** If true, truncate long values with ellipsis instead of wrapping */
+  truncate?: boolean;
 };

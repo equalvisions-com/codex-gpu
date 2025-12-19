@@ -131,8 +131,8 @@ interface DataTableInfiniteProps<TData, TValue, TMeta, TFavorite> {
   ) => React.ReactNode;
   renderSheetCharts?: (row: Row<TData> | null) => React.ReactNode;
   primaryColumnId?: string;
-  sheetButtonLabel?: string;
   sheetContentClassName?: string;
+  getRowHref?: (row: TData) => string | null;
 }
 
 export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>({
@@ -170,8 +170,8 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
   renderCheckedActions,
   renderSheetCharts,
   primaryColumnId = "gpu_model",
-  sheetButtonLabel,
   sheetContentClassName,
+  getRowHref,
 }: DataTableInfiniteProps<TData, TValue, TMeta, TFavorite>) {
   // Independent checkbox-only state (does not control the details pane)
   const [checkedRows, setCheckedRows] = React.useState<Record<string, boolean>>({});
@@ -445,37 +445,16 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
     return Math.min(Math.max(1, derivedOverscan), rows.length);
   }, [rows.length, derivedOverscan]);
 
+  // Clear checked rows when filters change or data is empty
+  // Do NOT prune checked rows when they scroll out of view - this preserves selection across scroll
   React.useEffect(() => {
-    if (!rows.length) {
-      setCheckedRows((previous) => {
-        if (Object.keys(previous).length === 0) {
-          return previous;
-        }
-        return {};
-      });
-      return;
-    }
-
-    const visibleRowIds = new Set(rows.map((row) => row.id));
     setCheckedRows((previous) => {
-      let didChange = false;
-      const next: Record<string, boolean> = {};
-
-      for (const key in previous) {
-        if (visibleRowIds.has(key)) {
-          next[key] = true;
-        } else {
-          didChange = true;
-        }
-      }
-
-      if (!didChange && Object.keys(previous).length === visibleRowIds.size) {
+      if (Object.keys(previous).length === 0) {
         return previous;
       }
-
-      return didChange ? next : previous;
+      return {};
     });
-  }, [rows, setCheckedRows]);
+  }, [columnFilters, setCheckedRows]);
 
   // Virtual scrolling setup - properly configured to reduce DOM size
   const virtualizationEnabled =
@@ -1102,7 +1081,7 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
       <DataTableSheetDetails
         title={renderSheetTitle({ row: selectedRow })}
         titleClassName="font-mono"
-        buttonLabel={sheetButtonLabel}
+        getRowHref={getRowHref ? (row) => getRowHref(row as TData) : undefined}
       >
         <div className="space-y-0">
           <MemoizedDataTableSheetContent
@@ -1118,9 +1097,11 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
           {(() => {
             const chartsNode = renderSheetCharts
               ? renderSheetCharts(selectedRow ?? null)
-              : selectedRow?.original
+              : selectedRow?.original &&
+                typeof selectedRow.original === "object" &&
+                "stable_key" in selectedRow.original
                 ? (
-                  <LazyGpuSheetCharts stableKey={(selectedRow.original as any)?.stable_key} />
+                  <LazyGpuSheetCharts stableKey={(selectedRow.original as Record<string, unknown>).stable_key as string | undefined} />
                 )
                 : null;
 

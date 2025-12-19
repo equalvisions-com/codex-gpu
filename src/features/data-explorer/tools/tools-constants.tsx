@@ -7,7 +7,6 @@ import Image from "next/image";
 import * as React from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getToolProviderLogo } from "./tool-provider-logos";
-import { ExternalLink } from "lucide-react";
 
 const LogoBadge = ({
   src,
@@ -80,14 +79,14 @@ export const filterFields: DataTableFilterField<ToolColumnSchema>[] = [
   },
 
   {
-    label: "Runtime",
-    value: "stack",
+    label: "OSS",
+    value: "oss",
     type: "checkbox",
     defaultOpen: true,
   },
   {
-    label: "OSS",
-    value: "oss",
+    label: "Runtime",
+    value: "stack",
     type: "checkbox",
     defaultOpen: true,
   },
@@ -178,19 +177,7 @@ export const sheetFields: SheetField<ToolColumnSchema>[] = [
     id: "url",
     label: "URL",
     type: "readonly",
-    component: (row) =>
-      row.url ? (
-        <a
-          href={row.url}
-          target="_blank"
-          rel="noopener"
-          className="inline-flex items-center gap-1.5 text-primary hover:underline max-w-[354px]"
-        >
-          <span className="truncate">{row.url}</span>
-          <ExternalLink className="h-3.5 w-3.5 shrink-0 text-foreground/70" />
-        </a>
-      ) : (
-        "N/A"
-      ),
+    truncate: true,
+    component: (row) => row.url || "N/A",
   },
 ] as const;

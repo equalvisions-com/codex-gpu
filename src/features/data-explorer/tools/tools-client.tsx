@@ -290,8 +290,8 @@ export function ToolsClient({ initialFavoriteKeys, isFavoritesMode }: ToolsClien
         mobileHeaderOffset="36px"
         primaryColumnId="description"
         renderSheetCharts={() => null}
-        sheetButtonLabel="Learn More"
         sheetContentClassName="border-b border-border/60"
+        getRowHref={(row) => row.url || null}
         renderCheckedActions={(meta) => (
           <ToolsCheckedActionsIsland initialFavoriteKeys={meta.initialFavoriteKeys} />
         )}

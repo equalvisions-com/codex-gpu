@@ -270,18 +270,18 @@ export function UserMenu({
   } else {
     triggerElement = (
       <DropdownMenuTrigger asChild>
-          <Button
-            type="button"
-            variant="ghost"
-            className={cn(
-              "flex items-center text-sm font-medium text-foreground hover:text-accent-foreground focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 active:outline-none",
-              showDetails
-                ? "h-auto gap-3 p-0 bg-transparent hover:bg-transparent"
-                : "!h-9 !w-9 justify-center rounded-full px-0",
-              !showDetails && !shouldRenderAvatar && "border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground hover:text-accent-foreground shadow-sm",
-              showDetails && (fullWidth ? "w-full justify-start" : "w-auto"),
-              triggerClassName,
-            )}
+        <Button
+          type="button"
+          variant="ghost"
+          className={cn(
+            "flex items-center text-sm font-medium text-foreground hover:text-accent-foreground focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 active:outline-none",
+            showDetails
+              ? "h-auto gap-3 p-0 bg-transparent hover:bg-transparent"
+              : "!h-9 !w-9 justify-center rounded-full px-0",
+            !showDetails && !shouldRenderAvatar && "border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground hover:text-accent-foreground shadow-sm",
+            showDetails && (fullWidth ? "w-full justify-start" : "w-auto"),
+            triggerClassName,
+          )}
           disabled={isSigningOut}
           aria-label={triggerAriaLabel}
         >
@@ -302,9 +302,9 @@ export function UserMenu({
                     alt={displayName}
                     onLoad={() => setImageLoaded(true)}
                     onError={() => setImageLoaded(true)}
-                   className={avatarImageClass}
-                 />
-               ) : null}
+                    className={avatarImageClass}
+                  />
+                ) : null}
               </Avatar>
             </div>
           ) : null}
@@ -612,13 +612,13 @@ export function MobileTopNav({
               }}
             >
               <SelectTrigger
-                className="h-9 w-[102px] min-w-[102px] justify-between rounded-lg shadow-sm bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground hover:text-accent-foreground"
+                className="h-9 w-[110px] min-w-[110px] justify-between rounded-lg shadow-sm bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground hover:text-accent-foreground"
                 aria-label={`${brandLabelDisplay} navigation`}
               >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent
-              className="mt-[4px] sm:mt-0">
+                className="mt-[4px] sm:mt-0">
                 {navItems.map((item) => (
                   <SelectItem
                     key={item.value}

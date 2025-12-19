@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, ChevronUp, X } from "lucide-react";
+import { ChevronDown, ChevronUp, ExternalLink, X } from "lucide-react";
 import * as React from "react";
 import {
   Sheet,
@@ -20,14 +20,14 @@ interface DataTableSheetDetailsProps {
   title?: React.ReactNode;
   titleClassName?: string;
   children?: React.ReactNode;
-  buttonLabel?: string;
+  getRowHref?: (row: Record<string, unknown>) => string | null;
 }
 
 export function DataTableSheetDetails({
   title,
   titleClassName,
   children,
-  buttonLabel = "Deploy",
+  getRowHref,
 }: DataTableSheetDetailsProps) {
   const { table, rowSelection, isLoading } = useDataTable();
 
@@ -53,48 +53,12 @@ export function DataTableSheetDetails({
     () => table.getCoreRowModel().flatRows[index - 1]?.id,
     [index, table],
   );
-  const selectedRowData = selectedRow?.original as Record<string, any> | undefined;
-  const deployHref = React.useMemo(() => {
-    if (!selectedRowData) return null;
 
-    const sourceUrl =
-      typeof selectedRowData.source_url === "string"
-        ? selectedRowData.source_url
-        : typeof selectedRowData.sourceUrl === "string"
-          ? selectedRowData.sourceUrl
-          : null;
-    if (sourceUrl) return sourceUrl;
-
-    const directUrl =
-      typeof selectedRowData.url === "string"
-        ? selectedRowData.url
-        : typeof selectedRowData.URL === "string"
-          ? selectedRowData.URL
-          : null;
-    if (directUrl) {
-      if (/^https?:\/\//i.test(directUrl)) return directUrl;
-      return `https://${directUrl}`;
-    }
-
-    const permaslug =
-      typeof selectedRowData.permaslug === "string"
-        ? selectedRowData.permaslug
-        : typeof selectedRowData.slug === "string"
-          ? selectedRowData.slug
-          : null;
-    if (permaslug) {
-      if (/^https?:\/\//i.test(permaslug)) return permaslug;
-      return `https://openrouter.ai/models/${permaslug}`;
-    }
-
-    const fallback =
-      typeof selectedRowData.deploy_url === "string"
-        ? selectedRowData.deploy_url
-        : typeof selectedRowData.deployUrl === "string"
-          ? selectedRowData.deployUrl
-          : null;
-    return fallback ?? null;
-  }, [selectedRowData]);
+  const selectedRowData = selectedRow?.original as Record<string, unknown> | undefined;
+  const href = React.useMemo(() => {
+    if (!selectedRowData || !getRowHref) return null;
+    return getRowHref(selectedRowData);
+  }, [selectedRowData, getRowHref]);
 
   const onPrev = React.useCallback(() => {
     if (prevId) table.setRowSelection({ [prevId]: true });
@@ -204,19 +168,23 @@ export function DataTableSheetDetails({
           </div>
           <div className="space-y-4">{children}</div>
           <div className="pt-4">
-            {deployHref ? (
+            {href ? (
               <Button asChild className="w-full font-semibold">
-                <a href={deployHref} target="_blank" rel="noopener noreferrer">
-                  {buttonLabel}
+                <a href={href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2">
+                  Learn More
+                  <ExternalLink className="h-4 w-4" />
                 </a>
               </Button>
             ) : (
               <Button
                 className="w-full font-semibold"
                 type="button"
-                disabled={!selectedRowKey}
+                disabled
               >
-                {buttonLabel}
+                <span className="inline-flex items-center gap-2">
+                  Learn More
+                  <ExternalLink className="h-4 w-4" />
+                </span>
               </Button>
             )}
           </div>

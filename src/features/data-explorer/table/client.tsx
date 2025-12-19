@@ -99,7 +99,7 @@ export function Client({ initialFavoriteKeys, isFavoritesMode }: ClientProps = {
       effectiveFavoritesMode,
       queryClient,
     });
-  const noopAsync = React.useCallback(async () => {}, []);
+  const noopAsync = React.useCallback(async () => { }, []);
 
 
   const queryOptions = React.useMemo(() => {
@@ -109,7 +109,7 @@ export function Client({ initialFavoriteKeys, isFavoritesMode }: ClientProps = {
       gcTime: 5 * 60 * 1000,
     };
   }, [search]);
-  
+
   // Optimize client-side navigation: use cached data for instant rendering
   // initialData: Persists to cache, skips loading state, marks data as fresh
   // Docs: https://tanstack.com/query/v5/docs/framework/react/guides/initial-query-data
@@ -136,9 +136,9 @@ export function Client({ initialFavoriteKeys, isFavoritesMode }: ClientProps = {
     // Only set initialData if cached data exists (avoids redundant placeholderData)
     ...(cachedData
       ? {
-          initialData: cachedData,
-          initialDataUpdatedAt: cachedState?.dataUpdatedAt,
-        }
+        initialData: cachedData,
+        initialDataUpdatedAt: cachedState?.dataUpdatedAt,
+      }
       : {}),
   });
 
@@ -156,7 +156,7 @@ export function Client({ initialFavoriteKeys, isFavoritesMode }: ClientProps = {
   const effectiveFavoriteKeys = effectiveFavoritesMode
     ? favoritesSnapshot?.favoriteKeysFromRows ?? []
     : initialFavoriteKeys;
-  
+
   const metadata: DataTableMeta<Record<string, unknown>> = {
     ...(lastPage?.meta?.metadata ?? {}),
     initialFavoriteKeys: effectiveFavoriteKeys,
@@ -316,6 +316,7 @@ export function Client({ initialFavoriteKeys, isFavoritesMode }: ClientProps = {
         }
         mobileHeaderOffset="36px"
         primaryColumnId="gpu_model"
+        getRowHref={(row) => row.source_url || null}
       />
     </>
   );

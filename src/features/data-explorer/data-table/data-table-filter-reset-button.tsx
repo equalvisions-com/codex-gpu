@@ -20,8 +20,9 @@ export function DataTableFilterResetButton<TData>({
     if (
       typeof filterValue === "object" &&
       !Array.isArray(filterValue) &&
-      "values" in (filterValue as any) &&
-      Array.isArray((filterValue as any).values)
+      filterValue !== null &&
+      "values" in filterValue &&
+      Array.isArray((filterValue as Record<string, unknown>).values)
     ) {
       return (filterValue as { values: unknown[] }).values ?? [];
     }
