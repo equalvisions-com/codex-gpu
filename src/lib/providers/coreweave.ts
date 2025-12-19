@@ -80,7 +80,8 @@ class CoreWeaveScraper implements ProviderScraper {
     const rows: PriceRow[] = [];
 
     // GPU table rows - look for any row that contains gpu pricing
-    const gpuRows = $('div.table-row.w-dyn-item').filter((_, el) => {
+    // Note: CoreWeave updated their CSS from 'table-row' to 'table-row-v2' circa Dec 2025
+    const gpuRows = $('div.table-row-v2.w-dyn-item').filter((_, el) => {
       const classes = $(el).attr('class') || '';
       return classes.includes('gpu') && !classes.includes('cpu');
     });
@@ -114,7 +115,10 @@ class CoreWeaveScraper implements ProviderScraper {
           const specs: Record<string, string> = {};
           $row.find('.table-cell-column-right .table-meta-text-right').each((_, kvElem) => {
             const $kv = $(kvElem);
-            const value = $kv.find('.table-meta-value').text().trim();
+            // Clone and strip footnote superscripts (e.g., "4<sup>1</sup>" -> "4")
+            const $valueEl = $kv.find('.table-meta-value').clone();
+            $valueEl.find('sup').remove();
+            const value = $valueEl.text().trim();
             const labelDiv = $kv.find('div').last();
             if (labelDiv.length) {
               const label = labelDiv.text().trim();
@@ -135,7 +139,7 @@ class CoreWeaveScraper implements ProviderScraper {
         const text = `${modelName} ${instanceId || ''}`.toLowerCase();
         const network: 'InfiniBand' | 'Ethernet' | 'Unknown' =
           text.includes('ib') || text.includes('infiniband') ? 'InfiniBand' :
-          text.includes('ethernet') ? 'Ethernet' : 'Unknown';
+            text.includes('ethernet') ? 'Ethernet' : 'Unknown';
 
         // Skip storing CoreWeave GPU rows that don't include a GPU Count
         if (gpuCount === undefined || gpuCount === null) {
@@ -170,12 +174,6 @@ class CoreWeaveScraper implements ProviderScraper {
     return rows;
   }
 
-
-  private extractFootnotes(text: string): string | undefined {
-    // Extract superscript numbers and other footnote indicators
-    const footnoteMatch = text.match(/[\d¹²³⁴⁵⁶⁷⁸⁹⁰*]+$/);
-    return footnoteMatch ? footnoteMatch[0] : undefined;
-  }
 }
 
 // Export a singleton instance

@@ -67,58 +67,65 @@ class CrusoeScraper implements ProviderScraper {
 
     const $ = cheerio.load(html);
 
-    // Find the GPU pricing table
-    const gpuTable = $('table.table');
+    // Note: Crusoe migrated from table.table to Webflow div-based layout circa Dec 2025
+    // The class is "prixing-item" (typo in their source)
+    const gpuItems = $('.prixing-item.w-dyn-item');
 
-    if (gpuTable.length === 0) {
-      console.warn('Could not find Crusoe GPU pricing table');
+    if (gpuItems.length === 0) {
+      console.warn('Could not find Crusoe GPU pricing items (.prixing-item.w-dyn-item)');
       return rows;
     }
 
-    // Parse table rows (skip header)
-    gpuTable.find('tbody tr').each((_, row) => {
-      const $row = $(row);
-      const cells = $row.find('td');
+    gpuItems.each((_, item) => {
+      const $item = $(item);
 
-      if (cells.length < 2) {
-        return; // Skip malformed rows
-      }
-
-      // Extract GPU information from the first cell
-      const gpuCell = $(cells[0]);
-      const gpuName = gpuCell.find('.gp-name').first().text().trim();
-      const gpuMem = gpuCell.find('.gp-mem').first().text().trim();
-      const gpuInterface = gpuCell.find('.gp-mem0model').first().text().trim();
-
-      // Extract On-Demand pricing from the second cell (index 1)
-      const onDemandCell = $(cells[1]);
-      const priceText = onDemandCell.find('.tr-price').first().text().trim();
+      // Extract GPU name from heading
+      const gpuName = $item.find('.pricing-item-heading').first().text().trim();
 
       if (!gpuName) {
         return; // Skip rows without GPU name
       }
 
+      // Skip non-GPU items (CPU instances, storage, etc.)
+      if (!gpuName.includes('NVIDIA') && !gpuName.includes('AMD')) {
+        return;
+      }
+
+      // Extract tags: first .pricing-tag.is-dark is VRAM, second .pricing-tag is interface
+      const tags = $item.find('.pricing-tag');
+      let gpuMem = '';
+      let gpuInterface = '';
+
+      tags.each((i, tag) => {
+        const $tag = $(tag);
+        const text = $tag.text().trim();
+        if ($tag.hasClass('is-dark')) {
+          gpuMem = text; // e.g., "80GB"
+        } else if (!gpuInterface) {
+          gpuInterface = text; // e.g., "SXM", "PCIe", "OAM"
+        }
+      });
+
+      // Extract On-Demand pricing from the first .pricing-rich block
+      const pricingBlocks = $item.find('.pricing-rich');
+      const onDemandBlock = pricingBlocks.first();
+      const priceText = onDemandBlock.find('p').first().text().trim() ||
+        onDemandBlock.text().trim();
+
       // Handle instances that require contacting sales
-      let priceHourUsd = 0;
+      let priceHourUsd: number | null = null;
       let isContactSales = false;
-      if (priceText === 'Contact sales') {
-        // Skip noisy logging in production
+      if (priceText.toLowerCase().includes('contact sales') || !priceText) {
         isContactSales = true;
-        priceHourUsd = -1; // Special marker for contact sales
       } else {
-        // Parse price (remove $ and convert to number)
-        const priceMatch = priceText.match(/\$?(\d+(?:\.\d+)?)/);
-        priceHourUsd = priceMatch ? parseFloat(priceMatch[1]) : 0;
+        // Parse price (e.g., "$3.90/GPU-hr" -> 3.90)
+        const priceMatch = priceText.match(/\$?([\d.]+)/);
+        priceHourUsd = priceMatch ? parseFloat(priceMatch[1]) : null;
       }
 
       // Parse VRAM (remove 'GB' and convert to number)
       const vramMatch = gpuMem.match(/(\d+)/);
-      const vramGb = vramMatch ? parseInt(vramMatch[1]) : 0;
-
-      if (vramGb === 0) {
-        console.warn(`Skipping Crusoe ${gpuName}: missing VRAM (${vramGb})`);
-        return;
-      }
+      const vramGb = vramMatch ? parseInt(vramMatch[1]) : null;
 
       // Clean up GPU model name - include interface but skip OAM for AMD
       let gpuModel = gpuName;
@@ -129,7 +136,7 @@ class CrusoeScraper implements ProviderScraper {
         gpuModel = `${gpuModel} ${gpuInterface}`;
       }
 
-      // Get complete hardware specs from mapping
+      // Get complete hardware specs from mapping (may return 0s if not mapped)
       const specsKey = `${gpuModel} (${gpuInterface})`;
       const specs = CRUSOE_GPU_SPECS[specsKey] || { vcpus: 0, ramGb: 0 };
 
@@ -139,19 +146,17 @@ class CrusoeScraper implements ProviderScraper {
         observed_at: observedAt,
         instance_id: gpuName, // Use GPU name as instance ID
         gpu_model: gpuModel,
-        gpu_count: 1, // Crusoe appears to offer single GPU instances
-        vram_gb: vramGb,
+        gpu_count: 1, // Crusoe offers single GPU instances
+        vram_gb: vramGb ?? 0,
         gpu_interface: gpuInterface || 'Unknown',
         vcpus: specs.vcpus,
         system_ram_gb: specs.ramGb,
         price_unit: 'gpu_hour',
-        ...(isContactSales ? { contact_sales: true } : { price_hour_usd: priceHourUsd }),
-        raw_cost: priceText,
+        ...(isContactSales ? { contact_sales: true } : { price_hour_usd: priceHourUsd ?? 0 }),
+        raw_cost: priceText || 'Contact sales',
         class: 'GPU',
         type: 'Virtual Machine',
       });
-
-      // Skip noisy logging in production
     });
 
     return rows;

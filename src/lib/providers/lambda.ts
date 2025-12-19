@@ -50,82 +50,71 @@ class LambdaScraper implements ProviderScraper {
     const rows: LambdaPriceRow[] = [];
     const observedAt = new Date().toISOString();
 
-    const $ = cheerio.load(html);
+    // Lambda's new site (circa Dec 2025) embeds pricing data as JSON with escaped HTML
+    // Each tab has format: {"contentHtml":"...","label":"8x"}
+    // Use a pattern that matches each tab object individually to avoid backtracking
 
-    // Find the main pricing tabbed content section (should have 4 tabs: 8x, 4x, 2x, 1x)
-    // Look for the section that contains "Choose your GPU configuration" text
-    const $pricingSection = $('p:contains("Choose your GPU configuration")').closest('.comp-tabbed-content');
+    const tabPattern = /\{"contentHtml":"((?:[^"\\]|\\.)*)","label":"(\d+)x"\}/g;
+    let tabMatch;
 
-    if ($pricingSection.length === 0) {
-      console.warn('Could not find Lambda pricing tabbed content section');
+    const tabs: Array<{ contentHtml: string; gpuCount: number }> = [];
+    while ((tabMatch = tabPattern.exec(html)) !== null) {
+      tabs.push({
+        contentHtml: tabMatch[1],
+        gpuCount: parseInt(tabMatch[2])
+      });
+    }
+
+    if (tabs.length === 0) {
+      console.warn('Could not find Lambda pricing tabs');
       return rows;
     }
 
-    // Find all tab panels within this section
-    $pricingSection.find('.comp-tabbed-content__tab-panel').each((_, panel) => {
-      const $panel = $(panel);
+    for (const tab of tabs) {
+      const gpuCount = tab.gpuCount;
 
-      // Get the GPU count from the corresponding tab button within this section
-      const tabIndex = $panel.attr('data-tab');
-      const tabButton = $pricingSection.find(`.comp-tabbed-content__tab-btn[data-tab="${tabIndex}"]`);
-      const gpuCountText = tabButton.text().trim();
-      const gpuCount = parseInt(gpuCountText.replace('x', ''));
+      // Parse the escaped HTML content
+      // The contentHtml contains escaped sequences like \u003C for <
+      const tableHtml = tab.contentHtml
+        .replace(/\\u003C/g, '<')
+        .replace(/\\u003E/g, '>')
+        .replace(/\\u002F/g, '/')
+        .replace(/\\"/g, '"');
 
-      if (isNaN(gpuCount)) {
-        console.warn(`Could not parse GPU count from tab: ${gpuCountText}`);
-        return;
-      }
+      const $ = cheerio.load(tableHtml);
 
-      // Find the table within this tab panel
-      const $table = $panel.find('table');
+      // Find pricing rows - they use class like "_pricingRow_z1nfw_36"
+      $('tr[class*="_pricingRow_"]').each((_, row) => {
+        const $row = $(row);
 
-      // Skip header row and process data rows
-      $table.find('tbody tr').each((rowIndex, row) => {
-        if (rowIndex === 0) return; // Skip header row
+        // GPU model is in th with data-label="Plan" or first th
+        const gpuModel = $row.find('th').first().text().trim();
 
-        const $cells = $(row).find('td');
-        if ($cells.length < 6) return; // Skip malformed rows
+        // Extract specs from td elements with data-label attributes
+        const vramText = $row.find('td[data-label*="VRAM"]').text().trim();
+        const vcpusText = $row.find('td[data-label*="vCPU"]').text().trim();
+        const ramText = $row.find('td[data-label*="RAM"]').text().trim();
+        const storageText = $row.find('td[data-label*="STORAGE"]').text().trim();
+        const priceText = $row.find('td[data-label*="PRICE"]').text().trim();
 
-        // Extract data from cells
-        const gpuModelText = $cells.eq(0).text().trim();
-        const vramText = $cells.eq(1).text().trim();
-        const vcpusText = $cells.eq(2).text().trim();
-        const ramText = $cells.eq(3).text().trim();
-        const storageText = $cells.eq(4).text().trim();
-        const priceText = $cells.eq(5).text().trim();
-
-        // Parse GPU model (remove "On-demand Xx " prefix)
-        const gpuModel = gpuModelText.replace(/^On-demand \dx\s/, '').trim();
-
-        // Parse VRAM (remove "GB" and convert to number)
+        // Parse VRAM (e.g., "80 GB" -> 80)
         const vramMatch = vramText.match(/(\d+)/);
         const vramGb = vramMatch ? parseInt(vramMatch[1]) : 0;
 
         // Parse vCPUs
         const vcpus = parseInt(vcpusText) || 0;
 
-        // Parse RAM (handle both GiB and GB, convert to GB)
-        let systemRamGb = 0;
-        if (ramText.includes('GiB')) {
-          const ramMatch = ramText.match(/(\d+(?:\.\d+)?)/);
-          if (ramMatch) {
-            systemRamGb = Math.round(parseFloat(ramMatch[1]) / 1024 * 100) / 100; // Convert GiB to GB
-          }
-        } else {
-          const ramMatch = ramText.match(/(\d+(?:\.\d+)?)/);
-          if (ramMatch) {
-            systemRamGb = parseFloat(ramMatch[1]);
-          }
-        }
+        // Parse RAM (handle GiB -> keep as-is since it's already approximate)
+        const ramMatch = ramText.match(/(\d+(?:\.\d+)?)/);
+        const systemRamGb = ramMatch ? parseFloat(ramMatch[1]) : 0;
 
-        // Parse price
-        const priceMatch = priceText.match(/\$(\d+(?:\.\d+)?)/);
+        // Parse price (e.g., "$3.29" -> 3.29)
+        const priceMatch = priceText.match(/\$([\d.]+)/);
         const priceHourUsd = priceMatch ? parseFloat(priceMatch[1]) : 0;
 
         // Skip if we don't have essential data
         if (!gpuModel || vramGb === 0 || priceHourUsd === 0) {
-          console.warn(`Skipping Lambda GPU ${gpuModel}: missing data (VRAM: ${vramGb}, Price: ${priceHourUsd})`);
-          return;
+          return; // Skip this row
         }
 
         // Create instance ID
@@ -149,7 +138,7 @@ class LambdaScraper implements ProviderScraper {
           type: 'Virtual Machine',
         });
       });
-    });
+    }
 
     return rows;
   }
