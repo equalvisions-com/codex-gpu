@@ -112,7 +112,7 @@ export const toolsColumns: ColumnDef<ToolColumnSchema>[] = [
     size: 275,
     minSize: 275,
     meta: {
-      cellClassName: "text-left overflow-hidden min-w-[275px] pr-0",
+      cellClassName: "text-left overflow-hidden min-w-[275px]",
       headerClassName: "text-left overflow-hidden min-w-[275px]",
     },
   },

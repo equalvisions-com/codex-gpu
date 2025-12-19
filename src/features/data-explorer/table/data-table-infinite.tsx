@@ -51,7 +51,7 @@ const LazyGpuSheetCharts = dynamic(
 );
 import { UserMenu, type AccountUser } from "./account-components";
 import { useRouter } from "next/navigation";
-import { Bot, Search, Server, Wrench } from "lucide-react";
+import { Bookmark, Bot, Search, Server, Wrench } from "lucide-react";
 import type { FavoriteKey } from "@/types/favorites";
 import { useGlobalHotkeys } from "@/hooks/use-global-hotkeys";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -252,6 +252,11 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
       isCurrent: item.value === currentValue,
     }));
   }, [activeNavValue, navItems]);
+
+  // Bookmarks mode is indicated by explicit navItems being passed (clients only pass navItems in favorites mode)
+  const isBookmarksMode = navItems !== undefined;
+  const currentNavItem = resolvedNavItems.find((item) => item.isCurrent);
+
   const currentNavValue =
     resolvedNavItems.find((item) => item.isCurrent)?.value ?? "/llms";
   const handleNavChange = React.useCallback(
@@ -718,10 +723,12 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
                       value={currentNavValue}
                       onValueChange={handleNavChange}
                       onOpenChange={(open) => {
-                        // Prefetch all nav routes when Select opens
+                        // Prefetch all nav routes when Select opens (skip current page)
                         if (open) {
                           resolvedNavItems.forEach((item) => {
-                            router.prefetch(item.value);
+                            if (item.value !== currentNavValue) {
+                              router.prefetch(item.value);
+                            }
                           });
                         }
                       }}
@@ -732,7 +739,18 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
                       ]}
                     >
                       <SelectTrigger className="h-9 w-full justify-between rounded-lg shadow-sm" aria-label="Page navigation">
-                        <SelectValue />
+                        <SelectValue aria-label={currentNavItem?.label}>
+                          {currentNavItem && (
+                            <span className="flex min-w-0 items-center gap-2">
+                              {isBookmarksMode ? (
+                                <Bookmark className="h-4 w-4" aria-hidden="true" />
+                              ) : (
+                                <currentNavItem.icon className="h-4 w-4" aria-hidden="true" />
+                              )}
+                              {currentNavItem.label}
+                            </span>
+                          )}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         {resolvedNavItems.map((item) => (
@@ -741,6 +759,14 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
                             value={item.value}
                             className="gap-2 cursor-pointer"
                             shortcut={item.shortcut}
+                            onPointerDown={(e) => {
+                              // Only navigate for same-page clicks in bookmarks mode
+                              // onPointerDown fires before Radix prevents re-selection of checked items
+                              if (isBookmarksMode && item.value === currentNavValue) {
+                                e.preventDefault();
+                                router.push(item.value);
+                              }
+                            }}
                           >
                             <item.icon className="h-4 w-4" aria-hidden="true" />
                             {item.label}

@@ -56,7 +56,7 @@ import {
   Wrench,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
 // Use next/dynamic with ssr: false for truly client-only lazy loading
 // This prevents any SSR/prefetching and ensures components only load when dialog is opened
@@ -371,6 +371,11 @@ export function UserMenu({
                           <span>GPUs</span>
                         </Link>
                       </DropdownMenuItem>
+                      <DropdownMenuItem asChild className={"flex w-full items-center gap-2 rounded-sm px-2 py-1.5 pl-2 text-sm font-medium text-foreground transition-colors hover:bg-muted hover:no-underline focus-visible:bg-muted focus-visible:text-accent-foreground"}>
+                        <Link href="/tools?bookmarks=true">
+                          <span>Tools</span>
+                        </Link>
+                      </DropdownMenuItem>
                     </div>
                   </AccordionContent>
                 </AccordionItem>
@@ -572,6 +577,11 @@ export function MobileTopNav({
 
   const currentNavValue =
     navItems.find((item) => item.isCurrent)?.value ?? "/llms";
+  const currentNavItem = navItems.find((item) => item.isCurrent);
+
+  // Detect bookmarks mode from URL search params
+  const searchParams = useSearchParams();
+  const isBookmarksMode = searchParams.get("bookmarks") === "true";
 
   const handleNavChange = React.useCallback(
     (value: string) => {
@@ -615,7 +625,18 @@ export function MobileTopNav({
                 className="h-9 w-[110px] min-w-[110px] justify-between rounded-lg shadow-sm bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground hover:text-accent-foreground"
                 aria-label={`${brandLabelDisplay} navigation`}
               >
-                <SelectValue />
+                <SelectValue aria-label={currentNavItem?.label}>
+                  {currentNavItem && (
+                    <span className="flex min-w-0 items-center gap-2">
+                      {isBookmarksMode ? (
+                        <Bookmark className="h-4 w-4" aria-hidden="true" />
+                      ) : (
+                        <currentNavItem.icon className="h-4 w-4" aria-hidden="true" />
+                      )}
+                      {currentNavItem.label}
+                    </span>
+                  )}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent
                 className="mt-[4px] sm:mt-0">
@@ -624,6 +645,13 @@ export function MobileTopNav({
                     key={item.value}
                     value={item.value}
                     className="gap-2 cursor-pointer"
+                    onPointerDown={(e) => {
+                      // Only navigate for same-page clicks in bookmarks mode
+                      if (isBookmarksMode && item.value === currentNavValue) {
+                        e.preventDefault();
+                        router.push(item.value);
+                      }
+                    }}
                   >
                     <item.icon className="h-4 w-4" aria-hidden="true" />
                     {item.label}
