@@ -7,7 +7,7 @@ import { useDataTable } from "@/features/data-explorer/data-table/data-table-pro
 import type { ColumnDef } from "@tanstack/react-table";
 import Image from "next/image";
 import type { ColumnSchema } from "./schema";
-import { getGpuProviderLogo } from "./provider-logos";
+import { getGpuProviderLogo, getProviderDisplayName } from "./provider-logos";
 
 function RowCheckboxCell({ rowId }: { rowId: string }) {
   const { checkedRows, toggleCheckedRow } = useDataTable<ColumnSchema, unknown>();
@@ -33,7 +33,8 @@ export const columns: ColumnDef<ColumnSchema>[] = [
       const providerRaw = row.getValue<ColumnSchema["provider"]>("provider") ?? "";
       const provider = typeof providerRaw === "string" ? providerRaw : "";
       const logo = getGpuProviderLogo(provider);
-      const fallbackInitial = provider ? provider.charAt(0).toUpperCase() : "";
+      const displayName = getProviderDisplayName(provider);
+      const fallbackInitial = displayName.charAt(0).toUpperCase();
 
       return (
         <div className="flex min-w-0 items-center gap-2">
@@ -55,8 +56,8 @@ export const columns: ColumnDef<ColumnSchema>[] = [
               </span>
             ) : null}
           </span>
-          <span className="truncate capitalize" title={provider || undefined}>
-            {provider || "Unknown"}
+          <span className="truncate" title={displayName}>
+            {displayName}
           </span>
         </div>
       );

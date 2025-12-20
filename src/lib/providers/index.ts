@@ -6,3 +6,4 @@ export { lambdaScraper } from "./lambda";
 export { digitaloceanScraper } from "./digitalocean";
 export { oracleScraper } from "./oracle";
 export { crusoeScraper } from "./crusoe";
+export { flyioScraper } from "./flyio";

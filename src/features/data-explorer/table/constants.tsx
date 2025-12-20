@@ -9,7 +9,7 @@ import { format } from "date-fns";
 import type { ColumnSchema } from "./schema";
 import Image from "next/image";
 import * as React from "react";
-import { getGpuProviderLogo } from "./provider-logos";
+import { getGpuProviderLogo, getProviderDisplayName } from "./provider-logos";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
@@ -70,7 +70,8 @@ const LogoBadge = ({
 
 const ProviderBadge = ({ provider }: { provider?: string | null }) => {
   const logo = getGpuProviderLogo(provider ?? undefined);
-  const fallbackInitial = provider ? provider.charAt(0).toUpperCase() : "";
+  const displayName = getProviderDisplayName(provider);
+  const fallbackInitial = displayName.charAt(0).toUpperCase();
   return (
     <div className="flex min-w-0 items-center gap-2">
       <LogoBadge
@@ -79,8 +80,8 @@ const ProviderBadge = ({ provider }: { provider?: string | null }) => {
         size={20}
         className="h-5 w-5 shrink-0"
       />
-      <span className="truncate capitalize" title={provider || undefined}>
-        {provider || "Unknown"}
+      <span className="truncate" title={displayName}>
+        {displayName}
       </span>
     </div>
   );
@@ -116,6 +117,12 @@ const TruncatedOption = ({ label }: Option) => {
 const CapitalizedOption = ({ label }: Option) => {
   const base = String(label ?? "");
   return <span className="block w-full truncate font-normal capitalize" title={base}>{base}</span>;
+};
+
+const ProviderOption = ({ label }: Option) => {
+  const base = String(label ?? "");
+  const displayName = getProviderDisplayName(base);
+  return <span className="block w-full truncate font-normal" title={displayName}>{displayName}</span>;
 };
 
 const VRAM_SLIDER_MIN = 16;
@@ -161,7 +168,7 @@ export const filterFields: DataTableFilterField<ColumnSchema>[] = [
     value: "provider",
     type: "checkbox",
     defaultOpen: true,
-    component: CapitalizedOption,
+    component: ProviderOption,
   },
   {
     label: "Config",
@@ -184,8 +191,8 @@ export const sheetFields = [
     component: ({ metadata, ...row }) => {
       const titleClassName =
         typeof metadata === "object" &&
-        metadata &&
-        typeof (metadata as { titleClassName?: unknown }).titleClassName === "string"
+          metadata &&
+          typeof (metadata as { titleClassName?: unknown }).titleClassName === "string"
           ? (metadata as { titleClassName: string }).titleClassName
           : undefined;
       const headlineSource = row.gpu_model || row.item || row.sku || "Unknown configuration";

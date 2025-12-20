@@ -10,6 +10,7 @@ import {
   digitaloceanScraper,
   oracleScraper,
   crusoeScraper,
+  flyioScraper,
 } from "./index";
 
 interface GpuScrapeSummary {
@@ -37,10 +38,11 @@ const DEFAULT_SCRAPERS: ProviderScraper[] = [
   digitaloceanScraper,
   oracleScraper,
   crusoeScraper,
+  flyioScraper,
 ];
 
 class GpuPricingScraper {
-  constructor(private readonly scrapers: ProviderScraper[] = DEFAULT_SCRAPERS) {}
+  constructor(private readonly scrapers: ProviderScraper[] = DEFAULT_SCRAPERS) { }
 
   async scrapeAll(): Promise<GpuScrapeAllResult> {
     const summaries: GpuScrapeSummary[] = [];

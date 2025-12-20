@@ -141,7 +141,7 @@ export const gpuPricing = pgTable("gpu_pricing", {
   providerIndex: index("gpu_pricing_provider_idx").on(table.provider),
   providerPriorityIndex: index("gpu_pricing_provider_priority_idx").on(
     sql`(array_position(
-      ARRAY['coreweave','lambda','runpod','digitalocean','oracle','nebius','hyperstack','crusoe'],
+      ARRAY['coreweave','lambda','runpod','digitalocean','oracle','nebius','hyperstack','crusoe','flyio'],
       lower(${table.provider})
     ))`,
     sql`lower(${table.provider})`,

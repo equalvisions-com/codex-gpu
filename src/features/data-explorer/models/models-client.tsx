@@ -71,6 +71,13 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
   const [isSigningOut, startSignOutTransition] = React.useTransition();
   const accountUser = (session?.user ?? null) as AccountUser | null;
   const broadcastId = React.useMemo(() => getFavoritesBroadcastId(), []);
+  // Redirect unauthenticated users away from bookmarks mode
+  React.useEffect(() => {
+    if (effectiveFavoritesMode && !authPending && !session) {
+      router.replace("/signin?callbackUrl=" + encodeURIComponent("/llms?bookmarks=true"));
+    }
+  }, [effectiveFavoritesMode, authPending, session, router]);
+
   const clearFavoriteQueries = React.useCallback(() => {
     queryClient.removeQueries({ queryKey: MODEL_FAVORITES_QUERY_KEY });
     queryClient.removeQueries({ queryKey: ["model-favorites", "rows"], exact: false });

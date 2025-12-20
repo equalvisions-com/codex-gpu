@@ -8,7 +8,7 @@ const columnSchema = z.object({
   stable_key: z.string().optional(),
 
   // Core identification (from PriceRow)
-  provider: z.enum(["coreweave", "nebius", "hyperstack", "runpod", "lambda", "digitalocean", "oracle", "crusoe"]),
+  provider: z.enum(["coreweave", "nebius", "hyperstack", "runpod", "lambda", "digitalocean", "oracle", "crusoe", "flyio"]),
   source_url: z.string(),
   observed_at: z.string(),
   item: z.string().optional(), // For Nebius data
@@ -35,7 +35,7 @@ export type ColumnSchema = z.infer<typeof columnSchema>;
 // GPU pricing filter schema
 const columnFilterSchema = z.object({
   provider: z
-    .enum(["coreweave", "nebius", "hyperstack", "runpod", "lambda", "digitalocean", "oracle", "crusoe"])
+    .enum(["coreweave", "nebius", "hyperstack", "runpod", "lambda", "digitalocean", "oracle", "crusoe", "flyio"])
     .optional(),
   gpu_model: z.string().optional(),
   instance_id: z.string().optional(),

@@ -13,10 +13,21 @@ export const PROVIDER_LOGOS: Record<
   digitalocean: { src: "/logos/digitalocean.png", alt: "DigitalOcean" },
   oracle: { src: "/logos/oracle.png", alt: "Oracle" },
   crusoe: { src: "/logos/crusoe.png", alt: "Crusoe" },
+  flyio: { src: "/logos/flyio.png", alt: "Fly.io" },
 };
 
 export function getGpuProviderLogo(provider?: string | null) {
   if (!provider) return null;
   const key = provider.toLowerCase().trim();
   return PROVIDER_LOGOS[key] ?? null;
+}
+
+// Get display name from PROVIDER_LOGOS.alt (single source of truth)
+export function getProviderDisplayName(provider?: string | null): string {
+  if (!provider) return "Unknown";
+  const key = provider.toLowerCase().trim();
+  const logo = PROVIDER_LOGOS[key];
+  if (logo) return logo.alt;
+  // Fallback: capitalize first letter
+  return provider.charAt(0).toUpperCase() + provider.slice(1);
 }

@@ -61,6 +61,13 @@ export function ToolsClient({ initialFavoriteKeys, isFavoritesMode }: ToolsClien
   const accountUser = (session?.user ?? null) as AccountUser | null;
   const broadcastId = React.useMemo(() => getToolFavoritesBroadcastId(), []);
 
+  // Redirect unauthenticated users away from bookmarks mode
+  React.useEffect(() => {
+    if (effectiveFavoritesMode && !authPending && !session) {
+      router.replace("/signin?callbackUrl=" + encodeURIComponent("/tools?bookmarks=true"));
+    }
+  }, [effectiveFavoritesMode, authPending, session, router]);
+
   const clearFavoriteQueries = React.useCallback(() => {
     queryClient.removeQueries({ queryKey: TOOL_FAVORITES_QUERY_KEY });
     queryClient.removeQueries({ queryKey: ["tool-favorites", "rows"], exact: false });

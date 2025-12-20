@@ -1,5 +1,5 @@
 // Provider types
-export type Provider = "coreweave" | "nebius" | "hyperstack" | "runpod" | "lambda" | "digitalocean" | "oracle" | "crusoe";
+export type Provider = "coreweave" | "nebius" | "hyperstack" | "runpod" | "lambda" | "digitalocean" | "oracle" | "crusoe" | "flyio";
 
 // CoreWeave pricing schema
 type CoreWeavePriceRow = {
@@ -234,8 +234,37 @@ export type CrusoePriceRow = {
   type?: "Virtual Machine" | "Bare Metal";   // instance type
 };
 
+// Fly.io pricing schema
+export type FlyioPriceRow = {
+  provider: "flyio";
+  source_url: string;           // https://fly.io/gpu
+  observed_at: string;          // ISO timestamp
+
+  // Identification
+  instance_id?: string;         // GPU model identifier
+
+  // Hardware
+  gpu_model: string;            // e.g., "NVIDIA L40S"
+  gpu_count: number;            // always 1 (per GPU pricing)
+  vram_gb: number;              // VRAM per GPU in GB
+  vcpus: number;                // 0 - GPU is an add-on, CPU is configurable
+  system_ram_gb: number;        // 0 - GPU is an add-on, RAM is configurable
+
+  // Pricing
+  price_unit: "gpu_hour";       // per GPU-hour
+  price_hour_usd: number;       // price per GPU per hour
+  raw_cost: string;             // original price text
+
+  // Optional
+  regions?: string[];           // Available regions for this GPU
+
+  // Flags
+  class: "GPU";                 // GPU instances only
+  type?: "Virtual Machine" | "Bare Metal";   // instance type
+};
+
 // Union type for all price rows
-export type PriceRow = CoreWeavePriceRow | NebiusPriceRow | HyperstackPriceRow | RunPodPriceRow | LambdaPriceRow | DigitalOceanPriceRow | OraclePriceRow | CrusoePriceRow;
+export type PriceRow = CoreWeavePriceRow | NebiusPriceRow | HyperstackPriceRow | RunPodPriceRow | LambdaPriceRow | DigitalOceanPriceRow | OraclePriceRow | CrusoePriceRow | FlyioPriceRow;
 
 export type ProviderSnapshot = {
   provider: Provider;
