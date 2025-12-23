@@ -1,5 +1,5 @@
 // Provider types
-export type Provider = "coreweave" | "nebius" | "hyperstack" | "runpod" | "lambda" | "digitalocean" | "oracle" | "crusoe" | "flyio" | "vultr" | "latitude" | "ori" | "voltagepark" | "googlecloud";
+export type Provider = "coreweave" | "nebius" | "hyperstack" | "runpod" | "lambda" | "digitalocean" | "oracle" | "crusoe" | "flyio" | "vultr" | "latitude" | "ori" | "voltagepark" | "googlecloud" | "verda" | "scaleway" | "replicate" | "thundercompute" | "koyeb" | "sesterce";
 
 // CoreWeave pricing schema
 type CoreWeavePriceRow = {
@@ -409,8 +409,179 @@ export type GoogleCloudPriceRow = {
   type: "Virtual Machine";
 };
 
+// Verda pricing schema
+export type VerdaPriceRow = {
+  provider: "verda";
+  source_url: string;           // https://verda.com/products
+  observed_at: string;          // ISO timestamp
+
+  // Identification
+  instance_id?: string;         // Instance name e.g., "8H100.80S.176V"
+  sku?: string;                 // Same as instance_id for stable key
+
+  // Hardware
+  gpu_model: string;            // e.g., "NVIDIA H100 SXM5"
+  gpu_count: number;
+  vram_gb?: number;
+  vcpus?: number;
+  system_ram_gb?: number;
+
+  // Pricing
+  price_unit: "instance_hour";
+  price_hour_usd: number;
+  raw_cost: string;
+
+  // Flags
+  class: "GPU";
+  type: "Virtual Machine";
+};
+
+// Scaleway pricing schema (EUR converted to USD)
+export type ScalewayPriceRow = {
+  provider: "scaleway";
+  source_url: string;
+  observed_at: string;
+
+  // Identification
+  instance_id?: string;         // e.g., "H100-1-80G"
+  sku?: string;                 // Same as instance_id for stable key
+
+  // Hardware
+  gpu_model: string;            // e.g., "NVIDIA H100"
+  gpu_count: number;
+  vram_gb?: number;
+  vcpus?: number;
+  system_ram_gb?: number;
+
+  // Pricing (converted from EUR)
+  price_unit: "instance_hour";
+  price_hour_usd: number;       // EUR × conversion rate
+  raw_cost: string;             // Original EUR price
+
+  // Flags
+  class: "GPU";
+  type: "Virtual Machine";
+};
+
+// Replicate pricing schema
+export type ReplicatePriceRow = {
+  provider: "replicate";
+  source_url: string;
+  observed_at: string;
+
+  // Identification
+  instance_id?: string;         // Hardware name (e.g., "Nvidia H100 GPU")
+  sku?: string;                 // Slug (e.g., "gpu-h100")
+
+  // Hardware
+  gpu_model: string;            // e.g., "NVIDIA H100"
+  gpu_count: number;
+  vram_gb?: number;
+  vcpus?: number;
+  system_ram_gb?: number;
+
+  // Pricing
+  price_unit: "instance_hour";
+  price_hour_usd: number;
+  raw_cost: string;
+
+  // Flags
+  class: "GPU";
+  type: "Virtual Machine";
+};
+
+// Thundercompute pricing schema
+export type ThundercomputePriceRow = {
+  provider: "thundercompute";
+  source_url: string;
+  observed_at: string;
+
+  // Identification
+  instance_id?: string;         // GPU name (e.g., "On-demand A100 80GB")
+  sku?: string;                 // Generated SKU
+
+  // Hardware
+  gpu_model: string;            // e.g., "NVIDIA A100"
+  gpu_count: number;            // Always 1 (pricing is per-GPU)
+  vram_gb?: number;
+  vcpus?: number;
+  system_ram_gb?: number;
+
+  // Pricing
+  price_unit: "instance_hour";
+  price_hour_usd: number;
+  raw_cost: string;
+
+  // Tier
+  tier: "prototyping" | "production";
+
+  // Flags
+  class: "GPU";
+  type: "Virtual Machine";
+};
+
+// Koyeb pricing schema
+export type KoyebPriceRow = {
+  provider: "koyeb";
+  source_url: string;
+  observed_at: string;
+
+  // Identification
+  instance_id?: string;         // Instance type name (e.g., "2x A100")
+  sku?: string;                 // Same as instance type
+
+  // Hardware
+  gpu_model: string;            // e.g., "NVIDIA A100"
+  gpu_count: number;
+  vram_gb?: number;
+  vcpus?: number;
+  system_ram_gb?: number;
+
+  // Pricing - nullable for "Request Access" instances
+  price_unit: "instance_hour";
+  price_hour_usd: number | null;
+  raw_cost: string;
+
+  // Flags
+  class: "GPU";
+  type: "Virtual Machine";
+};
+
+// Sesterce pricing schema (API-based)
+export type SestercePriceRow = {
+  provider: "sesterce";
+  source_url: string;
+  observed_at: string;
+
+  // Identification
+  instance_id: string;            // e.g., "B200_sxm6x8_NVLINK"
+  sku?: string;
+
+  // Hardware
+  gpu_model: string;              // e.g., "NVIDIA B200"
+  gpu_count: number;
+  vram_gb?: number;
+  vcpus?: number;
+  system_ram_gb?: number;
+  storage_gb?: number;
+
+  // Sesterce-specific
+  nvlink: boolean;
+  interconnect?: string;          // e.g., "sxm6", "pcie"
+  deployment_type: "vm" | "baremetal" | "container";
+
+  // Pricing
+  price_unit: "instance_hour";
+  price_hour_usd: number;
+  raw_cost: string;
+
+  // Flags
+  class: "GPU";
+  type: "Virtual Machine" | "Bare Metal";
+};
+
 // Union type for all price rows
-export type PriceRow = CoreWeavePriceRow | NebiusPriceRow | HyperstackPriceRow | RunPodPriceRow | LambdaPriceRow | DigitalOceanPriceRow | OraclePriceRow | CrusoePriceRow | FlyioPriceRow | VultrPriceRow | LatitudePriceRow | OriPriceRow | VoltageParkPriceRow | GoogleCloudPriceRow;
+export type PriceRow = CoreWeavePriceRow | NebiusPriceRow | HyperstackPriceRow | RunPodPriceRow | LambdaPriceRow | DigitalOceanPriceRow | OraclePriceRow | CrusoePriceRow | FlyioPriceRow | VultrPriceRow | LatitudePriceRow | OriPriceRow | VoltageParkPriceRow | GoogleCloudPriceRow | VerdaPriceRow | ScalewayPriceRow | ReplicatePriceRow | ThundercomputePriceRow | KoyebPriceRow | SestercePriceRow;
 
 export type ProviderSnapshot = {
   provider: Provider;

@@ -16,6 +16,12 @@ import {
   oriScraper,
   voltageParkScraper,
   googleCloudScraper,
+  verdaScraper,
+  scalewayScraper,
+  replicateScraper,
+  thundercomputeScraper,
+  koyebScraper,
+  sesterceScraper,
 } from "./index";
 
 interface GpuScrapeSummary {
@@ -49,6 +55,12 @@ const DEFAULT_SCRAPERS: ProviderScraper[] = [
   oriScraper,
   voltageParkScraper,
   googleCloudScraper,
+  verdaScraper,
+  scalewayScraper,
+  replicateScraper,
+  thundercomputeScraper,
+  koyebScraper,
+  sesterceScraper,
 ];
 
 class GpuPricingScraper {

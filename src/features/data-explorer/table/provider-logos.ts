@@ -19,6 +19,12 @@ export const PROVIDER_LOGOS: Record<
   ori: { src: "/logos/ori.png", alt: "Ori" },
   voltagepark: { src: "/logos/voltagepark.png", alt: "Voltage Park" },
   googlecloud: { src: "/logos/googlecloud.png", alt: "Google Cloud" },
+  verda: { src: "/logos/verda.png", alt: "Verda" },
+  scaleway: { src: "/logos/scaleway.png", alt: "Scaleway" },
+  replicate: { src: "/logos/replicate.jpeg", alt: "Replicate" },
+  thundercompute: { src: "/logos/thundercompute.png", alt: "Thunder Compute" },
+  koyeb: { src: "/logos/koyeb.png", alt: "Koyeb" },
+  sesterce: { src: "/logos/sesterce.png", alt: "Sesterce" },
 };
 
 export function getGpuProviderLogo(provider?: string | null) {
