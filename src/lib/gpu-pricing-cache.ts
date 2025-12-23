@@ -22,6 +22,11 @@ const PROVIDER_SORT_PRIORITY: Record<string, number> = {
   hyperstack: 7,
   crusoe: 8,
   flyio: 9,
+  vultr: 10,
+  latitude: 11,
+  ori: 12,
+  voltagepark: 13,
+  googlecloud: 14,
 };
 const PROVIDER_SORT_ORDER = [
   "coreweave",
@@ -33,6 +38,11 @@ const PROVIDER_SORT_ORDER = [
   "hyperstack",
   "crusoe",
   "flyio",
+  "vultr",
+  "latitude",
+  "ori",
+  "voltagepark",
+  "googlecloud",
 ];
 
 const PROVIDER_PRIORITY_ARRAY_SQL = sql.raw(

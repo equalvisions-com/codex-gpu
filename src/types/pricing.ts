@@ -1,5 +1,5 @@
 // Provider types
-export type Provider = "coreweave" | "nebius" | "hyperstack" | "runpod" | "lambda" | "digitalocean" | "oracle" | "crusoe" | "flyio";
+export type Provider = "coreweave" | "nebius" | "hyperstack" | "runpod" | "lambda" | "digitalocean" | "oracle" | "crusoe" | "flyio" | "vultr" | "latitude" | "ori" | "voltagepark" | "googlecloud";
 
 // CoreWeave pricing schema
 type CoreWeavePriceRow = {
@@ -263,8 +263,154 @@ export type FlyioPriceRow = {
   type?: "Virtual Machine" | "Bare Metal";   // instance type
 };
 
+// Vultr pricing schema
+export type VultrPriceRow = {
+  provider: "vultr";
+  source_url: string;           // https://www.vultr.com/pricing/
+  observed_at: string;          // ISO timestamp
+
+  // Identification
+  instance_id?: string;         // e.g., "amd-mi355x-8x"
+
+  // Hardware
+  gpu_model: string;            // e.g., "AMD MI355X"
+  gpu_count: number;            // Number of GPUs (1, 2, 4, 8)
+  vram_gb: number;              // GPU RAM in GB
+  vcpus: number;                // vCPU count
+  system_ram_gb: number;        // System RAM in GB
+  storage: string;              // Storage description (e.g., "13 TB")
+  bandwidth?: string;           // Bandwidth allowance (e.g., "15 TB")
+
+  // Pricing
+  price_unit: "gpu_hour" | "instance_hour";  // per GPU-hour or per instance-hour
+  price_hour_usd?: number;      // Price per GPU per hour (undefined for Contact Sales)
+  raw_cost: string;             // Original price text
+  contact_sales?: boolean;      // True if pricing requires contacting sales
+
+  // Flags
+  class: "GPU";                 // GPU instances only
+  type: "Virtual Machine" | "Bare Metal";  // Required for Vultr (not optional)
+};
+
+// Latitude.sh pricing schema
+export type LatitudePriceRow = {
+  provider: "latitude";
+  source_url: string;           // https://www.latitude.sh/pricing
+  observed_at: string;          // ISO timestamp
+
+  // Identification
+  instance_id?: string;         // e.g., "vm.rtx6kpro.small"
+
+  // Hardware
+  gpu_model: string;            // e.g., "NVIDIA RTX6KPRO"
+  gpu_count: number;            // Number of GPUs
+  vram_gb?: number;             // GPU RAM in GB (if available)
+  vcpus?: number;               // vCPU count
+  system_ram_gb?: number;       // System RAM in GB
+  storage?: string;             // Storage description
+
+  // Pricing
+  price_unit: "instance_hour";  // per instance-hour
+  price_hour_usd?: number;      // Price per hour
+  price_month_usd?: number;     // Monthly price (for reference)
+  raw_cost: string;             // Original price text
+
+  // Flags
+  class: "GPU";                 // GPU instances only
+  type: "Virtual Machine" | "Bare Metal";
+};
+
+// Ori pricing schema
+export type OriPriceRow = {
+  provider: "ori";
+  source_url: string;           // https://www.ori.co/pricing
+  observed_at: string;          // ISO timestamp
+
+  // Identification
+  instance_id?: string;         // e.g., "h200-1x"
+
+  // Hardware
+  gpu_model: string;            // e.g., "NVIDIA H200"
+  gpu_count: number;            // 1 or 8
+  vram_gb?: number;             // GPU VRAM in GB
+  vcpus?: number;               // vCPU count
+  system_ram_gb?: number;       // System RAM in GB
+  storage?: string;             // Storage description
+
+  // Pricing
+  price_unit: "instance_hour";
+  price_hour_usd: number;       // Hourly price
+  raw_cost: string;             // Original price text
+
+  // Flags
+  class: "GPU";
+  type: "Virtual Machine";
+};
+
+// Voltage Park pricing schema
+export type VoltageParkPriceRow = {
+  provider: "voltagepark";
+  source_url: string;           // https://www.voltagepark.com/
+  observed_at: string;          // ISO timestamp
+
+  // Identification
+  instance_id?: string;         // e.g., location_id-preset_id
+
+  // Hardware
+  gpu_model: string;            // e.g., "NVIDIA H100 SXM5"
+  gpu_count: number;
+  vram_gb?: number;
+  vcpus?: number;
+  system_ram_gb?: number;
+  storage?: string;
+
+  // Location
+  region?: string;              // e.g., "Texas, US"
+
+  // Pricing
+  price_unit: "instance_hour";
+  price_hour_usd: number;
+  raw_cost: string;
+
+  // Flags
+  class: "GPU";
+  type: "Virtual Machine" | "Bare Metal";
+};
+
+// Google Cloud pricing schema
+export type GoogleCloudPriceRow = {
+  provider: "googlecloud";
+  source_url: string;           // https://cloud.google.com/compute/vm-instance-pricing
+  observed_at: string;          // ISO timestamp
+
+  // Identification
+  instance_id?: string;         // e.g., "a2-highgpu-1g"
+  sku?: string;                 // Machine type for stable key (same as instance_id)
+  machine_family?: string;      // e.g., "A2 Standard", "A3 Ultra"
+
+  // Hardware
+  gpu_model: string;            // e.g., "NVIDIA A100 40GB"
+  gpu_count: number;
+  vram_gb?: number;
+  vcpus?: number;
+  system_ram_gb?: number;
+  storage?: string;             // e.g., "375 GiB SSD"
+
+  // Location
+  region?: string;              // e.g., "us-central1"
+
+  // Pricing
+  price_unit: "instance_hour";
+  price_hour_usd: number;
+  raw_cost: string;
+
+  // Flags
+  class: "GPU";
+  type: "Virtual Machine";
+};
+
 // Union type for all price rows
-export type PriceRow = CoreWeavePriceRow | NebiusPriceRow | HyperstackPriceRow | RunPodPriceRow | LambdaPriceRow | DigitalOceanPriceRow | OraclePriceRow | CrusoePriceRow | FlyioPriceRow;
+export type PriceRow = CoreWeavePriceRow | NebiusPriceRow | HyperstackPriceRow | RunPodPriceRow | LambdaPriceRow | DigitalOceanPriceRow | OraclePriceRow | CrusoePriceRow | FlyioPriceRow | VultrPriceRow | LatitudePriceRow | OriPriceRow | VoltageParkPriceRow | GoogleCloudPriceRow;
 
 export type ProviderSnapshot = {
   provider: Provider;

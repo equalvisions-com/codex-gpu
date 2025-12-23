@@ -12,8 +12,10 @@ export function stableGpuKey(
   const count = typeof row.gpu_count === "number" ? `${row.gpu_count}x` : "";
   const vram = typeof row.vram_gb === "number" ? `${row.vram_gb}gb` : "";
   const type = (row.type || "").toLowerCase().trim();
+  // Include sku (instance_id) for providers with multiple machine types per GPU
+  const sku = (row.sku || "").toLowerCase().trim();
 
-  return [provider, model, count, vram, type].filter(Boolean).join(":");
+  return [provider, sku, model, count, vram, type].filter(Boolean).join(":");
 }
 
 export function stableModelKey(

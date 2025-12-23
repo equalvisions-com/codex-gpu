@@ -14,6 +14,11 @@ export const PROVIDER_LOGOS: Record<
   oracle: { src: "/logos/oracle.png", alt: "Oracle" },
   crusoe: { src: "/logos/crusoe.png", alt: "Crusoe" },
   flyio: { src: "/logos/flyio.png", alt: "Fly.io" },
+  vultr: { src: "/logos/vultr.png", alt: "Vultr" },
+  latitude: { src: "/logos/latitude.png", alt: "Latitude.sh" },
+  ori: { src: "/logos/ori.png", alt: "Ori" },
+  voltagepark: { src: "/logos/voltagepark.png", alt: "Voltage Park" },
+  googlecloud: { src: "/logos/googlecloud.png", alt: "Google Cloud" },
 };
 
 export function getGpuProviderLogo(provider?: string | null) {

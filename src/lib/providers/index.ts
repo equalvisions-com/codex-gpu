@@ -7,3 +7,8 @@ export { digitaloceanScraper } from "./digitalocean";
 export { oracleScraper } from "./oracle";
 export { crusoeScraper } from "./crusoe";
 export { flyioScraper } from "./flyio";
+export { vultrScraper } from "./vultr";
+export { latitudeScraper } from "./latitude";
+export { oriScraper } from "./ori";
+export { voltageParkScraper } from "./voltage-park";
+export { googleCloudScraper } from "./google-cloud";
