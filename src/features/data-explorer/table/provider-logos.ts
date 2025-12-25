@@ -26,7 +26,7 @@ export const PROVIDER_LOGOS: Record<
   koyeb: { src: "/logos/koyeb.png", alt: "Koyeb" },
   sesterce: { src: "/logos/sesterce.png", alt: "Sesterce" },
   aws: { src: "/logos/aws.png", alt: "AWS" },
-  azure: { src: "/logos/azure.svg", alt: "Azure" },
+  azure: { src: "/logos/Azure.svg", alt: "Azure" },
 };
 
 export function getGpuProviderLogo(provider?: string | null) {
