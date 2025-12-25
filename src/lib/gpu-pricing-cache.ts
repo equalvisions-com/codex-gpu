@@ -33,6 +33,8 @@ const PROVIDER_SORT_PRIORITY: Record<string, number> = {
   thundercompute: 18,
   koyeb: 19,
   sesterce: 20,
+  aws: 21,
+  azure: 22,
 };
 const PROVIDER_SORT_ORDER = [
   "coreweave",
@@ -55,6 +57,8 @@ const PROVIDER_SORT_ORDER = [
   "thundercompute",
   "koyeb",
   "sesterce",
+  "aws",
+  "azure",
 ];
 
 const PROVIDER_PRIORITY_ARRAY_SQL = sql.raw(

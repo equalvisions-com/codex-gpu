@@ -22,6 +22,8 @@ import {
   thundercomputeScraper,
   koyebScraper,
   sesterceScraper,
+  awsScraper,
+  azureScraper,
 } from "./index";
 
 interface GpuScrapeSummary {
@@ -61,6 +63,8 @@ const DEFAULT_SCRAPERS: ProviderScraper[] = [
   thundercomputeScraper,
   koyebScraper,
   sesterceScraper,
+  awsScraper,
+  azureScraper,
 ];
 
 class GpuPricingScraper {

@@ -18,3 +18,5 @@ export { replicateScraper } from "./replicate";
 export { thundercomputeScraper } from "./thundercompute";
 export { koyebScraper } from "./koyeb";
 export { sesterceScraper } from "./sesterce";
+export { awsScraper } from "./aws";
+export { azureScraper } from "./azure";

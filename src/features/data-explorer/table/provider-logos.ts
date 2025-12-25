@@ -25,6 +25,8 @@ export const PROVIDER_LOGOS: Record<
   thundercompute: { src: "/logos/thundercompute.png", alt: "Thunder Compute" },
   koyeb: { src: "/logos/koyeb.png", alt: "Koyeb" },
   sesterce: { src: "/logos/sesterce.png", alt: "Sesterce" },
+  aws: { src: "/logos/aws.png", alt: "AWS" },
+  azure: { src: "/logos/azure.svg", alt: "Azure" },
 };
 
 export function getGpuProviderLogo(provider?: string | null) {
