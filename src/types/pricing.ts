@@ -1,5 +1,5 @@
 // Provider types
-export type Provider = "coreweave" | "nebius" | "hyperstack" | "runpod" | "lambda" | "digitalocean" | "oracle" | "crusoe" | "flyio" | "vultr" | "latitude" | "ori" | "voltagepark" | "googlecloud" | "verda" | "scaleway" | "replicate" | "thundercompute" | "koyeb" | "sesterce" | "aws" | "azure";
+export type Provider = "coreweave" | "nebius" | "hyperstack" | "runpod" | "lambda" | "digitalocean" | "oracle" | "crusoe" | "flyio" | "vultr" | "latitude" | "ori" | "voltagepark" | "googlecloud" | "verda" | "scaleway" | "replicate" | "thundercompute" | "koyeb" | "sesterce" | "aws" | "azure" | "civo" | "vast" | "hotaisle" | "alibaba" | "oblivus" | "paperspace";
 
 // CoreWeave pricing schema
 type CoreWeavePriceRow = {
@@ -634,8 +634,180 @@ export type AzurePriceRow = {
   type: "Virtual Machine";
 };
 
+// Civo pricing schema (pricing page scrape)
+export type CivoPriceRow = {
+  provider: "civo";
+  source_url: string;
+  observed_at: string;
+
+  // Identification
+  instance_id: string;            // e.g., "civo-nvidia-l40s-1x"
+  sku?: string;
+
+  // Hardware
+  gpu_model: string;              // e.g., "NVIDIA L40S"
+  gpu_count: number;              // 1, 2, 4, or 8
+  vram_gb: number;                // VRAM in GB (e.g., 48)
+  vcpus: number;
+  system_ram_gb: number;
+  storage?: string;               // e.g., "200GB NVMe"
+
+  // Pricing
+  price_unit: "instance_hour";
+  price_hour_usd?: number;          // Optional - N/A for some instances like B200
+  raw_cost: string;
+
+  // Flags
+  class: "GPU";
+  type: "Virtual Machine";
+};
+
+// Vast.ai pricing schema (API-based)
+export type VastPriceRow = {
+  provider: "vast";
+  source_url: string;
+  observed_at: string;
+
+  // Identification
+  instance_id: string;            // e.g., "vast-nvidia-rtx-4090-4x"
+
+  // Hardware
+  gpu_model: string;              // e.g., "RTX 4090"
+  gpu_count: number;              // 1, 2, 4, 8
+  vram_gb: number;                // Total VRAM in GB
+  vcpus: number;
+  system_ram_gb: number;
+
+  // Pricing
+  price_unit: "instance_hour";
+  price_hour_usd: number;         // dph_total from API
+  raw_cost: string;
+
+  // Additional Vast-specific
+  reliability?: number;           // Machine reliability score 0-1
+  geolocation?: string;           // e.g., "US, CA"
+
+  // Flags
+  class: "GPU";
+  type: "Virtual Machine";
+};
+
+// HotAisle pricing schema (HTML scrape)
+export type HotAislePriceRow = {
+  provider: "hotaisle";
+  source_url: string;
+  observed_at: string;
+
+  // Identification
+  instance_id: string;            // e.g., "hotaisle-mi300x-4x"
+  size_name?: string;             // e.g., "Small", "Medium", "Large"
+
+  // Hardware
+  gpu_model: string;              // e.g., "AMD MI300X"
+  gpu_count: number;              // 1, 2, 4, 8
+  vram_gb: number;                // 192GB per MI300X
+  vcpus: number;
+  system_ram_gb: number;
+  storage?: string;               // e.g., "12TB NVMe"
+
+  // Pricing
+  price_unit: "instance_hour";
+  price_hour_usd: number;
+  raw_cost: string;
+
+  // Flags
+  class: "GPU";
+  type: "Virtual Machine" | "Bare Metal";
+};
+
+// Alibaba Cloud pricing schema (API)
+export type AlibabaPriceRow = {
+  provider: "alibaba";
+  source_url: string;
+  observed_at: string;
+
+  // Identification
+  instance_id: string;            // InstanceTypeId e.g., "ecs.gn7e-c16g1.16xlarge"
+  instance_family: string;        // InstanceTypeFamily e.g., "ecs.gn7e"
+
+  // Hardware (from API)
+  gpu_model: string;              // GPUSpec e.g., "NVIDIA A100"
+  gpu_count: number;              // GPUAmount
+  vram_gb: number;                // GPUMemorySize
+  vcpus: number;                  // CpuCoreCount
+  system_ram_gb: number;          // MemorySize
+
+  // Pricing
+  price_unit: "instance_hour";
+  price_hour_usd: number | null;  // TradePrice (null if unavailable)
+  currency: string;               // CNY or USD
+
+  // Flags
+  class: "GPU";
+  type: "Virtual Machine" | "Bare Metal" | "vGPU";
+};
+
+// Oblivus pricing schema (API)
+export type OblivusPriceRow = {
+  provider: "oblivus";
+  source_url: string;
+  observed_at: string;
+
+  // Identification
+  instance_id: string;            // flavorID e.g., "H100_SXM5_80GB_x8"
+  gpu_model: string;              // metaName e.g., "H100 80GB SXM5"
+
+  // Hardware
+  gpu_count: number;              // GPUAmount
+  vram_gb: number;                // GPU memory in GB
+  vcpus: number;                  // vCPU
+  system_ram_gb: number;          // RAM in GB
+  storage_gb: number;             // ephemeralStorage + rootStorage
+
+  // Pricing (per GPU/hour)
+  price_unit: "gpu_hour";
+  price_hour_usd: number;         // hourlyCost
+  currency: "USD";
+
+  // Network
+  network: string;                // e.g., "100Gbps"
+
+  // Flags
+  class: "GPU";
+  type: "Virtual Machine";
+};
+
+// Paperspace pricing schema (API)
+export type PaperspacePriceRow = {
+  provider: "paperspace";
+  source_url: string;
+  observed_at: string;
+
+  // Identification
+  instance_id: string;            // label e.g., "A6000", "H100x8"
+  gpu_model: string;              // gpu e.g., "Ampere A6000"
+
+  // Hardware
+  gpu_count: number;
+  vram_gb: number;                // Total VRAM (from metadata)
+  vcpus: number;                  // cpus
+  system_ram_gb: number;          // ram in GB
+
+  // Pricing
+  price_unit: "instance_hour";
+  price_hour_usd: number;         // rateHourly
+  currency: "USD";
+
+  // Availability
+  regions: string[];              // Available regions
+
+  // Flags
+  class: "GPU";
+  type: "Virtual Machine";
+};
+
 // Union type for all price rows
-export type PriceRow = CoreWeavePriceRow | NebiusPriceRow | HyperstackPriceRow | RunPodPriceRow | LambdaPriceRow | DigitalOceanPriceRow | OraclePriceRow | CrusoePriceRow | FlyioPriceRow | VultrPriceRow | LatitudePriceRow | OriPriceRow | VoltageParkPriceRow | GoogleCloudPriceRow | VerdaPriceRow | ScalewayPriceRow | ReplicatePriceRow | ThundercomputePriceRow | KoyebPriceRow | SestercePriceRow | AWSPriceRow | AzurePriceRow;
+export type PriceRow = CoreWeavePriceRow | NebiusPriceRow | HyperstackPriceRow | RunPodPriceRow | LambdaPriceRow | DigitalOceanPriceRow | OraclePriceRow | CrusoePriceRow | FlyioPriceRow | VultrPriceRow | LatitudePriceRow | OriPriceRow | VoltageParkPriceRow | GoogleCloudPriceRow | VerdaPriceRow | ScalewayPriceRow | ReplicatePriceRow | ThundercomputePriceRow | KoyebPriceRow | SestercePriceRow | AWSPriceRow | AzurePriceRow | CivoPriceRow | VastPriceRow | HotAislePriceRow | AlibabaPriceRow | OblivusPriceRow | PaperspacePriceRow;
 
 export type ProviderSnapshot = {
   provider: Provider;

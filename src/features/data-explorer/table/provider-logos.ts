@@ -27,6 +27,12 @@ export const PROVIDER_LOGOS: Record<
   sesterce: { src: "/logos/sesterce.png", alt: "Sesterce" },
   aws: { src: "/logos/aws.png", alt: "AWS" },
   azure: { src: "/logos/Azure.svg", alt: "Azure" },
+  civo: { src: "/logos/civo.png", alt: "Civo" },
+  vast: { src: "/logos/vast.png", alt: "Vast.ai" },
+  hotaisle: { src: "/logos/hotaisle.jpeg", alt: "HotAisle" },
+  alibaba: { src: "/logos/alibaba.png", alt: "Alibaba Cloud" },
+  oblivus: { src: "/logos/oblivus.png", alt: "Oblivus" },
+  paperspace: { src: "/logos/paperspace.png", alt: "Paperspace" },
 };
 
 export function getGpuProviderLogo(provider?: string | null) {

@@ -22,17 +22,23 @@ class GpuPriceHistoryStore {
     }
 
     const touched = new Set<string>();
-    const values = samples.map((sample) => {
+    const dedupedMap = new Map<string, typeof samples[0]>();
+
+    // Deduplicate: keep last occurrence
+    for (const sample of samples) {
       const normalizedObservedAt = startOfUtcDay(sample.observedAt);
+      const key = `${sample.stableKey}|${normalizedObservedAt.toISOString()}`;
+      dedupedMap.set(key, sample);
       touched.add(sample.stableKey);
-      return {
-        stableKey: sample.stableKey,
-        provider: sample.provider,
-        observedAt: normalizedObservedAt,
-        priceUsd: sample.priceUsd,
-        scrapedAt: new Date(),
-      };
-    });
+    }
+
+    const values = Array.from(dedupedMap.values()).map((sample) => ({
+      stableKey: sample.stableKey,
+      provider: sample.provider,
+      observedAt: startOfUtcDay(sample.observedAt),
+      priceUsd: sample.priceUsd,
+      scrapedAt: new Date(),
+    }));
 
     await db
       .insert(gpuPriceSamples)

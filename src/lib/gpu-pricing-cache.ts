@@ -35,6 +35,12 @@ const PROVIDER_SORT_PRIORITY: Record<string, number> = {
   sesterce: 20,
   aws: 21,
   azure: 22,
+  civo: 23,
+  vast: 24,
+  hotaisle: 25,
+  alibaba: 26,
+  oblivus: 27,
+  paperspace: 28,
 };
 const PROVIDER_SORT_ORDER = [
   "coreweave",
@@ -59,6 +65,12 @@ const PROVIDER_SORT_ORDER = [
   "sesterce",
   "aws",
   "azure",
+  "civo",
+  "vast",
+  "hotaisle",
+  "alibaba",
+  "oblivus",
+  "paperspace",
 ];
 
 const PROVIDER_PRIORITY_ARRAY_SQL = sql.raw(

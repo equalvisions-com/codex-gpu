@@ -24,6 +24,12 @@ import {
   sesterceScraper,
   awsScraper,
   azureScraper,
+  civoScraper,
+  vastScraper,
+  hotaisleScraper,
+  alibabaScraper,
+  oblivusScraper,
+  paperspaceScraper,
 } from "./index";
 
 interface GpuScrapeSummary {
@@ -65,6 +71,12 @@ const DEFAULT_SCRAPERS: ProviderScraper[] = [
   sesterceScraper,
   awsScraper,
   azureScraper,
+  civoScraper,
+  vastScraper,
+  hotaisleScraper,
+  alibabaScraper,
+  oblivusScraper,
+  paperspaceScraper,
 ];
 
 class GpuPricingScraper {
