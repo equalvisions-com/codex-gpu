@@ -85,7 +85,10 @@ class OriScraper implements ProviderScraper {
             const gpuCount = gpuCountMatch ? parseInt(gpuCountMatch[1]) : 1;
 
             // Normalize GPU model name
-            const gpuModel = gpuModelRaw.includes('NVIDIA') ? gpuModelRaw : `NVIDIA ${gpuModelRaw}`;
+            let gpuModel = gpuModelRaw.includes('NVIDIA') ? gpuModelRaw : `NVIDIA ${gpuModelRaw}`;
+            gpuModel = gpuModel.replace(/PCIE/g, 'PCIe');  // Normalize PCIE -> PCIe
+            gpuModel = gpuModel.replace(/\bNVIDIA V100S\b/g, 'NVIDIA Tesla V100S');  // Add Tesla prefix
+            gpuModel = gpuModel.replace(/\bNVIDIA V100\b(?!S)/g, 'NVIDIA Tesla V100');  // Add Tesla prefix (not V100S)
 
             // Parse hourly price from "3.50/h" or "$3.50/h"
             const priceMatch = priceText.match(/\$?([\d,.]+)\/?h/i);

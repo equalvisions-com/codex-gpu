@@ -94,8 +94,14 @@ class VultrScraper implements ProviderScraper {
 
             // GPU model from h3 title (e.g., "NVIDIA H100" or "AMD MI355X")
             const titleText = $sub.find('h3').first().text().trim();
-            // Clean up title: remove "Pricing" suffix and clean whitespace
-            const gpuModel = titleText.replace(/\s*Pricing$/i, '').replace(/\s+/g, ' ').trim();
+            // Clean up title: remove "Pricing" suffix, fix PCle typo, strip HGX, reorder PCIe, and clean whitespace
+            const gpuModel = titleText
+                .replace(/\s*Pricing$/i, '')
+                .replace(/PCle/g, 'PCIe')  // Fix Vultr's typo: lowercase L instead of uppercase I
+                .replace(/\bHGX\s*/gi, '')  // Strip HGX prefix (e.g., "NVIDIA HGX B200" -> "NVIDIA B200")
+                .replace(/(NVIDIA)\s+PCIe\s+(\w+)/i, '$1 $2 PCIe')  // Reorder: "NVIDIA PCIe A100" -> "NVIDIA A100 PCIe"
+                .replace(/\s+/g, ' ')
+                .trim();
 
             if (!gpuModel) return;
 
@@ -217,7 +223,12 @@ class VultrScraper implements ProviderScraper {
             // Skip CPU-only packages
             if (!hasGpuInFirstSpec) return;
 
-            const gpuModel = titleText.replace(/\s+/g, ' ').trim();
+            const gpuModel = titleText
+                .replace(/PCle/g, 'PCIe')  // Fix Vultr's typo: lowercase L instead of uppercase I
+                .replace(/\bHGX\s*/gi, '')  // Strip HGX prefix (e.g., "NVIDIA HGX B200" -> "NVIDIA B200")
+                .replace(/(NVIDIA)\s+PCIe\s+(\w+)/i, '$1 $2 PCIe')  // Reorder: "NVIDIA PCIe A100" -> "NVIDIA A100 PCIe"
+                .replace(/\s+/g, ' ')
+                .trim();
 
             // Extract GPU count and VRAM from specs (e.g., "8 x AMD MI355X 288 GB")
             const gpuSpecMatch = specsText.match(/(\d+)\s*x\s*(?:NVIDIA|AMD)\s*[\w\s]+?\s*(\d+)\s*GB/i);
@@ -290,7 +301,7 @@ class VultrScraper implements ProviderScraper {
                 instance_id: instanceId,
                 gpu_model: gpuModel,
                 gpu_count: gpuCount,
-                vram_gb: vramGb,
+                vram_gb: vramGb * gpuCount,  // Total VRAM = per-GPU × count
                 vcpus: vcpus,
                 system_ram_gb: systemRamGb,
                 storage: storage,

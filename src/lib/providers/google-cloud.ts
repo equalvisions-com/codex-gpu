@@ -5,16 +5,28 @@ import type { ProviderScraper } from './types';
 
 const PRICING_URL = 'https://cloud.google.com/compute/vm-instance-pricing';
 
-// GPU model mappings from machine family prefixes
+// GPU model mappings from machine family prefixes (VRAM stripped for consistency)
 const GPU_MODEL_MAP: Record<string, string> = {
     'a4-highgpu': 'NVIDIA B200',
     'a3-ultragpu': 'NVIDIA H200',
-    'a3-megagpu': 'NVIDIA H100 80GB',
-    'a3-highgpu': 'NVIDIA H100 80GB',
-    'a2-ultragpu': 'NVIDIA A100 80GB',
-    'a2-highgpu': 'NVIDIA A100 40GB',
+    'a3-megagpu': 'NVIDIA H100 SXM',
+    'a3-highgpu': 'NVIDIA H100 SXM',
+    'a2-ultragpu': 'NVIDIA A100',
+    'a2-highgpu': 'NVIDIA A100',
     'g2-standard': 'NVIDIA L4',
-    'g4-standard': 'NVIDIA RTX PRO 6000',
+    'g4-standard': 'NVIDIA RTX 6000 Ada',
+};
+
+// Per-GPU VRAM in GB - verified from NVIDIA specs
+const GPU_VRAM_GB: Record<string, number> = {
+    'a4-highgpu': 192,    // B200: 192GB HBM3e
+    'a3-ultragpu': 141,   // H200: 141GB HBM3e
+    'a3-megagpu': 80,     // H100 SXM: 80GB HBM3
+    'a3-highgpu': 80,     // H100 SXM: 80GB HBM3
+    'a2-ultragpu': 80,    // A100 80GB
+    'a2-highgpu': 40,     // A100 40GB
+    'g2-standard': 24,    // L4: 24GB GDDR6
+    'g4-standard': 48,    // RTX 6000 Ada: 48GB GDDR6
 };
 
 // Machine family display names
@@ -188,26 +200,27 @@ class GoogleCloudScraper implements ProviderScraper {
         cells.each((idx: number, cell: any) => {
             const text = $(cell).text().trim();
 
-            // Look for price (e.g., "$3.67", "3.67")
-            const priceMatch = text.match(/\$?([\d,]+\.?\d*)/);
-            if (priceMatch && idx >= 2) {
-                const potentialPrice = parseFloat(priceMatch[1].replace(',', ''));
-                // Prices are typically in the range of $1-$100 for hourly rates
-                if (potentialPrice > 0 && potentialPrice < 500) {
-                    priceHourUsd = potentialPrice;
+            // Look for on-demand price in column index 3
+            // Table structure: Machine type (0), GPU (1), Components (2), On-Demand (3), 1yr CUD (4), 3yr CUD (5)
+            // Require $ to avoid matching component numbers, and only use idx 3
+            if (idx === 3) {
+                const priceMatch = text.match(/\$([\d,]+\.?\d*)/);
+                if (priceMatch) {
+                    priceHourUsd = parseFloat(priceMatch[1].replace(',', ''));
                     rawCost = text;
                 }
             }
 
-            // Look for vCPU count
-            const vcpuMatch = text.match(/(\d+)\s*vCPU/i);
+            // Look for vCPU count - specifically "vCPUs:" pattern in Components cell
+            const vcpuMatch = text.match(/vCPUs?:\s*(\d+)/i);
             if (vcpuMatch) {
                 vcpus = parseInt(vcpuMatch[1]);
             }
 
-            // Look for memory
-            const memMatch = text.match(/([\d,]+)\s*GB/i);
-            if (memMatch && !text.toLowerCase().includes('ssd') && !text.toLowerCase().includes('storage')) {
+            // Look for memory - specifically "Memory:" pattern to avoid matching SSD
+            // Handle both GB and GiB units
+            const memMatch = text.match(/Memory:\s*([\d,]+)\s*(?:GB|GiB)/i);
+            if (memMatch) {
                 systemRamGb = parseInt(memMatch[1].replace(',', ''));
             }
 
@@ -230,7 +243,7 @@ class GoogleCloudScraper implements ProviderScraper {
             machine_family: machineFamily,
             gpu_model: gpuModel,
             gpu_count: gpuCount,
-            vram_gb: this.getVramFromGpuModel(gpuModel),
+            vram_gb: this.getTotalVram(familyPrefix, gpuCount),
             vcpus: vcpus,
             system_ram_gb: systemRamGb,
             storage: storage,
@@ -270,11 +283,11 @@ class GoogleCloudScraper implements ProviderScraper {
     }
 
     /**
-     * Extract VRAM from GPU model string
+     * Calculate total VRAM from family prefix and GPU count
      */
-    private getVramFromGpuModel(gpuModel: string): number | undefined {
-        const match = gpuModel.match(/(\d+)\s*GB/i);
-        return match ? parseInt(match[1]) : undefined;
+    private getTotalVram(familyPrefix: string, gpuCount: number): number | undefined {
+        const vramPerGpu = GPU_VRAM_GB[familyPrefix];
+        return vramPerGpu ? vramPerGpu * gpuCount : undefined;
     }
 }
 

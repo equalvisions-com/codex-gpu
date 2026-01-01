@@ -8,7 +8,7 @@ const columnSchema = z.object({
   stable_key: z.string().optional(),
 
   // Core identification (from PriceRow)
-  provider: z.enum(["coreweave", "nebius", "hyperstack", "runpod", "lambda", "digitalocean", "oracle", "crusoe", "flyio", "vultr", "latitude", "ori", "voltagepark", "googlecloud", "verda", "scaleway", "replicate", "thundercompute", "koyeb", "sesterce", "aws", "azure", "civo", "vast", "hotaisle", "alibaba", "oblivus", "paperspace"]),
+  provider: z.enum(["coreweave", "nebius", "hyperstack", "runpod", "lambda", "digitalocean", "oracle", "crusoe", "flyio", "vultr", "latitude", "ori", "voltagepark", "googlecloud", "verda", "scaleway", "replicate", "thundercompute", "koyeb", "sesterce", "aws", "azure", "civo", "vast", "hotaisle", "alibaba", "oblivus", "paperspace", "togetherai"]),
   source_url: z.string(),
   observed_at: z.string(),
   item: z.string().optional(), // For Nebius data
@@ -35,7 +35,7 @@ export type ColumnSchema = z.infer<typeof columnSchema>;
 // GPU pricing filter schema
 const columnFilterSchema = z.object({
   provider: z
-    .enum(["coreweave", "nebius", "hyperstack", "runpod", "lambda", "digitalocean", "oracle", "crusoe", "flyio", "vultr", "latitude", "ori", "voltagepark", "googlecloud", "verda", "scaleway", "replicate", "thundercompute", "koyeb", "sesterce", "aws", "azure", "civo", "vast", "hotaisle", "alibaba", "oblivus", "paperspace"])
+    .enum(["coreweave", "nebius", "hyperstack", "runpod", "lambda", "digitalocean", "oracle", "crusoe", "flyio", "vultr", "latitude", "ori", "voltagepark", "googlecloud", "verda", "scaleway", "replicate", "thundercompute", "koyeb", "sesterce", "aws", "azure", "civo", "vast", "hotaisle", "alibaba", "oblivus", "paperspace", "togetherai"])
     .optional(),
   gpu_model: z.string().optional(),
   instance_id: z.string().optional(),

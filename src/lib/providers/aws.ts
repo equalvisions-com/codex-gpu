@@ -15,19 +15,19 @@ const GPU_FAMILY_MAP: Record<string, { model: string; vramPerGpu: number }> = {
     'p5en': { model: 'NVIDIA H200', vramPerGpu: 141 },
     'p5e': { model: 'NVIDIA H200', vramPerGpu: 141 },
     'p5': { model: 'NVIDIA H100', vramPerGpu: 80 },
-    // Ampere series
-    'p4d': { model: 'NVIDIA A100 40GB', vramPerGpu: 40 },
-    'p4de': { model: 'NVIDIA A100 80GB', vramPerGpu: 80 },
+    // Ampere series (VRAM in separate column, not in model name)
+    'p4d': { model: 'NVIDIA A100', vramPerGpu: 40 },
+    'p4de': { model: 'NVIDIA A100', vramPerGpu: 80 },
     // Ada Lovelace series
     'g6e': { model: 'NVIDIA L40S', vramPerGpu: 48 },
     'g6': { model: 'NVIDIA L4', vramPerGpu: 24 },
     // Ampere inference
     'g5': { model: 'NVIDIA A10G', vramPerGpu: 24 },
     // Turing series
-    'g4dn': { model: 'NVIDIA T4', vramPerGpu: 16 },
+    'g4dn': { model: 'NVIDIA Tesla T4', vramPerGpu: 16 },
     'g4ad': { model: 'AMD Radeon Pro V520', vramPerGpu: 8 },
     // Graviton with T4
-    'g5g': { model: 'NVIDIA T4G', vramPerGpu: 16 },
+    'g5g': { model: 'NVIDIA Tesla T4G', vramPerGpu: 16 },
 };
 
 interface AWSProduct {

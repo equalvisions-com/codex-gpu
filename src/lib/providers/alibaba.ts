@@ -226,13 +226,20 @@ class AlibabaScraper implements ProviderScraper {
                 return null;
             }
 
+            // Normalize GPU model name (add Tesla prefix for legacy GPUs)
+            const rawGpuModel = type.GPUSpec || 'Unknown';
+            const gpuModel = rawGpuModel
+                .replace(/\bNVIDIA P100\b/g, 'NVIDIA Tesla P100')
+                .replace(/\bNVIDIA T4\b/g, 'NVIDIA Tesla T4')
+                .replace(/\bNVIDIA V100\b/g, 'NVIDIA Tesla V100');
+
             return {
                 provider: 'alibaba',
                 source_url: SOURCE_URL,
                 observed_at: observedAt,
                 instance_id: type.InstanceTypeId,
                 instance_family: type.InstanceTypeFamily,
-                gpu_model: type.GPUSpec || 'Unknown',
+                gpu_model: gpuModel,
                 gpu_count: type.GPUAmount,
                 vram_gb: type.GPUMemorySize || 0,
                 vcpus: type.CpuCoreCount,

@@ -33,6 +33,7 @@ export const PROVIDER_LOGOS: Record<
   alibaba: { src: "/logos/alibaba.png", alt: "Alibaba Cloud" },
   oblivus: { src: "/logos/oblivus.png", alt: "Oblivus" },
   paperspace: { src: "/logos/paperspace.png", alt: "Paperspace" },
+  togetherai: { src: "/logos/together.svg", alt: "Together AI" },
 };
 
 export function getGpuProviderLogo(provider?: string | null) {

@@ -19,9 +19,9 @@ const GPU_SERIES_MAP: Record<string, { model: string; vramPerGpu: number }> = {
     'A100': { model: 'NVIDIA A100', vramPerGpu: 80 },
     'A10': { model: 'NVIDIA A10', vramPerGpu: 24 },
     // NVIDIA Turing
-    'T4': { model: 'NVIDIA T4', vramPerGpu: 16 },
+    'T4': { model: 'NVIDIA Tesla T4', vramPerGpu: 16 },
     // NVIDIA Volta
-    'V100': { model: 'NVIDIA V100', vramPerGpu: 16 },
+    'V100': { model: 'NVIDIA Tesla V100', vramPerGpu: 16 },
     // NVIDIA Tesla (older)
     'M60': { model: 'NVIDIA Tesla M60', vramPerGpu: 8 },
     'P40': { model: 'NVIDIA Tesla P40', vramPerGpu: 24 },
@@ -317,7 +317,8 @@ class AzureScraper implements ProviderScraper {
             } else if (productName.includes('NVSv3') || sku.includes('NV') && sku.includes('s_v3')) {
                 gpuSpec = GPU_SERIES_MAP['M60'];
             } else if (productName.includes('NVasv4') || sku.includes('NV') && sku.includes('as_v4')) {
-                gpuSpec = GPU_SERIES_MAP['MI25'];
+                // Skip AMD MI25 - old GPU not worth tracking
+                return null;
             } else if (productName.includes('NC Promo') || sku.includes('NC') && sku.includes('Promo')) {
                 // K80 promo series - old but still listed
                 return { model: 'NVIDIA Tesla K80', count: gpuCount, vramPerGpu: 12 };

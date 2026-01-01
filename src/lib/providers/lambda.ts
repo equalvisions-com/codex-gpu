@@ -93,29 +93,33 @@ class LambdaScraper implements ProviderScraper {
         // Extract specs from td elements with data-label attributes
         const vramText = $row.find('td[data-label*="VRAM"]').text().trim();
         const vcpusText = $row.find('td[data-label*="vCPU"]').text().trim();
-        const ramText = $row.find('td[data-label*="RAM"]').text().trim();
+        const ramText = $row.find('td[data-label="RAM"]').text().trim();
         const storageText = $row.find('td[data-label*="STORAGE"]').text().trim();
         const priceText = $row.find('td[data-label*="PRICE"]').text().trim();
 
-        // Parse VRAM (e.g., "80 GB" -> 80)
+        // Parse VRAM per GPU (e.g., "80 GB" -> 80)
         const vramMatch = vramText.match(/(\d+)/);
-        const vramGb = vramMatch ? parseInt(vramMatch[1]) : 0;
+        const vramPerGpu = vramMatch ? parseInt(vramMatch[1]) : 0;
 
-        // Parse vCPUs
+        // Parse vCPUs (already total for instance)
         const vcpus = parseInt(vcpusText) || 0;
 
-        // Parse RAM (handle GiB -> keep as-is since it's already approximate)
+        // Parse RAM (already total for instance - handle GiB -> keep as-is)
         const ramMatch = ramText.match(/(\d+(?:\.\d+)?)/);
         const systemRamGb = ramMatch ? parseFloat(ramMatch[1]) : 0;
 
-        // Parse price (e.g., "$3.29" -> 3.29)
+        // Parse price per GPU (e.g., "$3.29" -> 3.29)
         const priceMatch = priceText.match(/\$([\d.]+)/);
-        const priceHourUsd = priceMatch ? parseFloat(priceMatch[1]) : 0;
+        const pricePerGpu = priceMatch ? parseFloat(priceMatch[1]) : 0;
 
         // Skip if we don't have essential data
-        if (!gpuModel || vramGb === 0 || priceHourUsd === 0) {
+        if (!gpuModel || vramPerGpu === 0 || pricePerGpu === 0) {
           return; // Skip this row
         }
+
+        // Calculate TOTAL instance values (Lambda shows per-GPU for VRAM and price)
+        const totalVramGb = vramPerGpu * gpuCount;
+        const totalPriceHourUsd = Math.round(pricePerGpu * gpuCount * 100) / 100; // Round to 2 decimals
 
         // Create instance ID
         const instanceId = `${gpuCount}x-${gpuModel.toLowerCase().replace(/\s+/g, '-')}`;
@@ -127,13 +131,13 @@ class LambdaScraper implements ProviderScraper {
           instance_id: instanceId,
           gpu_model: gpuModel,
           gpu_count: gpuCount,
-          vram_gb: vramGb,
+          vram_gb: totalVramGb,
           vcpus: vcpus,
           system_ram_gb: systemRamGb,
           storage: storageText,
-          price_unit: 'gpu_hour',
-          price_hour_usd: priceHourUsd,
-          raw_cost: priceText,
+          price_unit: 'instance_hour',
+          price_hour_usd: totalPriceHourUsd,
+          raw_cost: `$${totalPriceHourUsd.toFixed(2)}/hr`,
           class: 'GPU',
           type: 'Virtual Machine',
         });

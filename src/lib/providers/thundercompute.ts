@@ -108,7 +108,7 @@ class ThundercomputeScraper implements ProviderScraper {
         // Extract specs if available (from text), or use defaults based on tier
         let specs = this.extractSpecs(cardText);
 
-        // Production tier has fixed specs: 18 vCPUs, 144GB RAM per GPU
+        // Production tier has fixed specs: 18 vCPUs, 144GB RAM per GPU (from dashboard)
         if (tier === 'production') {
             specs = { vcpus: 18, ram: 144 };
         }
@@ -165,7 +165,7 @@ class ThundercomputeScraper implements ProviderScraper {
             const tier = this.determineTier($el, text);
             let specs = this.extractSpecs(text);
 
-            // Production tier has fixed specs: 18 vCPUs, 144GB RAM per GPU
+            // Production tier has fixed specs: 18 vCPUs, 144GB RAM per GPU (from dashboard)
             if (tier === 'production') {
                 specs = { vcpus: 18, ram: 144 };
             }
@@ -217,10 +217,15 @@ class ThundercomputeScraper implements ProviderScraper {
         } else if (upperText.includes('A100') && upperText.includes('40')) {
             return { model: 'NVIDIA A100', displayName: 'A100 40GB', vram: 40 };
         } else if (upperText.includes('A100')) {
-            // Default A100 to 80GB if not specified
-            return { model: 'NVIDIA A100', displayName: 'A100', vram: 80 };
+            // Default A100 to 80GB if not specified, but check for "40" pattern more broadly
+            const has40 = /40\s*GB|40GB/i.test(text);
+            return {
+                model: 'NVIDIA A100',
+                displayName: has40 ? 'A100 40GB' : 'A100 80GB',
+                vram: has40 ? 40 : 80
+            };
         } else if (upperText.includes('T4') || upperText.includes('TESLA T4')) {
-            return { model: 'NVIDIA T4', displayName: 'Tesla T4', vram: 16 };
+            return { model: 'NVIDIA Tesla T4', displayName: 'Tesla T4', vram: 16 };
         }
 
         return null;

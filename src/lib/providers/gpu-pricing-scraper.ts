@@ -30,6 +30,7 @@ import {
   alibabaScraper,
   oblivusScraper,
   paperspaceScraper,
+  togetheraiScraper,
 } from "./index";
 
 interface GpuScrapeSummary {
@@ -77,6 +78,7 @@ const DEFAULT_SCRAPERS: ProviderScraper[] = [
   alibabaScraper,
   oblivusScraper,
   paperspaceScraper,
+  togetheraiScraper,
 ];
 
 class GpuPricingScraper {

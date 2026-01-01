@@ -82,7 +82,7 @@ class VoltageParkScraper implements ProviderScraper {
                         instance_id: `${location.id}-${presetId}`,
                         gpu_model: gpuModel,
                         gpu_count: gpuCount,
-                        vram_gb: this.extractVram(gpuKey),
+                        vram_gb: (this.extractVram(gpuKey) || 0) * gpuCount, // Total VRAM = per-GPU × count
                         vcpus: resources.vcpu_count,
                         system_ram_gb: resources.ram_gb,
                         storage: `${resources.storage_gb}GB`,
@@ -125,9 +125,9 @@ class VoltageParkScraper implements ProviderScraper {
                     source_url: this.url,
                     observed_at: observedAt,
                     instance_id: `bm-${location.id}-${config.type.toLowerCase()}`,
-                    gpu_model: `${gpuModel} (${config.type})`,
+                    gpu_model: gpuModel,  // Network type is in instance_id, not model name
                     gpu_count: gpuCount,
-                    vram_gb: this.extractVram(specs_per_node.gpu_model),
+                    vram_gb: (this.extractVram(specs_per_node.gpu_model) || 0) * gpuCount, // Total VRAM = per-GPU × count
                     vcpus: specs_per_node.cpu_count,
                     system_ram_gb: specs_per_node.ram_gb,
                     storage: `${specs_per_node.storage_gb}GB`,

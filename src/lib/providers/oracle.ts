@@ -5,25 +5,21 @@ import type { ProviderScraper } from './types';
 
 const PRICING_URL = 'https://www.oracle.com/cloud/compute/pricing/';
 
-// Oracle GPU hardware specs fallback for instances missing CPU/RAM data in HTML
-const ORACLE_GPU_SPECS_FALLBACK: Record<string, { vcpus: number; ramGb: number }> = {
-  'BM.GPU.B200.8': { vcpus: 256, ramGb: 2048 },      // NVIDIA B200
-  'BM.GPU.GB200.41': { vcpus: 128, ramGb: 1024 },    // NVIDIA B200 NVL72
-  'BM.GPU.H200.8': { vcpus: 224, ramGb: 2048 },      // NVIDIA H200
-};
 
 // Oracle GPU pricing per GPU (from internal pricing table)
 // For multi-GPU instances, multiply by gpu_count to get total instance price
 const ORACLE_GPU_PRICING: Record<string, number> = {
   // Large scale-out AI training, data analytics, and HPC
   'BM.GPU.B200.8': 14.00,      // 8x GPUs = $112.00 total
-  'BM.GPU.GB200.41': 16.00,   // 4x GPUs = $64.00 total (HTML has superscript 1)
-  'BM.GPU.H200.8': 10.00,     // 8x GPUs = $80.00 total
-  'BM.GPU.H100.8': 10.00,     // 8x GPUs = $80.00 total
-  'BM.GPU.MI300X.8': 6.00,    // 8x GPUs = $48.00 total
-  'BM.GPU.A100-v2.8': 4.00,   // 8x GPUs = $32.00 total
-  'BM.GPU.L40S.4': 3.50,      // 4x GPUs = $14.00 total
-  'BM.GPU4.8': 3.05,          // 8x GPUs = $24.40 total
+  'BM.GPU.GB200.41': 16.00,    // 4x GPUs = $64.00 total (HTML has superscript 1)
+  'BM.GPU.GB300.4': 18.00,     // 4x GPUs = $72.00 total (NVIDIA B300)
+  'BM.GPU.H200.8': 10.00,      // 8x GPUs = $80.00 total
+  'BM.GPU.H100.8': 10.00,      // 8x GPUs = $80.00 total
+  'BM.GPU.MI300X.8': 6.00,     // 8x GPUs = $48.00 total
+  'BM.GPU.MI355X.8': 8.60,     // 8x GPUs = $68.80 total (AMD MI355X)
+  'BM.GPU.A100-v2.8': 4.00,    // 8x GPUs = $32.00 total
+  'BM.GPU.L40S.4': 3.50,       // 4x GPUs = $14.00 total
+  'BM.GPU4.8': 3.05,           // 8x GPUs = $24.40 total
 
   // Small AI training, inference, streaming, gaming, and virtual desktop infrastructure
   'VM.GPU.A10.1': 2.00,        // 1x GPU = $2.00 total
@@ -137,6 +133,8 @@ class OracleScraper implements ProviderScraper {
       gpuModel = gpuModel.replace(/\s+\d+GB.*$/, '').trim(); // Remove memory info
       gpuModel = gpuModel.replace(/\s+Tensor Core.*$/, '').trim(); // Remove Tensor Core suffix
       gpuModel = gpuModel.replace(/^Nvidia$/, 'NVIDIA').replace(/^Nvidia\s+/, 'NVIDIA '); // Fix capitalization
+      gpuModel = gpuModel.replace(/\bNVIDIA P100\b/g, 'NVIDIA Tesla P100');  // Add Tesla prefix for P100
+      gpuModel = gpuModel.replace(/\bNVIDIA V100\b/g, 'NVIDIA Tesla V100');  // Add Tesla prefix for V100
 
       // Get pricing from the manual mapping (per GPU pricing)
       let priceHourUsd = 0;
@@ -156,20 +154,13 @@ class OracleScraper implements ProviderScraper {
       const gpuMemoryMatch = gpuMemoryText.match(/(\d+(?:,\d+)?)/);
       const vramGb = gpuMemoryMatch ? parseInt(gpuMemoryMatch[1].replace(',', '')) : 0;
 
-      // Parse CPU cores
+      // Parse CPU cores - use undefined if not available
       const cpuCoresMatch = cpuCoresText.match(/(\d+)/);
-      let vcpus = cpuCoresMatch ? parseInt(cpuCoresMatch[1]) : 0;
+      const vcpus = cpuCoresMatch ? parseInt(cpuCoresMatch[1]) : undefined;
 
-      // Parse CPU memory
+      // Parse CPU memory - use undefined if not available
       const cpuMemoryMatch = cpuMemoryText.match(/(\d+(?:,\d+)?)/);
-      let systemRamGb = cpuMemoryMatch ? parseInt(cpuMemoryMatch[1].replace(',', '')) : 0;
-
-      // Apply fallback specs for instances missing CPU/RAM data in HTML
-      const fallbackSpecs = ORACLE_GPU_SPECS_FALLBACK[shape];
-      if (fallbackSpecs && (vcpus === 0 || systemRamGb === 0)) {
-        if (vcpus === 0) vcpus = fallbackSpecs.vcpus;
-        if (systemRamGb === 0) systemRamGb = fallbackSpecs.ramGb;
-      }
+      const systemRamGb = cpuMemoryMatch ? parseInt(cpuMemoryMatch[1].replace(',', '')) : undefined;
 
       // Skip if we don't have essential hardware data
       if (!gpuModel || vramGb === 0) {

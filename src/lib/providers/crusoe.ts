@@ -131,10 +131,13 @@ class CrusoeScraper implements ProviderScraper {
       let gpuModel = gpuName;
       gpuModel = gpuModel.replace(/^Nvidia$/, 'NVIDIA').replace(/^Nvidia\s+/, 'NVIDIA '); // Fix capitalization
 
-      // Append interface to model name (except OAM for AMD)
-      if (gpuInterface && gpuInterface !== 'OAM') {
+      // Append interface to model name (except OAM for AMD and HGX which we strip)
+      if (gpuInterface && gpuInterface !== 'OAM' && gpuInterface !== 'HGX') {
         gpuModel = `${gpuModel} ${gpuInterface}`;
       }
+
+      // Strip HGX from final model name if it got in somehow
+      gpuModel = gpuModel.replace(/\bHGX\s*/gi, '').trim();
 
       // Get complete hardware specs from mapping (may return 0s if not mapped)
       const specsKey = `${gpuModel} (${gpuInterface})`;

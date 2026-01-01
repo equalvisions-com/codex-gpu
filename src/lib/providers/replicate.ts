@@ -55,13 +55,19 @@ class ReplicateScraper implements ProviderScraper {
 
     /**
      * Parse the hardware pricing table
+     * Only parse the FIRST matching table (on-demand hardware)
+     * Skip "Additional hardware" section which requires committed spend contracts
      */
     private parseHardwareTable($: cheerio.CheerioAPI): ReplicatePriceRow[] {
         const rows: ReplicatePriceRow[] = [];
         const observedAt = new Date().toISOString();
+        let foundFirstTable = false;
 
         // Find table headers to determine column indices
         $('table').each((_: number, table: any) => {
+            // Only process the first matching hardware table
+            if (foundFirstTable) return;
+
             const $table = $(table);
 
             // Find header row
@@ -80,6 +86,10 @@ class ReplicateScraper implements ProviderScraper {
 
             // Skip tables without hardware/price columns
             if (hardwareColIndex === -1 || priceColIndex === -1) return;
+
+            // Mark that we found the first valid table
+            foundFirstTable = true;
+            console.log('[ReplicateScraper] Parsing first (on-demand) hardware table only');
 
             // Parse data rows
             $table.find('tbody tr').each((__: number, row: any) => {
@@ -214,7 +224,7 @@ class ReplicateScraper implements ProviderScraper {
         } else if (lowerSlug.includes('l40s') || lowerName.includes('l40s')) {
             return 'NVIDIA L40S';
         } else if (lowerSlug.includes('t4') || lowerName.includes('t4')) {
-            return 'NVIDIA T4';
+            return 'NVIDIA Tesla T4';
         }
         return 'Unknown GPU';
     }

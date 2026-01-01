@@ -192,7 +192,7 @@ class CivoScraper implements ProviderScraper {
      * Examples:
      * - "NVIDIA L40S 48GB GPU pricing" -> { gpuModel: "NVIDIA L40S", headerVramGb: 48 }
      * - "NVIDIA H100 SXM GPU pricing" -> { gpuModel: "NVIDIA H100 SXM", headerVramGb: 0 }
-     * - "NVIDIA A100 80GB GPU pricing" -> { gpuModel: "NVIDIA A100 80GB", headerVramGb: 80 }
+     * - "NVIDIA A100 80GB GPU pricing" -> { gpuModel: "NVIDIA A100", headerVramGb: 80 }
      */
     private parseGpuModelFromHeader(headerText: string): { gpuModel: string; headerVramGb: number } {
         // Remove "GPU pricing" suffix (case insensitive)
@@ -207,15 +207,17 @@ class CivoScraper implements ProviderScraper {
 
         if (vramMatch) {
             headerVramGb = parseInt(vramMatch[1], 10);
-            // Remove the VRAM part from model name for models like A100 where VRAM is part of the name
-            // But keep it for display (A100 40GB vs A100 80GB are different products)
-            // The model name stays as-is: "NVIDIA A100 80GB"
+            // Strip VRAM from model name - it's displayed in separate column
+            gpuModel = withoutSuffix.replace(/\s*\d+\s*GB$/i, '').trim();
         }
 
         // Ensure model starts with NVIDIA
         if (!gpuModel.startsWith('NVIDIA')) {
             gpuModel = 'NVIDIA ' + gpuModel;
         }
+
+        // Normalize PCI to PCIe for consistency
+        gpuModel = gpuModel.replace(/\bPCI\b/gi, 'PCIe');
 
         return { gpuModel, headerVramGb };
     }

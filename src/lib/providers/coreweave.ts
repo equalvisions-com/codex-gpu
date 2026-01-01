@@ -14,13 +14,13 @@ function toMoney(s?: string | null): number | undefined {
 
 function toInt(s?: string | null): number | undefined {
   if (!s || s.trim() === '') return undefined;
-  const parsed = parseInt(s.trim(), 10);
+  const parsed = parseInt(s.replace(/,/g, '').trim(), 10);
   return isNaN(parsed) ? undefined : parsed;
 }
 
 function toFloat(s?: string | null): number | undefined {
   if (!s || s.trim() === '') return undefined;
-  const parsed = parseFloat(s.trim());
+  const parsed = parseFloat(s.replace(/,/g, '').trim());
   return isNaN(parsed) ? undefined : parsed;
 }
 
@@ -96,9 +96,8 @@ class CoreWeaveScraper implements ProviderScraper {
 
         // GPU model name
         let modelName = $row.find('.table-v2-cell--name .table-model-name').first().text().trim();
-
-        // Clean up GPU model name: remove "Server Edition" suffix
-        modelName = modelName.replace(/\s+Server Edition$/i, '').trim();
+        modelName = modelName.replace(/\bHGX\s*/gi, '');  // Strip HGX prefix (e.g., "NVIDIA HGX B200" -> "NVIDIA B200")
+        modelName = modelName.replace(/\bServer Edition\b/gi, 'SE');  // "Server Edition" -> "SE"
 
         // Price extraction
         const priceText = $row.find('.table-meta-value').first().text().trim();

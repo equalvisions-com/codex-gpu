@@ -163,11 +163,11 @@ class SesterceScraper implements ProviderScraper {
         if (upperName === 'RTX4090') return 'NVIDIA RTX 4090';
         if (upperName === 'RTX5090') return 'NVIDIA RTX 5090';
         if (upperName === 'RTX6000ADA') return 'NVIDIA RTX 6000 Ada';
-        if (upperName === 'RTXPRO6000') return 'NVIDIA RTX Pro 6000';
+        if (upperName === 'RTX4000ADA') return 'NVIDIA RTX 4000 Ada';
+        if (upperName === 'RTXPRO6000') return 'NVIDIA RTX PRO 6000';
 
-        // Ampere series (preserve VRAM variants - they're different hardware)
-        if (upperName === 'A100') return 'NVIDIA A100 40GB';
-        if (upperName === 'A100_80G') return 'NVIDIA A100 80GB';
+        // Ampere series (VRAM comes from API's vRamGB field, not model name)
+        if (upperName === 'A100' || upperName === 'A100_80G') return 'NVIDIA A100';
         if (upperName === 'A6000') return 'NVIDIA RTX A6000';
         if (upperName === 'A5000') return 'NVIDIA RTX A5000';
         if (upperName === 'A4000') return 'NVIDIA RTX A4000';
@@ -175,9 +175,8 @@ class SesterceScraper implements ProviderScraper {
         if (upperName === 'A10') return 'NVIDIA A10';
         if (upperName === 'A10G') return 'NVIDIA A10G';
 
-        // Tesla/Volta series (preserve VRAM variants - they're different hardware)
-        if (upperName === 'V100') return 'NVIDIA V100 16GB';
-        if (upperName === 'V100_32G') return 'NVIDIA V100 32GB';
+        // Tesla/Volta series (VRAM comes from API's vRamGB field, not model name)
+        if (upperName === 'V100' || upperName === 'V100_32G') return 'NVIDIA Tesla V100';
         if (upperName === 'T4') return 'NVIDIA T4';
 
         // Default: prefix with NVIDIA if looks like a GPU

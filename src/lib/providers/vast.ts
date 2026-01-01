@@ -172,17 +172,19 @@ class VastScraper implements ProviderScraper {
 
     /**
      * Normalize GPU names for consistent display.
-     * Vast uses names like "RTX_4090" - convert to "RTX 4090"
+     * Vast uses names like "A100 PCIE" - convert to "NVIDIA A100 PCIe"
      */
     private normalizeGpuName(name: string): string {
         // Replace underscores with spaces
         let normalized = name.replace(/_/g, ' ');
 
-        // Add NVIDIA prefix if not present for consistent naming
-        if (!normalized.toLowerCase().startsWith('nvidia') &&
-            !normalized.toLowerCase().includes('tesla') &&
-            !normalized.toLowerCase().includes('quadro')) {
-            // Don't add prefix for RTX/GTX cards - they're obvious NVIDIA
+        // Normalize PCIE to PCIe for consistency
+        normalized = normalized.replace(/\bPCIE\b/gi, 'PCIe');
+
+        // Add NVIDIA prefix for datacenter/professional GPUs that don't have it
+        const needsNvidiaPrefix = /^(A\d+|H\d+|L\d+|GH\d+|B\d+|Tesla|Quadro)/i.test(normalized);
+        if (needsNvidiaPrefix && !normalized.toLowerCase().startsWith('nvidia')) {
+            normalized = 'NVIDIA ' + normalized;
         }
 
         return normalized;

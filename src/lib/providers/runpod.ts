@@ -98,12 +98,14 @@ class RunPodScraper implements ProviderScraper {
       if (communityCloudPrice && communityCloudPrice.trim() !== '') {
         const price = parseFloat(communityCloudPrice);
         if (!isNaN(price)) {
+          // Normalize RTX Pro to RTX PRO (case-sensitive: only for RTX models, not AMD Pro)
+          const normalizedGpuModel = gpuModel.replace(/\b(RTX)\s+Pro\b/g, '$1 PRO');
           rows.push({
             provider: 'runpod',
             source_url: PRICING_URL,
             observed_at: observedAt,
             instance_id: instanceId,
-            gpu_model: `NVIDIA ${gpuModel}`,
+            gpu_model: `NVIDIA ${normalizedGpuModel}`,
             gpu_count: 1,
             vram_gb: vramGb,
             vcpus: vcpus,

@@ -27,30 +27,15 @@ interface LatitudePlan {
     type: string;
     attributes: {
         name: string;
-        slug: string;
+        slug?: string;
         features?: string[];
-        specs: {
-            cpu?: { type?: string; clock?: number; cores?: number; count?: number };
-            vcpus?: number;
-            memory?: { total?: number };
-            gpu?: {
-                type?: string;
-                count?: number;
-                vram_per_gpu?: number;
-                interconnect?: string;
-            };
-            drives?: Array<{ size?: string; type?: string; count?: number }>;
-            disk?: { size?: number | { amount?: number; unit?: string }; type?: string };
-            nics?: Array<{ type?: string; count?: number }>;
-        };
-        regions?: LatitudeRegion[];
-        // VM plans use 'available_in' instead of 'regions'
-        available_in?: Array<{
-            region?: { city?: string; country?: string; slug?: string };
-            pricing: {
-                USD?: { hour?: number; month?: number };
-            };
-        }>;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        specs: Record<string, any>;  // Flexible for both VM and bare metal
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        regions?: any[];
+        stock_level?: string;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        available_in?: any[];
     };
 }
 
@@ -127,17 +112,6 @@ class LatitudeScraper implements ProviderScraper {
     }
 
     /**
-     * Map of VM plan name patterns to GPU info
-     * Format: vm.{gpu_type}.{size}
-     */
-    private static readonly VM_GPU_MAP: Record<string, { model: string; vram: number }> = {
-        'l40s': { model: 'NVIDIA L40S', vram: 48 },
-        'h100': { model: 'NVIDIA H100', vram: 80 },
-        'rtx6kpro': { model: 'NVIDIA RTX PRO 6000', vram: 48 },
-        'a100': { model: 'NVIDIA A100', vram: 80 },
-    };
-
-    /**
      * Normalize GPU model name by stripping VRAM
      * e.g., "NVIDIA H100 80GB NVLink" -> "NVIDIA H100 NVLink"
      */
@@ -145,13 +119,38 @@ class LatitudeScraper implements ProviderScraper {
         return model
             // Remove VRAM specs like "80GB", "48 GB", etc.
             .replace(/\s*\d+\s*GB\b/gi, '')
+            // Convert "Server Edition" to "SE"
+            .replace(/\bServer Edition\b/gi, 'SE')
+            // Strip NVLink from model name
+            .replace(/\s+NVLink\b/gi, '')
             // Clean up extra spaces
             .replace(/\s+/g, ' ')
             .trim();
     }
 
     /**
+     * Parse VRAM from string like "48 Gb" or "80 GB"
+     */
+    private parseVramString(vramStr: string | number | undefined): number | undefined {
+        if (typeof vramStr === 'number') return vramStr;
+        if (typeof vramStr !== 'string') return undefined;
+        const match = vramStr.match(/(\d+)/);
+        return match ? parseInt(match[1]) : undefined;
+    }
+
+    /**
      * Parse plans from API response
+     * 
+     * Bare Metal API structure:
+     *   specs.gpu.type = "NVIDIA H100 80GB NVLink"
+     *   specs.gpu.count = 4
+     *   specs.gpu.vram_per_gpu = 80 (number)
+     *   specs.memory.total = 768 (system RAM)
+     * 
+     * VM API structure:
+     *   specs.gpu = "NVIDIA L40S" (string)
+     *   specs.vram_per_gpu = "48 Gb" (string)
+     *   specs.memory = 128 (system RAM as number)
      */
     private parsePlans(plans: LatitudePlan[], defaultType: 'Virtual Machine' | 'Bare Metal'): LatitudePriceRow[] {
         const rows: LatitudePriceRow[] = [];
@@ -164,42 +163,46 @@ class LatitudeScraper implements ProviderScraper {
             let gpuModel: string;
             let gpuCount: number;
             let vramGb: number | undefined;
+            let systemRamGb: number | undefined;
+            let vcpus: number | undefined;
 
-            // Check if explicit GPU specs exist (bare metal)
-            if (specs?.gpu?.type && specs?.gpu?.count) {
-                // Strip VRAM and extra suffixes from model name (e.g., "NVIDIA H100 80GB NVLink" -> "NVIDIA H100")
+            if (defaultType === 'Virtual Machine') {
+                // VM API: specs.gpu is a string, specs.vram_per_gpu is a string
+                if (typeof specs?.gpu !== 'string' || !specs.gpu) {
+                    continue; // Skip non-GPU VMs
+                }
+
+                // GPU model directly from API
+                gpuModel = this.normalizeGpuModel(specs.gpu);
+                gpuCount = 1; // VMs have 1 GPU
+
+                // VRAM from string like "48 Gb"
+                vramGb = this.parseVramString(specs.vram_per_gpu);
+
+                // System RAM for VMs
+                systemRamGb = typeof specs?.memory === 'number' ? specs.memory : undefined;
+                vcpus = specs?.vcpus;
+
+            } else {
+                // Bare Metal API: specs.gpu is an object
+                if (!specs?.gpu?.type || !specs?.gpu?.count) {
+                    continue; // Skip non-GPU bare metal
+                }
+
                 let rawModel = specs.gpu.type;
                 if (!rawModel.includes('NVIDIA') && !rawModel.includes('AMD')) {
                     rawModel = `NVIDIA ${rawModel}`;
                 }
                 gpuModel = this.normalizeGpuModel(rawModel);
                 gpuCount = specs.gpu.count;
-                vramGb = specs.gpu.vram_per_gpu;
-            } else if (defaultType === 'Virtual Machine' && name.startsWith('vm.')) {
-                // Parse GPU from VM plan name: vm.{gpu_type}.{size}
-                const parts = name.split('.');
-                if (parts.length >= 2) {
-                    const gpuKey = parts[1].toLowerCase();
-                    const gpuInfo = LatitudeScraper.VM_GPU_MAP[gpuKey];
-                    if (gpuInfo) {
-                        gpuModel = gpuInfo.model;
-                        gpuCount = 1; // VMs typically have 1 GPU
-                        vramGb = gpuInfo.vram;
-                    } else {
-                        console.log(`  [LatitudeScraper] Unknown GPU type in VM name: ${name}`);
-                        continue;
-                    }
-                } else {
-                    continue;
-                }
-            } else {
-                // No GPU info available
-                continue;
-            }
+                // Total VRAM = per-GPU VRAM × GPU count
+                const vramPerGpu = specs.gpu.vram_per_gpu;
+                vramGb = vramPerGpu ? vramPerGpu * gpuCount : undefined;
 
-            // Get specs - handle both bare metal (cpu.cores) and VM (vcpus/memory as number) formats
-            const vcpus = specs?.vcpus || specs?.cpu?.cores || specs?.cpu?.count;
-            const systemRamGb = typeof specs?.memory === 'number' ? specs.memory : specs?.memory?.total;
+                // System RAM for bare metal
+                systemRamGb = specs?.memory?.total;
+                vcpus = specs?.cpu?.cores || specs?.cpu?.count;
+            }
 
             // Get storage - handle both formats
             let storage: string | undefined;

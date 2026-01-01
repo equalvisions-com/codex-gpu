@@ -1,9 +1,38 @@
-import * as cheerio from 'cheerio';
 import crypto from 'crypto';
 import type { DigitalOceanPriceRow, ProviderResult } from '@/types/pricing';
 import type { ProviderScraper } from './types';
 
 const PRICING_URL = 'https://www.digitalocean.com/pricing/gpu-droplets';
+
+// Interface for the __NEXT_DATA__ JSON structure
+interface DOGpuPlan {
+  description: string;      // e.g., "NVIDIA HGX H100×8" or "AMD Instinct™ MI300X"
+  slug: string;             // e.g., "gpu-h100x8-640gb"
+  cpus: number;             // vCPUs
+  memory: number;           // System RAM in GB
+  disk: {
+    boot: number;           // Boot disk in GB
+    scratch?: number;       // Scratch disk in GB (optional)
+  };
+  price: {
+    hourly: number;         // Price per hour
+    monthly?: number;       // Monthly price (if available)
+  };
+  gpu: {
+    memory: number;         // Total VRAM in GB
+    variant?: number;       // GPU count (1 if not specified, 8 for multi-GPU)
+  };
+}
+
+interface DONextData {
+  props: {
+    pageProps: {
+      data: {
+        plans: DOGpuPlan[];
+      };
+    };
+  };
+}
 
 class DigitalOceanScraper implements ProviderScraper {
   name = 'digitalocean';
@@ -32,7 +61,7 @@ class DigitalOceanScraper implements ProviderScraper {
       const html = await response.text();
       const sourceHash = crypto.createHash('sha256').update(html).digest('hex');
 
-      // Parse the HTML and extract pricing data
+      // Parse the HTML and extract pricing data from __NEXT_DATA__ JSON
       const rows = this.parsePricingPage(html);
 
       return {
@@ -50,132 +79,77 @@ class DigitalOceanScraper implements ProviderScraper {
     const rows: DigitalOceanPriceRow[] = [];
     const observedAt = new Date().toISOString();
 
-    const $ = cheerio.load(html);
+    // Extract __NEXT_DATA__ JSON from the page
+    const nextDataMatch = html.match(/<script id="__NEXT_DATA__"[^>]*>([^<]+)<\/script>/);
+    if (!nextDataMatch) {
+      console.warn('Could not find __NEXT_DATA__ in DigitalOcean page');
+      return rows;
+    }
 
-    // Find all pricing cards that contain "On-Demand Price"
-    const processedCards = new Set<string>();
+    let nextData: DONextData;
+    try {
+      nextData = JSON.parse(nextDataMatch[1]);
+    } catch (e) {
+      console.warn('Failed to parse __NEXT_DATA__ JSON:', e);
+      return rows;
+    }
 
-    $('[class*="CardPricingCard"]').each((_, card) => {
-      const $card = $(card);
+    const plans = nextData.props?.pageProps?.data?.plans;
+    if (!Array.isArray(plans)) {
+      console.warn('No plans array found in __NEXT_DATA__');
+      return rows;
+    }
 
-      // Check if this card contains "On-Demand Price"
-      if (!$card.text().includes('On-Demand Price')) {
-        return;
+    for (const plan of plans) {
+      // Skip if missing essential data
+      if (!plan.description || !plan.price?.hourly || !plan.gpu?.memory) {
+        continue;
       }
 
-      // Create a unique identifier for this card to avoid duplicates
-      const cardId = $card.find('h3').first().text().trim();
-      if (processedCards.has(cardId)) {
-        return;
-      }
-      processedCards.add(cardId);
+      // Parse GPU model name from description
+      // e.g., "NVIDIA HGX H100×8" -> "NVIDIA H100"
+      // e.g., "AMD Instinct™ MI300X" -> "AMD MI300X"
+      let gpuModel = plan.description
+        .replace(/×\d+$/, '')           // Remove ×8 suffix
+        .replace(/™/g, '')              // Remove trademark symbol
+        .replace(/Instinct\s+/i, '')    // Remove "Instinct" from AMD names
+        .replace(/\bHGX\s*/gi, '')      // Strip HGX prefix (e.g., "NVIDIA HGX H100" -> "NVIDIA H100")
+        .replace(/\s+Ada\s+Generation\b/gi, ' Ada')  // "RTX 4000 Ada Generation" -> "RTX 4000 Ada"
+        .trim();
 
-      // Extract GPU name - look for h3 elements in the card that don't contain "On-Demand Price"
-      const gpuNameElements = $card.find('h3').filter((_, el) => !$(el).text().includes('On-Demand Price'));
-      let gpuName = gpuNameElements.first().text().trim();
-
-      if (!gpuName) {
-        console.warn('Could not extract GPU name from DigitalOcean pricing card');
-        return;
-      }
-
-      // Clean up the GPU name: remove trademark symbols, ×count suffixes, "generation", and "Instinct" from AMD names
-      gpuName = gpuName.replace(/™/g, '').replace(/×\d+$/, '').replace(/\s+generation$/i, '').replace(/\s+Instinct\s+/i, ' ').trim();
-
-      // Extract specifications from the list items using the specific span structure
-      const specs: { [key: string]: string } = {};
-
-      // Target the specific span classes used in DigitalOcean's HTML
-      $card.find('li').each((_, item) => {
-        const $item = $(item);
-        const $labelSpan = $item.find('span[class*="Miafh"], span[class*="gKVwPQ"]').first();
-        const $valueSpan = $item.find('span[class*="jfxkfG"], span[class*="lpkpkz"]').last();
-
-        if ($labelSpan.length && $valueSpan.length) {
-          const label = $labelSpan.text().trim().toLowerCase();
-          const value = $valueSpan.text().trim();
-          specs[label] = value;
-        }
-      });
-
-      // Extract key specifications
-      const gpuCount = this.parseNumber(specs['gpus per droplet']) ||
-                      (gpuName.includes('×8') ? 8 :
-                       gpuName.includes('×4') ? 4 :
-                       gpuName.includes('×2') ? 2 : 1);
-
-      const gpuMemoryMatch = specs['gpu memory']?.match(/(\d+(?:,\d+)?)/);
-      const vramGb = gpuMemoryMatch ? parseInt(gpuMemoryMatch[1].replace(',', '')) : 0;
-
-      const dropletMemoryMatch = specs['droplet memory']?.match(/(\d+(?:,\d+)?)/);
-      const systemRamGb = dropletMemoryMatch ? Math.round(parseFloat(dropletMemoryMatch[1].replace(',', ''))) : 0;
-
-      const vcpus = this.parseNumber(specs['droplet vcpus']) || 0;
+      // GPU count: use variant if specified, otherwise 1
+      const gpuCount = plan.gpu.variant || 1;
 
       // Build storage description
-      const bootDisk = specs['boot disk'];
-      const scratchDisk = specs['scratch disk'];
-      const storageParts = [];
-      if (bootDisk) storageParts.push(`Boot: ${bootDisk}`);
-      if (scratchDisk) storageParts.push(`Scratch: ${scratchDisk}`);
+      const storageParts: string[] = [];
+      if (plan.disk?.boot) {
+        storageParts.push(`Boot: ${plan.disk.boot >= 1000 ? (plan.disk.boot / 1000).toFixed(1) + ' TB' : plan.disk.boot + ' GB'}`);
+      }
+      if (plan.disk?.scratch) {
+        storageParts.push(`Scratch: ${plan.disk.scratch >= 1000 ? (plan.disk.scratch / 1000).toFixed(1) + ' TB' : plan.disk.scratch + ' GB'}`);
+      }
       const storage = storageParts.join(', ') || 'Unknown';
-
-      // Extract transfer allowance
-      const transferMatch = specs['transfer']?.match(/(\d+(?:,\d+)?)/);
-      const transferGb = transferMatch ? parseInt(transferMatch[1].replace(',', '')) : undefined;
-
-      // Extract pricing from the header text that shows the strike-through pricing
-      let priceHourUsd = 0;
-      const priceText = $card.find('.gpu-droplets__StyledStrikeThrough-sc-93767cc8-0, [class*="strike"], span').first().text().trim();
-      const priceMatch = priceText.match(/\$(\d+(?:\.\d+)?)/);
-      if (priceMatch) {
-        priceHourUsd = parseFloat(priceMatch[1]);
-        // DigitalOcean shows per-GPU pricing for multi-GPU instances, but we want total instance price
-        // Multiply by GPU count for instances with more than 1 GPU
-        if (gpuCount > 1) {
-          priceHourUsd *= gpuCount;
-        }
-      }
-
-      // Skip if we don't have essential data
-      if (!gpuName || priceHourUsd === 0) {
-        console.warn(`Skipping DigitalOcean GPU ${gpuName}: missing data (price: ${priceHourUsd})`);
-        return;
-      }
-
-      // Create instance ID from the slug in the card data or generate from name
-      const cardData = $card.attr('data-card') || $card.find('[data-slug]').attr('data-slug');
-      const instanceId = cardData || gpuName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
 
       rows.push({
         provider: 'digitalocean',
         source_url: PRICING_URL,
         observed_at: observedAt,
-        instance_id: instanceId,
-        gpu_model: gpuName,
+        instance_id: plan.slug,
+        gpu_model: gpuModel,
         gpu_count: gpuCount,
-        vram_gb: vramGb,
-        vcpus: vcpus,
-        system_ram_gb: systemRamGb,
+        vram_gb: plan.gpu.memory,
+        vcpus: plan.cpus,
+        system_ram_gb: plan.memory,
         storage: storage,
-        transfer_gb: transferGb,
         price_unit: gpuCount === 1 ? 'gpu_hour' : 'instance_hour',
-        price_hour_usd: priceHourUsd,
-        raw_cost: `$${priceHourUsd.toFixed(2)}`,
+        price_hour_usd: plan.price.hourly,
+        raw_cost: `$${plan.price.hourly.toFixed(2)}/hr`,
         class: 'GPU',
         type: 'Virtual Machine',
       });
-
-      // Intentionally no logger here to reduce noise; keep provider parsers quiet in production
-    });
+    }
 
     return rows;
-  }
-
-  private parseNumber(text: string | undefined): number | undefined {
-    if (!text) return undefined;
-    const num = parseFloat(text.replace(/,/g, ''));
-    return isNaN(num) ? undefined : num;
   }
 }
 

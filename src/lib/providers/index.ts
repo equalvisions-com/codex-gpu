@@ -26,3 +26,4 @@ export { hotaisleScraper } from "./hotaisle";
 export { alibabaScraper } from "./alibaba";
 export { oblivusScraper } from "./oblivus";
 export { paperspaceScraper } from "./paperspace";
+export { togetheraiScraper } from "./togetherai";

@@ -325,6 +325,8 @@ class KoyebScraper implements ProviderScraper {
         // Determine GPU model and VRAM (skip N300s - AMD instances not tracked)
         if (upperName.includes('N300')) {
             return null; // Skip AMD Instinct N300s
+        } else if (upperName.includes('H200')) {
+            return { model: 'NVIDIA H200', count, vram: 141 * count };
         } else if (upperName.includes('H100')) {
             return { model: 'NVIDIA H100', count, vram: 80 * count };
         } else if (upperName.includes('A100 SXM') || upperName.includes('A100-SXM')) {
@@ -332,17 +334,19 @@ class KoyebScraper implements ProviderScraper {
         } else if (upperName.includes('A100')) {
             return { model: 'NVIDIA A100', count, vram: 80 * count };
         } else if (upperName.includes('L40S')) {
-            return { model: 'NVIDIA L40S', count, vram: 48 };
+            return { model: 'NVIDIA L40S', count, vram: 48 * count };
         } else if (upperName.includes('L4')) {
-            return { model: 'NVIDIA L4', count, vram: 24 };
+            return { model: 'NVIDIA L4', count, vram: 24 * count };
         } else if (upperName.includes('RTX-A6000') || upperName.includes('A6000')) {
-            return { model: 'NVIDIA RTX A6000', count, vram: 48 };
+            return { model: 'NVIDIA RTX A6000', count, vram: 48 * count };
         } else if (upperName.includes('RTX-4000') || upperName.includes('RTX 4000')) {
-            return { model: 'NVIDIA RTX 4000 SFF Ada', count, vram: 20 };
+            return { model: 'NVIDIA RTX 4000 Ada SFF', count, vram: 20 * count };
         }
 
         // Check full text as fallback
-        if (upperText.includes('H100')) {
+        if (upperText.includes('H200')) {
+            return { model: 'NVIDIA H200', count, vram: 141 * count };
+        } else if (upperText.includes('H100')) {
             return { model: 'NVIDIA H100', count, vram: 80 * count };
         } else if (upperText.includes('A100')) {
             return { model: 'NVIDIA A100', count, vram: 80 * count };

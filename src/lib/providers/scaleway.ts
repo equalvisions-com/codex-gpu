@@ -145,6 +145,9 @@ class ScalewayScraper implements ProviderScraper {
         // Convert EUR to USD
         const priceHourUsd = Math.round(euroPrice * EUR_TO_USD * 100) / 100;
 
+        // Calculate total VRAM (per-GPU VRAM × GPU count)
+        const totalVramGb = gpuInfo.vram ? gpuInfo.vram * gpuInfo.count : undefined;
+
         return {
             provider: 'scaleway',
             source_url: PRICING_URL,
@@ -153,7 +156,7 @@ class ScalewayScraper implements ProviderScraper {
             sku: instanceName,
             gpu_model: gpuInfo.model,
             gpu_count: gpuInfo.count,
-            vram_gb: gpuInfo.vram,
+            vram_gb: totalVramGb, // Total VRAM = per-GPU × count
             vcpus: vcpus,
             system_ram_gb: systemRamGb,
             price_unit: 'instance_hour',

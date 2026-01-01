@@ -96,10 +96,8 @@ class OblivusScraper implements ProviderScraper {
             // Process each GPU type
             for (const [gpuKey, gpuData] of Object.entries(data.data.gpu)) {
                 const hourlyCostPerGpu = parseFloat(gpuData.hourlyCost);
-                // Prefix with NVIDIA if not already RTX (which includes NVIDIA branding)
-                const gpuModel = gpuData.metaName.startsWith('RTX')
-                    ? `NVIDIA ${gpuData.metaName}`
-                    : `NVIDIA ${gpuData.metaName}`;
+                // Normalize GPU model name: strip VRAM, normalize PCIe, add NVIDIA prefix
+                const gpuModel = this.normalizeGpuModel(gpuData.metaName);
                 const network = gpuData.network;
 
                 // Process each configuration
@@ -148,6 +146,28 @@ class OblivusScraper implements ProviderScraper {
         } catch (error) {
             throw new Error(`Oblivus scraping failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
+    }
+
+    /**
+     * Normalize GPU model name for consistent display.
+     * - Strip VRAM suffix (e.g., "80GB") - it's in separate column
+     * - Normalize PCIE to PCIe
+     * - Add NVIDIA prefix
+     */
+    private normalizeGpuModel(metaName: string): string {
+        // Strip VRAM suffix (e.g., "H100 80GB SXM5" -> "H100 SXM5")
+        let normalized = metaName.replace(/\s*\d+GB\s*/gi, ' ').trim();
+        // Clean up any double spaces
+        normalized = normalized.replace(/\s+/g, ' ');
+        // Normalize PCIE to PCIe
+        normalized = normalized.replace(/\bPCIE\b/gi, 'PCIe');
+        // Strip NVLink from model name
+        normalized = normalized.replace(/\s+NVLink\b/gi, '');
+        // Add NVIDIA prefix
+        if (!normalized.toLowerCase().startsWith('nvidia')) {
+            normalized = 'NVIDIA ' + normalized;
+        }
+        return normalized;
     }
 }
 

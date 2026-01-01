@@ -151,7 +151,7 @@ class PaperspaceScraper implements ProviderScraper {
                     source_url: SOURCE_URL,
                     observed_at: observedAt,
                     instance_id: mt.label,
-                    gpu_model: `NVIDIA ${mt.gpu}`,
+                    gpu_model: this.normalizeGpuModel(mt.gpu),
                     gpu_count: gpuCount,
                     vram_gb: totalVram,
                     vcpus: mt.cpus,
@@ -188,6 +188,41 @@ class PaperspaceScraper implements ProviderScraper {
         // Match patterns like "A6000x4", "H100x8", etc.
         const match = label.match(/x(\d+)$/);
         return match ? parseInt(match[1], 10) : 1;
+    }
+
+    /**
+     * Normalize GPU model name for consistent display.
+     * - Strip generation prefix (Ampere, Hopper, Quadro) - but keep Tesla
+     * - Strip VRAM suffix (80G, 32G, etc.)
+     * - Add NVIDIA prefix
+     */
+    private normalizeGpuModel(gpuName: string): string {
+        // Strip generation prefix (keep Tesla for legacy GPU naming consistency)
+        let normalized = gpuName
+            .replace(/^Ampere\s+/i, '')
+            .replace(/^Hopper\s+/i, '')
+            .replace(/^Quadro\s+/i, '');
+
+        // Strip VRAM suffix (e.g., "80G", "32G", "80G PCIe")
+        normalized = normalized
+            .replace(/\s+\d+G\s*$/i, '')       // "A100 80G" -> "A100"
+            .replace(/\s+\d+G\s+/i, ' ');      // "A100 80G PCIe" -> "A100 PCIe"
+
+        // Normalize PCIe
+        normalized = normalized.replace(/\bPCIE\b/gi, 'PCIe');
+
+        // Add space after RTX if missing (e.g., "RTX4000" -> "RTX 4000")
+        normalized = normalized.replace(/\bRTX(\d)/gi, 'RTX $1');
+
+        // Clean up whitespace
+        normalized = normalized.replace(/\s+/g, ' ').trim();
+
+        // Add NVIDIA prefix
+        if (!normalized.toLowerCase().startsWith('nvidia')) {
+            normalized = 'NVIDIA ' + normalized;
+        }
+
+        return normalized;
     }
 }
 

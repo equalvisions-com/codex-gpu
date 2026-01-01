@@ -198,10 +198,8 @@ class VerdaScraper implements ProviderScraper {
         // Parse RAM (GB)
         const systemRamGb = this.parseNumber(ramValue);
 
-        // Parse VRAM (GB) - total for all GPUs
-        const vramTotal = this.parseNumber(vramValue);
-        // Calculate per-GPU VRAM
-        const vramPerGpu = vramTotal && gpuCount > 0 ? Math.round(vramTotal / gpuCount) : undefined;
+        // Parse VRAM (GB) - total for all GPUs (this is what the website shows)
+        const vramGb = this.parseNumber(vramValue);
 
         // Parse price (e.g., "$10.32/h")
         const priceMatch = priceValue.match(/\$?([\d.]+)/);
@@ -217,7 +215,7 @@ class VerdaScraper implements ProviderScraper {
             sku: instanceName,
             gpu_model: gpuModel,
             gpu_count: gpuCount,
-            vram_gb: vramPerGpu,
+            vram_gb: vramGb, // Total VRAM for instance (not per-GPU)
             vcpus: vcpus,
             system_ram_gb: systemRamGb,
             price_unit: 'instance_hour',

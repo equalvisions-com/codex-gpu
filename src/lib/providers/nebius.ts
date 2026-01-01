@@ -7,6 +7,30 @@ const PRICING_URL = 'https://nebius.com/prices';
 
 const MONEY_RE = /\$([0-9.]+)/;
 
+// VRAM mapping based on official NVIDIA specifications
+// Source: NVIDIA product pages and datasheets
+const VRAM_MAPPING: Record<string, number> = {
+  'NVIDIA GB200 NVL72': 186,    // 372 GB HBM3e per superchip (2 GPUs) → 186 per GPU
+  'NVIDIA HGX B200': 180,       // DGX B200: 1,440 GB / 8 GPUs = 180 GB
+  'NVIDIA HGX H200': 141,       // H200 spec: 141 GB HBM3e
+  'NVIDIA HGX H100': 80,        // H100 spec: 80 GB HBM3
+  'NVIDIA L40S': 48,            // L40S spec: 48 GB GDDR6
+};
+
+function getVramGb(gpuModel: string): number | undefined {
+  // Try exact match first
+  if (VRAM_MAPPING[gpuModel]) {
+    return VRAM_MAPPING[gpuModel];
+  }
+  // Try partial match for variations
+  for (const [key, vram] of Object.entries(VRAM_MAPPING)) {
+    if (gpuModel.includes(key) || key.includes(gpuModel)) {
+      return vram;
+    }
+  }
+  return undefined;
+}
+
 function parsePrice(text: string): number | undefined {
   const m = text.match(MONEY_RE);
   return m ? Number(m[1]) : undefined;
@@ -16,10 +40,12 @@ function cleanGpuModelName(item: string): string {
   // Remove asterisks
   let cleaned = item.replace(/\*/g, '');
 
-  // Handle specific patterns for L40S GPUs
+  // Handle specific patterns for L40S GPUs - strip Intel/AMD suffixes
   cleaned = cleaned
-    .replace(/NVIDIA L40S GPU with AMD/g, 'NVIDIA L40S AMD')
-    .replace(/NVIDIA L40S GPU with Intel/g, 'NVIDIA L40S Intel');
+    .replace(/NVIDIA L40S GPU with AMD/g, 'NVIDIA L40S')
+    .replace(/NVIDIA L40S GPU with Intel/g, 'NVIDIA L40S')
+    .replace(/\bNVIDIA L40S\s+(Intel|AMD)\b/gi, 'NVIDIA L40S')
+    .replace(/\bHGX\s*/gi, '');  // Strip HGX prefix (e.g., "NVIDIA HGX B200" -> "NVIDIA B200")
 
   return cleaned.trim();
 }
@@ -167,6 +193,7 @@ class NebiusScraper implements ProviderScraper {
         gpu_model: normalizedModel,
         class: 'GPU',
         gpu_count: 1,
+        vram_gb: getVramGb(normalizedModel),
         vcpus: normalizedVcpus,
         system_ram_gb: systemRamGb,
         price_unit: 'gpu_hour',

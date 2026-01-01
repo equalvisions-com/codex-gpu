@@ -1,5 +1,5 @@
 // Provider types
-export type Provider = "coreweave" | "nebius" | "hyperstack" | "runpod" | "lambda" | "digitalocean" | "oracle" | "crusoe" | "flyio" | "vultr" | "latitude" | "ori" | "voltagepark" | "googlecloud" | "verda" | "scaleway" | "replicate" | "thundercompute" | "koyeb" | "sesterce" | "aws" | "azure" | "civo" | "vast" | "hotaisle" | "alibaba" | "oblivus" | "paperspace";
+export type Provider = "coreweave" | "nebius" | "hyperstack" | "runpod" | "lambda" | "digitalocean" | "oracle" | "crusoe" | "flyio" | "vultr" | "latitude" | "ori" | "voltagepark" | "googlecloud" | "verda" | "scaleway" | "replicate" | "thundercompute" | "koyeb" | "sesterce" | "aws" | "azure" | "civo" | "vast" | "hotaisle" | "alibaba" | "oblivus" | "paperspace" | "togetherai";
 
 // CoreWeave pricing schema
 type CoreWeavePriceRow = {
@@ -46,6 +46,7 @@ export type NebiusPriceRow = {
 
   // Hardware
   gpu_count?: number;           // Always 1 for GPU instances
+  vram_gb?: number;             // VRAM in GB (from hardcoded lookup)
 
   // Specs (may be ranges)
   vcpus: string;                // "16", "8-40", etc.
@@ -124,17 +125,17 @@ export type LambdaPriceRow = {
   // Identification
   instance_id?: string;         // instance type (e.g., "8x-nvidia-b200-sxm6")
 
-  // Hardware (per GPU specs)
+  // Hardware (total instance specs)
   gpu_model: string;            // e.g., "NVIDIA B200 SXM6"
   gpu_count: number;            // number of GPUs in instance (1, 2, 4, 8)
-  vram_gb: number;              // VRAM per GPU in GB
+  vram_gb: number;              // TOTAL VRAM for instance (vram_per_gpu * gpu_count)
   vcpus: number;                // total vCPUs for the instance
   system_ram_gb: number;        // total RAM for the instance in GB
   storage: string;              // storage description (e.g., "22 TiB SSD")
 
   // Pricing
-  price_unit: "gpu_hour";      // per GPU-hour
-  price_hour_usd: number;       // price per GPU per hour
+  price_unit: "instance_hour";  // per instance-hour (total price)
+  price_hour_usd: number;       // total instance price per hour
   raw_cost: string;             // original price text
 
   // Flags
@@ -185,8 +186,8 @@ export type OraclePriceRow = {
   gpu_model: string;            // e.g., "NVIDIA B200"
   gpu_count: number;            // number of GPUs in instance
   vram_gb: number;              // total VRAM in GB (not per GPU)
-  vcpus: number;                // total vCPUs for the instance
-  system_ram_gb: number;        // total RAM for the instance in GB
+  vcpus?: number;               // total vCPUs (optional - not always available)
+  system_ram_gb?: number;       // total RAM in GB (optional - not always available)
   storage: string;              // storage description
   network: string;              // network description
 
@@ -806,8 +807,32 @@ export type PaperspacePriceRow = {
   type: "Virtual Machine";
 };
 
+// Together AI pricing schema (HTML scrape)
+export type TogetherAIPriceRow = {
+  provider: "togetherai";
+  source_url: string;
+  observed_at: string;
+
+  // Identification
+  instance_id: string;            // e.g., "hgx-h100-sxm-8x"
+  gpu_model: string;              // e.g., "NVIDIA H100 SXM"
+
+  // Hardware
+  gpu_count: 8;                   // Always 8x GPU clusters
+  vram_gb: number;                // Total VRAM (per GPU × 8)
+
+  // Pricing
+  price_unit: "cluster_hour";
+  price_hour_usd: number;         // Total cluster hourly price
+  currency: "USD";
+
+  // Flags
+  class: "GPU";
+  type: "Virtual Machine";
+};
+
 // Union type for all price rows
-export type PriceRow = CoreWeavePriceRow | NebiusPriceRow | HyperstackPriceRow | RunPodPriceRow | LambdaPriceRow | DigitalOceanPriceRow | OraclePriceRow | CrusoePriceRow | FlyioPriceRow | VultrPriceRow | LatitudePriceRow | OriPriceRow | VoltageParkPriceRow | GoogleCloudPriceRow | VerdaPriceRow | ScalewayPriceRow | ReplicatePriceRow | ThundercomputePriceRow | KoyebPriceRow | SestercePriceRow | AWSPriceRow | AzurePriceRow | CivoPriceRow | VastPriceRow | HotAislePriceRow | AlibabaPriceRow | OblivusPriceRow | PaperspacePriceRow;
+export type PriceRow = CoreWeavePriceRow | NebiusPriceRow | HyperstackPriceRow | RunPodPriceRow | LambdaPriceRow | DigitalOceanPriceRow | OraclePriceRow | CrusoePriceRow | FlyioPriceRow | VultrPriceRow | LatitudePriceRow | OriPriceRow | VoltageParkPriceRow | GoogleCloudPriceRow | VerdaPriceRow | ScalewayPriceRow | ReplicatePriceRow | ThundercomputePriceRow | KoyebPriceRow | SestercePriceRow | AWSPriceRow | AzurePriceRow | CivoPriceRow | VastPriceRow | HotAislePriceRow | AlibabaPriceRow | OblivusPriceRow | PaperspacePriceRow | TogetherAIPriceRow;
 
 export type ProviderSnapshot = {
   provider: Provider;

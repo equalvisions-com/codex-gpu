@@ -92,12 +92,16 @@ class HyperstackScraper implements ProviderScraper {
 
         if (!model) return; // skip malformed rows
 
+        // Normalize model name
+        let normalizedModel = model.replace(/\b(RTX)\s+Pro\b/g, '$1 PRO');  // RTX Pro -> RTX PRO
+        normalizedModel = normalizedModel.replace(/\s+NVLink\b/gi, '');      // Strip NVLink
+
         const row: HyperstackPriceRow = {
           provider: 'hyperstack',
           source_url: PRICING_URL,
           observed_at: observedAt,
           instance_id: slugify(model),
-          gpu_model: model,
+          gpu_model: normalizedModel,
           gpu_count: 1, // Hyperstack pricing is per-GPU
           vram_gb: parseIntSafe(vramText),
           vcpus: parseIntSafe(vcpusText),
