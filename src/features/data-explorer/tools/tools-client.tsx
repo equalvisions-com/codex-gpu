@@ -224,8 +224,8 @@ export function ToolsClient({ initialFavoriteKeys, isFavoritesMode }: ToolsClien
   const navItems = React.useMemo(() => {
     if (!effectiveFavoritesMode) return undefined;
     return [
-      { label: "LLMs", value: "/llms", icon: Bot },
       { label: "GPUs", value: "/gpus", icon: Server },
+      { label: "LLMs", value: "/llms", icon: Bot },
       { label: "Tools", value: "/tools", icon: Wrench, isCurrent: true },
     ];
   }, [effectiveFavoritesMode]);

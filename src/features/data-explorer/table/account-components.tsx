@@ -362,13 +362,13 @@ export function UserMenu({
                         className="pointer-events-none absolute left-[15px] top-1 bottom-1 w-px bg-muted"
                       />
                       <DropdownMenuItem asChild className={"flex w-full items-center gap-2 rounded-sm px-2 py-1.5 pl-2 text-sm font-medium text-foreground transition-colors hover:bg-muted hover:no-underline focus-visible:bg-muted focus-visible:text-accent-foreground"}>
-                        <Link href="/llms?bookmarks=true">
-                          <span>LLMs</span>
+                        <Link href="/gpus?bookmarks=true">
+                          <span>GPUs</span>
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild className={"flex w-full items-center gap-2 rounded-sm px-2 py-1.5 pl-2 text-sm font-medium text-foreground transition-colors hover:bg-muted hover:no-underline focus-visible:bg-muted focus-visible:text-accent-foreground"}>
-                        <Link href="/gpus?bookmarks=true">
-                          <span>GPUs</span>
+                        <Link href="/llms?bookmarks=true">
+                          <span>LLMs</span>
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild className={"flex w-full items-center gap-2 rounded-sm px-2 py-1.5 pl-2 text-sm font-medium text-foreground transition-colors hover:bg-muted hover:no-underline focus-visible:bg-muted focus-visible:text-accent-foreground"}>
@@ -554,16 +554,16 @@ export function MobileTopNav({
   const navItems = React.useMemo(
     () => [
       {
-        label: "LLMs",
-        value: "/llms",
-        isCurrent: pathname === "/" || pathname.startsWith("/llms"),
-        icon: Bot,
-      },
-      {
         label: "GPUs",
         value: "/gpus",
-        isCurrent: pathname.startsWith("/gpus"),
+        isCurrent: pathname === "/" || pathname.startsWith("/gpus"),
         icon: Server,
+      },
+      {
+        label: "LLMs",
+        value: "/llms",
+        isCurrent: pathname.startsWith("/llms"),
+        icon: Bot,
       },
       {
         label: "Tools",
@@ -576,7 +576,7 @@ export function MobileTopNav({
   );
 
   const currentNavValue =
-    navItems.find((item) => item.isCurrent)?.value ?? "/llms";
+    navItems.find((item) => item.isCurrent)?.value ?? "/gpus";
   const currentNavItem = navItems.find((item) => item.isCurrent);
 
   // Detect bookmarks mode from URL search params

@@ -5,17 +5,17 @@ import {
   QueryClient,
   dehydrate,
 } from "@tanstack/react-query";
-import { ModelsClient } from "@/features/data-explorer/models/models-client";
-import { modelsDataOptions } from "@/features/data-explorer/models/models-query-options";
-import { modelsSearchParamsCache } from "@/features/data-explorer/models/models-search-params";
-import { getModelsPage } from "@/lib/models-loader";
-import { buildModelsSchema } from "@/features/data-explorer/models/build-models-schema";
+import { Client } from "@/features/data-explorer/table/client";
+import { dataOptions } from "@/features/data-explorer/table/query-options";
+import { searchParamsCache } from "@/features/data-explorer/table/search-params";
+import { getGpuPricingPage } from "@/lib/gpu-pricing-loader";
+import { buildGpuSchema } from "@/features/data-explorer/table/gpu-schema";
 
 export const revalidate = 43200;
 
-const HOME_META_TITLE = "Deploybase | LLM Benchmark Explorer";
+const HOME_META_TITLE = "GPU Pricing Explorer | Deploybase";
 const HOME_META_DESCRIPTION =
-  "Benchmark large language models by latency, throughput, modality support, and pricing with our interactive data explorer.";
+  "Compare hourly GPU prices, VRAM, and provider availability with our infinite data table powered by TanStack Table, nuqs, and shadcn/ui.";
 const SHARED_OG_IMAGE = "/assets/data-table-infinite.png";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -39,17 +39,18 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default function HomePage() {
-  return <HomeLlmsContent />;
+  return <HomeGpusContent />;
 }
 
-async function HomeLlmsContent() {
-  const parsedSearch = modelsSearchParamsCache.parse({});
+async function HomeGpusContent() {
+  const parsedSearch = searchParamsCache.parse({});
   const queryClient = new QueryClient();
-  let firstPagePayload: Awaited<ReturnType<typeof getModelsPage>> | null = null;
+  let firstPagePayload: Awaited<ReturnType<typeof getGpuPricingPage>> | null =
+    null;
 
   if (parsedSearch.bookmarks !== "true") {
     try {
-      const infiniteOptions = modelsDataOptions(parsedSearch);
+      const infiniteOptions = dataOptions(parsedSearch);
       await queryClient.prefetchInfiniteQuery({
         ...infiniteOptions,
         queryFn: async ({ pageParam }) => {
@@ -59,7 +60,7 @@ async function HomeLlmsContent() {
             (pageParam as { size?: number } | undefined)?.size ??
             parsedSearch.size ??
             50;
-          const result = await getModelsPage({
+          const result = await getGpuPricingPage({
             ...parsedSearch,
             cursor,
             size,
@@ -72,14 +73,14 @@ async function HomeLlmsContent() {
         },
       });
     } catch (error) {
-      console.error("[HomePage] Failed to prefetch models data", {
+      console.error("[HomePage] Failed to prefetch GPU data", {
         error: error instanceof Error ? error.message : String(error),
       });
     }
   }
 
   const dehydratedState = dehydrate(queryClient);
-  const schemaMarkup = buildModelsSchema(firstPagePayload);
+  const schemaMarkup = buildGpuSchema(firstPagePayload);
 
   return (
     <HydrationBoundary state={dehydratedState}>
@@ -99,7 +100,7 @@ async function HomeLlmsContent() {
           "--total-padding-desktop": "3rem",
         } as React.CSSProperties}
       >
-        <ModelsClient />
+        <Client />
       </div>
     </HydrationBoundary>
   );

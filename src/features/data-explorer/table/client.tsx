@@ -250,8 +250,8 @@ export function Client({ initialFavoriteKeys, isFavoritesMode }: ClientProps = {
   const navItems = React.useMemo(() => {
     if (!effectiveFavoritesMode) return undefined;
     return [
-      { label: "LLMs", value: "/llms", icon: Bot },
       { label: "GPUs", value: "/gpus", icon: Server, isCurrent: true },
+      { label: "LLMs", value: "/llms", icon: Bot },
       { label: "Tools", value: "/tools", icon: Wrench },
     ];
   }, [effectiveFavoritesMode]);

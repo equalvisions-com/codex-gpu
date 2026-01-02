@@ -9,11 +9,12 @@ const MONEY_RE = /\$([0-9.]+)/;
 
 // VRAM mapping based on official NVIDIA specifications
 // Source: NVIDIA product pages and datasheets
+// Keys must match output of cleanGpuModelName() (without HGX prefix)
 const VRAM_MAPPING: Record<string, number> = {
   'NVIDIA GB200 NVL72': 186,    // 372 GB HBM3e per superchip (2 GPUs) → 186 per GPU
-  'NVIDIA HGX B200': 180,       // DGX B200: 1,440 GB / 8 GPUs = 180 GB
-  'NVIDIA HGX H200': 141,       // H200 spec: 141 GB HBM3e
-  'NVIDIA HGX H100': 80,        // H100 spec: 80 GB HBM3
+  'NVIDIA B200': 180,           // B200 spec: 180 GB HBM3e
+  'NVIDIA H200': 141,           // H200 spec: 141 GB HBM3e
+  'NVIDIA H100': 80,            // H100 spec: 80 GB HBM3
   'NVIDIA L40S': 48,            // L40S spec: 48 GB GDDR6
 };
 

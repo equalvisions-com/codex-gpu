@@ -174,8 +174,8 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
   const navItems = React.useMemo(() => {
     if (!effectiveFavoritesMode) return undefined;
     return [
-      { label: "LLMs", value: "/llms", icon: Bot, isCurrent: true },
       { label: "GPUs", value: "/gpus", icon: Server },
+      { label: "LLMs", value: "/llms", icon: Bot, isCurrent: true },
       { label: "Tools", value: "/tools", icon: Wrench },
     ];
   }, [effectiveFavoritesMode]);

@@ -132,6 +132,12 @@ class ReplicateScraper implements ProviderScraper {
         }
     ): ReplicatePriceRow | null {
         const cellTexts = cells.map((_: number, cell: any) => $(cell).text().trim()).get();
+        const rowText = cellTexts.join(' ');
+
+        // Skip rows from "Additional hardware" section that show "committed spend contracts" message
+        if (rowText.toLowerCase().includes('committed spend') || rowText.toLowerCase().includes('additional multi-gpu')) {
+            return null;
+        }
 
         // Get hardware name and slug from first column
         const hardwareCell = $(cells.get(indices.hardwareColIndex));

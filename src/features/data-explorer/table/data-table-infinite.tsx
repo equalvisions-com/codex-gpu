@@ -70,8 +70,8 @@ export type NavItem = {
 };
 
 export const DEFAULT_NAV_ITEMS: NavItem[] = [
-  { label: "LLMs", value: "/llms", icon: Bot, shortcut: "k" },
   { label: "GPUs", value: "/gpus", icon: Server, shortcut: "g" },
+  { label: "LLMs", value: "/llms", icon: Bot, shortcut: "k" },
   { label: "Tools", value: "/tools", icon: Wrench, shortcut: "e" },
 ];
 
@@ -245,7 +245,7 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
     const inferredValueFromItems =
       baseItems.find((item) => item.isCurrent)?.value ?? null;
     const currentValue =
-      activeNavValue ?? inferredValueFromItems ?? baseItems[0]?.value ?? "/llms";
+      activeNavValue ?? inferredValueFromItems ?? baseItems[0]?.value ?? "/gpus";
 
     return baseItems.map((item) => ({
       ...item,
@@ -258,7 +258,7 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
   const currentNavItem = resolvedNavItems.find((item) => item.isCurrent);
 
   const currentNavValue =
-    resolvedNavItems.find((item) => item.isCurrent)?.value ?? "/llms";
+    resolvedNavItems.find((item) => item.isCurrent)?.value ?? "/gpus";
   const handleNavChange = React.useCallback(
     (value: string) => {
       if (!value) return;
