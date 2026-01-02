@@ -4,9 +4,10 @@ import type { ModelsColumnSchema } from "./models/models-schema";
 export function stableGpuKey(
   row: Pick<
     ColumnSchema,
-    "provider" | "gpu_model" | "item" | "sku" | "gpu_count" | "vram_gb" | "type"
+    "provider" | "gpu_model" | "item" | "sku" | "gpu_count" | "vram_gb" | "type" | "stable_key"
   >
 ): string {
+  if (row.stable_key) return row.stable_key;
   const provider = row.provider?.toLowerCase().trim();
   const model = (row.gpu_model || "").toLowerCase().trim();
   const count = typeof row.gpu_count === "number" ? `${row.gpu_count}x` : "";
@@ -45,4 +46,3 @@ export function stableToolKey(
   const category = row.category?.toLowerCase().trim();
   return [name, developer, category].filter(Boolean).join(":");
 }
-

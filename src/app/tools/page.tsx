@@ -9,6 +9,7 @@ import { ToolsClient } from "@/features/data-explorer/tools/tools-client";
 import { toolsDataOptions } from "@/features/data-explorer/tools/tools-query-options";
 import { toolsSearchParamsCache } from "@/features/data-explorer/tools/tools-search-params";
 import { getToolsPage } from "@/lib/tools-loader";
+import { buildToolsSchema } from "@/features/data-explorer/tools/build-tools-schema";
 
 export const revalidate = 43200;
 
@@ -44,23 +45,30 @@ export default function ToolsPage() {
 async function ToolsHydratedContent() {
   const parsedSearch = toolsSearchParamsCache.parse({});
   const queryClient = new QueryClient();
+  let firstPagePayload: Awaited<ReturnType<typeof getToolsPage>> | null = null;
+
   if (parsedSearch.bookmarks !== "true") {
     try {
       const infiniteOptions = toolsDataOptions(parsedSearch);
       await queryClient.prefetchInfiniteQuery({
         ...infiniteOptions,
         queryFn: async ({ pageParam }) => {
-          const cursor = typeof pageParam?.cursor === "number" ? pageParam.cursor : null;
+          const cursor =
+            typeof pageParam?.cursor === "number" ? pageParam.cursor : null;
           const size =
             (pageParam as { size?: number } | undefined)?.size ??
             parsedSearch.size ??
             50;
-          return getToolsPage({
+          const result = await getToolsPage({
             ...parsedSearch,
             cursor,
             size,
             uuid: null,
           });
+          if (!firstPagePayload && (cursor === null || cursor === 0)) {
+            firstPagePayload = result;
+          }
+          return result;
         },
       });
     } catch (error) {
@@ -71,9 +79,19 @@ async function ToolsHydratedContent() {
   }
 
   const dehydratedState = dehydrate(queryClient);
+  const schemaMarkup = buildToolsSchema(firstPagePayload);
 
   return (
     <HydrationBoundary state={dehydratedState}>
+      {schemaMarkup ? (
+        <script
+          type="application/ld+json"
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(schemaMarkup).replace(/</g, "\\u003c"),
+          }}
+        />
+      ) : null}
       <div
         className="flex min-h-dvh w-full flex-col sm:flex-row pt-2 sm:p-0"
         style={{

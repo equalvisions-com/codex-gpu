@@ -14,6 +14,8 @@ const PROMPT_PRICE_SLIDER_MAX = 1;
 const PROMPT_PRICE_SLIDER_STEP = 0.001;
 const PROMPT_PRICE_DECIMALS = 2;
 const PROMPT_PRICE_EXPONENT = Math.log(4 / 9) / Math.log(0.5);
+const PROMPT_PRICE_VALUE_MIN = 0;
+const PROMPT_PRICE_VALUE_MAX = 10;
 
 const GPU_PRICE_SLIDER_MIN = 0.01;
 const GPU_PRICE_SLIDER_MAX = 20;
@@ -238,8 +240,7 @@ function getPromptPriceGridLines() {
 }
 
 /**
- * Extracts the slider value from filter state.
- * For range filters [min, max], returns the upper bound (max) which represents the selected slider position.
+ * Extracts a numeric range from filter state.
  */
 function coerceNumeric(value: unknown): number | null {
   if (typeof value === "number") {
@@ -252,27 +253,32 @@ function coerceNumeric(value: unknown): number | null {
   return null;
 }
 
-function getFilter(filterValue: unknown): number | null {
-  const numeric = coerceNumeric(filterValue);
-  if (numeric !== null) return numeric;
+type RangeValue = [number, number];
 
+function normalizeRange([min, max]: RangeValue): RangeValue {
+  return min <= max ? [min, max] : [max, min];
+}
+
+function getRange(filterValue: unknown): RangeValue | null {
   if (Array.isArray(filterValue)) {
     const coerced = filterValue
       .map(coerceNumeric)
       .filter((val): val is number => val !== null);
 
     if (coerced.length === 0) return null;
-    return coerced.length >= 2 ? coerced[1] : coerced[0];
+    if (coerced.length === 1) return [coerced[0], coerced[0]];
+    return [coerced[0], coerced[1]];
   }
 
-  return null;
+  const numeric = coerceNumeric(filterValue);
+  return numeric === null ? null : [numeric, numeric];
 }
 
 /**
  * A self-managed slider filter component for data tables.
  *
  * Features:
- * - Single-handle range slider (filters from 1K to selected value)
+ * - Dual-handle range slider (filters between selected bounds)
  * - Visual grid lines with intermediate markers for precise reference
  * - Smooth continuous movement (no stepping)
  * - Memoized calculations for optimal performance
@@ -302,6 +308,8 @@ function DataTableFilterSliderComponent<TData>({
   const sliderStep = isPriceFilter
     ? PROMPT_PRICE_SLIDER_STEP
     : sliderConfig?.sliderStep ?? step;
+  const sliderMinBound = typeof sliderRangeMin === "number" ? sliderRangeMin : defaultMin ?? 0;
+  const sliderMaxBound = typeof sliderRangeMax === "number" ? sliderRangeMax : defaultMax ?? 0;
 
   const priceToSlider = useCallback(
     (pricePerToken: number) => {
@@ -321,42 +329,43 @@ function DataTableFilterSliderComponent<TData>({
     [isPriceFilter],
   );
 
-  // Extract current value from filters (single source of truth)
-  const currentValue = useMemo(() => {
+  // Extract current range from filters (single source of truth)
+  const currentValue = useMemo<RangeValue>(() => {
     const filter = columnFilters.find(f => f.id === value);
-    if (filter?.value && Array.isArray(filter.value)) {
-      const raw = getFilter(filter.value);
-      if (typeof raw === "number") {
-        if (isPriceFilter) {
-          return priceToSlider(raw / 1_000_000);
-        }
-        if (sliderConfig) {
-          const min = typeof sliderRangeMin === "number" ? sliderRangeMin : sliderConfig.sliderMin;
-          const max = typeof sliderRangeMax === "number" ? sliderRangeMax : sliderConfig.sliderMax;
-          return clamp(sliderConfig.toSlider(raw), min, max);
-        }
-        return raw;
+    const range = getRange(filter?.value);
+    if (range) {
+      const [minValue, maxValue] = normalizeRange(range);
+      if (isPriceFilter) {
+        return normalizeRange([
+          clamp(priceToSlider(minValue / 1_000_000), sliderMinBound, sliderMaxBound),
+          clamp(priceToSlider(maxValue / 1_000_000), sliderMinBound, sliderMaxBound),
+        ]);
       }
+      if (sliderConfig) {
+        return normalizeRange([
+          clamp(sliderConfig.toSlider(minValue), sliderMinBound, sliderMaxBound),
+          clamp(sliderConfig.toSlider(maxValue), sliderMinBound, sliderMaxBound),
+        ]);
+      }
+      return normalizeRange([
+        clamp(minValue, sliderMinBound, sliderMaxBound),
+        clamp(maxValue, sliderMinBound, sliderMaxBound),
+      ]);
     }
 
-    if (sliderConfig) {
-      return typeof sliderRangeMax === "number" ? sliderRangeMax : sliderConfig.sliderMax;
-    }
-
-    return sliderRangeMax ?? defaultMax ?? 0;
+    return [sliderMinBound, sliderMaxBound];
   }, [
     columnFilters,
-    defaultMax,
     isPriceFilter,
     priceToSlider,
     sliderConfig,
-    sliderRangeMax,
-    sliderRangeMin,
+    sliderMaxBound,
+    sliderMinBound,
     value,
   ]);
 
   // Local state for responsive UI updates (synced with external state)
-  const [localValue, setLocalValue] = useState(currentValue);
+  const [localValue, setLocalValue] = useState<RangeValue>(currentValue);
   const isUserInteractingRef = useRef(false);
 
   // Sync local state when external filter changes
@@ -382,28 +391,52 @@ function DataTableFilterSliderComponent<TData>({
     };
 
     const otherFilters = columnFiltersRef.current.filter((f: ColumnFilter) => f.id !== value);
-    const tolerance = Math.max(1e-12, sliderStep ?? (defaultMax - defaultMin) * 0.001);
+    const sliderSpan = Math.abs(sliderMaxBound - sliderMinBound);
+    const tolerance = Math.max(1e-12, sliderStep ?? sliderSpan * 0.001);
+    const [rawMinSlider, rawMaxSlider] = Array.isArray(debouncedValue)
+      ? debouncedValue
+      : [sliderMinBound, sliderMaxBound];
+    const [minSlider, maxSlider] = normalizeRange([
+      clamp(rawMinSlider, sliderMinBound, sliderMaxBound),
+      clamp(rawMaxSlider, sliderMinBound, sliderMaxBound),
+    ]);
+    const isFullRange =
+      minSlider <= sliderMinBound + tolerance &&
+      maxSlider >= sliderMaxBound - tolerance;
 
     if (isPriceFilter) {
-      const isAtMax = debouncedValue >= sliderRangeMax - tolerance;
-      const actualMax = sliderToPrice(debouncedValue);
-      const normalizedMax = Number((actualMax * 1_000_000).toFixed(PROMPT_PRICE_DECIMALS));
-      const normalizedMin = 0;
+      const actualMin = sliderToPrice(minSlider);
+      const actualMax = sliderToPrice(maxSlider);
+      const normalizedMin = clamp(
+        Number((actualMin * 1_000_000).toFixed(PROMPT_PRICE_DECIMALS)),
+        PROMPT_PRICE_VALUE_MIN,
+        PROMPT_PRICE_VALUE_MAX,
+      );
+      const normalizedMax = clamp(
+        Number((actualMax * 1_000_000).toFixed(PROMPT_PRICE_DECIMALS)),
+        PROMPT_PRICE_VALUE_MIN,
+        PROMPT_PRICE_VALUE_MAX,
+      );
+      const [rangeMin, rangeMax] = normalizeRange([normalizedMin, normalizedMax]);
 
-      if (!isAtMax) {
+      if (!isFullRange) {
         const previous = columnFiltersRef.current.find((f: ColumnFilter) => f.id === value);
-        if (previous && Array.isArray(previous.value)) {
+        if (
+          previous &&
+          Array.isArray(previous.value) &&
+          previous.value.length === 2
+        ) {
           const [prevMin, prevMax] = previous.value as (string | number)[];
-          if (Number(prevMax) === Number(normalizedMax) && Number(prevMin) === Number(normalizedMin)) {
+          if (Number(prevMin) === Number(rangeMin) && Number(prevMax) === Number(rangeMax)) {
             finishInteraction();
             return;
           }
         }
       }
 
-      const newFilters = isAtMax
+      const newFilters = isFullRange
         ? otherFilters
-        : [...otherFilters, { id: value, value: [normalizedMin, normalizedMax] }];
+        : [...otherFilters, { id: value, value: [rangeMin, rangeMax] }];
 
       setColumnFilters(newFilters);
       finishInteraction();
@@ -411,69 +444,79 @@ function DataTableFilterSliderComponent<TData>({
     }
 
     if (sliderConfig) {
-      const isAtMax = debouncedValue >= sliderRangeMax - tolerance;
-      const rawMax = sliderConfig.fromSlider(debouncedValue);
-      const processedMax = sliderConfig.postProcessMax
-        ? sliderConfig.postProcessMax(rawMax)
-        : rawMax;
-      const boundedMax = clamp(processedMax, sliderConfig.valueMin, sliderConfig.valueMax);
-      const normalizedMin = sliderConfig.valueMin;
+      const postProcess = sliderConfig.postProcessMax ?? ((value: number) => value);
+      const rawMin = sliderConfig.fromSlider(minSlider);
+      const rawMax = sliderConfig.fromSlider(maxSlider);
+      const boundedMin = clamp(
+        postProcess(rawMin),
+        sliderConfig.valueMin,
+        sliderConfig.valueMax,
+      );
+      const boundedMax = clamp(
+        postProcess(rawMax),
+        sliderConfig.valueMin,
+        sliderConfig.valueMax,
+      );
+      const [rangeMin, rangeMax] = normalizeRange([boundedMin, boundedMax]);
 
-      if (!isAtMax) {
+      if (!isFullRange) {
         const previous = columnFiltersRef.current.find((f: ColumnFilter) => f.id === value);
-        if (previous && Array.isArray(previous.value)) {
+        if (
+          previous &&
+          Array.isArray(previous.value) &&
+          previous.value.length === 2
+        ) {
           const [prevMin, prevMax] = previous.value as (string | number)[];
-          if (Number(prevMax) === Number(boundedMax) && Number(prevMin) === Number(normalizedMin)) {
+          if (Number(prevMin) === Number(rangeMin) && Number(prevMax) === Number(rangeMax)) {
             finishInteraction();
             return;
           }
         }
       }
 
-      const newFilters = isAtMax
+      const newFilters = isFullRange
         ? otherFilters
-        : [...otherFilters, { id: value, value: [normalizedMin, boundedMax] }];
+        : [...otherFilters, { id: value, value: [rangeMin, rangeMax] }];
 
       setColumnFilters(newFilters);
       finishInteraction();
       return;
     }
 
-    const isAtMax = debouncedValue >= sliderRangeMax - tolerance;
-    const maxValue = debouncedValue;
-    const normalizedMin = typeof sliderRangeMin === "number"
-      ? sliderRangeMin
-      : typeof defaultMin === "number"
-        ? defaultMin
-        : 0;
+    const [rangeMin, rangeMax] = normalizeRange([
+      clamp(minSlider, sliderMinBound, sliderMaxBound),
+      clamp(maxSlider, sliderMinBound, sliderMaxBound),
+    ]);
 
-    if (!isAtMax) {
+    if (!isFullRange) {
       const previous = columnFiltersRef.current.find((f: ColumnFilter) => f.id === value);
-      if (previous && Array.isArray(previous.value)) {
+      if (
+        previous &&
+        Array.isArray(previous.value) &&
+        previous.value.length === 2
+      ) {
         const [prevMin, prevMax] = previous.value as (string | number)[];
-        if (Number(prevMax) === Number(maxValue) && Number(prevMin) === Number(normalizedMin)) {
+        if (Number(prevMin) === Number(rangeMin) && Number(prevMax) === Number(rangeMax)) {
           finishInteraction();
           return;
         }
       }
     }
 
-    const newFilters = isAtMax
+    const newFilters = isFullRange
       ? otherFilters
-      : [...otherFilters, { id: value, value: [normalizedMin, maxValue] }];
+      : [...otherFilters, { id: value, value: [rangeMin, rangeMax] }];
 
     setColumnFilters(newFilters);
     finishInteraction();
   }, [
     debouncedValue,
     value,
-    sliderRangeMax,
-    sliderRangeMin,
+    sliderMaxBound,
+    sliderMinBound,
     setColumnFilters,
     sliderStep,
     sliderToPrice,
-    defaultMax,
-    defaultMin,
     isPriceFilter,
     sliderConfig,
   ]);
@@ -569,7 +612,12 @@ function DataTableFilterSliderComponent<TData>({
   // Stable change handler
   const handleChange = useCallback((values: number[]) => {
     isUserInteractingRef.current = true;
-    setLocalValue(values[0]);
+    if (!values.length) return;
+    if (values.length === 1) {
+      setLocalValue([values[0], values[0]]);
+      return;
+    }
+    setLocalValue(normalizeRange([values[0], values[1]]));
   }, []);
 
   return (
@@ -578,7 +626,7 @@ function DataTableFilterSliderComponent<TData>({
         min={sliderRangeMin}
         max={sliderRangeMax}
         step={sliderStep}
-        value={[localValue]}
+        value={localValue}
         onValueChange={handleChange}
         aria-label={`${label} filter slider`}
         thumbLabel={`${label} filter slider`}

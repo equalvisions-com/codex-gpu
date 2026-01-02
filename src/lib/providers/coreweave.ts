@@ -152,7 +152,7 @@ class CoreWeaveScraper implements ProviderScraper {
           instance_id: instanceId,
           gpu_model: modelName,
           gpu_count: gpuCount,
-          vram_gb: vramGb,
+          vram_gb: (vramGb && gpuCount) ? vramGb * gpuCount : vramGb,
           vcpus: vcpus,
           system_ram_gb: ramGb,
           local_storage_tb: storageTb,

@@ -15,13 +15,21 @@ const Slider = React.forwardRef<
   React.ElementRef<typeof SliderPrimitive.Root>,
   SliderProps
 >(({ className, thumbLabel, ...props }, ref) => {
-  const initialValue = Array.isArray(props.value)
-    ? props.value
-    : [props.min, props.max];
+  const [isMounted, setIsMounted] = React.useState(false);
   const ariaLabel =
     thumbLabel ??
     ((props as Record<string, string | undefined>)["aria-label"] ??
       undefined);
+  const min = typeof props.min === "number" ? props.min : 0;
+  const max = typeof props.max === "number" ? props.max : 100;
+  const range = Math.max(1e-12, max - min);
+  const thumbSizePx = 16;
+  const halfThumb = thumbSizePx / 2;
+  const initialValue = Array.isArray(props.value) ? props.value : [min, max];
+
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   return (
     <SliderPrimitive.Root
@@ -35,6 +43,25 @@ const Slider = React.forwardRef<
       <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-secondary">
         <SliderPrimitive.Range className="absolute h-full bg-primary" />
       </SliderPrimitive.Track>
+      {!isMounted ? (
+        initialValue.map((value, index) => {
+          const numeric = typeof value === "number" ? value : min;
+          const position = Math.max(0, Math.min(1, (numeric - min) / range));
+          const percent = position * 100;
+          const offset = halfThumb - (halfThumb * percent) / 50;
+          return (
+            <span
+              key={`placeholder-${index}`}
+              aria-hidden="true"
+              className="pointer-events-none absolute top-1/2 h-4 w-4 rounded-full border-2 border-primary bg-background"
+              style={{
+                left: `calc(${percent}% + ${offset}px)`,
+                transform: "translate(-50%, -50%)",
+              }}
+            />
+          );
+        })
+      ) : null}
       {initialValue.map((_, index) => (
         <React.Fragment key={index}>
           <SliderPrimitive.Thumb
