@@ -14,7 +14,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Bell, Palette, UserRound, ChevronRight, Lock } from "lucide-react";
+import { Bell, Palette, UserRound, ChevronRight, Lock, MessageSquare } from "lucide-react";
+import { SettingsContactForm } from "./settings-contact-form";
+import { SettingsSubmitForm } from "./settings-submit-form";
 
 interface SettingsDialogProps {
   open: boolean;
@@ -33,13 +35,17 @@ const navItems = [
   { value: "security", label: "Security", icon: Lock },
   { value: "appearance", label: "Appearance", icon: Palette },
   { value: "notifications", label: "Notifications", icon: Bell },
+  { value: "contact", label: "Contact", icon: MessageSquare },
 ];
 const passwordProviderIds = ["email", "credentials", "credential", "password"];
 
 export function SettingsDialog({ open, onOpenChange, user, isAuthenticated = true }: SettingsDialogProps) {
   const router = useRouter();
   const filteredNavItems = React.useMemo(
-    () => isAuthenticated ? navItems : navItems.filter((item) => item.value === "appearance"),
+    () =>
+      isAuthenticated
+        ? navItems
+        : navItems.filter((item) => item.value === "appearance" || item.value === "contact"),
     [isAuthenticated]
   );
   const [activeItem, setActiveItem] = React.useState(filteredNavItems[0].value);
@@ -60,6 +66,8 @@ export function SettingsDialog({ open, onOpenChange, user, isAuthenticated = tru
   const [revokeSessionsError, setRevokeSessionsError] = React.useState<string | null>(null);
   const [isNewsletterSubscribed, setIsNewsletterSubscribed] = React.useState(false);
   const [deletePassword, setDeletePassword] = React.useState("");
+  const [isContactFormOpen, setIsContactFormOpen] = React.useState(false);
+  const [isSubmitFormOpen, setIsSubmitFormOpen] = React.useState(false);
   const isMounted = React.useRef(true);
   const activeLabel =
     filteredNavItems.find((item) => item.value === activeItem)?.label ?? "Settings";
@@ -101,6 +109,8 @@ export function SettingsDialog({ open, onOpenChange, user, isAuthenticated = tru
       setIsDeleting(false);
       setIsNewsletterSubscribed(false);
       setDeletePassword("");
+      setIsContactFormOpen(false);
+      setIsSubmitFormOpen(false);
       closeResetTimeout.current = null;
     }, 200);
     return () => {
@@ -764,6 +774,67 @@ export function SettingsDialog({ open, onOpenChange, user, isAuthenticated = tru
                           />
                         </div>
                       </div>
+                    </div>
+                  </div>
+                ) : null}
+
+                {activeItem === "contact" ? (
+                  <div className="space-y-4 sm:space-y-6">
+                    <div className="rounded-lg border border-border/60 bg-muted/10 p-4 shadow-sm shadow-black/5 sm:p-6">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="space-y-1">
+                          <div className="text-sm font-semibold text-foreground">Send us a message</div>
+                          <p className="text-sm text-foreground/70">
+                            Reach out with questions or feedback.
+                          </p>
+                        </div>
+                        {!isContactFormOpen ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setIsContactFormOpen(true)}
+                          >
+                            Contact
+                          </Button>
+                        ) : null}
+                      </div>
+                      {isContactFormOpen ? (
+                        <div className="mt-5">
+                          <SettingsContactForm
+                            defaultName={user?.name?.trim() ?? ""}
+                            defaultEmail={user?.email?.trim() ?? ""}
+                            onCancel={() => setIsContactFormOpen(false)}
+                          />
+                        </div>
+                      ) : null}
+                    </div>
+                    <div className="rounded-lg border border-border/60 bg-muted/10 p-4 shadow-sm shadow-black/5 sm:p-6">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="space-y-1">
+                          <div className="text-sm font-semibold text-foreground">Submit</div>
+                          <p className="text-sm text-foreground/70">
+                            Share an LLM provider, GPU cloud provider, or ML tool.
+                          </p>
+                        </div>
+                        {!isSubmitFormOpen ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setIsSubmitFormOpen(true)}
+                          >
+                            Submit
+                          </Button>
+                        ) : null}
+                      </div>
+                      {isSubmitFormOpen ? (
+                        <div className="mt-5">
+                          <SettingsSubmitForm
+                            defaultName={user?.name?.trim() ?? ""}
+                            defaultEmail={user?.email?.trim() ?? ""}
+                            onCancel={() => setIsSubmitFormOpen(false)}
+                          />
+                        </div>
+                      ) : null}
                     </div>
                   </div>
                 ) : null}
