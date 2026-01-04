@@ -14,7 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Bell, Palette, UserRound, ChevronRight, Lock, Mail } from "lucide-react";
+import { Bell, Palette, UserRound, ChevronRight, Lock, Mail, Scale } from "lucide-react";
 import { SettingsContactForm } from "./settings-contact-form";
 import { SettingsSubmitForm } from "./settings-submit-form";
 
@@ -36,6 +36,7 @@ const navItems = [
   { value: "appearance", label: "Appearance", icon: Palette },
   { value: "security", label: "Security", icon: Lock },
   { value: "contact", label: "Contact", icon: Mail },
+  { value: "legal", label: "Legal", icon: Scale },
 ];
 const passwordProviderIds = ["email", "credentials", "credential", "password"];
 
@@ -45,7 +46,12 @@ export function SettingsDialog({ open, onOpenChange, user, isAuthenticated = tru
     () =>
       isAuthenticated
         ? navItems
-        : navItems.filter((item) => item.value === "appearance" || item.value === "contact"),
+        : navItems.filter(
+            (item) =>
+              item.value === "appearance" ||
+              item.value === "contact" ||
+              item.value === "legal",
+          ),
     [isAuthenticated]
   );
   const [activeItem, setActiveItem] = React.useState(filteredNavItems[0].value);
@@ -68,6 +74,8 @@ export function SettingsDialog({ open, onOpenChange, user, isAuthenticated = tru
   const [deletePassword, setDeletePassword] = React.useState("");
   const [isContactFormOpen, setIsContactFormOpen] = React.useState(false);
   const [isSubmitFormOpen, setIsSubmitFormOpen] = React.useState(false);
+  const [isPrivacyOpen, setIsPrivacyOpen] = React.useState(false);
+  const [isTermsOpen, setIsTermsOpen] = React.useState(false);
   const isMounted = React.useRef(true);
   const activeLabel =
     filteredNavItems.find((item) => item.value === activeItem)?.label ?? "Settings";
@@ -111,6 +119,8 @@ export function SettingsDialog({ open, onOpenChange, user, isAuthenticated = tru
       setDeletePassword("");
       setIsContactFormOpen(false);
       setIsSubmitFormOpen(false);
+      setIsPrivacyOpen(false);
+      setIsTermsOpen(false);
       closeResetTimeout.current = null;
     }, 200);
     return () => {
@@ -834,6 +844,79 @@ export function SettingsDialog({ open, onOpenChange, user, isAuthenticated = tru
                             onCancel={() => setIsSubmitFormOpen(false)}
                           />
                         </div>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : null}
+
+                {activeItem === "legal" ? (
+                  <div className="space-y-4 sm:space-y-6">
+                    <div className="rounded-lg border border-border/60 bg-muted/10 p-4 shadow-sm shadow-black/5 sm:p-6">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="space-y-1">
+                          <div className="text-sm font-semibold text-foreground">Privacy</div>
+                          <p className="text-sm text-foreground/70">
+                            Learn how we collect, use, and protect your data.
+                          </p>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setIsPrivacyOpen((prev) => !prev)}
+                        >
+                          View
+                        </Button>
+                      </div>
+                      {isPrivacyOpen ? (
+                        <ScrollArea className="mt-5 h-40 rounded-md border border-border/60 bg-background/60 p-4">
+                          <div className="space-y-3 text-sm text-foreground/70">
+                            <p>
+                              Privacy policy placeholder text. This section will outline what data we collect,
+                              how we use it, and how long we retain it.
+                            </p>
+                            <p>
+                              We will also describe your rights, including access, correction, and deletion
+                              requests, as well as how to contact us with privacy-related questions.
+                            </p>
+                            <p>
+                              Final copy will be inserted before launch. For now, this block is a placeholder.
+                            </p>
+                          </div>
+                        </ScrollArea>
+                      ) : null}
+                    </div>
+                    <div className="rounded-lg border border-border/60 bg-muted/10 p-4 shadow-sm shadow-black/5 sm:p-6">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="space-y-1">
+                          <div className="text-sm font-semibold text-foreground">Terms and Conditions</div>
+                          <p className="text-sm text-foreground/70">
+                            Review the rules and guidelines for using the product.
+                          </p>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setIsTermsOpen((prev) => !prev)}
+                        >
+                          View
+                        </Button>
+                      </div>
+                      {isTermsOpen ? (
+                        <ScrollArea className="mt-5 h-40 rounded-md border border-border/60 bg-background/60 p-4">
+                          <div className="space-y-3 text-sm text-foreground/70">
+                            <p>
+                              Terms and conditions placeholder text. This area will describe acceptable use,
+                              service limitations, and any disclaimers.
+                            </p>
+                            <p>
+                              We will also include sections on account responsibilities, content ownership,
+                              and how disputes are handled.
+                            </p>
+                            <p>
+                              Final copy will be inserted before launch. For now, this block is a placeholder.
+                            </p>
+                          </div>
+                        </ScrollArea>
                       ) : null}
                     </div>
                   </div>
