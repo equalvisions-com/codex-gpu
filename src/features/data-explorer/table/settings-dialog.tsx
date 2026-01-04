@@ -14,7 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Bell, Palette, UserRound, ChevronRight, Lock, MessageSquare } from "lucide-react";
+import { Bell, Palette, UserRound, ChevronRight, Lock, Mail } from "lucide-react";
 import { SettingsContactForm } from "./settings-contact-form";
 import { SettingsSubmitForm } from "./settings-submit-form";
 
@@ -32,10 +32,10 @@ interface SettingsDialogProps {
 
 const navItems = [
   { value: "profile", label: "Profile", icon: UserRound },
-  { value: "security", label: "Security", icon: Lock },
-  { value: "appearance", label: "Appearance", icon: Palette },
   { value: "notifications", label: "Notifications", icon: Bell },
-  { value: "contact", label: "Contact", icon: MessageSquare },
+  { value: "appearance", label: "Appearance", icon: Palette },
+  { value: "security", label: "Security", icon: Lock },
+  { value: "contact", label: "Contact", icon: Mail },
 ];
 const passwordProviderIds = ["email", "credentials", "credential", "password"];
 
@@ -388,7 +388,7 @@ export function SettingsDialog({ open, onOpenChange, user, isAuthenticated = tru
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-w-3xl flex-col gap-0 h-auto h-auto sm:h-[520px] overflow-hidden rounded-lg border border-border/60 bg-background p-0 sm:p-0 [&>button:last-of-type]:top-4 [&>button:last-of-type]:right-4 sm:[&>button:last-of-type]:top-6 sm:[&>button:last-of-type]:right-6">
+      <DialogContent className="flex max-w-3xl flex-col gap-0 h-auto max-h-[85vh] supports-[height:100svh]:max-h-[85svh] overflow-x-hidden overflow-y-auto sm:h-[520px] sm:overflow-hidden rounded-lg border border-border/60 bg-background p-0 sm:p-0 [&>button:last-of-type]:top-4 [&>button:last-of-type]:right-4 sm:[&>button:last-of-type]:top-6 sm:[&>button:last-of-type]:right-6">
         <DialogHeader className="sr-only">
           <DialogTitle>Settings</DialogTitle>
         </DialogHeader>
