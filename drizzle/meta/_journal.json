@@ -153,6 +153,13 @@
       "when": 1766092498069,
       "tag": "0021_empty_proudstar",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1767642197197,
+      "tag": "0022_careful_miracleman",
+      "breakpoints": true
     }
   ]
 }

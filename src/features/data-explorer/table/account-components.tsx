@@ -76,6 +76,7 @@ export interface AccountUser {
   name?: string | null;
   email?: string | null;
   image?: string | null;
+  newsletter?: boolean | null;
 }
 
 interface UserMenuProps {

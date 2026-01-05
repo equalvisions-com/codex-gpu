@@ -34,6 +34,13 @@ export const auth = betterAuth({
     },
   },
   user: {
+    additionalFields: {
+      newsletter: {
+        type: "boolean",
+        required: false,
+        defaultValue: true,
+      },
+    },
     deleteUser: {
       enabled: true,
     },

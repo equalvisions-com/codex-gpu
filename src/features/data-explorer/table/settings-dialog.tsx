@@ -13,7 +13,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { Bell, Palette, UserRound, ChevronRight, Lock, Mail, Scale } from "lucide-react";
 import { SettingsContactForm } from "./settings-contact-form";
 import { SettingsSubmitForm } from "./settings-submit-form";
@@ -26,6 +25,7 @@ interface SettingsDialogProps {
     name?: string | null;
     email?: string | null;
     image?: string | null;
+    newsletter?: boolean | null;
   } | null;
   isAuthenticated?: boolean;
 }
@@ -70,26 +70,34 @@ export function SettingsDialog({ open, onOpenChange, user, isAuthenticated = tru
   const [isRevokingSessions, setIsRevokingSessions] = React.useState(false);
   const [revokeSessionsMessage, setRevokeSessionsMessage] = React.useState<string | null>(null);
   const [revokeSessionsError, setRevokeSessionsError] = React.useState<string | null>(null);
-  const [isNewsletterSubscribed, setIsNewsletterSubscribed] = React.useState(false);
+  const [isNewsletterUpdating, setIsNewsletterUpdating] = React.useState(false);
+  const [newsletterError, setNewsletterError] = React.useState<string | null>(null);
+  const [isNewsletterCooldown, setIsNewsletterCooldown] = React.useState(false);
   const [deletePassword, setDeletePassword] = React.useState("");
   const [isContactFormOpen, setIsContactFormOpen] = React.useState(false);
   const [isSubmitFormOpen, setIsSubmitFormOpen] = React.useState(false);
   const [isPrivacyOpen, setIsPrivacyOpen] = React.useState(false);
   const [isTermsOpen, setIsTermsOpen] = React.useState(false);
   const isMounted = React.useRef(true);
+  const newsletterCooldownTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const activeLabel =
     filteredNavItems.find((item) => item.value === activeItem)?.label ?? "Settings";
 
   const initialName = user?.name?.trim() ?? "";
+  const initialNewsletter = user?.newsletter ?? true;
   const displayEmail = user?.email?.trim() ?? "";
   const displayImage = user?.image ?? "";
   const [profileName, setProfileName] = React.useState(initialName);
   const [nameInput, setNameInput] = React.useState(initialName);
+  const [newsletterStatus, setNewsletterStatus] = React.useState(initialNewsletter);
   const closeResetTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   React.useEffect(() => {
     setProfileName(initialName);
     setNameInput(initialName);
   }, [initialName]);
+  React.useEffect(() => {
+    setNewsletterStatus(initialNewsletter);
+  }, [initialNewsletter]);
   React.useEffect(() => {
     if (closeResetTimeout.current) {
       clearTimeout(closeResetTimeout.current);
@@ -115,7 +123,10 @@ export function SettingsDialog({ open, onOpenChange, user, isAuthenticated = tru
       setRevokeSessionsError(null);
       setIsRevokingSessions(false);
       setIsDeleting(false);
-      setIsNewsletterSubscribed(false);
+      setNewsletterStatus(initialNewsletter);
+      setIsNewsletterUpdating(false);
+      setNewsletterError(null);
+      setIsNewsletterCooldown(false);
       setDeletePassword("");
       setIsContactFormOpen(false);
       setIsSubmitFormOpen(false);
@@ -128,9 +139,14 @@ export function SettingsDialog({ open, onOpenChange, user, isAuthenticated = tru
         clearTimeout(closeResetTimeout.current);
         closeResetTimeout.current = null;
       }
+      if (newsletterCooldownTimeout.current) {
+        clearTimeout(newsletterCooldownTimeout.current);
+        newsletterCooldownTimeout.current = null;
+      }
     };
-  }, [open, initialName, filteredNavItems]);
+  }, [open, initialName, filteredNavItems, initialNewsletter]);
   React.useEffect(() => {
+    isMounted.current = true;
     return () => {
       isMounted.current = false;
     };
@@ -392,6 +408,59 @@ export function SettingsDialog({ open, onOpenChange, user, isAuthenticated = tru
     } finally {
       if (isMounted.current) {
         setIsRevokingSessions(false);
+      }
+    }
+  };
+
+  const startNewsletterCooldown = React.useCallback(() => {
+    if (newsletterCooldownTimeout.current) {
+      clearTimeout(newsletterCooldownTimeout.current);
+    }
+    setIsNewsletterCooldown(true);
+    newsletterCooldownTimeout.current = setTimeout(() => {
+      if (isMounted.current) {
+        setIsNewsletterCooldown(false);
+      }
+      newsletterCooldownTimeout.current = null;
+    }, 3000);
+  }, []);
+
+  const handleNewsletterAction = async () => {
+    if (isNewsletterUpdating || isNewsletterCooldown) return;
+    const nextValue = !newsletterStatus;
+    const previousValue = newsletterStatus;
+    setNewsletterError(null);
+    setNewsletterStatus(nextValue);
+    setIsNewsletterUpdating(true);
+    startNewsletterCooldown();
+
+    try {
+      const updateResult = await authClient.updateUser({
+        newsletter: nextValue,
+      });
+      const updateError = (updateResult as { error?: { message?: string } } | undefined)?.error;
+      if (updateError) {
+        if (isMounted.current) {
+          setNewsletterStatus(previousValue);
+          setNewsletterError(updateError.message || "Unable to update newsletter preferences.");
+        }
+        return;
+      }
+      if (isMounted.current) {
+        router.refresh();
+      }
+    } catch (error) {
+      const fallbackMessage =
+        error instanceof Error && error.message
+          ? error.message
+          : "Unable to update newsletter preferences.";
+      if (isMounted.current) {
+        setNewsletterStatus(previousValue);
+        setNewsletterError(fallbackMessage);
+      }
+    } finally {
+      if (isMounted.current) {
+        setIsNewsletterUpdating(false);
       }
     }
   };
@@ -774,15 +843,36 @@ export function SettingsDialog({ open, onOpenChange, user, isAuthenticated = tru
                       <div className="space-y-4 text-sm">
                         <div className="flex items-center justify-between gap-3">
                           <div className="space-y-1">
-                            <Label className="text-sm font-semibold text-foreground">Subscribe to newsletter</Label>
-                            <p className="text-foreground/70">Get product updates and insights.</p>
+                            <Label className="text-sm font-semibold text-foreground">Newsletter</Label>
+                            <p className="font-medium text-foreground/70">
+                              <span className="inline-flex items-center gap-2">
+                                <span
+                                  className={[
+                                    "h-2 w-2 rounded-full",
+                                    newsletterStatus
+                                      ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.7)]"
+                                      : "bg-rose-400 shadow-[0_0_8px_rgba(251,113,133,0.65)]",
+                                  ].join(" ")}
+                                  aria-hidden="true"
+                                />
+                                {newsletterStatus ? "Subscribed" : "Unsubscribed"}
+                              </span>
+                            </p>
                           </div>
-                          <Switch
-                            checked={isNewsletterSubscribed}
-                            onCheckedChange={(checked) => setIsNewsletterSubscribed(Boolean(checked))}
-                            aria-label="Subscribe to newsletter"
-                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={handleNewsletterAction}
+                            disabled={isNewsletterUpdating || isNewsletterCooldown}
+                            className="disabled:opacity-100"
+                          >
+                            {newsletterStatus ? "Unsubscribe" : "Subscribe"}
+                          </Button>
                         </div>
+                        {newsletterError ? (
+                          <p className="text-sm text-destructive">{newsletterError}</p>
+                        ) : null}
                       </div>
                     </div>
                   </div>
