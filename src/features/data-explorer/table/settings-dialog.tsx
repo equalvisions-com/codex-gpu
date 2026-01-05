@@ -841,7 +841,7 @@ export function SettingsDialog({ open, onOpenChange, user, isAuthenticated = tru
                   <div className="space-y-4 sm:space-y-6">
                     <div className="rounded-lg border border-border/60 bg-muted/10 p-4 shadow-sm shadow-black/5 sm:p-6">
                       <div className="space-y-4 text-sm">
-                        <div className="flex items-center justify-between gap-3">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                           <div className="space-y-1">
                             <Label className="text-sm font-semibold text-foreground">Newsletter</Label>
                             <p className="font-medium text-foreground/70">
@@ -865,7 +865,7 @@ export function SettingsDialog({ open, onOpenChange, user, isAuthenticated = tru
                             size="sm"
                             onClick={handleNewsletterAction}
                             disabled={isNewsletterUpdating || isNewsletterCooldown}
-                            className="disabled:opacity-100"
+                            className="w-full disabled:opacity-100 sm:w-auto"
                           >
                             {newsletterStatus ? "Unsubscribe" : "Subscribe"}
                           </Button>
