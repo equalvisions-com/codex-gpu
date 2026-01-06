@@ -1,6 +1,6 @@
 {
-  "id": "3a1a347d-b5e9-4105-8167-c128f1b62880",
-  "prevId": "a997bed0-6e33-4a74-a9c2-d42570d4f3a3",
+  "id": "357e9949-ff01-42dd-ad74-0647209a362a",
+  "prevId": "3a1a347d-b5e9-4105-8167-c128f1b62880",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -1604,6 +1604,13 @@
           "primaryKey": false,
           "notNull": true,
           "default": false
+        },
+        "newsletter_subscribed": {
+          "name": "newsletter_subscribed",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
         },
         "image": {
           "name": "image",

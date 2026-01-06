@@ -1,9 +1,11 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
+import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import * as authSchema from "@/db/auth-schema";
 import { sendVerificationEmail, sendPasswordResetEmail } from "@/lib/email";
+import { enqueueNewsletterSync } from "@/lib/newsletter-queue";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: "pg", schema: authSchema }),
@@ -26,6 +28,17 @@ export const auth = betterAuth({
     },
     sendOnSignUp: true,
     autoSignInAfterVerification: true,
+    afterEmailVerification: async (user, request) => {
+      try {
+        await db
+          .update(authSchema.user)
+          .set({ newsletterSubscribed: true })
+          .where(eq(authSchema.user.id, user.id));
+        await enqueueNewsletterSync({ userId: user.id, email: user.email }, request?.url);
+      } catch (error) {
+        console.error("Failed to enqueue newsletter sync after verification", error);
+      }
+    },
   },
   session: {
     cookieCache: {
@@ -34,15 +47,29 @@ export const auth = betterAuth({
     },
   },
   user: {
-    additionalFields: {
-      newsletter: {
-        type: "boolean",
-        required: false,
-        defaultValue: true,
-      },
-    },
     deleteUser: {
       enabled: true,
+      afterDelete: async (user, request) => {
+        try {
+          await enqueueNewsletterSync({ email: user.email, forceUnsubscribe: true }, request?.url);
+        } catch (error) {
+          console.error("Failed to enqueue newsletter unsubscribe on delete", error);
+        }
+      },
+    },
+  },
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (user) => {
+          if (!user?.emailVerified) return;
+          try {
+            await enqueueNewsletterSync({ userId: user.id, email: user.email });
+          } catch (error) {
+            console.error("Failed to enqueue newsletter sync", error);
+          }
+        },
+      },
     },
   },
   socialProviders: {

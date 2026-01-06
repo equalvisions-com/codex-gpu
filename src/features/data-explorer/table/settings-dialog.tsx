@@ -25,7 +25,6 @@ interface SettingsDialogProps {
     name?: string | null;
     email?: string | null;
     image?: string | null;
-    newsletter?: boolean | null;
   } | null;
   isAuthenticated?: boolean;
 }
@@ -70,6 +69,8 @@ export function SettingsDialog({ open, onOpenChange, user, isAuthenticated = tru
   const [isRevokingSessions, setIsRevokingSessions] = React.useState(false);
   const [revokeSessionsMessage, setRevokeSessionsMessage] = React.useState<string | null>(null);
   const [revokeSessionsError, setRevokeSessionsError] = React.useState<string | null>(null);
+  const [newsletterStatus, setNewsletterStatus] = React.useState<boolean | null>(null);
+  const [isNewsletterLoading, setIsNewsletterLoading] = React.useState(false);
   const [isNewsletterUpdating, setIsNewsletterUpdating] = React.useState(false);
   const [newsletterError, setNewsletterError] = React.useState<string | null>(null);
   const [isNewsletterCooldown, setIsNewsletterCooldown] = React.useState(false);
@@ -84,20 +85,15 @@ export function SettingsDialog({ open, onOpenChange, user, isAuthenticated = tru
     filteredNavItems.find((item) => item.value === activeItem)?.label ?? "Settings";
 
   const initialName = user?.name?.trim() ?? "";
-  const initialNewsletter = user?.newsletter ?? true;
   const displayEmail = user?.email?.trim() ?? "";
   const displayImage = user?.image ?? "";
   const [profileName, setProfileName] = React.useState(initialName);
   const [nameInput, setNameInput] = React.useState(initialName);
-  const [newsletterStatus, setNewsletterStatus] = React.useState(initialNewsletter);
   const closeResetTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   React.useEffect(() => {
     setProfileName(initialName);
     setNameInput(initialName);
   }, [initialName]);
-  React.useEffect(() => {
-    setNewsletterStatus(initialNewsletter);
-  }, [initialNewsletter]);
   React.useEffect(() => {
     if (closeResetTimeout.current) {
       clearTimeout(closeResetTimeout.current);
@@ -123,7 +119,8 @@ export function SettingsDialog({ open, onOpenChange, user, isAuthenticated = tru
       setRevokeSessionsError(null);
       setIsRevokingSessions(false);
       setIsDeleting(false);
-      setNewsletterStatus(initialNewsletter);
+      setNewsletterStatus(null);
+      setIsNewsletterLoading(false);
       setIsNewsletterUpdating(false);
       setNewsletterError(null);
       setIsNewsletterCooldown(false);
@@ -144,7 +141,7 @@ export function SettingsDialog({ open, onOpenChange, user, isAuthenticated = tru
         newsletterCooldownTimeout.current = null;
       }
     };
-  }, [open, initialName, filteredNavItems, initialNewsletter]);
+  }, [open, initialName, filteredNavItems]);
   React.useEffect(() => {
     isMounted.current = true;
     return () => {
@@ -378,6 +375,24 @@ export function SettingsDialog({ open, onOpenChange, user, isAuthenticated = tru
     [connectedAccounts],
   );
   const isPasswordChangeAllowed = accountsQuery.isSuccess && hasEmailPasswordAccount;
+  const newsletterLabel =
+    newsletterStatus === null
+      ? "Checking..."
+      : newsletterStatus
+        ? "Subscribed"
+        : "Unsubscribed";
+  const newsletterDotClass =
+    newsletterStatus === null
+      ? "bg-foreground/30 shadow-[0_0_6px_rgba(148,163,184,0.45)]"
+      : newsletterStatus
+        ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.7)]"
+        : "bg-rose-400 shadow-[0_0_8px_rgba(251,113,133,0.65)]";
+  const isNewsletterActionDisabled =
+    isNewsletterLoading ||
+    isNewsletterUpdating ||
+    isNewsletterCooldown ||
+    newsletterStatus === null ||
+    !user?.email;
 
   const handleRevokeOtherSessions = async () => {
     if (isRevokingSessions) return;
@@ -412,6 +427,51 @@ export function SettingsDialog({ open, onOpenChange, user, isAuthenticated = tru
     }
   };
 
+  const shouldFetchNewsletter =
+    open && activeItem === "notifications" && Boolean(user?.email);
+
+  React.useEffect(() => {
+    if (!shouldFetchNewsletter) return;
+    if (newsletterStatus !== null) return;
+    const controller = new AbortController();
+    let cancelled = false;
+
+    setIsNewsletterLoading(true);
+    setNewsletterError(null);
+
+    fetch("/api/newsletter", { cache: "no-store", signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error("Unable to load newsletter status.");
+        }
+        const payload = (await response.json()) as { subscribed?: boolean };
+        if (!cancelled) {
+          setNewsletterStatus(Boolean(payload?.subscribed));
+        }
+      })
+      .catch((error) => {
+        if (controller.signal.aborted) return;
+        if (!cancelled) {
+          setNewsletterStatus(false);
+          setNewsletterError(
+            error instanceof Error && error.message
+              ? error.message
+              : "Unable to load newsletter status."
+          );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsNewsletterLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [newsletterStatus, shouldFetchNewsletter]);
+
   const startNewsletterCooldown = React.useCallback(() => {
     if (newsletterCooldownTimeout.current) {
       clearTimeout(newsletterCooldownTimeout.current);
@@ -427,27 +487,32 @@ export function SettingsDialog({ open, onOpenChange, user, isAuthenticated = tru
 
   const handleNewsletterAction = async () => {
     if (isNewsletterUpdating || isNewsletterCooldown) return;
-    const nextValue = !newsletterStatus;
-    const previousValue = newsletterStatus;
+    if (!user?.email) {
+      setNewsletterError("No email found for this account.");
+      return;
+    }
+    const currentValue = newsletterStatus ?? false;
+    const nextValue = !currentValue;
+    const previousValue = currentValue;
     setNewsletterError(null);
     setNewsletterStatus(nextValue);
     setIsNewsletterUpdating(true);
     startNewsletterCooldown();
 
     try {
-      const updateResult = await authClient.updateUser({
-        newsletter: nextValue,
+      const response = await fetch("/api/newsletter", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ subscribed: nextValue }),
       });
-      const updateError = (updateResult as { error?: { message?: string } } | undefined)?.error;
-      if (updateError) {
-        if (isMounted.current) {
-          setNewsletterStatus(previousValue);
-          setNewsletterError(updateError.message || "Unable to update newsletter preferences.");
-        }
-        return;
+
+      if (!response.ok) {
+        throw new Error("Unable to update newsletter preferences.");
       }
-      if (isMounted.current) {
-        router.refresh();
+
+      const payload = (await response.json()) as { subscribed?: boolean };
+      if (typeof payload?.subscribed === "boolean" && isMounted.current) {
+        setNewsletterStatus(payload.subscribed);
       }
     } catch (error) {
       const fallbackMessage =
@@ -599,10 +664,7 @@ export function SettingsDialog({ open, onOpenChange, user, isAuthenticated = tru
                           <div className="space-y-1 pt-4">
                             <Label>Connected accounts</Label>
                             {accountsQuery.isLoading ? (
-                              <div className="space-y-2">
-                                <div className="h-4 w-32 animate-pulse rounded bg-muted/70" />
-                                <div className="h-4 w-24 animate-pulse rounded bg-muted/70" />
-                              </div>
+                              <div className="h-4 w-32 animate-pulse rounded bg-muted/70" />
                             ) : null}
                             {!accountsQuery.isLoading && !accountsQuery.isError && displayConnectedAccounts.length === 0 ? (
                               <p className="text-sm text-foreground/70">None</p>
@@ -844,31 +906,37 @@ export function SettingsDialog({ open, onOpenChange, user, isAuthenticated = tru
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                           <div className="space-y-1">
                             <Label className="text-sm font-semibold text-foreground">Newsletter</Label>
-                            <p className="font-medium text-foreground/70">
-                              <span className="inline-flex items-center gap-2">
-                                <span
-                                  className={[
-                                    "h-2 w-2 rounded-full",
-                                    newsletterStatus
-                                      ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.7)]"
-                                      : "bg-rose-400 shadow-[0_0_8px_rgba(251,113,133,0.65)]",
-                                  ].join(" ")}
-                                  aria-hidden="true"
-                                />
-                                {newsletterStatus ? "Subscribed" : "Unsubscribed"}
-                              </span>
-                            </p>
+                            {isNewsletterLoading ? (
+                              <div className="h-4 w-32 animate-pulse rounded bg-muted/70" />
+                            ) : (
+                              <p className="font-medium text-foreground/70">
+                                <span className="inline-flex items-center gap-2">
+                                  <span
+                                    className={[
+                                      "h-2 w-2 rounded-full",
+                                      newsletterDotClass,
+                                    ].join(" ")}
+                                    aria-hidden="true"
+                                  />
+                                  {newsletterLabel}
+                                </span>
+                              </p>
+                            )}
                           </div>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={handleNewsletterAction}
-                            disabled={isNewsletterUpdating || isNewsletterCooldown}
-                            className="w-full disabled:opacity-100 sm:w-auto"
-                          >
-                            {newsletterStatus ? "Unsubscribe" : "Subscribe"}
-                          </Button>
+                          {isNewsletterLoading ? (
+                            <div className="h-8 w-full animate-pulse rounded bg-muted/70 sm:w-24" />
+                          ) : (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={handleNewsletterAction}
+                              disabled={isNewsletterActionDisabled}
+                              className="w-full disabled:opacity-100 sm:w-auto"
+                            >
+                              {newsletterStatus ? "Unsubscribe" : "Subscribe"}
+                            </Button>
+                          )}
                         </div>
                         {newsletterError ? (
                           <p className="text-sm text-destructive">{newsletterError}</p>
