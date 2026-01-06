@@ -194,6 +194,7 @@ export function ModelComparisonCharts({
         emptyMessage={throughputEmptyMessage}
         valueLabel="TPS"
         valueFormatter={throughputValueFormatter}
+        sourceLabel="Source: OpenRouter"
       />
       <SheetLineChart
         title="Latency"
@@ -215,6 +216,7 @@ export function ModelComparisonCharts({
         emptyMessage={latencyEmptyMessage}
         valueLabel="seconds"
         valueFormatter={latencyValueFormatter}
+        sourceLabel="Source: OpenRouter"
       />
     </div>
   );

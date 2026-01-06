@@ -480,7 +480,7 @@ export function AuthDialog({
               />
             </div>
 
-              <label className="my-2 flex items-start gap-3 text-sm text-foreground/80">
+              <label className="flex items-start gap-3 text-sm text-foreground/80">
                 <Checkbox
                   id="signup-terms"
                   checked={agreedToPolicies}

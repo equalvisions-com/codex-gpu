@@ -43,6 +43,7 @@ export type SheetLineChartProps = {
   emptyMessage?: string;
   valueFormatter?: (value: number) => string;
   valueLabel?: string;
+  sourceLabel?: string;
 };
 
 export function SheetLineChart({
@@ -55,6 +56,7 @@ export function SheetLineChart({
   emptyMessage,
   valueFormatter,
   valueLabel,
+  sourceLabel,
 }: SheetLineChartProps) {
   const descriptionContent = React.useMemo(() => {
     if (!description) return null;
@@ -158,6 +160,15 @@ export function SheetLineChart({
     return [min - padding, max + padding] as [number, number];
   }, [resolvedSeries]);
 
+  const yTicks = React.useMemo(() => {
+    const [min, max] = linearDomain;
+    if (!Number.isFinite(min) || !Number.isFinite(max)) return undefined;
+    if (max === min) return [min];
+    const count = 4;
+    const step = (max - min) / (count - 1);
+    return Array.from({ length: count }, (_, index) => min + step * index);
+  }, [linearDomain]);
+
   return (
     <Card className="border-border/60 bg-background shadow-none">
       <CardHeader className="space-y-1.5 p-4 pb-1">
@@ -167,82 +178,96 @@ export function SheetLineChart({
         {descriptionContent}
       </CardHeader>
       <CardContent className="p-4">
-        <div className="h-36 w-full">
-          {isLoading ? (
-            <Skeleton className="h-full w-full" />
-          ) : showEmpty ? (
-            <div className="flex h-full items-center justify-center text-xs text-foreground/70">
-              {emptyMessage ?? "No data available."}
-            </div>
+        <div className="space-y-1">
+          <div className="h-36 w-full">
+            {isLoading ? (
+              <Skeleton className="h-full w-full" />
+            ) : showEmpty ? (
+              <div className="flex h-full items-center justify-center text-xs text-foreground/70">
+                {emptyMessage ?? "No data available."}
+              </div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={mergedData} margin={{ top: 4, right: 4, bottom: 4, left: 4 }}>
-                <YAxis hide domain={linearDomain} tickCount={5} />
+                <YAxis
+                  hide
+                  domain={linearDomain}
+                  ticks={yTicks}
+                  tickCount={yTicks?.length ?? 5}
+                  padding={{ top: 8, bottom: 8 }}
+                />
                 <CartesianGrid
                   strokeDasharray="3 3"
                   vertical={false}
                   stroke="hsl(var(--border))"
+                  syncWithTicks
                 />
-                <Tooltip
-                  contentStyle={{
-                    background: "hsl(var(--background))",
-                    border: "1px solid hsl(var(--border))",
-                    borderRadius: "0.5rem",
-                    fontSize: "0.75rem",
-                  }}
-                  labelFormatter={(label, payload) => formatLabel(payload, label)}
-                  content={({ payload, label }) => {
-                    if (!payload?.length) return null;
-                    return (
-                      <div
-                        className="recharts-default-tooltip"
-                        style={{
-                          background: "hsl(var(--background))",
-                          border: "1px solid hsl(var(--border))",
-                          borderRadius: "0.5rem",
-                          fontSize: "0.75rem",
-                          padding: "0.5rem 0.75rem",
-                        }}
-                      >
-                        <div className="font-semibold" style={{ color: "hsl(var(--foreground))" }}>
-                          {formatLabel(payload as any, label as any)}
+                  <Tooltip
+                    contentStyle={{
+                      background: "hsl(var(--background))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "0.5rem",
+                      fontSize: "0.75rem",
+                    }}
+                    labelFormatter={(label, payload) => formatLabel(payload, label)}
+                    content={({ payload, label }) => {
+                      if (!payload?.length) return null;
+                      return (
+                        <div
+                          className="recharts-default-tooltip"
+                          style={{
+                            background: "hsl(var(--background))",
+                            border: "1px solid hsl(var(--border))",
+                            borderRadius: "0.5rem",
+                            fontSize: "0.75rem",
+                            padding: "0.5rem 0.75rem",
+                          }}
+                        >
+                          <div className="font-semibold" style={{ color: "hsl(var(--foreground))" }}>
+                            {formatLabel(payload as any, label as any)}
+                          </div>
+                          <div className="recharts-tooltip-item-list mt-1 flex flex-col gap-1">
+                            {payload.map((entry, index) => (
+                              <div key={index} className="flex items-center gap-2 text-xs">
+                                <span
+                                  className="inline-block h-2 w-2 rounded-full"
+                                  style={{ backgroundColor: entry.color ?? stroke }}
+                                />
+                                <span className="font-mono">
+                                  {valueFormatter
+                                    ? valueFormatter(entry.value as number)
+                                    : (entry.value as number).toLocaleString(undefined, {
+                                        maximumFractionDigits: 2,
+                                      })}
+                                </span>
+                          </div>
+                        ))}
+                          </div>
                         </div>
-                        <div className="recharts-tooltip-item-list mt-1 flex flex-col gap-1">
-                          {payload.map((entry, index) => (
-                            <div key={index} className="flex items-center gap-2 text-xs">
-                              <span
-                                className="inline-block h-2 w-2 rounded-full"
-                                style={{ backgroundColor: entry.color ?? stroke }}
-                              />
-                              <span className="font-mono">
-                                {valueFormatter
-                                  ? valueFormatter(entry.value as number)
-                                  : (entry.value as number).toLocaleString(undefined, {
-                                      maximumFractionDigits: 2,
-                                    })}
-                              </span>
-                        </div>
-                      ))}
-                        </div>
-                      </div>
-                    );
-                  }}
-                />
+                      );
+                    }}
+                  />
                 {resolvedSeries.map((series, index) => (
                   <Line
                     key={series.id}
-                    type="natural"
+                    type="monotone"
                     dot={false}
                     dataKey={series.id}
                     stroke={series.color ?? DEFAULT_COLORS[index % DEFAULT_COLORS.length]}
                     strokeWidth={2}
-                    activeDot={{ r: 4 }}
-                    isAnimationActive={false}
-                  />
-                ))}
-              </LineChart>
-            </ResponsiveContainer>
-          )}
+                      activeDot={{ r: 4 }}
+                      isAnimationActive={false}
+                    />
+                  ))}
+                </LineChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+          {sourceLabel ? (
+            <div className="text-right text-[10px] text-foreground/50">
+              {sourceLabel}
+            </div>
+          ) : null}
         </div>
       </CardContent>
     </Card>

@@ -1127,7 +1127,10 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
                 typeof selectedRow.original === "object" &&
                 "stable_key" in selectedRow.original
                 ? (
-                  <LazyGpuSheetCharts stableKey={(selectedRow.original as Record<string, unknown>).stable_key as string | undefined} />
+                  <LazyGpuSheetCharts
+                    stableKey={(selectedRow.original as Record<string, unknown>).stable_key as string | undefined}
+                    provider={(selectedRow.original as Record<string, unknown>).provider as string | undefined}
+                  />
                 )
                 : null;
 

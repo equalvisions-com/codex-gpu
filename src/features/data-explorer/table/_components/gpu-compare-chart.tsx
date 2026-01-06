@@ -4,6 +4,7 @@ import * as React from "react";
 import type { Row } from "@tanstack/react-table";
 import type { ColumnSchema } from "@/features/data-explorer/table/schema";
 import { ChartLegend } from "@/components/charts/chart-legend";
+import { getProviderDisplayName } from "../provider-logos";
 import { useQueries } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 
@@ -64,7 +65,7 @@ export function GpuCompareChart({
         const stableKey = data.stable_key ?? null;
         if (!stableKey) return null;
         const providerName = data.provider
-          ? data.provider.charAt(0).toUpperCase() + data.provider.slice(1)
+          ? getProviderDisplayName(data.provider)
           : null;
         const baseLabel =
           data.gpu_model ??
@@ -117,6 +118,20 @@ export function GpuCompareChart({
       ? "Unable to load pricing history."
       : "No pricing history yet.";
 
+  const sourceLabel = React.useMemo(() => {
+    const uniqueProviders = new Map<string, string>();
+    for (const target of targets) {
+      const name = target.provider?.trim();
+      if (!name) continue;
+      const key = name.toLowerCase();
+      if (!uniqueProviders.has(key)) {
+        uniqueProviders.set(key, name);
+      }
+    }
+    if (!uniqueProviders.size) return undefined;
+    return `Source: ${Array.from(uniqueProviders.values()).join(", ")}`;
+  }, [targets]);
+
   return (
     <SheetLineChart
       title="Pricing"
@@ -138,6 +153,7 @@ export function GpuCompareChart({
       emptyMessage={emptyMessage}
       valueLabel="USD"
       valueFormatter={(value) => `$${value.toFixed(2)} hr`}
+      sourceLabel={sourceLabel}
     />
   );
 }

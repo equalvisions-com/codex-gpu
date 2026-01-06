@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
+import { getProviderDisplayName } from "./provider-logos";
 
 const ChartSkeleton = () => (
   <div className="h-36 w-full rounded-md border border-border/60 bg-muted/20" />
@@ -34,10 +35,15 @@ type PriceHistoryResponse = {
 
 interface GpuSheetChartsProps {
   stableKey?: string | null;
+  provider?: string | null;
 }
 
-export function GpuSheetCharts({ stableKey }: GpuSheetChartsProps) {
+export function GpuSheetCharts({ stableKey, provider }: GpuSheetChartsProps) {
   const enabled = Boolean(stableKey);
+  const sourceLabel = React.useMemo(() => {
+    if (!provider) return undefined;
+    return `Source: ${getProviderDisplayName(provider)}`;
+  }, [provider]);
 
   const normalizeObservedAt = React.useCallback((value?: string) => {
     if (!value) return undefined;
@@ -193,6 +199,7 @@ export function GpuSheetCharts({ stableKey }: GpuSheetChartsProps) {
       emptyMessage={emptyMessage}
       valueLabel="USD"
       valueFormatter={(value) => `$${value.toFixed(2)} hr`}
+      sourceLabel={sourceLabel}
     />
   );
 }
