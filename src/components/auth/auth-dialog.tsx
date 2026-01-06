@@ -9,6 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -19,6 +20,7 @@ import { authClient } from "@/lib/auth-client";
 import { useAuth } from "@/providers/auth-client-provider";
 import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
+import Link from "next/link";
 
 export type AuthView = "signIn" | "signUp" | "forgotPassword";
 
@@ -55,6 +57,7 @@ export function AuthDialog({
   const [password, setPassword] = React.useState("");
   const [name, setName] = React.useState("");
   const [pending, setPending] = React.useState(false);
+  const [agreedToPolicies, setAgreedToPolicies] = React.useState(false);
   const [socialPending, setSocialPending] = React.useState<"github" | "google" | "huggingface" | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [successMessage, setSuccessMessage] = React.useState<string | null>(null);
@@ -100,6 +103,7 @@ export function AuthDialog({
       setResetEmailSent(false);
       setPassword("");
       setName("");
+      setAgreedToPolicies(false);
       if (!defaultEmail) {
         setEmail("");
       }
@@ -129,7 +133,7 @@ export function AuthDialog({
     }
 
     return {
-        title: "Create account",
+        title: "Sign up",
         description: "Please fill in the details to get started",
         cta: pending ? "Creating…" : "Create account",
         alternateLabel: "Already have an account?",
@@ -476,7 +480,38 @@ export function AuthDialog({
               />
             </div>
 
-              <Button type="submit" disabled={isLocked}>
+              <label className="my-2 flex items-start gap-3 text-sm text-foreground/80">
+                <Checkbox
+                  id="signup-terms"
+                  checked={agreedToPolicies}
+                  onCheckedChange={(checked) => setAgreedToPolicies(Boolean(checked))}
+                  disabled={isLocked}
+                />
+                <span className="leading-5">
+                  I agree to the{" "}
+                  <Link
+                    href="#"
+                    prefetch={false}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-primary underline-offset-4 hover:underline"
+                  >
+                    Terms of Service
+                  </Link>{" "}
+                  and{" "}
+                  <Link
+                    href="#"
+                    prefetch={false}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-primary underline-offset-4 hover:underline"
+                  >
+                    Privacy Policy
+                  </Link>
+                </span>
+              </label>
+
+              <Button type="submit" disabled={isLocked || !agreedToPolicies}>
                 {copy.cta}
               </Button>
             </form>
