@@ -95,6 +95,7 @@ This app prioritizes **scanability and information density** over visual aesthet
 | **Vercel Speed Insights** | Performance monitoring |
 | **OpenTelemetry** | Observability/tracing |
 | **Upstash Redis** | Rate limiting |
+| **Upstash Qstash** | Cron jobs |
 
 ### Styling & UI
 | Technology | Purpose |
