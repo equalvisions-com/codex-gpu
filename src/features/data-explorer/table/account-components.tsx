@@ -373,7 +373,7 @@ export function UserMenu({
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild className={"flex w-full items-center gap-2 rounded-sm px-2 py-1.5 pl-2 text-sm font-medium text-foreground transition-colors hover:bg-muted hover:no-underline focus-visible:bg-muted focus-visible:text-accent-foreground"}>
                         <Link href="/tools?bookmarks=true">
-                          <span>Tools</span>
+                          <span>MLops</span>
                         </Link>
                       </DropdownMenuItem>
                     </div>
@@ -566,7 +566,7 @@ export function MobileTopNav({
         icon: Bot,
       },
       {
-        label: "Tools",
+        label: "MLops",
         value: "/tools",
         isCurrent: pathname.startsWith("/tools"),
         icon: Wrench,
