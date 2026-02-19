@@ -13,6 +13,14 @@ async function revalidateCorePages() {
 
 export async function POST(request: NextRequest) {
   try {
+    const cronAuthorized = isAuthorizedCronRequest(request);
+    if (!cronAuthorized && process.env.NODE_ENV === "production") {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized cron invocation." },
+        { status: 401 },
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const providerParam = searchParams.get("provider");
     const force = searchParams.get("force") === "1";

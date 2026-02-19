@@ -46,6 +46,14 @@ async function runThroughputScrape(limit?: number) {
 
 export async function POST(request: NextRequest) {
   try {
+    const cronAuthorized = isAuthorizedCronRequest(request);
+    if (!cronAuthorized && process.env.NODE_ENV === "production") {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized cron invocation." },
+        { status: 401 },
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const limitParam = searchParams.get("limit");
     const limit = limitParam ? Number(limitParam) : undefined;

@@ -13,7 +13,14 @@ async function revalidateCorePages() {
 
 export async function POST(request: NextRequest) {
   try {
-    // Note: add auth if you expose this publicly
+    const cronAuthorized = isAuthorizedCronRequest(request);
+    if (!cronAuthorized && process.env.NODE_ENV === "production") {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized cron invocation." },
+        { status: 401 },
+      );
+    }
+
     const startTime = Date.now();
 
     // Get limit from query parameter for testing
