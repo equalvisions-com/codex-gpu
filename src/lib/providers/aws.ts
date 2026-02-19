@@ -213,21 +213,10 @@ class AWSScraper implements ProviderScraper {
         const gpuSpec = GPU_FAMILY_MAP[family];
         if (!gpuSpec) return null;
 
-        // Parse VRAM from AWS gpuMemory field if available (e.g., "80 GB HBM3", "320 GB HBM2")
-        // This is total VRAM for the instance, not per-GPU
-        let vramGb: number;
-        if (gpuMemory) {
-            const memMatch = gpuMemory.match(/^(\d+)\s*GB/i);
-            if (memMatch) {
-                vramGb = parseInt(memMatch[1], 10);
-            } else {
-                // Fallback to hardcoded value * count
-                vramGb = gpuSpec.vramPerGpu * gpuCount;
-            }
-        } else {
-            // Fallback to hardcoded value * count
-            vramGb = gpuSpec.vramPerGpu * gpuCount;
-        }
+        // Always use our hardcoded vramPerGpu * gpuCount for total VRAM.
+        // AWS gpuMemory field is inconsistent: per-GPU for some families (H200),
+        // total for others (B200), so we rely on our known-correct spec map.
+        const vramGb = gpuSpec.vramPerGpu * gpuCount;
 
         return {
             model: gpuSpec.model,

@@ -6,6 +6,11 @@ import type { ProviderScraper } from './types';
 const PRICING_URL = 'https://www.civo.com/pricing';
 const SOURCE_URL = 'https://www.civo.com/pricing#nvidia-gpus';
 
+// Civo's page lists incorrect VRAM for some GPUs. Override with correct specs.
+const VRAM_OVERRIDE_PER_GPU: Record<string, number> = {
+    'NVIDIA H200 SXM': 141,  // Civo shows 80GB, actual H200 HBM3e = 141GB
+};
+
 class CivoScraper implements ProviderScraper {
     name = 'civo';
     url = PRICING_URL;
@@ -115,6 +120,12 @@ class CivoScraper implements ProviderScraper {
                     if (rowVramMatch) {
                         vramGb = parseInt(rowVramMatch[1], 10);
                     }
+                }
+
+                // Apply VRAM override for GPUs where Civo's page is wrong
+                const override = VRAM_OVERRIDE_PER_GPU[gpuModel];
+                if (override) {
+                    vramGb = override;
                 }
 
                 // Parse RAM (e.g., "96 GB" or "2.5TB")

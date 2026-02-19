@@ -241,7 +241,7 @@ class AlibabaScraper implements ProviderScraper {
                 instance_family: type.InstanceTypeFamily,
                 gpu_model: gpuModel,
                 gpu_count: type.GPUAmount,
-                vram_gb: type.GPUMemorySize || 0,
+                vram_gb: (type.GPUMemorySize || 0) * (type.GPUAmount || 1),
                 vcpus: type.CpuCoreCount,
                 system_ram_gb: type.MemorySize,
                 price_unit: 'instance_hour',

@@ -41,7 +41,6 @@ export type FavoritesDataOptions<
   TQueryPage,
   Error,
   InfiniteData<TQueryPage, TPageParam>,
-  TQueryPage,
   readonly unknown[],
   TPageParam
 >;
