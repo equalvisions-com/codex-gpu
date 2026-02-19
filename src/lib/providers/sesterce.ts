@@ -3,6 +3,7 @@ import type { SestercePriceRow, ProviderResult } from '@/types/pricing';
 import type { ProviderScraper } from './types';
 
 const API_URL = 'https://api.cloud.sesterce.com/gpu-cloud/instances/offers';
+const PRICING_URL = 'https://www.sesterce.com/pricing';
 
 // API response type
 interface SesterceOffer {
@@ -35,7 +36,7 @@ interface SesterceOffer {
 
 class SesterceScraper implements ProviderScraper {
     name = 'sesterce';
-    url = API_URL;
+    url = PRICING_URL;
     scrapeIntervalMinutes = 1440;
     enabled = true;
 
@@ -113,7 +114,7 @@ class SesterceScraper implements ProviderScraper {
 
             const row: SestercePriceRow = {
                 provider: 'sesterce',
-                source_url: API_URL,
+                source_url: PRICING_URL,
                 observed_at: observedAt,
                 instance_id: offer.instanceId,
                 sku: offer.instanceId,
