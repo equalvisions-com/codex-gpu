@@ -490,7 +490,7 @@ export function AuthDialog({
                 <span className="leading-5">
                   I agree to the{" "}
                   <Link
-                    href="#"
+                    href="/terms"
                     prefetch={false}
                     target="_blank"
                     rel="noreferrer"
@@ -500,7 +500,7 @@ export function AuthDialog({
                   </Link>{" "}
                   and{" "}
                   <Link
-                    href="#"
+                    href="/privacy"
                     prefetch={false}
                     target="_blank"
                     rel="noreferrer"

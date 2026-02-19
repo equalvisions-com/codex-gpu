@@ -1028,17 +1028,71 @@ export function SettingsDialog({ open, onOpenChange, user, isAuthenticated = tru
                       {isPrivacyOpen ? (
                         <ScrollArea className="mt-5 h-40 rounded-md border border-border/60 bg-background/60 p-4">
                           <div className="space-y-3 text-sm text-foreground/70">
-                            <p>
-                              Privacy policy placeholder text. This section will outline what data we collect,
-                              how we use it, and how long we retain it.
-                            </p>
-                            <p>
-                              We will also describe your rights, including access, correction, and deletion
-                              requests, as well as how to contact us with privacy-related questions.
-                            </p>
-                            <p>
-                              Final copy will be inserted before launch. For now, this block is a placeholder.
-                            </p>
+                            <p className="font-semibold text-foreground">Privacy Policy</p>
+                            <p className="text-xs text-foreground/50">Effective Date: February 19, 2026</p>
+
+                            <p className="font-medium text-foreground">1. Introduction</p>
+                            <p>Deploybase (&ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;) respects your privacy. This Privacy Policy explains what information we collect, how we use it, and your rights regarding that information.</p>
+
+                            <p className="font-medium text-foreground">2. Information We Collect</p>
+                            <p><span className="italic">Account Information:</span> When you create an account, we collect your name and email address. If you sign up using a third-party provider (Google, GitHub, or Hugging Face), we receive your name, email address, and profile image from that provider.</p>
+                            <p><span className="italic">Newsletter:</span> By creating an account, you are subscribed to our newsletter. Your email and name are shared with our email service provider (Resend) for this purpose.</p>
+                            <p><span className="italic">Favorites:</span> If you save favorites, we store those preferences associated with your account.</p>
+                            <p>We do not collect passwords for OAuth users. For email/password accounts, passwords are securely hashed and never stored in plain text.</p>
+
+                            <p className="font-medium text-foreground">3. Analytics</p>
+                            <p>We use Plausible Analytics, a privacy-friendly analytics service. Plausible does not use cookies, does not collect personal data, and does not track users across websites. All analytics data is aggregated and cannot be used to identify individual users.</p>
+
+                            <p className="font-medium text-foreground">4. Cookies</p>
+                            <p>Deploybase uses only essential cookies required for authentication (session cookies). We do not use advertising cookies, tracking cookies, or any third-party cookies for marketing purposes.</p>
+
+                            <p className="font-medium text-foreground">5. How We Use Your Information</p>
+                            <p>We use the information we collect to:</p>
+                            <ul className="list-disc pl-5 space-y-1">
+                              <li>Provide and maintain the Service</li>
+                              <li>Authenticate your identity and manage your account</li>
+                              <li>Send you our newsletter (which you may opt out of at any time)</li>
+                              <li>Store your favorites and preferences</li>
+                              <li>Communicate important updates about the Service</li>
+                            </ul>
+
+                            <p className="font-medium text-foreground">6. Data Sharing</p>
+                            <p>We do not sell, rent, or trade your personal information. We share data only with the following service providers, solely for operating the Service:</p>
+                            <ul className="list-disc pl-5 space-y-1">
+                              <li><span className="font-medium">Resend</span> &mdash; email delivery and newsletter management</li>
+                              <li><span className="font-medium">Vercel</span> &mdash; hosting and infrastructure</li>
+                              <li><span className="font-medium">Better Auth</span> &mdash; authentication processing</li>
+                            </ul>
+                            <p>We may disclose information if required by law or to protect our rights.</p>
+
+                            <p className="font-medium text-foreground">7. Affiliate Links</p>
+                            <p>Some links on the Service are affiliate links. When you click an affiliate link, the destination provider may use cookies or other tracking technologies on their own site to attribute the referral. We do not control the privacy practices of third-party providers and recommend reviewing their privacy policies.</p>
+
+                            <p className="font-medium text-foreground">8. Data Retention</p>
+                            <p>We retain your account information for as long as your account is active. If you delete your account, we will remove your personal data and unsubscribe you from the newsletter. Some data may be retained in backups for a limited period.</p>
+
+                            <p className="font-medium text-foreground">9. Your Rights</p>
+                            <p>You have the right to:</p>
+                            <ul className="list-disc pl-5 space-y-1">
+                              <li>Access the personal data we hold about you</li>
+                              <li>Request correction of inaccurate data</li>
+                              <li>Delete your account and associated data</li>
+                              <li>Unsubscribe from the newsletter at any time</li>
+                              <li>Request a copy of your data</li>
+                            </ul>
+                            <p>To exercise these rights, contact us at hello@deploybase.com or delete your account through the Service.</p>
+
+                            <p className="font-medium text-foreground">10. Security</p>
+                            <p>We implement reasonable technical and organizational measures to protect your data, including encrypted connections (HTTPS), secure password hashing, and access controls. No system is completely secure, and we cannot guarantee absolute security.</p>
+
+                            <p className="font-medium text-foreground">11. Children&apos;s Privacy</p>
+                            <p>The Service is not intended for users under 16 years of age. We do not knowingly collect information from children.</p>
+
+                            <p className="font-medium text-foreground">12. Changes to This Policy</p>
+                            <p>We may update this Privacy Policy from time to time. We will notify you of material changes by posting the updated policy on this page with a revised effective date.</p>
+
+                            <p className="font-medium text-foreground">13. Contact</p>
+                            <p>For privacy-related inquiries, contact us at hello@deploybase.com.</p>
                           </div>
                         </ScrollArea>
                       ) : null}
@@ -1062,17 +1116,53 @@ export function SettingsDialog({ open, onOpenChange, user, isAuthenticated = tru
                       {isTermsOpen ? (
                         <ScrollArea className="mt-5 h-40 rounded-md border border-border/60 bg-background/60 p-4">
                           <div className="space-y-3 text-sm text-foreground/70">
-                            <p>
-                              Terms and conditions placeholder text. This area will describe acceptable use,
-                              service limitations, and any disclaimers.
-                            </p>
-                            <p>
-                              We will also include sections on account responsibilities, content ownership,
-                              and how disputes are handled.
-                            </p>
-                            <p>
-                              Final copy will be inserted before launch. For now, this block is a placeholder.
-                            </p>
+                            <p className="font-semibold text-foreground">Terms of Service</p>
+                            <p className="text-xs text-foreground/50">Effective Date: February 19, 2026</p>
+
+                            <p className="font-medium text-foreground">1. Acceptance of Terms</p>
+                            <p>By accessing or using Deploybase (&ldquo;the Service&rdquo;), operated by Deploybase (&ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;), you agree to be bound by these Terms of Service. If you do not agree, do not use the Service.</p>
+
+                            <p className="font-medium text-foreground">2. Description of the Service</p>
+                            <p>Deploybase is an information aggregation platform that collects, normalizes, and displays publicly available data related to GPU cloud pricing, large language models, and AI/ML tools. We do not sell, resell, or broker any of the products or services listed.</p>
+
+                            <p className="font-medium text-foreground">3. No Warranties or Guarantees</p>
+                            <p>All data displayed on Deploybase is provided strictly on an &ldquo;as-is&rdquo; and &ldquo;as-available&rdquo; basis. We make no representations or warranties of any kind, express or implied, regarding the accuracy, completeness, reliability, timeliness, or availability of any data. Pricing, specifications, and availability shown may be outdated or incorrect. Always verify information directly with the relevant provider before making purchasing decisions.</p>
+
+                            <p className="font-medium text-foreground">4. Not Financial or Professional Advice</p>
+                            <p>Nothing on this Service constitutes financial, investment, legal, or professional advice. Deploybase is a research and comparison tool only. You are solely responsible for any decisions made based on information found on the Service.</p>
+
+                            <p className="font-medium text-foreground">5. Accounts and Newsletter</p>
+                            <p>When you create an account, you agree to provide accurate information and are responsible for maintaining the security of your credentials. By creating an account, you consent to receiving our newsletter. You may unsubscribe from the newsletter at any time using the unsubscribe link in any email.</p>
+
+                            <p className="font-medium text-foreground">6. Intellectual Property</p>
+                            <p>The original presentation, design, and organization of data on Deploybase is our property. The underlying data we aggregate is publicly available and belongs to its respective owners. You may not scrape, reproduce, or redistribute the Service&apos;s compiled datasets without written permission.</p>
+
+                            <p className="font-medium text-foreground">7. Third-Party Content and Links</p>
+                            <p>The Service displays data sourced from third-party providers. We are not affiliated with, endorsed by, or responsible for any third-party provider&apos;s products, services, pricing, or conduct. Any trademarks, logos, or brand names displayed belong to their respective owners.</p>
+
+                            <p className="font-medium text-foreground">8. Affiliate Links and Compensation</p>
+                            <p>Some links on Deploybase may be affiliate links, meaning we may earn a commission if you click through and make a purchase or sign up with a third-party provider. This does not affect the data we display or how providers are ranked, sorted, or presented. Affiliate relationships do not influence the accuracy or ordering of information on the Service.</p>
+
+                            <p className="font-medium text-foreground">9. DMCA and Takedown Requests</p>
+                            <p>If you believe any content on Deploybase infringes your intellectual property rights, please contact us at hello@deploybase.com. We will review and respond to valid takedown requests promptly.</p>
+
+                            <p className="font-medium text-foreground">10. Limitation of Liability</p>
+                            <p>To the fullest extent permitted by law, Deploybase and its operator shall not be liable for any indirect, incidental, special, consequential, or punitive damages, or any loss of profits or revenue, whether incurred directly or indirectly, arising from your use of the Service. Our total aggregate liability shall not exceed $100.</p>
+
+                            <p className="font-medium text-foreground">11. Indemnification</p>
+                            <p>You agree to indemnify and hold harmless Deploybase and its operator from any claims, damages, losses, or expenses arising from your use of the Service or violation of these Terms.</p>
+
+                            <p className="font-medium text-foreground">12. Modifications</p>
+                            <p>We reserve the right to modify these Terms at any time. Continued use of the Service after changes constitutes acceptance of the updated Terms.</p>
+
+                            <p className="font-medium text-foreground">13. Termination</p>
+                            <p>We may suspend or terminate your access to the Service at any time, for any reason, without notice.</p>
+
+                            <p className="font-medium text-foreground">14. Governing Law</p>
+                            <p>These Terms shall be governed by the laws of the Commonwealth of Massachusetts, without regard to conflict of law principles.</p>
+
+                            <p className="font-medium text-foreground">15. Contact</p>
+                            <p>Questions about these Terms may be directed to hello@deploybase.com.</p>
                           </div>
                         </ScrollArea>
                       ) : null}
