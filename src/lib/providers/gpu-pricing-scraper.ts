@@ -92,6 +92,7 @@ class GpuPricingScraper {
     const scrapedAt = new Date().toISOString();
 
     for (const scraper of this.scrapers) {
+      if (!scraper.enabled) continue;
       const start = Date.now();
       try {
         const result = await scraper.scrape();
@@ -108,6 +109,7 @@ class GpuPricingScraper {
           sourceHash: result.sourceHash,
         });
       } catch (error) {
+        console.error(`[GpuPricingScraper] ${scraper.name} failed:`, error instanceof Error ? error.message : String(error));
         summaries.push({
           provider: scraper.name,
           rowsScraped: 0,

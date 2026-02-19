@@ -9,7 +9,7 @@ class FlyioScraper implements ProviderScraper {
     name = 'flyio';
     url = PRICING_URL;
     scrapeIntervalMinutes = 1440;
-    enabled = true;
+    enabled = false; // Fly.io deprecated GPUs — shutting down August 1, 2026
 
     async scrape(): Promise<ProviderResult> {
         try {
