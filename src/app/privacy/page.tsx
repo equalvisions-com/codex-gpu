@@ -78,7 +78,7 @@ export default function PrivacyPage() {
             <li>Unsubscribe from the newsletter at any time</li>
             <li>Request a copy of your data</li>
           </ul>
-          <p>To exercise these rights, contact us at hello@deploybase.com or delete your account through the Service.</p>
+          <p>To exercise these rights, contact us at hello@mail.deploybase.ai or delete your account through the Service.</p>
         </div>
 
         <div className="space-y-2">
@@ -98,7 +98,7 @@ export default function PrivacyPage() {
 
         <div className="space-y-2">
           <h2 className="font-semibold text-foreground">13. Contact</h2>
-          <p>For privacy-related inquiries, contact us at hello@deploybase.com.</p>
+          <p>For privacy-related inquiries, contact us at hello@mail.deploybase.ai.</p>
         </div>
       </section>
     </div>

@@ -1080,7 +1080,7 @@ export function SettingsDialog({ open, onOpenChange, user, isAuthenticated = tru
                               <li>Unsubscribe from the newsletter at any time</li>
                               <li>Request a copy of your data</li>
                             </ul>
-                            <p>To exercise these rights, contact us at hello@deploybase.com or delete your account through the Service.</p>
+                            <p>To exercise these rights, contact us at hello@mail.deploybase.ai or delete your account through the Service.</p>
 
                             <p className="font-medium text-foreground">10. Security</p>
                             <p>We implement reasonable technical and organizational measures to protect your data, including encrypted connections (HTTPS), secure password hashing, and access controls. No system is completely secure, and we cannot guarantee absolute security.</p>
@@ -1092,7 +1092,7 @@ export function SettingsDialog({ open, onOpenChange, user, isAuthenticated = tru
                             <p>We may update this Privacy Policy from time to time. We will notify you of material changes by posting the updated policy on this page with a revised effective date.</p>
 
                             <p className="font-medium text-foreground">13. Contact</p>
-                            <p>For privacy-related inquiries, contact us at hello@deploybase.com.</p>
+                            <p>For privacy-related inquiries, contact us at hello@mail.deploybase.ai.</p>
                           </div>
                         </ScrollArea>
                       ) : null}
@@ -1144,7 +1144,7 @@ export function SettingsDialog({ open, onOpenChange, user, isAuthenticated = tru
                             <p>Some links on Deploybase may be affiliate links, meaning we may earn a commission if you click through and make a purchase or sign up with a third-party provider. This does not affect the data we display or how providers are ranked, sorted, or presented. Affiliate relationships do not influence the accuracy or ordering of information on the Service.</p>
 
                             <p className="font-medium text-foreground">9. DMCA and Takedown Requests</p>
-                            <p>If you believe any content on Deploybase infringes your intellectual property rights, please contact us at hello@deploybase.com. We will review and respond to valid takedown requests promptly.</p>
+                            <p>If you believe any content on Deploybase infringes your intellectual property rights, please contact us at hello@mail.deploybase.ai. We will review and respond to valid takedown requests promptly.</p>
 
                             <p className="font-medium text-foreground">10. Limitation of Liability</p>
                             <p>To the fullest extent permitted by law, Deploybase and its operator shall not be liable for any indirect, incidental, special, consequential, or punitive damages, or any loss of profits or revenue, whether incurred directly or indirectly, arising from your use of the Service. Our total aggregate liability shall not exceed $100.</p>
@@ -1162,7 +1162,7 @@ export function SettingsDialog({ open, onOpenChange, user, isAuthenticated = tru
                             <p>These Terms shall be governed by the laws of the Commonwealth of Massachusetts, without regard to conflict of law principles.</p>
 
                             <p className="font-medium text-foreground">15. Contact</p>
-                            <p>Questions about these Terms may be directed to hello@deploybase.com.</p>
+                            <p>Questions about these Terms may be directed to hello@mail.deploybase.ai.</p>
                           </div>
                         </ScrollArea>
                       ) : null}

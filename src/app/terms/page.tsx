@@ -54,7 +54,7 @@ export default function TermsPage() {
 
         <div className="space-y-2">
           <h2 className="font-semibold text-foreground">9. DMCA and Takedown Requests</h2>
-          <p>If you believe any content on Deploybase infringes your intellectual property rights, please contact us at hello@deploybase.com. We will review and respond to valid takedown requests promptly.</p>
+          <p>If you believe any content on Deploybase infringes your intellectual property rights, please contact us at hello@mail.deploybase.ai. We will review and respond to valid takedown requests promptly.</p>
         </div>
 
         <div className="space-y-2">
@@ -84,7 +84,7 @@ export default function TermsPage() {
 
         <div className="space-y-2">
           <h2 className="font-semibold text-foreground">15. Contact</h2>
-          <p>Questions about these Terms may be directed to hello@deploybase.com.</p>
+          <p>Questions about these Terms may be directed to hello@mail.deploybase.ai.</p>
         </div>
       </section>
     </div>
