@@ -236,7 +236,12 @@ export function AuthDialog({
     setError(null);
 
     try {
-      const result = await authClient.forgetPassword({
+      // Type assertion: better-auth 1.4.x BetterFetch conditional types
+      // fail to resolve with TS 5.7, but the method exists at runtime.
+      const result = await (authClient as unknown as {
+        forgetPassword: (data: { email: string; redirectTo: string }) =>
+          Promise<{ error: { message: string } | null }>;
+      }).forgetPassword({
         email,
         redirectTo: `${window.location.origin}/reset-password`,
       });
