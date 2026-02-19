@@ -101,7 +101,7 @@ class PaperspaceScraper implements ProviderScraper {
                 method: 'GET',
                 headers: {
                     'accept': 'application/json',
-                    'authorization': `token ${this.token}`,
+                    'authorization': `Bearer ${this.token}`,
                     'content-type': 'application/json',
                     'origin': 'https://console.paperspace.com',
                     'x-client': 'PS-WEB',
