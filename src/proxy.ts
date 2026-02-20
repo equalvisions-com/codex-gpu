@@ -3,11 +3,11 @@ import type { NextRequest } from "next/server";
 
 const csp = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://plausible.io",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://us-assets.i.posthog.com",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: https: blob:",
   "font-src 'self' data:",
-  "connect-src 'self' https://*.upstash.io https://openrouter.ai https://plausible.io",
+  "connect-src 'self' https://*.upstash.io https://openrouter.ai https://us.i.posthog.com",
   "frame-ancestors 'none'",
 ].join("; ");
 
