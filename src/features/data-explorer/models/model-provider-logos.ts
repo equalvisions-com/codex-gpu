@@ -18,7 +18,7 @@ export const MODEL_PROVIDER_LOGOS: Record<
   cohere: { src: "/logos/Cohere.png", alt: "Cohere" },
   cloudflare: { src: "/logos/cloudflare.png", alt: "Cloudflare" },
   crusoe: { src: "/logos/crusoe.png", alt: "Crusoe" },
-  deepseek: { src: "/logos/deepseek.png", alt: "DeepSeek" },
+  deepseek: { src: "/logos/DeepSeek.png", alt: "DeepSeek" },
   deepinfra: { src: "/logos/deepinfra.png", alt: "DeepInfra" },
   featherless: { src: "/logos/featherless.svg", alt: "Featherless" },
   fireworks: { src: "/logos/Fireworks.png", alt: "Fireworks" },

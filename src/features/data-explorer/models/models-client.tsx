@@ -14,7 +14,6 @@ import {
   sheetFields,
 } from "./models-constants";
 import type { ModelsColumnSchema, ModelsFacetMetadataSchema } from "./models-schema";
-import type { ModalitiesDirection } from "./modalities-filter";
 import type { ModelFavoriteKey } from "@/types/model-favorites";
 import { MobileTopNav, SidebarPanel, type AccountUser } from "../table/account-components";
 import {
@@ -125,13 +124,20 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
     });
   }, [clearFavoriteQueries, effectiveFavoritesMode, router, signOut]);
 
-  const queryOptions = React.useMemo(() => modelsDataOptions(search), [search]);
+  const queryOptions = React.useMemo(() => {
+    return {
+      ...modelsDataOptions(search),
+      staleTime: 60 * 1000,
+      gcTime: 5 * 60 * 1000,
+    };
+  }, [search]);
 
   // Optimize client-side navigation: use cached data for instant rendering
   // initialData: Persists to cache, skips loading state, marks data as fresh
   // Docs: https://tanstack.com/query/v5/docs/framework/react/guides/initial-query-data
   type QueryData = InfiniteData<ModelsInfiniteQueryResponse<ModelsColumnSchema[], ModelsLogsMeta>, { cursor: number | null; size: number }>;
   const cachedData = queryClient.getQueryData<QueryData>(queryOptions.queryKey);
+  const cachedState = queryClient.getQueryState(queryOptions.queryKey);
 
   const {
     data,
@@ -150,7 +156,12 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
     // This persists to cache and skips loading state for instant rendering
     // HydrationBoundary handles server-side hydration automatically
     // Only set initialData if cached data exists (avoids redundant placeholderData)
-    ...(cachedData ? { initialData: cachedData } : {}),
+    ...(cachedData
+      ? {
+        initialData: cachedData,
+        initialDataUpdatedAt: cachedState?.dataUpdatedAt,
+      }
+      : {}),
   });
 
   const baseFlatData = React.useMemo(() => {
@@ -205,12 +216,9 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
   const tableIsFetchingNextPage = effectiveFavoritesMode
     ? favoritesSnapshot?.isFetchingNextPage ?? false
     : isFetchingNextPage;
-  const tableFetchNextPage =
-    effectiveFavoritesMode && favoritesSnapshot?.fetchNextPage
-      ? favoritesSnapshot.fetchNextPage
-      : effectiveFavoritesMode
-        ? noopAsync
-        : fetchNextPage;
+  const tableFetchNextPage = effectiveFavoritesMode
+    ? favoritesSnapshot?.fetchNextPage ?? noopAsync
+    : fetchNextPage;
   const tableHasNextPage = effectiveFavoritesMode
     ? favoritesSnapshot?.hasNextPage ?? false
     : hasNextPage;
@@ -223,6 +231,10 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
       const facetsField = castFacets?.[field.value];
       if (!facetsField) return field;
       if (field.options && field.options.length > 0) return field;
+
+      if (!facetsField.rows || !Array.isArray(facetsField.rows)) {
+        return field;
+      }
 
       const options = facetsField.rows
         .filter((row) => row && typeof row === "object" && "value" in row)
@@ -286,6 +298,7 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
         isError={tableIsError}
         error={tableError}
         onRetry={tableRetry}
+        getRowClassName={() => "opacity-100"}
         renderSheetTitle={({ row }) => {
           if (!row) return "AI Model Details";
           const model = row.original as ModelsColumnSchema;
@@ -349,31 +362,3 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
   );
 }
 
-function areSearchPayloadsEqual(
-  previous: Record<string, unknown> | null,
-  next: Record<string, unknown>,
-) {
-  if (!previous) return false;
-  const previousKeys = Object.keys(previous);
-  const nextKeys = Object.keys(next);
-  if (previousKeys.length !== nextKeys.length) return false;
-
-  for (const key of nextKeys) {
-    if (!previousKeys.includes(key)) return false;
-    if (!isLooseEqual(previous[key], next[key])) return false;
-  }
-
-  return true;
-}
-
-function isLooseEqual(a: unknown, b: unknown) {
-  if (Object.is(a, b)) return true;
-  if (typeof a === "object" && a !== null && typeof b === "object" && b !== null) {
-    try {
-      return JSON.stringify(a) === JSON.stringify(b);
-    } catch {
-      return false;
-    }
-  }
-  return false;
-}

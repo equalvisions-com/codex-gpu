@@ -137,7 +137,7 @@ class ModelsScraper {
     return AUTHOR_MAP[author] ?? author;
   }
 
-  private cleanShortName(value?: string | null): string | null {
+  private cleanShortName(value?: string | null, author?: string | null): string | null {
     if (!value) {
       return null;
     }
@@ -149,6 +149,19 @@ class ModelsScraper {
 
     // Convert " (thinking)" to " Thinking"
     cleaned = cleaned.replace(/\s*\(thinking\)/gi, ' Thinking').trim();
+
+    // Prepend author when the short name starts with a version/codename identifier
+    // that's meaningless without the brand — e.g. "R1" → "DeepSeek R1"
+    // Only applies when the name starts with a letter+number pattern (R1, V3, etc.)
+    // and doesn't already contain the author name
+    if (author && cleaned.length > 0) {
+      const cleanedLower = cleaned.toLowerCase();
+      const authorLower = author.toLowerCase();
+      const startsWithCodename = /^[A-Za-z]\d/.test(cleaned);
+      if (startsWithCodename && !cleanedLower.includes(authorLower)) {
+        cleaned = `${author} ${cleaned}`;
+      }
+    }
 
     return cleaned.length > 0 ? cleaned : null;
   }
@@ -251,12 +264,14 @@ class ModelsScraper {
             const idDuplicateSuffix = idDuplicateIndex > 0 ? `--dup-${idDuplicateIndex}` : '';
             const uniqueId = `${baseIdKey}${idDuplicateSuffix}--seq-${globalSequence}`;
 
+            const modelAuthor = model.author ? this.transformAuthorName(model.author) : null;
+
             return {
               id: uniqueId,
               slug: uniqueSlug, // Now includes provider prefix for uniqueness
               name: model.name || null,
-              shortName: this.cleanShortName(model.short_name),
-              author: model.author ? this.transformAuthorName(model.author) : null,
+              shortName: this.cleanShortName(model.short_name, modelAuthor),
+              author: modelAuthor,
               description: model.description || null,
               modelVersionGroupId: model.model_version_group_id || null,
               contextLength: model.context_length || null,

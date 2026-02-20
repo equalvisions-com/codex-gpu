@@ -24,24 +24,25 @@ export async function GET(req: Request): Promise<Response> {
       >,
     );
 
-    logger.info(
-      JSON.stringify({
-        event: "api.models.page",
-        cursor: search.cursor ?? 0,
-        size: search.size ?? 50,
-        rowsReturned: response.data.length,
-        nextCursor: response.nextCursor,
-        filterCount: response.meta.filterRowCount,
-        latencyMs: Date.now() - t1,
-        ...logContext,
-      }),
-    );
+    logger.info({
+      event: "api.models.page",
+      cursor: search.cursor ?? 0,
+      size: search.size ?? 50,
+      rowsReturned: response.data.length,
+      nextCursor: response.nextCursor,
+      filterCount: response.meta.filterRowCount,
+      latencyMs: Date.now() - t1,
+      ...logContext,
+    });
 
     return res;
   } catch (error) {
-    console.error("Models API error:", error);
+    console.error("Error in models API:", error);
     return Response.json(
-      { error: "Failed to fetch models data" },
+      {
+        error: "Failed to fetch models data",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
       { status: 500 },
     );
   }

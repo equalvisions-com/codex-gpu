@@ -115,7 +115,13 @@ export function ToolsClient({ initialFavoriteKeys, isFavoritesMode }: ToolsClien
     });
   const noopAsync = React.useCallback(async () => { }, []);
 
-  const queryOptions = React.useMemo(() => toolsDataOptions(search), [search]);
+  const queryOptions = React.useMemo(() => {
+    return {
+      ...toolsDataOptions(search),
+      staleTime: 60 * 1000,
+      gcTime: 5 * 60 * 1000,
+    };
+  }, [search]);
   type QueryData = InfiniteData<
     ToolInfiniteQueryResponse<ToolColumnSchema[], ToolLogsMeta>,
     { cursor: number | null; size: number }
@@ -187,12 +193,9 @@ export function ToolsClient({ initialFavoriteKeys, isFavoritesMode }: ToolsClien
   const tableIsFetchingNextPage = effectiveFavoritesMode
     ? favoritesSnapshot?.isFetchingNextPage ?? false
     : isFetchingNextPage;
-  const tableFetchNextPage =
-    effectiveFavoritesMode && favoritesSnapshot?.fetchNextPage
-      ? favoritesSnapshot.fetchNextPage
-      : effectiveFavoritesMode
-        ? noopAsync
-        : fetchNextPage;
+  const tableFetchNextPage = effectiveFavoritesMode
+    ? favoritesSnapshot?.fetchNextPage ?? noopAsync
+    : fetchNextPage;
   const tableHasNextPage = effectiveFavoritesMode
     ? favoritesSnapshot?.hasNextPage ?? false
     : hasNextPage;
@@ -205,6 +208,10 @@ export function ToolsClient({ initialFavoriteKeys, isFavoritesMode }: ToolsClien
       const facetsField = castFacets?.[field.value];
       if (!facetsField) return field;
       if (field.options && field.options.length > 0) return field;
+
+      if (!facetsField.rows || !Array.isArray(facetsField.rows)) {
+        return field;
+      }
 
       const options = facetsField.rows
         .filter((row) => row && typeof row === "object" && "value" in row)
@@ -268,6 +275,7 @@ export function ToolsClient({ initialFavoriteKeys, isFavoritesMode }: ToolsClien
         isError={tableIsError}
         error={tableError}
         onRetry={tableRetry}
+        getRowClassName={() => "opacity-100"}
         renderSheetTitle={({ row }) => row?.original.name || "Tool Details"}
         getRowId={(row) => row.stable_key || stableToolKey(row)}
         focusTargetRef={contentRef}

@@ -245,8 +245,6 @@ export function Client({ initialFavoriteKeys, isFavoritesMode }: ClientProps = {
     });
   }, [castFacets]);
 
-  const previousFilterPayloadRef = React.useRef<Record<string, unknown> | null>(null);
-
   const navItems = React.useMemo(() => {
     if (!effectiveFavoritesMode) return undefined;
     return [
@@ -296,7 +294,7 @@ export function Client({ initialFavoriteKeys, isFavoritesMode }: ClientProps = {
         onRetry={tableRetry}
         getRowClassName={() => "opacity-100"}
         getRowId={(row) => row.uuid}
-        renderSheetTitle={(props) => props.row?.original.uuid}
+        renderSheetTitle={({ row }) => row?.original.gpu_model || "GPU Details"}
         focusTargetRef={contentRef}
         account={{
           user: accountUser,
