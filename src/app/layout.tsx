@@ -8,8 +8,9 @@ import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { AuthProvider } from "@/providers/auth-provider";
 import { AuthDialogProvider } from "@/providers/auth-dialog-provider";
-import { Analytics } from '@vercel/analytics/next';
-import { SpeedInsights } from '@vercel/speed-insights/next';
+import Script from "next/script";
+
+const PLAUSIBLE_SRC = process.env.NEXT_PUBLIC_PLAUSIBLE_SRC;
 
 
 const TITLE = "Deploybase";
@@ -94,8 +95,6 @@ export default function RootLayout({
                   <AuthDialogProvider>
                     <main id="content" className="flex min-h-[100dvh] flex-col">
                       {children}
-                      <SpeedInsights />
-                      <Analytics />
                     </main>
                   </AuthDialogProvider>
                 </Suspense>
@@ -104,6 +103,12 @@ export default function RootLayout({
           </ReactQueryProvider>
         </AuthProvider>
       </body>
+      {PLAUSIBLE_SRC && (
+        <Script
+          src={PLAUSIBLE_SRC}
+          strategy="afterInteractive"
+        />
+      )}
     </html>
   );
 }
