@@ -153,7 +153,7 @@ export function AuthDialogProvider({ children }: AuthDialogProviderProps) {
         router.refresh();
       });
     },
-    [closeDialogInternal, resolveDestination, router, startTransition]
+    [resolveDestination, router, startTransition]
   );
 
   const setView = React.useCallback((nextView: AuthView) => {

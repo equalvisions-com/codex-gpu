@@ -50,8 +50,7 @@ async function GpusHydratedContent() {
   // Use new QueryClient for ISR - each page render gets fresh client
   // This is correct for server-side prefetching per TanStack Query docs
   const queryClient = new QueryClient();
-  let firstPagePayload: Awaited<ReturnType<typeof getGpuPricingPage>> | null =
-    null;
+  const captured: { firstPage: Awaited<ReturnType<typeof getGpuPricingPage>> | null } = { firstPage: null };
 
   if (parsedSearch.bookmarks !== "true") {
     try {
@@ -73,8 +72,8 @@ async function GpusHydratedContent() {
             size,
             uuid: null,
           });
-          if (!firstPagePayload && (cursor === null || cursor === 0)) {
-            firstPagePayload = result;
+          if (!captured.firstPage && (cursor === null || cursor === 0)) {
+            captured.firstPage = result;
           }
           return result;
         },
@@ -87,7 +86,7 @@ async function GpusHydratedContent() {
   }
 
   const dehydratedState = dehydrate(queryClient);
-  const schemaMarkup = buildGpuSchema(firstPagePayload);
+  const schemaMarkup = buildGpuSchema(captured.firstPage);
 
   return (
     <HydrationBoundary state={dehydratedState}>

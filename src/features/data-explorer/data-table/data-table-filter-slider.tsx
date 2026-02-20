@@ -383,7 +383,9 @@ function DataTableFilterSliderComponent<TData>({
 
   // Ref to access current columnFilters without dependency (avoids circular dependency)
   const columnFiltersRef = useRef(columnFilters);
-  columnFiltersRef.current = columnFilters;
+  useEffect(() => {
+    columnFiltersRef.current = columnFilters;
+  }, [columnFilters]);
 
   // Apply filter when debounced value changes (single effect for all filter logic)
   useEffect(() => {

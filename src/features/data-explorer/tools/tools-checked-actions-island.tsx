@@ -85,12 +85,16 @@ export function ToolsCheckedActionsIsland({ initialFavoriteKeys }: { initialFavo
   const prevFavoritesRef = React.useRef<string>("");
   const [localFavorites, setLocalFavorites] = React.useState<ToolFavoriteKey[] | undefined>(() => {
     const cached = queryClient.getQueryData<ToolFavoriteKey[]>(TOOL_FAVORITES_QUERY_KEY);
-    const initial = cached ?? initialFavoriteKeys;
-    if (initial) {
-      prevFavoritesRef.current = JSON.stringify(initial);
-    }
-    return initial;
+    return cached ?? initialFavoriteKeys;
   });
+
+  // Initialize ref after first render (cannot write refs during render)
+  React.useEffect(() => {
+    if (localFavorites) {
+      prevFavoritesRef.current = JSON.stringify(localFavorites);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const shouldFetchFavorites = React.useMemo(() => {
     if (authPending) return false;

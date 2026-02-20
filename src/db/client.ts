@@ -3,9 +3,7 @@ import { drizzle } from "drizzle-orm/postgres-js"; // uses postgres.js driver un
 import { logger } from "@/lib/logger";
 
 declare global {
-  // eslint-disable-next-line no-var
   var __DRIZZLE_SQL__: ReturnType<typeof postgres> | undefined;
-  // eslint-disable-next-line no-var
   var __DRIZZLE_DB__: ReturnType<typeof drizzle> | undefined;
 }
 

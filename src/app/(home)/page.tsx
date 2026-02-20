@@ -46,8 +46,7 @@ export default function HomePage() {
 async function HomeGpusContent() {
   const parsedSearch = searchParamsCache.parse({});
   const queryClient = new QueryClient();
-  let firstPagePayload: Awaited<ReturnType<typeof getGpuPricingPage>> | null =
-    null;
+  const captured: { firstPage: Awaited<ReturnType<typeof getGpuPricingPage>> | null } = { firstPage: null };
 
   if (parsedSearch.bookmarks !== "true") {
     try {
@@ -67,8 +66,8 @@ async function HomeGpusContent() {
             size,
             uuid: null,
           });
-          if (!firstPagePayload && (cursor === null || cursor === 0)) {
-            firstPagePayload = result;
+          if (!captured.firstPage && (cursor === null || cursor === 0)) {
+            captured.firstPage = result;
           }
           return result;
         },
@@ -81,7 +80,7 @@ async function HomeGpusContent() {
   }
 
   const dehydratedState = dehydrate(queryClient);
-  const schemaMarkup = buildGpuSchema(firstPagePayload);
+  const schemaMarkup = buildGpuSchema(captured.firstPage);
 
   return (
     <HydrationBoundary state={dehydratedState}>

@@ -12,7 +12,6 @@ import { UserMenu, type AccountUser } from "./account-components";
 import type { NavItem } from "./data-table-infinite";
 
 export interface DataTableSidebarProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   searchFilterField: DataTableInputFilterField<any> | undefined;
   isDesktopSearchOpen: boolean;
   toggleDesktopSearch: () => void;

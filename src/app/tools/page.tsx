@@ -46,7 +46,7 @@ export default function ToolsPage() {
 async function ToolsHydratedContent() {
   const parsedSearch = toolsSearchParamsCache.parse({});
   const queryClient = new QueryClient();
-  let firstPagePayload: Awaited<ReturnType<typeof getToolsPage>> | null = null;
+  const captured: { firstPage: Awaited<ReturnType<typeof getToolsPage>> | null } = { firstPage: null };
 
   if (parsedSearch.bookmarks !== "true") {
     try {
@@ -66,8 +66,8 @@ async function ToolsHydratedContent() {
             size,
             uuid: null,
           });
-          if (!firstPagePayload && (cursor === null || cursor === 0)) {
-            firstPagePayload = result;
+          if (!captured.firstPage && (cursor === null || cursor === 0)) {
+            captured.firstPage = result;
           }
           return result;
         },
@@ -80,7 +80,7 @@ async function ToolsHydratedContent() {
   }
 
   const dehydratedState = dehydrate(queryClient);
-  const schemaMarkup = buildToolsSchema(firstPagePayload);
+  const schemaMarkup = buildToolsSchema(captured.firstPage);
 
   return (
     <HydrationBoundary state={dehydratedState}>

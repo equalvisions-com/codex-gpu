@@ -719,7 +719,7 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
                         <TableCell colSpan={columns.length} className="py-10">
                           <div className="flex flex-col gap-4 rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive-foreground sm:flex-row sm:items-center sm:justify-between">
                             <div className="space-y-1">
-                              <p className="font-medium">We couldn't load GPU rows.</p>
+                              <p className="font-medium">We couldn&apos;t load GPU rows.</p>
                               <p className="text-muted-foreground">{errorMessage}</p>
                             </div>
                             <Button

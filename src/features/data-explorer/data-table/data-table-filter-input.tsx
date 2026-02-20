@@ -53,15 +53,15 @@ export function DataTableFilterInput<TData>({
     isUserInputRef.current = false;
   }, [debouncedInput, setColumnFilters, value]);
 
-  // Sync external changes to local state (but not when user is typing)
-  useEffect(() => {
-    // Don't sync if user is currently typing
-    if (isUserInputRef.current) return;
-
-    if (filters !== input) {
-      setInput(filters);
-    }
-  }, [filters, input]);
+  // Sync external changes to local state using React-recommended
+  // "adjusting state based on props during render" pattern.
+  // When filters change externally (e.g. programmatic clear), update local input.
+  // This won't interfere with typing because debounce hasn't fired yet.
+  const [prevFilters, setPrevFilters] = useState(filters);
+  if (prevFilters !== filters) {
+    setPrevFilters(filters);
+    setInput(filters);
+  }
 
   const isFilterActive = Boolean(filters && filters.trim() !== "");
 

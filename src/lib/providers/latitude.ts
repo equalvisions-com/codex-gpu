@@ -30,12 +30,9 @@ interface LatitudePlan {
         name: string;
         slug?: string;
         features?: string[];
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         specs: Record<string, any>;  // Flexible for both VM and bare metal
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         regions?: any[];
         stock_level?: string;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         available_in?: any[];
     };
 }

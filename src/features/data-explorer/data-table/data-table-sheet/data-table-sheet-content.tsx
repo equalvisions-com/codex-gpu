@@ -30,15 +30,26 @@ function DataTableSheetContent<TData, TMeta>({
 }: DataTableSheetContentProps<TData, TMeta>) {
   if (!data) return <SheetDetailsContentSkeleton fields={fields} />;
 
-  let previousVisibleField: (typeof fields)[number] | null = null;
+  // Build a map of previous *visible* fields (respecting conditions) for divider logic
+  const prevVisibleMap = new Map<number, (typeof fields)[number] | null>();
+  let lastVisibleField: (typeof fields)[number] | null = null;
+  for (let i = 0; i < fields.length; i++) {
+    const f = fields[i];
+    const isVisible = !f.condition || f.condition(data);
+    prevVisibleMap.set(i, lastVisibleField);
+    if (isVisible) {
+      lastVisibleField = f;
+    }
+  }
 
   return (
     <dl className={cn(className)} {...props}>
-      {fields.map((field) => {
+      {fields.map((field, fieldIndex) => {
         if (field.condition && !field.condition(data)) return null;
 
         const Component = field.component;
         const value = String(data[field.id]);
+        const previousVisibleField = prevVisibleMap.get(fieldIndex) ?? null;
         const shouldAddDivider =
           previousVisibleField !== null &&
           !(
@@ -62,8 +73,6 @@ function DataTableSheetContent<TData, TMeta>({
             ? "justify-start text-left"
             : "justify-end text-right",
         );
-
-        previousVisibleField = field;
 
         return (
           <div key={field.id.toString()}>
