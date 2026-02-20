@@ -595,15 +595,6 @@ export function MobileTopNav({
   return (
     <NavigationMenu className="flex w-full max-w-none justify-between px-2 sm:hidden">
       <NavigationMenuList className="grid w-full grid-cols-3 items-center gap-2">
-        {/*
-          <NavigationMenuItem className="mr-auto">
-            <NavigationMenuLink asChild>
-              <span className="select-none text-sm font-medium text-background">
-                {brandLabel}
-              </span>
-            </NavigationMenuLink>
-          </NavigationMenuItem>
-        */}
         <NavigationMenuItem className="flex justify-start min-w-0">
           <div className="flex items-center gap-2 h-9">
             <Separator orientation="vertical" className="h-9 bg-border" />

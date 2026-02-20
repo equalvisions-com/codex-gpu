@@ -16,7 +16,7 @@ async function parseErrorMessage(response: Response) {
   }
 }
 
-export interface FetchJsonOptions extends RequestInit {
+interface FetchJsonOptions extends RequestInit {
   timeoutMs?: number;
   maxRetries?: number;
 }
@@ -47,14 +47,12 @@ const DEFAULT_MAX_RETRIES = 2;
 const BACKOFF_BASE_MS = 500;
 
 /**
- * Shared implementation for fetchJson and fetchHtml.
- * Adds timeout (AbortSignal.timeout) and retry with exponential backoff.
+ * Fetches JSON with timeout (AbortSignal.timeout) and retry with exponential backoff.
  */
-async function fetchWithResilience(
+export async function fetchJson<T>(
   input: RequestInfo | URL,
-  init: FetchJsonOptions | undefined,
-  mode: "json" | "html",
-): Promise<unknown> {
+  init?: FetchJsonOptions,
+): Promise<T> {
   const { timeoutMs = DEFAULT_TIMEOUT_MS, maxRetries = DEFAULT_MAX_RETRIES, ...fetchInit } = init ?? {};
 
   let lastError: unknown;
@@ -76,10 +74,7 @@ async function fetchWithResilience(
         throw new HttpError(message, response.status);
       }
 
-      if (mode === "json") {
-        return (await response.json()) as unknown;
-      }
-      return await response.text();
+      return (await response.json()) as T;
     } catch (error) {
       lastError = error;
 
@@ -96,18 +91,4 @@ async function fetchWithResilience(
 
   // Should be unreachable, but satisfies the type checker.
   throw lastError;
-}
-
-export async function fetchJson<T>(
-  input: RequestInfo | URL,
-  init?: FetchJsonOptions,
-): Promise<T> {
-  return fetchWithResilience(input, init, "json") as Promise<T>;
-}
-
-export async function fetchHtml(
-  input: RequestInfo | URL,
-  init?: FetchJsonOptions,
-): Promise<string> {
-  return fetchWithResilience(input, init, "html") as Promise<string>;
 }

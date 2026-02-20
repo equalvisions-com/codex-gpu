@@ -1179,5 +1179,3 @@ export function SettingsDialog({ open, onOpenChange, user, isAuthenticated = tru
     </Dialog>
   );
 }
-
-export default SettingsDialog;
