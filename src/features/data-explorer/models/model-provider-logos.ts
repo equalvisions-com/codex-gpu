@@ -6,7 +6,7 @@ export const MODEL_PROVIDER_LOGOS: Record<
   }
 > = {
   anthropic: { src: "/logos/Anthropic.svg", alt: "Anthropic" },
-  alibaba: { src: "/logos/alibaba.png", alt: "Alibaba" },
+  "alibaba cloud": { src: "/logos/alibaba.png", alt: "Alibaba Cloud" },
   "amazon bedrock": { src: "/logos/Bedrock.svg", alt: "Amazon Bedrock" },
   ai21: { src: "/logos/ai21.png", alt: "AI21" },
   aionlabs: { src: "/logos/aionlabs.png", alt: "AionLabs" },

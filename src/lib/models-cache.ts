@@ -21,7 +21,7 @@ const PROVIDER_SORT_ORDER = [
   "Amazon Bedrock",
   "MiniMax",
   "MoonshotAI",
-  "Alibaba",
+  "Alibaba Cloud",
   "Z.AI",
   "Xiaomi",
   // Tier 2 — Fast inference / dev-favorite hosting

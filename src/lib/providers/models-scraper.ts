@@ -77,6 +77,7 @@ const AUTHOR_MAP: Record<string, string> = {
 const PROVIDER_MAP: Record<string, string> = {
   'WandB': 'Weights and Biases',
   'Google': 'Google Vertex',
+  'Alibaba': 'Alibaba Cloud',
   'Mancer 2': 'Mancer',
   'Minimax': 'MiniMax',
   'Moonshot AI': 'MoonshotAI',
