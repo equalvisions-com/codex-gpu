@@ -46,6 +46,7 @@ const AUTHOR_MAP: Record<string, string> = {
   'sao10k': 'Sao10K',
   'shisa-ai': 'Shisa AI',
   'raifle': 'rAIfle',
+  'stepfun': 'StepFun',
   'stepfun-ai': 'StepFun',
   'switchpoint': 'Switchpoint',
   'tencent': 'Tencent',
