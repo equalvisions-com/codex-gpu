@@ -1,5 +1,4 @@
 import type { AIModel, ModelScrapeResult } from '@/types/models';
-import { providerParameters } from './provider-params';
 
 const AUTHOR_MAP: Record<string, string> = {
   'x-ai': 'xAI',
@@ -66,11 +65,44 @@ const PROVIDER_MAP: Record<string, string> = {
   'Nvidia': 'NVIDIA',
 };
 
+// Providers to skip (test/fake providers on OpenRouter)
+const SKIP_PROVIDERS = new Set(['FakeProvider']);
+
 /**
  * Scrapes AI models from OpenRouter API
  */
+
 class ModelsScraper {
   private readonly baseUrl = 'https://openrouter.ai/api/frontend/models/find?fmt=cards';
+  private readonly providersUrl = 'https://openrouter.ai/api/frontend/providers';
+
+  /**
+   * Fetch the live provider list from OpenRouter instead of using a hardcoded list.
+   * New providers are automatically picked up on the next scrape.
+   */
+  private async fetchProviders(): Promise<{ name: string; parameter: string }[]> {
+    const response = await fetch(this.providersUrl, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; ModelsScraper/1.0)' },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch providers: HTTP ${response.status}`);
+    }
+
+    const json = await response.json() as { data?: string[] };
+    const providers = json.data;
+
+    if (!Array.isArray(providers) || providers.length === 0) {
+      throw new Error('OpenRouter returned empty provider list');
+    }
+
+    return providers
+      .filter((name) => !SKIP_PROVIDERS.has(name))
+      .map((name) => ({
+        name,
+        parameter: encodeURIComponent(name),
+      }));
+  }
 
   private sanitizeSuffix(value: string): string {
     return value.toLowerCase().replace(/[^a-z0-9]+/g, '-');
@@ -126,8 +158,8 @@ class ModelsScraper {
     console.log(`[ModelsScraper] Starting AI models scrape${limit ? ` (limit: ${limit})` : ''}...`);
 
     try {
-      const confirmedProviders = providerParameters;
-      console.log(`[ModelsScraper] Found ${confirmedProviders.length} confirmed providers to scrape`);
+      const confirmedProviders = await this.fetchProviders();
+      console.log(`[ModelsScraper] Found ${confirmedProviders.length} providers from OpenRouter`);
 
       const allModels: AIModel[] = [];
       let totalFetched = 0;

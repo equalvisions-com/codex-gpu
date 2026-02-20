@@ -192,16 +192,15 @@ class PaperspaceScraper implements ProviderScraper {
 
     /**
      * Normalize GPU model name for consistent display.
-     * - Strip generation prefix (Ampere, Hopper, Quadro) - but keep Tesla
+     * - Strip generation prefix (Ampere, Hopper) - keep Tesla and Quadro
      * - Strip VRAM suffix (80G, 32G, etc.)
      * - Add NVIDIA prefix
      */
     private normalizeGpuModel(gpuName: string): string {
-        // Strip generation prefix (keep Tesla for legacy GPU naming consistency)
+        // Strip generation prefix (keep Tesla and Quadro for correct identification)
         let normalized = gpuName
             .replace(/^Ampere\s+/i, '')
-            .replace(/^Hopper\s+/i, '')
-            .replace(/^Quadro\s+/i, '');
+            .replace(/^Hopper\s+/i, '');
 
         // Strip VRAM suffix (e.g., "80G", "32G", "80G PCIe")
         normalized = normalized
