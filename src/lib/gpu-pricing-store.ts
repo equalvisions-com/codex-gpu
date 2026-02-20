@@ -7,6 +7,7 @@ import { and, eq, sql } from "drizzle-orm";
 import { stableGpuKey } from "@/features/data-explorer/stable-keys";
 import { gpuPriceHistoryStore, type GpuPriceSampleInput } from "@/lib/gpu-price-history-store";
 import { normalizeObservedAt } from "@/lib/normalize-observed-at";
+import { normalizeGpuModel } from "@/lib/normalize-gpu-model";
 
 type GpuPricingRow = typeof gpuPricing.$inferSelect;
 
@@ -96,8 +97,14 @@ class GpuPricingStore {
       const version = typeof result.version === "number" ? result.version : 1;
 
       for (const row of result.rows) {
-        const id = computeRowId(result.provider, observedAtIso, row);
+        // Normalize gpu_model before hashing, stable key, and DB storage
         const rowData = row as PriceRowFields;
+        if (rowData.gpu_model) {
+          (row as Record<string, unknown>).gpu_model = normalizeGpuModel(rowData.gpu_model);
+          rowData.gpu_model = (row as Record<string, unknown>).gpu_model as string;
+        }
+
+        const id = computeRowId(result.provider, observedAtIso, row);
         const stableKey = stableGpuKey({
           provider: result.provider,
           gpu_model: rowData.gpu_model,
