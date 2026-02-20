@@ -273,9 +273,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
 
       const label = computedScore > 1 ? "Multimodal" : "Unimodal";
       const formatList = (modalities: string[]) => (
-        modalities.length
-          ? modalities.map(modality => modality.charAt(0).toUpperCase() + modality.slice(1)).join(", ")
-          : "-"
+        modalities.length ? modalities.join(", ") : "-"
       );
 
       return (

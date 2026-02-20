@@ -168,7 +168,7 @@ export function ModalitiesFilter() {
         <div className="pr-0 space-y-1">
           {optionsWithSelections.map((option) => {
             const checked = selectedValues.includes(option.value);
-            const label = option.label.charAt(0).toUpperCase() + option.label.slice(1);
+            const label = option.label;
             const optionDirection = directionMap[option.value] ?? "input";
 
             return (

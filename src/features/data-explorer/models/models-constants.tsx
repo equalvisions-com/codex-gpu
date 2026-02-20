@@ -120,9 +120,7 @@ const formatModalities = (modalities?: string[]) => {
     (modality): modality is string => typeof modality === "string" && modality.trim().length > 0,
   );
   if (validModalities.length === 0) return "N/A";
-  return validModalities
-    .map((modality) => modality.replace(/\b\w/g, (char) => char.toUpperCase()))
-    .join(", ");
+  return validModalities.join(", ");
 };
 
 const formatParameterList = (parameters?: string | string[] | null) => {

@@ -135,19 +135,6 @@ class ModelsScraper {
     return AUTHOR_MAP[author] ?? author;
   }
 
-  private normalizeName(value?: string | null): string | null {
-    if (!value) {
-      return null;
-    }
-
-    const cleaned = value
-      .toLowerCase()
-      .trim()
-      .replace(/\s+/g, ' ');
-
-    return cleaned.length > 0 ? cleaned : null;
-  }
-
   private cleanShortName(value?: string | null): string | null {
     if (!value) {
       return null;
@@ -155,13 +142,10 @@ class ModelsScraper {
 
     let cleaned = value.trim();
 
-    // Convert "ChatGPT-" to "GPT-" (case-insensitive)
-    cleaned = cleaned.replace(/ChatGPT-/gi, 'GPT-');
-
-    // Strip only " (free)" pattern (case-insensitive)
+    // Strip " (free)" — OpenRouter pricing variant, not part of the model name
     cleaned = cleaned.replace(/\s*\(free\)/gi, '').trim();
 
-    // Convert only " (thinking)" to " Thinking" (case-insensitive, capitalize result)
+    // Convert " (thinking)" to " Thinking"
     cleaned = cleaned.replace(/\s*\(thinking\)/gi, ' Thinking').trim();
 
     return cleaned.length > 0 ? cleaned : null;
@@ -274,8 +258,12 @@ class ModelsScraper {
               description: model.description || null,
               modelVersionGroupId: model.model_version_group_id || null,
               contextLength: model.context_length || null,
-              inputModalities: Array.isArray(model.input_modalities) ? model.input_modalities : [],
-              outputModalities: Array.isArray(model.output_modalities) ? model.output_modalities : [],
+              inputModalities: Array.isArray(model.input_modalities)
+                ? model.input_modalities.map((m: string) => m.charAt(0).toUpperCase() + m.slice(1))
+                : [],
+              outputModalities: Array.isArray(model.output_modalities)
+                ? model.output_modalities.map((m: string) => m.charAt(0).toUpperCase() + m.slice(1))
+                : [],
               hasTextOutput: model.has_text_output ? 'true' : 'false',
               group: model.group || null,
               instructType: model.instruct_type || null,
