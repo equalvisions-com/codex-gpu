@@ -61,10 +61,32 @@ export const MODEL_PROVIDER_LOGOS: Record<
   venice: { src: "/logos/venice.png", alt: "Venice" },
   qwen: { src: "/logos/Qwen.png", alt: "Qwen" },
   google: { src: "/logos/google.svg", alt: "Google" },
+  "amazon nova": { src: "", alt: "Amazon Nova" },
+  ambient: { src: "", alt: "Ambient" },
+  "arcee ai": { src: "", alt: "Arcee AI" },
+  avian: { src: "", alt: "Avian" },
+  "black forest labs": { src: "", alt: "Black Forest Labs" },
+  byteplus: { src: "", alt: "BytePlus" },
+  cirrascale: { src: "", alt: "Cirrascale" },
+  clarifai: { src: "", alt: "Clarifai" },
+  inceptron: { src: "", alt: "Inceptron" },
+  "io net": { src: "", alt: "Io Net" },
+  mara: { src: "", alt: "Mara" },
+  modelrun: { src: "", alt: "ModelRun" },
+  modular: { src: "", alt: "Modular" },
+  seed: { src: "", alt: "Seed" },
+  sourceful: { src: "", alt: "Sourceful" },
+  stealth: { src: "", alt: "Stealth" },
+  stepfun: { src: "", alt: "StepFun" },
+  streamlake: { src: "", alt: "StreamLake" },
+  upstage: { src: "", alt: "Upstage" },
+  xiaomi: { src: "", alt: "Xiaomi" },
 };
 
 export function getModelProviderLogo(provider?: string | null) {
   if (!provider) return null;
   const key = provider.toLowerCase().trim();
-  return MODEL_PROVIDER_LOGOS[key] ?? null;
+  const entry = MODEL_PROVIDER_LOGOS[key];
+  if (!entry || !entry.src) return null;
+  return entry;
 }
