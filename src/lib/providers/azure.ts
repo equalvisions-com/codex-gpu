@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import type { AzurePriceRow, ProviderResult } from '@/types/pricing';
 import type { ProviderScraper } from './types';
+import { logger } from "@/lib/logger";
 
 // Azure Retail Prices API for eastus region
 const API_URL = 'https://prices.azure.com/api/retail/prices';
@@ -128,7 +129,7 @@ class AzureScraper implements ProviderScraper {
 
     async scrape(): Promise<ProviderResult> {
         try {
-            console.log('[AzureScraper] Fetching Azure retail prices for eastus...');
+            logger.info('[AzureScraper] Fetching Azure retail prices for eastus...');
 
             const allItems: AzurePriceItem[] = [];
 
@@ -165,10 +166,10 @@ class AzureScraper implements ProviderScraper {
 
             // Warn if we hit the page cap (results may be truncated)
             if (pageCount >= 100 && url) {
-                console.warn('[AzureScraper] Hit 100-page cap with more pages available; results may be truncated');
+                logger.warn('[AzureScraper] Hit 100-page cap with more pages available; results may be truncated');
             }
 
-            console.log(`[AzureScraper] Fetched ${allItems.length} items across ${pageCount} pages`);
+            logger.info(`[AzureScraper] Fetched ${allItems.length} items across ${pageCount} pages`);
 
             const sourceHash = crypto.createHash('sha256')
                 .update(JSON.stringify(allItems.length))
@@ -177,7 +178,7 @@ class AzureScraper implements ProviderScraper {
 
             const rows = this.parseItems(allItems, observedAt);
 
-            console.log(`[AzureScraper] Parsed ${rows.length} GPU VM pricing rows`);
+            logger.info(`[AzureScraper] Parsed ${rows.length} GPU VM pricing rows`);
 
             return {
                 provider: 'azure',
@@ -332,7 +333,7 @@ class AzureScraper implements ProviderScraper {
         }
 
         if (!gpuSpec) {
-            console.log(`[AzureScraper] Unknown GPU for SKU: ${sku}, productName: ${productName}`);
+            logger.info(`[AzureScraper] Unknown GPU for SKU: ${sku}, productName: ${productName}`);
             return null;
         }
 

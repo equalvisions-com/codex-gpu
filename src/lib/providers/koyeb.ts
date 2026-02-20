@@ -2,6 +2,7 @@ import * as cheerio from 'cheerio';
 import crypto from 'crypto';
 import type { KoyebPriceRow, ProviderResult } from '@/types/pricing';
 import type { ProviderScraper } from './types';
+import { logger } from "@/lib/logger";
 
 const PRICING_URL = 'https://www.koyeb.com/pricing';
 
@@ -40,7 +41,7 @@ class KoyebScraper implements ProviderScraper {
                 return true;
             });
 
-            console.log(`[KoyebScraper] Parsed ${uniqueRows.length} GPU pricing rows`);
+            logger.info(`[KoyebScraper] Parsed ${uniqueRows.length} GPU pricing rows`);
 
             return {
                 provider: "koyeb",
@@ -71,7 +72,7 @@ class KoyebScraper implements ProviderScraper {
             return className.includes('grid-cols-5');
         });
 
-        console.log(`[KoyebScraper] Found ${allGrids.length} grid-cols-5 containers`);
+        logger.info(`[KoyebScraper] Found ${allGrids.length} grid-cols-5 containers`);
 
         allGrids.each((_: number, container: any) => {
             const $container = $(container);
@@ -82,13 +83,13 @@ class KoyebScraper implements ProviderScraper {
                 return;
             }
 
-            console.log(`[KoyebScraper] Found GPU pricing container`);
+            logger.info(`[KoyebScraper] Found GPU pricing container`);
 
             // Get all direct children (cells)
             const cells = $container.children();
             const cellCount = cells.length;
 
-            console.log(`[KoyebScraper] Container has ${cellCount} child cells`);
+            logger.info(`[KoyebScraper] Container has ${cellCount} child cells`);
 
             // Skip header row (first 5 cells), process data rows (every 5 cells = 1 row)
             for (let i = 5; i < cellCount; i += 5) {
@@ -156,7 +157,7 @@ class KoyebScraper implements ProviderScraper {
                 if (seenSkus.has(sku)) continue;
                 seenSkus.add(sku);
 
-                console.log(`[KoyebScraper] Parsed row: ${instanceName}, GPU: ${gpuInfo.model} x${gpuInfo.count}, vCPU: ${vcpus}, RAM: ${ram}GB, Price: ${priceHourUsd}`);
+                logger.info(`[KoyebScraper] Parsed row: ${instanceName}, GPU: ${gpuInfo.model} x${gpuInfo.count}, vCPU: ${vcpus}, RAM: ${ram}GB, Price: ${priceHourUsd}`);
 
                 rows.push({
                     provider: 'koyeb',

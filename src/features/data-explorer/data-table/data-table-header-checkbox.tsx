@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import type { CheckedState } from "@radix-ui/react-checkbox";
+import type { Checkbox as CheckboxPrimitive } from "radix-ui";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useDataTable } from "./data-table-provider";
 
@@ -23,7 +23,7 @@ export function DataTableHeaderCheckbox() {
   const someChecked = checkedCount > 0 && checkedCount < rowIds.length;
 
   const handleToggle = React.useCallback(
-    (_state: CheckedState) => {
+    (_state: CheckboxPrimitive.CheckedState) => {
       const shouldCheck = !(allChecked || someChecked);
       setCheckedRows((previous) => {
         // When unchecking, clear ALL checked rows (not just visible ones)

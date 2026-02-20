@@ -8,6 +8,7 @@ import { isArrayOfDates } from "@/lib/is-array";
 import { normalizeObservedAt } from "@/lib/normalize-observed-at";
 import { isSameDay } from "date-fns";
 import type { SQL } from "drizzle-orm";
+import { logger } from "@/lib/logger";
 
 type GpuPricingRow = typeof gpuPricing.$inferSelect;
 
@@ -391,7 +392,7 @@ class GpuPricingCache {
 
       typeRowsArray = (typeRowsResult as unknown as Array<{ type: string; count: string | number }>);
     } catch (error) {
-      console.warn("[getGpusFacets] Failed to generate type facet", {
+      logger.warn("[getGpusFacets] Failed to generate type facet", {
         error: error instanceof Error ? error.message : String(error),
       });
     }
@@ -418,7 +419,7 @@ class GpuPricingCache {
 
       modelRowsArray = (modelRowsResult as unknown as Array<{ model: string; count: string | number }>);
     } catch (error) {
-      console.warn("[getGpusFacets] Failed to generate model facet", {
+      logger.warn("[getGpusFacets] Failed to generate model facet", {
         error: error instanceof Error ? error.message : String(error),
       });
     }
@@ -446,7 +447,7 @@ class GpuPricingCache {
 
       vramRowsArray = (vramRowsResult as unknown as Array<{ vram: number | string; count: string | number }>);
     } catch (error) {
-      console.warn("[getGpusFacets] Failed to generate VRAM facet", {
+      logger.warn("[getGpusFacets] Failed to generate VRAM facet", {
         error: error instanceof Error ? error.message : String(error),
       });
     }
@@ -489,7 +490,7 @@ class GpuPricingCache {
 
       priceRowsArray = (priceRowsResult as unknown as Array<{ price: number | string; count: string | number }>);
     } catch (error) {
-      console.warn("[getGpusFacets] Failed to generate price facet", {
+      logger.warn("[getGpusFacets] Failed to generate price facet", {
         error: error instanceof Error ? error.message : String(error),
       });
     }

@@ -10,6 +10,7 @@ import { dataOptions } from "@/features/data-explorer/table/query-options";
 import { searchParamsCache } from "@/features/data-explorer/table/search-params";
 import { getGpuPricingPage } from "@/lib/gpu-pricing-loader";
 import { buildGpuSchema } from "@/features/data-explorer/table/gpu-schema";
+import { logger } from "@/lib/logger";
 
 export const revalidate = 43200;
 
@@ -73,7 +74,7 @@ async function HomeGpusContent() {
         },
       });
     } catch (error) {
-      console.error("[HomePage] Failed to prefetch GPU data", {
+      logger.error("[HomePage] Failed to prefetch GPU data", {
         error: error instanceof Error ? error.message : String(error),
       });
     }

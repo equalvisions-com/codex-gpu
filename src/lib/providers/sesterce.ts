@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import type { SestercePriceRow, ProviderResult } from '@/types/pricing';
 import type { ProviderScraper } from './types';
+import { logger } from "@/lib/logger";
 
 const API_URL = 'https://api.cloud.sesterce.com/gpu-cloud/instances/offers';
 const PRICING_URL = 'https://www.sesterce.com/pricing';
@@ -68,7 +69,7 @@ class SesterceScraper implements ProviderScraper {
             // This matches Sesterce website behavior (grouping by product, showing "Cost From")
             const aggregated = this.aggregateByLowestPrice(rows);
 
-            console.log(`[SesterceScraper] Parsed ${aggregated.length} GPU pricing rows from API (${rows.length} raw offers aggregated)`);
+            logger.info(`[SesterceScraper] Parsed ${aggregated.length} GPU pricing rows from API (${rows.length} raw offers aggregated)`);
 
             return {
                 provider: 'sesterce',

@@ -25,6 +25,9 @@ interface LatencyScrapeResult {
 
 const USER_AGENT = "Mozilla/5.0 (compatible; ModelsLatencyScraper/1.0)";
 
+/** Number of permaslugs to fetch concurrently */
+const SCRAPE_CONCURRENCY = 5;
+
 class ModelsLatencyScraper {
   private readonly baseUrl = "https://openrouter.ai/api/frontend/stats/latency-comparison";
 
@@ -105,9 +108,8 @@ class ModelsLatencyScraper {
       errors: [],
     };
 
-    const concurrency = 5;
-    for (let i = 0; i < pending.length; i += concurrency) {
-      const chunk = pending.slice(i, i + concurrency);
+    for (let i = 0; i < pending.length; i += SCRAPE_CONCURRENCY) {
+      const chunk = pending.slice(i, i + SCRAPE_CONCURRENCY);
       const results = await Promise.allSettled(
         chunk.map(async (permaslug) => {
           const samples = await this.fetchPermaslug(permaslug);

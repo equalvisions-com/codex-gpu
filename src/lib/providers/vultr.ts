@@ -2,6 +2,7 @@ import * as cheerio from 'cheerio';
 import crypto from 'crypto';
 import type { VultrPriceRow, ProviderResult } from '@/types/pricing';
 import type { ProviderScraper } from './types';
+import { logger } from "@/lib/logger";
 
 const PRICING_URL = 'https://www.vultr.com/pricing/';
 
@@ -60,7 +61,7 @@ class VultrScraper implements ProviderScraper {
                 return true;
             });
 
-            console.log(`[VultrScraper] Scraped ${allRows.length} rows, deduplicated to ${rows.length} (Cloud GPU: ${cloudGpuRows.length}, Bare Metal: ${bareMetalRows.length})`);
+            logger.info(`[VultrScraper] Scraped ${allRows.length} rows, deduplicated to ${rows.length} (Cloud GPU: ${cloudGpuRows.length}, Bare Metal: ${bareMetalRows.length})`);
 
             return {
                 provider: "vultr",
@@ -84,7 +85,7 @@ class VultrScraper implements ProviderScraper {
 
         const cloudGpuSection = $('#cloud-gpu');
         if (!cloudGpuSection.length) {
-            console.warn('[VultrScraper] Could not find #cloud-gpu section');
+            logger.warn('[VultrScraper] Could not find #cloud-gpu section');
             return rows;
         }
 
@@ -195,7 +196,7 @@ class VultrScraper implements ProviderScraper {
 
         const bareMetalSection = $('#bare-metal');
         if (!bareMetalSection.length) {
-            console.warn('[VultrScraper] Could not find #bare-metal section');
+            logger.warn('[VultrScraper] Could not find #bare-metal section');
             return rows;
         }
 

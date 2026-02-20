@@ -2,6 +2,7 @@ import * as cheerio from 'cheerio';
 import crypto from 'crypto';
 import type { ThundercomputePriceRow, ProviderResult } from '@/types/pricing';
 import type { ProviderScraper } from './types';
+import { logger } from "@/lib/logger";
 
 const PRICING_URL = 'https://www.thundercompute.com/pricing';
 
@@ -40,7 +41,7 @@ class ThundercomputeScraper implements ProviderScraper {
                 return true;
             });
 
-            console.log(`[ThundercomputeScraper] Parsed ${uniqueRows.length} GPU pricing rows`);
+            logger.info(`[ThundercomputeScraper] Parsed ${uniqueRows.length} GPU pricing rows`);
 
             return {
                 provider: "thundercompute",

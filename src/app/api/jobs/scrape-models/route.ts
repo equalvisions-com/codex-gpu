@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Models scraping job failed:', error);
+    logger.error('Models scraping job failed:', error);
 
     return NextResponse.json({
       success: false,
@@ -136,7 +136,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Models cache stats / cron failed:', error);
+    logger.error('Models cache stats / cron failed:', error);
     return NextResponse.json({
       status: 'error',
       error: error instanceof Error ? error.message : 'Unknown error',

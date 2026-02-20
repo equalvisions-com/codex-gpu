@@ -1,8 +1,36 @@
 import crypto from 'crypto';
 import type { VoltageParkPriceRow, ProviderResult } from '@/types/pricing';
 import type { ProviderScraper } from './types';
+import { logger } from "@/lib/logger";
 
 const API_BASE_URL = 'https://cloud-api.voltagepark.com/api/v1';
+
+interface VmLocation {
+    id: string;
+    available_presets?: {
+        id: string;
+        resources: {
+            gpus?: Record<string, { count?: number }>;
+            vcpu_count?: number;
+            ram_gb?: number;
+            storage_gb?: number;
+        };
+        compute_rate_hourly: string;
+    }[];
+}
+
+interface BmLocation {
+    id: string;
+    specs_per_node?: {
+        gpu_model: string;
+        gpu_count?: number;
+        cpu_count?: number;
+        ram_gb?: number;
+        storage_gb?: number;
+    };
+    gpu_price_ethernet: string;
+    gpu_price_infiniband: string;
+}
 
 class VoltageParkScraper implements ProviderScraper {
     name = 'voltagepark';
@@ -13,7 +41,7 @@ class VoltageParkScraper implements ProviderScraper {
     async scrape(): Promise<ProviderResult> {
         const apiKey = process.env.VOLTAGE_PARK;
         if (!apiKey) {
-            console.warn('[VoltageParkScraper] VOLTAGE_PARK environment variable not set, skipping');
+            logger.warn('[VoltageParkScraper] VOLTAGE_PARK environment variable not set, skipping');
             return {
                 provider: "voltagepark",
                 rows: [],
@@ -45,7 +73,7 @@ class VoltageParkScraper implements ProviderScraper {
             const bmRows = this.parseBmLocations(bmData.results || []);
 
             const rows = [...vmRows, ...bmRows];
-            console.log(`[VoltageParkScraper] Parsed ${rows.length} GPU pricing rows (${vmRows.length} VMs, ${bmRows.length} Bare Metal)`);
+            logger.info(`[VoltageParkScraper] Parsed ${rows.length} GPU pricing rows (${vmRows.length} VMs, ${bmRows.length} Bare Metal)`);
 
             return {
                 provider: "voltagepark",
@@ -58,7 +86,7 @@ class VoltageParkScraper implements ProviderScraper {
         }
     }
 
-    private parseVmLocations(locations: any[]): VoltageParkPriceRow[] {
+    private parseVmLocations(locations: VmLocation[]): VoltageParkPriceRow[] {
         const rows: VoltageParkPriceRow[] = [];
         const observedAt = new Date().toISOString();
 
@@ -68,7 +96,7 @@ class VoltageParkScraper implements ProviderScraper {
                 const { resources, compute_rate_hourly, id: presetId } = preset;
                 const gpus = resources?.gpus || {};
 
-                for (const [gpuKey, gpuInfo] of Object.entries<any>(gpus)) {
+                for (const [gpuKey, gpuInfo] of Object.entries(gpus)) {
                     const gpuModel = this.normalizeGpuModel(gpuKey);
                     const gpuCount = gpuInfo.count || 1;
                     const priceHourUsd = parseFloat(compute_rate_hourly) || 0;
@@ -99,7 +127,7 @@ class VoltageParkScraper implements ProviderScraper {
         return rows;
     }
 
-    private parseBmLocations(locations: any[]): VoltageParkPriceRow[] {
+    private parseBmLocations(locations: BmLocation[]): VoltageParkPriceRow[] {
         const rows: VoltageParkPriceRow[] = [];
         const observedAt = new Date().toISOString();
 

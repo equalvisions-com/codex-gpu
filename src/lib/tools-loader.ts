@@ -7,11 +7,10 @@ import type { ToolsSearchParamsType } from "@/features/data-explorer/tools/tools
 import { toolsCache } from "@/lib/tools-cache";
 import { unstable_cache } from "next/cache";
 import { createHash } from "crypto";
-import { STANDARD_CACHE_TTL } from "@/lib/cache/constants";
+import { STANDARD_CACHE_TTL, CACHE_SIZE_LIMIT_BYTES, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from "@/lib/cache/constants";
 import type { Tool } from "@/types/tools";
 import { stableToolKey } from "@/features/data-explorer/stable-keys";
-
-const CACHE_SIZE_LIMIT_BYTES = 2 * 1024 * 1024; // 2MB
+import { logger } from "@/lib/logger";
 
 const getCachedFacets = unstable_cache(
   async () => {
@@ -39,7 +38,7 @@ async function getCachedToolsFiltered(search: ToolsSearchParamsType) {
       const result = await toolsCache.getToolsFiltered(search);
       const estimatedSize = JSON.stringify(result).length;
       if (estimatedSize > CACHE_SIZE_LIMIT_BYTES) {
-        console.warn("[getCachedToolsFiltered] Cache size limit exceeded, will fall back to direct DB query", {
+        logger.warn("[getCachedToolsFiltered] Cache size limit exceeded, will fall back to direct DB query", {
           estimatedSizeBytes: estimatedSize,
           limitBytes: CACHE_SIZE_LIMIT_BYTES,
           rowCount: result.data.length,
@@ -100,12 +99,12 @@ export async function getToolsPage(
     const errorMessage = error instanceof Error ? error.message : String(error);
     const isSizeError = errorMessage.includes("2MB") || errorMessage.includes("size") || errorMessage.includes("cache");
     if (isSizeError) {
-      console.warn("[getToolsPage] Cache size limit exceeded, using direct DB query", {
+      logger.warn("[getToolsPage] Cache size limit exceeded, using direct DB query", {
         searchParams: { cursor: search.cursor, size: search.size, sort: search.sort },
         error: errorMessage,
       });
     } else {
-      console.warn("[getToolsPage] Cache lookup failed, falling back to DB", {
+      logger.warn("[getToolsPage] Cache lookup failed, falling back to DB", {
         searchParams: { cursor: search.cursor, size: search.size, sort: search.sort },
         error: errorMessage,
       });
@@ -128,7 +127,7 @@ export async function getToolsPage(
   };
 
   const cursor = typeof search.cursor === "number" && search.cursor >= 0 ? search.cursor : 0;
-  const size = Math.min(Math.max(1, search.size ?? 50), 200);
+  const size = Math.min(Math.max(1, search.size ?? DEFAULT_PAGE_SIZE), MAX_PAGE_SIZE);
 
   const nextCursor = cursor + filteredTools.length < filterCount ? cursor + filteredTools.length : null;
   const prevCursor = cursor > 0 ? Math.max(0, cursor - size) : null;

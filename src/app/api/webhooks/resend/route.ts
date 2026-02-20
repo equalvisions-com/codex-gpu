@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import { Webhook } from "svix";
 import { db } from "@/db/client";
 import { user } from "@/db/auth-schema";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +38,7 @@ export async function POST(request: Request) {
       "svix-signature": svixSignature,
     }) as ContactWebhookPayload;
   } catch (error) {
-    console.error("[resend-webhook] Signature verification failed", error);
+    logger.error("[resend-webhook] Signature verification failed", error);
     return Response.json({ error: "Invalid webhook signature" }, { status: 400 });
   }
 

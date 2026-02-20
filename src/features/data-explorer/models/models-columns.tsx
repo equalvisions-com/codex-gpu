@@ -6,7 +6,7 @@ import { useDataTable } from "@/features/data-explorer/data-table/data-table-pro
 import { Checkbox } from "@/components/ui/checkbox";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { cn } from "@/lib/utils";
-import { HoverCardPortal } from "@radix-ui/react-hover-card";
+import { HoverCard as HoverCardPrimitive } from "radix-ui";
 import type { ColumnDef, SortingFn } from "@tanstack/react-table";
 import Image from "next/image";
 import type { ModelsColumnSchema } from "./models-schema";
@@ -284,7 +284,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
                 {label}
               </div>
             </HoverCardTrigger>
-            <HoverCardPortal>
+            <HoverCardPrimitive.Portal>
               <HoverCardContent side="bottom" sideOffset={8} collisionPadding={12} className="w-fit max-w-[155px] text-left text-xs space-y-1.5 p-2">
                 <div>
                   <span className="font-semibold text-foreground">Input:</span>{" "}
@@ -295,7 +295,7 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
                   <span className="text-foreground/80">{formatList(outputModalities)}</span>
                 </div>
               </HoverCardContent>
-            </HoverCardPortal>
+            </HoverCardPrimitive.Portal>
           </HoverCard>
         </div>
       );

@@ -5,9 +5,8 @@ import { gpuPricingCache } from "@/lib/gpu-pricing-cache";
 import { unstable_cache } from "next/cache";
 import { createHash } from "crypto";
 import { mapGpuRowToColumnSchema } from "@/lib/gpu-column-transformer";
-import { STANDARD_CACHE_TTL } from "@/lib/cache/constants";
-
-const CACHE_SIZE_LIMIT_BYTES = 2 * 1024 * 1024; // 2MB
+import { STANDARD_CACHE_TTL, CACHE_SIZE_LIMIT_BYTES, DEFAULT_PAGE_SIZE } from "@/lib/cache/constants";
+import { logger } from "@/lib/logger";
 
 // Cache facets generation (uses SQL aggregations, not full data load)
 // Cache for 12 hours - data only changes when scraper runs, which invalidates cache
@@ -40,7 +39,7 @@ async function getCachedGpusFiltered(search: SearchParamsType) {
       const estimatedSize = JSON.stringify(result).length;
 
       if (estimatedSize > CACHE_SIZE_LIMIT_BYTES) {
-        console.warn(
+        logger.warn(
           "[getCachedGpusFiltered] Cache size limit exceeded, will fall back to direct DB query",
           {
             estimatedSizeBytes: estimatedSize,
@@ -92,7 +91,7 @@ export async function getGpuPricingPage(
       errorMessage.includes("cache");
 
     if (isSizeError) {
-      console.warn(
+      logger.warn(
         "[getGpuPricingPage] Cache size limit exceeded, using direct DB query",
         {
           searchParams: {
@@ -104,7 +103,7 @@ export async function getGpuPricingPage(
         },
       );
     } else {
-      console.warn(
+      logger.warn(
         "[getGpuPricingPage] Cache lookup failed, falling back to DB",
         {
           searchParams: {
@@ -132,7 +131,7 @@ export async function getGpuPricingPage(
     price_hour_usd: facetsData.price_hour_usd,
   };
 
-  const pageSize = search.size ?? 50;
+  const pageSize = search.size ?? DEFAULT_PAGE_SIZE;
   const startOffset =
     typeof search.cursor === "number" && search.cursor >= 0
       ? search.cursor

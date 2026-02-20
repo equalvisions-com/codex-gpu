@@ -6,12 +6,25 @@ import { db } from "@/db/client";
 import * as authSchema from "@/db/auth-schema";
 import { sendVerificationEmail, sendPasswordResetEmail } from "@/lib/email";
 import { enqueueNewsletterSync } from "@/lib/newsletter-queue";
+import { logger } from "@/lib/logger";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: "pg", schema: authSchema }),
+  rateLimit: {
+    window: 60, // 60-second sliding window
+    max: 100, // max requests per window (global)
+    customRules: {
+      "/sign-in/email": { window: 60, max: 5 },
+      "/sign-up/email": { window: 60, max: 5 },
+      "/forget-password": { window: 60, max: 3 },
+      "/reset-password": { window: 60, max: 5 },
+    },
+  },
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,
+    minPasswordLength: 8,
+    maxPasswordLength: 128,
     sendResetPassword: async ({ user, url, token }, request) => {
       await sendPasswordResetEmail({
         to: user.email,
@@ -36,7 +49,7 @@ export const auth = betterAuth({
           .where(eq(authSchema.user.id, user.id));
         await enqueueNewsletterSync({ userId: user.id, email: user.email }, request?.url);
       } catch (error) {
-        console.error("Failed to enqueue newsletter sync after verification", error);
+        logger.error("Failed to enqueue newsletter sync after verification", error);
       }
     },
   },
@@ -53,7 +66,7 @@ export const auth = betterAuth({
         try {
           await enqueueNewsletterSync({ email: user.email, forceUnsubscribe: true }, request?.url);
         } catch (error) {
-          console.error("Failed to enqueue newsletter unsubscribe on delete", error);
+          logger.error("Failed to enqueue newsletter unsubscribe on delete", error);
         }
       },
     },
@@ -66,7 +79,7 @@ export const auth = betterAuth({
           try {
             await enqueueNewsletterSync({ userId: user.id, email: user.email });
           } catch (error) {
-            console.error("Failed to enqueue newsletter sync", error);
+            logger.error("Failed to enqueue newsletter sync", error);
           }
         },
       },

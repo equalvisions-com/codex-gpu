@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import type { AWSPriceRow, ProviderResult } from '@/types/pricing';
 import type { ProviderScraper } from './types';
+import { logger } from "@/lib/logger";
 
 // AWS Bulk Price List for us-east-1 region
 const PRICE_LIST_URL = 'https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/us-east-1/index.json';
@@ -68,7 +69,7 @@ class AWSScraper implements ProviderScraper {
 
     async scrape(): Promise<ProviderResult> {
         try {
-            console.log('[AWSScraper] Fetching AWS bulk price list for us-east-1...');
+            logger.info('[AWSScraper] Fetching AWS bulk price list for us-east-1...');
 
             const response = await fetch(PRICE_LIST_URL, {
                 headers: { 'Accept': 'application/json' },
@@ -87,16 +88,16 @@ class AWSScraper implements ProviderScraper {
             const rows = this.parseProducts(priceList, observedAt);
 
             // Debug: Log all parsed instances for verification
-            console.log(`[AWSScraper] Parsed ${rows.length} GPU instance pricing rows:`);
+            logger.info(`[AWSScraper] Parsed ${rows.length} GPU instance pricing rows:`);
             const byModel: Record<string, string[]> = {};
             for (const row of rows) {
                 if (!byModel[row.gpu_model]) byModel[row.gpu_model] = [];
                 byModel[row.gpu_model].push(`${row.instance_id} (${row.gpu_count}x GPU, $${row.price_hour_usd.toFixed(2)}/hr)`);
             }
             for (const [model, instances] of Object.entries(byModel).sort()) {
-                console.log(`  ${model}: ${instances.length} instances`);
+                logger.info(`  ${model}: ${instances.length} instances`);
                 for (const inst of instances.sort()) {
-                    console.log(`    - ${inst}`);
+                    logger.info(`    - ${inst}`);
                 }
             }
 

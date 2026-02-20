@@ -2,6 +2,7 @@ import * as cheerio from 'cheerio';
 import crypto from 'crypto';
 import type { NebiusPriceRow, ProviderResult } from '@/types/pricing';
 import type { ProviderScraper } from './types';
+import { logger } from "@/lib/logger";
 
 const PRICING_URL = 'https://nebius.com/prices';
 
@@ -118,7 +119,7 @@ class NebiusScraper implements ProviderScraper {
     // Extract pricing data from Next.js JSON
     const nextDataMatch = html.match(/id="__NEXT_DATA__"[^>]*>([^<]*)</);
     if (!nextDataMatch) {
-      console.warn('Could not find Next.js data');
+      logger.warn('Could not find Next.js data');
       return rows;
     }
 
@@ -127,7 +128,7 @@ class NebiusScraper implements ProviderScraper {
       const pageProps = nextData.props?.pageProps;
 
       if (!pageProps) {
-        console.warn('Could not find page props in Next.js data');
+        logger.warn('Could not find page props in Next.js data');
         return rows;
       }
 
@@ -136,19 +137,19 @@ class NebiusScraper implements ProviderScraper {
       const pagesKey = Object.keys(apolloState).find(key => key.startsWith('pages:'));
 
       if (!pagesKey) {
-        console.warn('Could not find pages key in Apollo state');
+        logger.warn('Could not find pages key in Apollo state');
         return rows;
       }
 
       const pageData = apolloState[pagesKey];
       if (!pageData.content) {
-        console.warn('Could not find content in page data');
+        logger.warn('Could not find content in page data');
         return rows;
       }
 
       const content = typeof pageData.content === 'string' ? JSON.parse(pageData.content) : pageData.content;
       if (!content.blocks) {
-        console.warn('Could not find blocks in content');
+        logger.warn('Could not find blocks in content');
         return rows;
       }
 
@@ -166,7 +167,7 @@ class NebiusScraper implements ProviderScraper {
         }
       }
     } catch (error) {
-      console.warn('Error parsing Next.js data:', error);
+      logger.warn('Error parsing Next.js data:', error);
     }
 
     return rows;

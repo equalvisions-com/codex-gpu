@@ -13,6 +13,7 @@ import {
   getToolFavoritesCacheTag,
   getToolFavoritesRateLimitKey,
 } from "@/lib/tool-favorites/constants";
+import { logger } from "@/lib/logger";
 
 type UserToolFavoriteRow = {
   id: string;
@@ -58,7 +59,7 @@ export async function GET() {
 
     return NextResponse.json<ToolFavoritesResponse>({ favorites });
   } catch (error) {
-    console.error("[GET /api/tools/favorites] Failed to fetch favorites", {
+    logger.error("[GET /api/tools/favorites] Failed to fetch favorites", {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
     });
@@ -112,7 +113,7 @@ export async function POST(request: NextRequest) {
       revalidateTag("tool-favorites", "max");
       revalidatePath("/api/tools/favorites/rows");
     } catch (error) {
-      console.error("[POST /api/tools/favorites] Cache revalidation failed", {
+      logger.error("[POST /api/tools/favorites] Cache revalidation failed", {
         userId: session.user.id,
         error: error instanceof Error ? error.message : String(error),
       });
@@ -123,7 +124,7 @@ export async function POST(request: NextRequest) {
       { headers: buildRateHeaders(rate.limit, rate.remaining, rate.reset) },
     );
   } catch (error) {
-    console.error("[POST /api/tools/favorites] Database operation failed", {
+    logger.error("[POST /api/tools/favorites] Database operation failed", {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
     });
@@ -173,7 +174,7 @@ export async function DELETE(request: NextRequest) {
       revalidateTag("tool-favorites", "max");
       revalidatePath("/api/tools/favorites/rows");
     } catch (error) {
-      console.error("[DELETE /api/tools/favorites] Cache revalidation failed", {
+      logger.error("[DELETE /api/tools/favorites] Cache revalidation failed", {
         userId: session.user.id,
         error: error instanceof Error ? error.message : String(error),
       });
@@ -184,7 +185,7 @@ export async function DELETE(request: NextRequest) {
       { headers: buildRateHeaders(rate.limit, rate.remaining, rate.reset) },
     );
   } catch (error) {
-    console.error("[DELETE /api/tools/favorites] Database operation failed", {
+    logger.error("[DELETE /api/tools/favorites] Database operation failed", {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
     });

@@ -8,9 +8,8 @@ import { modelsCache } from "@/lib/models-cache";
 import type { AIModel } from "@/types/models";
 import { unstable_cache } from "next/cache";
 import { createHash } from "crypto";
-import { STANDARD_CACHE_TTL } from "@/lib/cache/constants";
-
-const CACHE_SIZE_LIMIT_BYTES = 2 * 1024 * 1024; // 2MB
+import { STANDARD_CACHE_TTL, CACHE_SIZE_LIMIT_BYTES, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from "@/lib/cache/constants";
+import { logger } from "@/lib/logger";
 
 const getCachedFacets = unstable_cache(
   async () => {
@@ -41,7 +40,7 @@ async function getCachedModelsFiltered(search: ModelsSearchParamsType) {
       const estimatedSize = JSON.stringify(result).length;
 
       if (estimatedSize > CACHE_SIZE_LIMIT_BYTES) {
-        console.warn(
+        logger.warn(
           "[getCachedModelsFiltered] Cache size limit exceeded, will fall back to direct DB query",
           {
             estimatedSizeBytes: estimatedSize,
@@ -120,7 +119,7 @@ export async function getModelsPage(
       errorMessage.includes("cache");
 
     if (isSizeError) {
-      console.warn(
+      logger.warn(
         "[getModelsPage] Cache size limit exceeded, using direct DB query",
         {
           searchParams: {
@@ -132,7 +131,7 @@ export async function getModelsPage(
         },
       );
     } else {
-      console.warn("[getModelsPage] Cache lookup failed, falling back to DB", {
+      logger.warn("[getModelsPage] Cache lookup failed, falling back to DB", {
         searchParams: {
           cursor: search.cursor,
           size: search.size,
@@ -160,7 +159,7 @@ export async function getModelsPage(
     typeof search.cursor === "number" && search.cursor >= 0
       ? search.cursor
       : 0;
-  const size = Math.min(Math.max(1, search.size ?? 50), 200);
+  const size = Math.min(Math.max(1, search.size ?? DEFAULT_PAGE_SIZE), MAX_PAGE_SIZE);
 
   return {
     data: filteredModels.map(mapToColumnSchema),

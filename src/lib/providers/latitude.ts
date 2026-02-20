@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import type { LatitudePriceRow, ProviderResult } from '@/types/pricing';
 import type { ProviderScraper } from './types';
+import { logger } from "@/lib/logger";
 
 // Two endpoints: bare metal GPU plans and virtual machine plans
 const BARE_METAL_API_URL = 'https://api.latitude.sh/plans?filter[gpu]=true';
@@ -54,7 +55,7 @@ class LatitudeScraper implements ProviderScraper {
         const apiKey = process.env.LATITUDE_SH;
 
         if (!apiKey) {
-            console.warn('[LatitudeScraper] LATITUDE_SH environment variable not set, skipping');
+            logger.warn('[LatitudeScraper] LATITUDE_SH environment variable not set, skipping');
             return {
                 provider: "latitude",
                 rows: [],
@@ -91,14 +92,14 @@ class LatitudeScraper implements ProviderScraper {
             const combinedData = { bareMetalData, vmData };
             const sourceHash = crypto.createHash('sha256').update(JSON.stringify(combinedData)).digest('hex');
 
-            console.log(`[LatitudeScraper] Bare Metal API: ${bareMetalData.data?.length || 0} GPU plans, VM API: ${vmData.data?.length || 0} VM plans`);
+            logger.info(`[LatitudeScraper] Bare Metal API: ${bareMetalData.data?.length || 0} GPU plans, VM API: ${vmData.data?.length || 0} VM plans`);
 
             // Parse plans from both sources
             const bareMetalRows = this.parsePlans(bareMetalData.data || [], 'Bare Metal');
             const vmRows = this.parsePlans(vmData.data || [], 'Virtual Machine');
 
             const rows = [...bareMetalRows, ...vmRows];
-            console.log(`[LatitudeScraper] Parsed ${rows.length} GPU pricing rows (${bareMetalRows.length} bare metal, ${vmRows.length} VMs)`);
+            logger.info(`[LatitudeScraper] Parsed ${rows.length} GPU pricing rows (${bareMetalRows.length} bare metal, ${vmRows.length} VMs)`);
 
             return {
                 provider: "latitude",
@@ -240,7 +241,7 @@ class LatitudeScraper implements ProviderScraper {
 
             // Skip if no hourly pricing available
             if (lowestHourlyPrice === undefined) {
-                console.log(`  [LatitudeScraper] Skipping ${name}: no hourly pricing found`);
+                logger.info(`  [LatitudeScraper] Skipping ${name}: no hourly pricing found`);
                 continue;
             }
 

@@ -54,6 +54,7 @@ const modelsColumnFilterSchema = z.object({
 type ModelsColumnFilterSchema = z.infer<typeof modelsColumnFilterSchema>;
 
 const modelsFacetMetadataSchema = z.object({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- facet values from DB can be string | number | null; kept as any for Option compatibility
   rows: z.array(z.object({ value: z.any(), total: z.number() })),
   total: z.number(),
   min: z.number().optional(),

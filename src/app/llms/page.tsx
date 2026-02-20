@@ -10,6 +10,7 @@ import { modelsDataOptions } from "@/features/data-explorer/models/models-query-
 import { modelsSearchParamsCache } from "@/features/data-explorer/models/models-search-params";
 import { getModelsPage } from "@/lib/models-loader";
 import { buildModelsSchema } from "@/features/data-explorer/models/build-models-schema";
+import { logger } from "@/lib/logger";
 
 export const revalidate = 43200;
 
@@ -79,7 +80,7 @@ async function ModelsHydratedContent() {
         },
       });
     } catch (error) {
-      console.error("[ModelsPage] Failed to prefetch models data", {
+      logger.error("[ModelsPage] Failed to prefetch models data", {
         error: error instanceof Error ? error.message : String(error),
       });
     }

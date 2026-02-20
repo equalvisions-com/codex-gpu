@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import type { PaperspacePriceRow, ProviderResult } from '@/types/pricing';
 import type { ProviderScraper } from './types';
+import { logger } from "@/lib/logger";
 
 const API_URL = 'https://api.paperspace.com/trpc/machines.createFormDataV2';
 const SOURCE_URL = 'https://console.paperspace.com';
@@ -94,7 +95,7 @@ class PaperspaceScraper implements ProviderScraper {
         }
 
         try {
-            console.log('[PaperspaceScraper] Fetching machine types...');
+            logger.info('[PaperspaceScraper] Fetching machine types...');
             const observedAt = new Date().toISOString();
 
             const response = await fetch(`${API_URL}?batch=1&input=${TRPC_INPUT}`, {
@@ -115,7 +116,7 @@ class PaperspaceScraper implements ProviderScraper {
             const data = await response.json() as Record<string, TrpcResponse>;
             const machineTypes = data['0']?.result?.data?.json?.machineTypes || [];
 
-            console.log(`[PaperspaceScraper] Found ${machineTypes.length} machine types`);
+            logger.info(`[PaperspaceScraper] Found ${machineTypes.length} machine types`);
 
             const rows: PaperspacePriceRow[] = [];
 
@@ -167,7 +168,7 @@ class PaperspaceScraper implements ProviderScraper {
                 rows.push(row);
             }
 
-            console.log(`[PaperspaceScraper] Scraped ${rows.length} available GPU configurations`);
+            logger.info(`[PaperspaceScraper] Scraped ${rows.length} available GPU configurations`);
 
             return {
                 provider: 'paperspace',

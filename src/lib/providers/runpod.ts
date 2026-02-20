@@ -2,6 +2,7 @@ import * as cheerio from 'cheerio';
 import crypto from 'crypto';
 import type { RunPodPriceRow, ProviderResult } from '@/types/pricing';
 import type { ProviderScraper } from './types';
+import { logger } from "@/lib/logger";
 
 const PRICING_URL = 'https://www.runpod.io/pricing';
 
@@ -87,7 +88,7 @@ class RunPodScraper implements ProviderScraper {
 
       // Skip if we don't have essential specs
       if (!vramGb || !systemRamGb || !vcpus) {
-        console.warn(`Skipping GPU ${gpuModel}: missing specs (VRAM: ${vramGb}, RAM: ${systemRamGb}, vCPUs: ${vcpus})`);
+        logger.warn(`Skipping GPU ${gpuModel}: missing specs (VRAM: ${vramGb}, RAM: ${systemRamGb}, vCPUs: ${vcpus})`);
         return;
       }
 

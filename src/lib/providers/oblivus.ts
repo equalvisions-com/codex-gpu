@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import type { OblivusPriceRow, ProviderResult } from '@/types/pricing';
 import type { ProviderScraper } from './types';
+import { logger } from "@/lib/logger";
 
 const API_URL = 'https://api.oblivus.com/v2/cloud/metadata';
 const SOURCE_URL = 'https://oblivus.com/pricing';
@@ -70,7 +71,7 @@ class OblivusScraper implements ProviderScraper {
         }
 
         try {
-            console.log('[OblivusScraper] Fetching GPU metadata...');
+            logger.info('[OblivusScraper] Fetching GPU metadata...');
             const observedAt = new Date().toISOString();
 
             const response = await fetch(API_URL, {
@@ -135,7 +136,7 @@ class OblivusScraper implements ProviderScraper {
                 }
             }
 
-            console.log(`[OblivusScraper] Scraped ${rows.length} GPU configurations`);
+            logger.info(`[OblivusScraper] Scraped ${rows.length} GPU configurations`);
 
             return {
                 provider: 'oblivus',

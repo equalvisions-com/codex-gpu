@@ -4,6 +4,7 @@ import { and, asc, desc, eq, ilike, inArray, or, sql, type SQL } from "drizzle-o
 import type { ToolsSearchParamsType } from "@/features/data-explorer/tools/tools-search-params";
 import type { Tool } from "@/types/tools";
 import { stableToolKey } from "@/features/data-explorer/stable-keys";
+import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from "@/lib/cache/constants";
 
 type ToolRow = typeof tools.$inferSelect;
 
@@ -133,7 +134,7 @@ class ToolsCache {
     }
 
     const cursor = typeof search.cursor === "number" && search.cursor >= 0 ? search.cursor : 0;
-    const size = Math.min(Math.max(1, search.size ?? 50), 200);
+    const size = Math.min(Math.max(1, search.size ?? DEFAULT_PAGE_SIZE), MAX_PAGE_SIZE);
 
     const rows = await db
       .select()
@@ -241,7 +242,7 @@ class ToolsCache {
     }
 
     const cursor = typeof search.cursor === "number" && search.cursor >= 0 ? search.cursor : 0;
-    const size = Math.min(Math.max(1, search.size ?? 50), 200);
+    const size = Math.min(Math.max(1, search.size ?? DEFAULT_PAGE_SIZE), MAX_PAGE_SIZE);
 
     const [countResult] = await db
       .select({ count: sql<number>`count(*)` })

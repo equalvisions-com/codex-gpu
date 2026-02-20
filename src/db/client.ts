@@ -1,5 +1,6 @@
 import postgres from "postgres";
 import { drizzle } from "drizzle-orm/postgres-js"; // uses postgres.js driver under the hood
+import { logger } from "@/lib/logger";
 
 declare global {
   // eslint-disable-next-line no-var
@@ -22,7 +23,7 @@ const missingDatabaseProxy = <T extends object>() =>
   });
 
 if (!connectionString && !isProduction) {
-  console.warn("[db] DATABASE_URL is not set; database client is disabled.");
+  logger.warn("[db] DATABASE_URL is not set; database client is disabled.");
 }
 
 const shouldEnforceSSL =

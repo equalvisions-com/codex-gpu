@@ -2,6 +2,7 @@ import * as cheerio from 'cheerio';
 import crypto from 'crypto';
 import type { ScalewayPriceRow, ProviderResult } from '@/types/pricing';
 import type { ProviderScraper } from './types';
+import { logger } from "@/lib/logger";
 
 const PRICING_URL = 'https://www.scaleway.com/en/pricing/gpu/';
 
@@ -16,7 +17,7 @@ class ScalewayScraper implements ProviderScraper {
 
     async scrape(): Promise<ProviderResult> {
         try {
-            console.log(`[ScalewayScraper] Using EUR→USD rate: ${EUR_TO_USD}`);
+            logger.info(`[ScalewayScraper] Using EUR→USD rate: ${EUR_TO_USD}`);
 
             const response = await fetch(PRICING_URL, {
                 headers: {
@@ -45,7 +46,7 @@ class ScalewayScraper implements ProviderScraper {
                 return true;
             });
 
-            console.log(`[ScalewayScraper] Parsed ${uniqueRows.length} GPU pricing rows`);
+            logger.info(`[ScalewayScraper] Parsed ${uniqueRows.length} GPU pricing rows`);
 
             return {
                 provider: "scaleway",

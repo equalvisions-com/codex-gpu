@@ -20,9 +20,9 @@ export interface AIModel {
   supportedParameters: string[];
   modalityScore?: number | null;
 
-  // Complex nested data
-  pricing: Record<string, any>;
-  features: Record<string, any>;
+  // Complex nested data (JSONB from database, structure varies by provider)
+  pricing: Record<string, unknown>;
+  features: Record<string, unknown>;
   promptPrice?: number | null;
   completionPrice?: number | null;
 

@@ -8,6 +8,7 @@ import { stableGpuKey } from "@/features/data-explorer/stable-keys";
 import { gpuPriceHistoryStore, type GpuPriceSampleInput } from "@/lib/gpu-price-history-store";
 import { normalizeObservedAt } from "@/lib/normalize-observed-at";
 import { normalizeGpuModel } from "@/lib/normalize-gpu-model";
+import { logger } from "@/lib/logger";
 
 type GpuPricingRow = typeof gpuPricing.$inferSelect;
 
@@ -84,7 +85,7 @@ class GpuPricingStore {
       return { stored: 0, touchedStableKeys: [] };
     }
 
-    console.log(`[GpuPricingStore] Replacing GPU pricing data for ${providerResults.length} providers...`);
+    logger.info(`[GpuPricingStore] Replacing GPU pricing data for ${providerResults.length} providers...`);
     await db.delete(gpuPricing);
 
     const historySamples: GpuPriceSampleInput[] = [];
@@ -150,7 +151,7 @@ class GpuPricingStore {
     const touchedStableKeys = await gpuPriceHistoryStore.appendSamples(historySamples);
     await gpuPriceHistoryStore.pruneThirtyDaysWindow();
 
-    console.log(`[GpuPricingStore] Stored ${rowsToInsert.length} GPU pricing rows`);
+    logger.info(`[GpuPricingStore] Stored ${rowsToInsert.length} GPU pricing rows`);
     return { stored: rowsToInsert.length, touchedStableKeys };
   }
 

@@ -8,6 +8,9 @@ export type NewsletterSyncPayload = {
   forceUnsubscribe?: boolean;
 };
 
+/** Maximum number of delivery attempts for newsletter sync messages */
+const NEWSLETTER_MAX_RETRIES = 5;
+
 const DEFAULT_FLOW_CONTROL = {
   key: "resend-newsletter",
   rate: 1,
@@ -56,7 +59,7 @@ export async function enqueueNewsletterSync(payload: NewsletterSyncPayload, requ
   await client.publishJSON({
     url,
     body: payload,
-    retries: 5,
+    retries: NEWSLETTER_MAX_RETRIES,
     failureCallback,
     flowControl: DEFAULT_FLOW_CONTROL,
   });

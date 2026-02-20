@@ -2,6 +2,7 @@ import * as cheerio from 'cheerio';
 import crypto from 'crypto';
 import type { HotAislePriceRow, ProviderResult } from '@/types/pricing';
 import type { ProviderScraper } from './types';
+import { logger } from "@/lib/logger";
 
 const PRICING_URL = 'https://hotaisle.xyz/pricing/';
 const SOURCE_URL = 'https://hotaisle.xyz/pricing/';
@@ -17,7 +18,7 @@ class HotAisleScraper implements ProviderScraper {
 
     async scrape(): Promise<ProviderResult> {
         try {
-            console.log('[HotAisleScraper] Fetching HotAisle pricing page...');
+            logger.info('[HotAisleScraper] Fetching HotAisle pricing page...');
 
             const response = await fetch(PRICING_URL, {
                 headers: {
@@ -37,7 +38,7 @@ class HotAisleScraper implements ProviderScraper {
 
             const rows = this.parsePricingPage(html, observedAt);
 
-            console.log(`[HotAisleScraper] Parsed ${rows.length} GPU instance pricing rows`);
+            logger.info(`[HotAisleScraper] Parsed ${rows.length} GPU instance pricing rows`);
 
             return {
                 provider: 'hotaisle',
@@ -60,7 +61,7 @@ class HotAisleScraper implements ProviderScraper {
         const basePriceMatch = pageText.match(/\$(\d+\.?\d*)\s*\/\s*GPU\s*\/\s*hr/i);
         const basePricePerGpu = basePriceMatch ? parseFloat(basePriceMatch[1]) : 1.99; // Default fallback
 
-        console.log(`[HotAisleScraper] Base price per GPU: $${basePricePerGpu}/hr`);
+        logger.info(`[HotAisleScraper] Base price per GPU: $${basePricePerGpu}/hr`);
 
         // Parse GPU configurations from page text
         // Patterns: "1x 192GB MI300x VM", "2x, 4x 192GB MI300x VM", "8x 192GB MI300x Bare Metal"

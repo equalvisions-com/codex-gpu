@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import type { VastPriceRow, ProviderResult } from '@/types/pricing';
 import type { ProviderScraper } from './types';
+import { logger } from "@/lib/logger";
 
 const API_URL = 'https://console.vast.ai/api/v0/bundles/';
 const SOURCE_URL = 'https://vast.ai/';
@@ -40,7 +41,7 @@ class VastScraper implements ProviderScraper {
         }
 
         try {
-            console.log('[VastScraper] Fetching Vast.ai GPU offers...');
+            logger.info('[VastScraper] Fetching Vast.ai GPU offers...');
 
             const response = await fetch(API_URL, {
                 method: 'POST',
@@ -82,7 +83,7 @@ class VastScraper implements ProviderScraper {
             const data: VastApiResponse = await response.json();
             const offers = data.offers || [];
 
-            console.log(`[VastScraper] Received ${offers.length} offers from API`);
+            logger.info(`[VastScraper] Received ${offers.length} offers from API`);
 
             const sourceHash = crypto.createHash('sha256')
                 .update(JSON.stringify(offers))
@@ -91,7 +92,7 @@ class VastScraper implements ProviderScraper {
 
             const rows = this.aggregateOffers(offers, observedAt);
 
-            console.log(`[VastScraper] Aggregated to ${rows.length} unique GPU configurations`);
+            logger.info(`[VastScraper] Aggregated to ${rows.length} unique GPU configurations`);
 
             return {
                 provider: 'vast',

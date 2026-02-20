@@ -10,6 +10,7 @@ import { unstable_cache } from "next/cache";
 import { createHash } from "crypto";
 import { STANDARD_CACHE_TTL } from "@/lib/cache/constants";
 import { stableToolKey } from "@/features/data-explorer/stable-keys";
+import { logger } from "@/lib/logger";
 
 const CACHE_SIZE_LIMIT_BYTES = 2 * 1024 * 1024; // 2MB
 
@@ -141,7 +142,7 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("[GET /api/tools/favorites/rows] Failed to fetch favorite rows", {
+    logger.error("[GET /api/tools/favorites/rows] Failed to fetch favorite rows", {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
     });
@@ -173,7 +174,7 @@ export async function POST(request: NextRequest) {
       })),
     });
   } catch (error) {
-    console.error("[POST /api/tools/favorites/rows] Failed to resolve rows", {
+    logger.error("[POST /api/tools/favorites/rows] Failed to resolve rows", {
       error: error instanceof Error ? error.message : String(error),
     });
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

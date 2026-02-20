@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
       summaries: scrapeResult.summaries,
     });
   } catch (error) {
-    console.error("Scraping job failed:", error);
+    logger.error("Scraping job failed:", error);
 
     return NextResponse.json(
       {
@@ -163,7 +163,7 @@ export async function GET(request: NextRequest) {
       lastScrapedAt: stats.lastScrapedAt,
     });
   } catch (error) {
-    console.error("Cache stats / cron failed:", error);
+    logger.error("Cache stats / cron failed:", error);
     return NextResponse.json(
       {
         status: "error",

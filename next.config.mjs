@@ -6,6 +6,9 @@ const withBundleAnalyzer = bundleAnalyzer({
 
 /** @type {import("next").NextConfig} */
 const nextConfig = {
+  // React Compiler 1.0.0+ has improved react-hook-form compatibility.
+  // If issues arise in settings-submit-form.tsx or settings-contact-form.tsx,
+  // add the "use no memo" directive at the top of those files.
   reactCompiler: true,
   // Optimize package imports - only load modules you actually use
   // This is especially important for icon libraries like lucide-react

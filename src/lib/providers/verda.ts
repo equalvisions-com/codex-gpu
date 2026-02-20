@@ -2,6 +2,7 @@ import * as cheerio from 'cheerio';
 import crypto from 'crypto';
 import type { VerdaPriceRow, ProviderResult } from '@/types/pricing';
 import type { ProviderScraper } from './types';
+import { logger } from "@/lib/logger";
 
 const PRICING_URL = 'https://verda.com/products';
 
@@ -36,14 +37,14 @@ class VerdaScraper implements ProviderScraper {
             const uniqueRows = rows.filter(row => {
                 const key = row.sku || row.instance_id || `${row.gpu_model}-${row.gpu_count}`;
                 if (seenIds.has(key)) {
-                    console.log(`[VerdaScraper] Skipping duplicate: ${key}`);
+                    logger.info(`[VerdaScraper] Skipping duplicate: ${key}`);
                     return false;
                 }
                 seenIds.add(key);
                 return true;
             });
 
-            console.log(`[VerdaScraper] Parsed ${uniqueRows.length} GPU pricing rows`);
+            logger.info(`[VerdaScraper] Parsed ${uniqueRows.length} GPU pricing rows`);
 
             return {
                 provider: "verda",

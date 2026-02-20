@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import type { AlibabaPriceRow, ProviderResult } from '@/types/pricing';
 import type { ProviderScraper } from './types';
+import { logger } from "@/lib/logger";
 
 const REGION_ID = 'us-east-1';
 const ECS_ENDPOINT = `https://ecs.${REGION_ID}.aliyuncs.com/`;
@@ -63,23 +64,23 @@ class AlibabaScraper implements ProviderScraper {
         }
 
         try {
-            console.log('[AlibabaScraper] Starting Alibaba Cloud GPU pricing scrape...');
+            logger.info('[AlibabaScraper] Starting Alibaba Cloud GPU pricing scrape...');
             const observedAt = new Date().toISOString();
 
             // Step 1: Get all GPU instance types
-            console.log('[AlibabaScraper] Step 1: Fetching GPU instance types...');
+            logger.info('[AlibabaScraper] Step 1: Fetching GPU instance types...');
             const instanceTypes = await this.getGpuInstanceTypes();
-            console.log(`[AlibabaScraper] Found ${instanceTypes.length} GPU instance types`);
+            logger.info(`[AlibabaScraper] Found ${instanceTypes.length} GPU instance types`);
 
             // Step 2: Check availability for each type
-            console.log('[AlibabaScraper] Step 2: Checking availability...');
+            logger.info('[AlibabaScraper] Step 2: Checking availability...');
             const availableTypes = await this.filterAvailableTypes(instanceTypes);
-            console.log(`[AlibabaScraper] ${availableTypes.length} types available in ${REGION_ID}`);
+            logger.info(`[AlibabaScraper] ${availableTypes.length} types available in ${REGION_ID}`);
 
             // Step 3: Get pricing for each available type
-            console.log('[AlibabaScraper] Step 3: Fetching prices...');
+            logger.info('[AlibabaScraper] Step 3: Fetching prices...');
             const rows = await this.getPricesForTypes(availableTypes, observedAt);
-            console.log(`[AlibabaScraper] Scraped ${rows.length} GPU instances with pricing`);
+            logger.info(`[AlibabaScraper] Scraped ${rows.length} GPU instances with pricing`);
 
             return {
                 provider: 'alibaba',

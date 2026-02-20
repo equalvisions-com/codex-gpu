@@ -67,7 +67,8 @@ class ModelThroughputCache {
 
   async resetModelThroughput(): Promise<number> {
     const result = await db.execute(sql`UPDATE ai_models SET throughput = NULL`);
-    return Number((result as any)?.rowCount ?? 0);
+    // rowCount exists at runtime on postgres.js results but is not in Drizzle's type definitions
+    return Number((result as unknown as { rowCount?: number })?.rowCount ?? 0);
   }
 
   async syncLatestThroughputToModels(): Promise<number> {
@@ -85,7 +86,8 @@ class ModelThroughputCache {
       WHERE m.endpoint_id = latest.endpoint_id
     `);
 
-    return Number((result as any)?.rowCount ?? 0);
+    // rowCount exists at runtime on postgres.js results but is not in Drizzle's type definitions
+    return Number((result as unknown as { rowCount?: number })?.rowCount ?? 0);
   }
 
   async getSeries(permaslug: string, endpointId?: string): Promise<ThroughputSeriesPoint[]> {

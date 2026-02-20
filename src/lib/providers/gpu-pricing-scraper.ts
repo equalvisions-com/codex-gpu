@@ -1,6 +1,8 @@
 import { createHash } from "crypto";
 import type { ProviderResult } from "@/types/pricing";
 import type { ProviderScraper } from "./types";
+import { logger } from "@/lib/logger";
+import { scraperDelay } from "./validation";
 import {
   coreweaveScraper,
   nebiusScraper,
@@ -91,11 +93,25 @@ class GpuPricingScraper {
     const hash = createHash("sha256");
     const scrapedAt = new Date().toISOString();
 
-    for (const scraper of this.scrapers) {
+    const PER_SCRAPER_TIMEOUT_MS = 60_000;
+
+    for (let i = 0; i < this.scrapers.length; i++) {
+      const scraper = this.scrapers[i];
       if (!scraper.enabled) continue;
+
+      // Rate-limit: add a small delay between sequential scraper calls.
+      if (i > 0) {
+        await scraperDelay();
+      }
+
       const start = Date.now();
       try {
-        const result = await scraper.scrape();
+        const result = await Promise.race([
+          scraper.scrape(),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error(`Scraper ${scraper.name} timed out after ${PER_SCRAPER_TIMEOUT_MS}ms`)), PER_SCRAPER_TIMEOUT_MS),
+          ),
+        ]);
         providerResults.push(result);
 
         hash.update(scraper.name);
@@ -109,7 +125,7 @@ class GpuPricingScraper {
           sourceHash: result.sourceHash,
         });
       } catch (error) {
-        console.error(`[GpuPricingScraper] ${scraper.name} failed:`, error instanceof Error ? error.message : String(error));
+        logger.error(`[GpuPricingScraper] ${scraper.name} failed:`, error instanceof Error ? error.message : String(error));
         summaries.push({
           provider: scraper.name,
           rowsScraped: 0,

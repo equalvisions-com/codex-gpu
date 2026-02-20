@@ -4,6 +4,7 @@ import { eq, sql } from "drizzle-orm";
 import { db } from "@/db/client";
 import { user } from "@/db/auth-schema";
 import { ensureNewsletterSubscribed, unsubscribeNewsletter } from "@/lib/newsletter";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +17,7 @@ const PayloadSchema = z.object({
 export const POST = verifySignatureAppRouter(async (req: Request) => {
   const parsed = PayloadSchema.safeParse(await req.json());
   if (!parsed.success) {
-    console.error("[newsletter-sync] Invalid payload", parsed.error.flatten());
+    logger.error("[newsletter-sync] Invalid payload", parsed.error.flatten());
     return Response.json({ ok: false, error: "Invalid payload" });
   }
 

@@ -2,6 +2,7 @@ import * as cheerio from 'cheerio';
 import crypto from 'crypto';
 import type { LambdaPriceRow, ProviderResult } from '@/types/pricing';
 import type { ProviderScraper } from './types';
+import { logger } from "@/lib/logger";
 
 const PRICING_URL = 'https://lambda.ai/pricing';
 
@@ -66,7 +67,7 @@ class LambdaScraper implements ProviderScraper {
     }
 
     if (tabs.length === 0) {
-      console.warn('Could not find Lambda pricing tabs');
+      logger.warn('Could not find Lambda pricing tabs');
       return rows;
     }
 

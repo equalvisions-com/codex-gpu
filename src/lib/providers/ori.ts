@@ -2,6 +2,7 @@ import * as cheerio from 'cheerio';
 import crypto from 'crypto';
 import type { OriPriceRow, ProviderResult } from '@/types/pricing';
 import type { ProviderScraper } from './types';
+import { logger } from "@/lib/logger";
 
 const PRICING_URL = 'https://www.ori.co/pricing';
 
@@ -40,7 +41,7 @@ class OriScraper implements ProviderScraper {
                 return true;
             });
 
-            console.log(`[OriScraper] Parsed ${uniqueRows.length} GPU pricing rows`);
+            logger.info(`[OriScraper] Parsed ${uniqueRows.length} GPU pricing rows`);
 
             return {
                 provider: "ori",

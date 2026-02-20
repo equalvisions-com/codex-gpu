@@ -1,4 +1,35 @@
 import type { AIModel, ModelScrapeResult } from '@/types/models';
+import { logger } from "@/lib/logger";
+
+/** Shape of a single model returned by the OpenRouter cards API. */
+interface OpenRouterModel {
+  id?: string;
+  slug?: string;
+  name?: string;
+  short_name?: string;
+  author?: string;
+  description?: string;
+  model_version_group_id?: string;
+  context_length?: number;
+  input_modalities?: string[];
+  output_modalities?: string[];
+  has_text_output?: boolean;
+  group?: string;
+  instruct_type?: string;
+  permaslug?: string;
+  features?: Record<string, unknown>;
+  endpoint?: OpenRouterEndpoint;
+}
+
+interface OpenRouterEndpoint {
+  id?: string;
+  provider_name?: string;
+  variant?: string;
+  pricing?: Record<string, unknown>;
+  supported_parameters?: unknown[];
+  max_completion_tokens?: number;
+  model?: { max_completion_tokens?: number };
+}
 
 const AUTHOR_MAP: Record<string, string> = {
   'x-ai': 'xAI',
@@ -171,11 +202,11 @@ class ModelsScraper {
    */
   async scrapeAll(limit?: number): Promise<ModelScrapeResult> {
     const startTime = Date.now();
-    console.log(`[ModelsScraper] Starting AI models scrape${limit ? ` (limit: ${limit})` : ''}...`);
+    logger.info(`[ModelsScraper] Starting AI models scrape${limit ? ` (limit: ${limit})` : ''}...`);
 
     try {
       const confirmedProviders = await this.fetchProviders();
-      console.log(`[ModelsScraper] Found ${confirmedProviders.length} providers from OpenRouter`);
+      logger.info(`[ModelsScraper] Found ${confirmedProviders.length} providers from OpenRouter`);
 
       const allModels: AIModel[] = [];
       let totalFetched = 0;
@@ -187,7 +218,7 @@ class ModelsScraper {
       // Scrape each provider individually
       for (const { name, parameter } of confirmedProviders) {
         try {
-          console.log(`[ModelsScraper] Scraping ${name} with parameter: ${parameter}`);
+          logger.info(`[ModelsScraper] Scraping ${name} with parameter: ${parameter}`);
 
           const providerUrl = `${this.baseUrl}&providers=${parameter}`;
           const response = await fetch(providerUrl, {
@@ -197,22 +228,22 @@ class ModelsScraper {
           });
 
           if (!response.ok) {
-            console.warn(`[ModelsScraper] Failed to fetch ${name}: HTTP ${response.status}`);
+            logger.warn(`[ModelsScraper] Failed to fetch ${name}: HTTP ${response.status}`);
             continue;
           }
 
           const data = await response.json();
 
           if (!data?.data?.models) {
-            console.warn(`[ModelsScraper] Invalid response structure for ${name}`);
+            logger.warn(`[ModelsScraper] Invalid response structure for ${name}`);
             continue;
           }
 
           const modelsData = data.data.models;
-          console.log(`[ModelsScraper] ${name}: fetched ${modelsData.length} models`);
+          logger.info(`[ModelsScraper] ${name}: fetched ${modelsData.length} models`);
 
           // Process models for this provider
-          const processedModels: AIModel[] = modelsData.map((model: any, index: number) => {
+          const processedModels: AIModel[] = modelsData.map((model: OpenRouterModel, index: number) => {
             globalSequence++; // Increment for each model processed
             const supportedParameters = Array.isArray(model.endpoint?.supported_parameters)
               ? model.endpoint.supported_parameters.filter(
@@ -221,22 +252,22 @@ class ModelsScraper {
               : [];
 
             // Extract max_completion_tokens from endpoint
-            const extractMaxCompletionTokens = (endpoint: any): number | null => {
-              if (!endpoint || typeof endpoint !== "object") return null;
-              
+            const extractMaxCompletionTokens = (endpoint?: OpenRouterEndpoint): number | null => {
+              if (!endpoint) return null;
+
               // Try top-level first
               if (typeof endpoint.max_completion_tokens === "number") {
                 return endpoint.max_completion_tokens;
               }
-              
+
               // Try nested in model object
-              if (endpoint.model && typeof endpoint.model === "object") {
+              if (endpoint.model) {
                 const modelValue = endpoint.model.max_completion_tokens;
                 if (typeof modelValue === "number") {
                   return modelValue;
                 }
               }
-              
+
               return null;
             };
             const maxCompletionTokens = extractMaxCompletionTokens(model.endpoint);
@@ -305,7 +336,7 @@ class ModelsScraper {
           }
 
         } catch (error) {
-          console.error(`[ModelsScraper] Failed to scrape ${name}:`, error);
+          logger.error(`[ModelsScraper] Failed to scrape ${name}:`, error);
           continue; // Continue with next provider
         }
       }
@@ -320,7 +351,7 @@ class ModelsScraper {
       const scrapedAt = new Date().toISOString();
 
       const duration = Date.now() - startTime;
-      console.log(`[ModelsScraper] Scraped ${finalModels.length} AI models from ${confirmedProviders.length} providers in ${duration}ms`);
+      logger.info(`[ModelsScraper] Scraped ${finalModels.length} AI models from ${confirmedProviders.length} providers in ${duration}ms`);
 
       return {
         models: finalModels,
@@ -329,7 +360,7 @@ class ModelsScraper {
       };
 
     } catch (error) {
-      console.error('[ModelsScraper] Failed to scrape AI models:', error);
+      logger.error('[ModelsScraper] Failed to scrape AI models:', error);
       throw error;
     }
   }

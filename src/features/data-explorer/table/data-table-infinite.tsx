@@ -10,8 +10,6 @@ import {
 } from "@/components/custom/table";
 import { Button } from "@/components/ui/button";
 import { DataTableProvider } from "@/features/data-explorer/data-table/data-table-provider";
-import { DataTableFilterControls } from "@/features/data-explorer/data-table/data-table-filter-controls";
-import { DataTableFilterInput } from "@/features/data-explorer/data-table/data-table-filter-input";
 import { MemoizedDataTableSheetContent } from "@/features/data-explorer/data-table/data-table-sheet/data-table-sheet-content";
 import { DataTableSheetDetails } from "@/features/data-explorer/data-table/data-table-sheet/data-table-sheet-details";
 import type {
@@ -34,7 +32,6 @@ import type {
   OnChangeFn,
 } from "@tanstack/react-table";
 import { flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
-import { useVirtualizer } from "@tanstack/react-virtual";
 import { RowSkeletons } from "./_components/row-skeletons";
 import { CheckedActionsIsland } from "./_components/checked-actions-island";
 // Use next/dynamic with ssr: false for truly client-only lazy loading
@@ -49,17 +46,19 @@ const LazyGpuSheetCharts = dynamic(
     ssr: false, // Client-only - only loads when sheet is opened
   },
 );
-import { UserMenu, type AccountUser } from "./account-components";
+import { type AccountUser } from "./account-components";
 import { useRouter } from "next/navigation";
-import { Bookmark, Bot, Search, Server, Wrench } from "lucide-react";
+import { Bot, Server, Wrench } from "lucide-react";
 import type { FavoriteKey } from "@/types/favorites";
 import { useGlobalHotkeys } from "@/hooks/use-global-hotkeys";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+// Extracted sub-components and hooks
+import { MemoizedRow } from "./data-table-row";
+import { DataTableSidebar } from "./data-table-sidebar";
+import { useVirtualScroll } from "./hooks/use-virtual-scroll";
+import { useColumnResize } from "./hooks/use-column-resize";
 
 const noop = () => { };
-const clamp = (value: number, min: number, max: number) =>
-  Math.min(Math.max(value, min), max);
-const ESTIMATED_ROW_HEIGHT_PX = 41;
 
 export type NavItem = {
   label: string;
@@ -195,19 +194,6 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
   const accountIsLoading = account?.isLoading ?? false;
   const router = useRouter();
   const [isDesktopSearchOpen, setIsDesktopSearchOpen] = React.useState(false);
-  const [containerHeight, setContainerHeight] = React.useState<number | null>(null);
-  const derivedOverscan = React.useMemo(() => {
-    if (containerHeight && Number.isFinite(containerHeight)) {
-      const rowsInView = Math.max(
-        1,
-        Math.ceil(containerHeight / ESTIMATED_ROW_HEIGHT_PX),
-      );
-      // Slightly larger buffer to smooth Safari/table layouts
-      return clamp(Math.ceil(rowsInView * 0.75), 6, 16);
-    }
-    // Fallback buffer when not yet measured
-    return 10;
-  }, [containerHeight]);
   const searchFilterField = React.useMemo(
     () =>
       filterFields.find(
@@ -300,68 +286,6 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
     } as React.CSSProperties;
   }, [mobileHeaderOffset]);
 
-  React.useLayoutEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const measure = () => {
-      const height =
-        container.getBoundingClientRect()?.height || container.offsetHeight;
-      if (height) {
-        setContainerHeight(height);
-      }
-    };
-
-    measure();
-
-    if (typeof ResizeObserver !== "undefined") {
-      const observer = new ResizeObserver((entries) => {
-        const entry = entries[0];
-        if (!entry) return;
-        setContainerHeight(entry.contentRect.height);
-      });
-      observer.observe(container);
-      return () => observer.disconnect();
-    }
-
-    window.addEventListener("resize", measure);
-    return () => {
-      window.removeEventListener("resize", measure);
-    };
-  }, []);
-
-  const [isPrefetching, setIsPrefetching] = React.useState(false);
-  React.useEffect(() => {
-    if (!isFetchingNextPage) {
-      setIsPrefetching(false);
-    }
-  }, [isFetchingNextPage]);
-
-  const requestNextPage = React.useCallback(() => {
-    if (isPrefetching || isFetching || isFetchingNextPage || !hasNextPage) {
-      return;
-    }
-    setIsPrefetching(true);
-    void fetchNextPage().finally(() => {
-      setIsPrefetching(false);
-    });
-  }, [fetchNextPage, hasNextPage, isFetching, isFetchingNextPage, isPrefetching]);
-
-  const onScroll = React.useCallback(
-    (e: React.UIEvent<HTMLElement>) => {
-      const { scrollTop, clientHeight, scrollHeight } = e.currentTarget;
-      const distanceToBottom = scrollHeight - (scrollTop + clientHeight);
-      const threshold = containerHeight
-        ? Math.max(containerHeight * 0.5, ESTIMATED_ROW_HEIGHT_PX * derivedOverscan)
-        : 600;
-      if (distanceToBottom <= threshold) {
-        requestNextPage();
-      }
-    },
-    [requestNextPage, containerHeight, derivedOverscan],
-  );
-
-
   const resolvedGetRowId = React.useMemo(() => {
     if (getRowId) {
       return getRowId;
@@ -437,18 +361,10 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
 
   // Table rows for rendering order
   const rows = table.getRowModel().rows;
-  const columnSizing = table.getState().columnSizing;
-  const visibleLeafColumns = table.getVisibleLeafColumns();
-  // Stable key for column sizing - only changes when actual sizes change (not on every render)
-  const columnSizingKey = JSON.stringify(columnSizing);
   const primaryColumn = React.useMemo(
     () => table.getColumn(primaryColumnId),
     [primaryColumnId, table],
   );
-  const overscan = React.useMemo(() => {
-    if (!rows.length) return derivedOverscan;
-    return Math.min(Math.max(1, derivedOverscan), rows.length);
-  }, [rows.length, derivedOverscan]);
 
   // Clear checked rows when filters change or data is empty
   // Do NOT prune checked rows when they scroll out of view - this preserves selection across scroll
@@ -461,151 +377,46 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
     });
   }, [columnFilters, setCheckedRows]);
 
-  // Virtual scrolling setup - properly configured to reduce DOM size
-  const virtualizationEnabled =
-    !isLoading && !(isFetching && !data.length) && rows.length > 0;
-
-  const rowVirtualizer = useVirtualizer({
-    count: rows.length,
-    getScrollElement: () => containerRef.current,
-    estimateSize: () => ESTIMATED_ROW_HEIGHT_PX, // Row height in pixels
+  // --- Virtual scroll hook ---
+  const {
     overscan,
-    enabled: virtualizationEnabled,
+    isPrefetching,
+    onScroll,
+    virtualizationEnabled,
+    virtualItems,
+    totalSize,
+    measureVirtualRow,
+  } = useVirtualScroll({
+    rows,
+    containerRef,
+    isLoading,
+    isFetching,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    dataLength: data.length,
+    sorting,
+    columnFilters,
   });
 
-  const measureVirtualRow = virtualizationEnabled
-    ? rowVirtualizer.measureElement
-    : undefined;
+  // --- Column resize hook ---
+  const {
+    getHeaderRef,
+    modelColumnMeasuredWidthRef,
+    modelColumnHasBeenResizedRef,
+    pendingModelColumnResizeRef,
+    minimumModelColumnWidth,
+    modelColumnDefaultSize,
+    getModelColumnWidth,
+    fixedColumnsWidth,
+  } = useColumnResize({
+    table,
+    primaryColumnId,
+    primaryColumn,
+  });
 
-  // Get virtual items (cached to avoid multiple calls)
-  const virtualItems = rowVirtualizer.getVirtualItems();
-  const totalSize = rowVirtualizer.getTotalSize();
   const showErrorState = Boolean(isError);
   const errorMessage = React.useMemo(() => getErrorMessage(error), [error]);
-
-
-  const previousFiltersRef = React.useRef<ColumnFiltersState | null>(null);
-  React.useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-    container.scrollTop = 0;
-  }, [sorting]);
-
-  React.useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-    if (
-      previousFiltersRef.current &&
-      areColumnFiltersEqual(previousFiltersRef.current, columnFilters ?? [])
-    ) {
-      return;
-    }
-    previousFiltersRef.current = columnFilters;
-    container.scrollTop = 0;
-  }, [columnFilters]);
-
-  // Track measured width for reference
-  const modelColumnMeasuredWidthRef = React.useRef<number | null>(null);
-  // Track if model column has been manually resized - persists across renders
-  // Once resized, column should always use pixel width (never revert to "auto")
-  const modelColumnHasBeenResizedRef = React.useRef<boolean>(false);
-  const pendingModelColumnResizeRef = React.useRef<boolean>(false);
-
-  // Stable ref map for header elements - created once, persists across renders
-  const headerRefsMap = React.useRef<Map<string, React.RefObject<HTMLTableCellElement | null>>>(new Map());
-
-  // Get or create a ref for a specific header ID
-  const getHeaderRef = React.useCallback((headerId: string): React.RefObject<HTMLTableCellElement | null> => {
-    if (!headerRefsMap.current.has(headerId)) {
-      headerRefsMap.current.set(headerId, React.createRef<HTMLTableCellElement | null>());
-    }
-    return headerRefsMap.current.get(headerId)!;
-  }, []);
-
-  React.useLayoutEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const headerElement = primaryColumnId
-      ? getHeaderRef(primaryColumnId).current
-      : null;
-    if (!headerElement) {
-      return;
-    }
-
-    const updateMeasuredWidth = (width?: number) => {
-      if (!width || Number.isNaN(width)) {
-        return;
-      }
-      modelColumnMeasuredWidthRef.current = width;
-    };
-
-    if (typeof ResizeObserver !== "undefined") {
-      const observer = new ResizeObserver((entries) => {
-        const entry = entries[0];
-        if (!entry) return;
-        updateMeasuredWidth(entry.contentRect.width);
-      });
-      observer.observe(headerElement);
-      return () => observer.disconnect();
-    }
-
-    let frame: number | null = null;
-    let pending = false;
-    const handleResize = () => {
-      if (pending) return;
-      pending = true;
-      frame = window.requestAnimationFrame(() => {
-        pending = false;
-        updateMeasuredWidth(
-          headerElement.offsetWidth ||
-          headerElement.getBoundingClientRect().width,
-        );
-      });
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => {
-      window.removeEventListener("resize", handleResize);
-      if (frame) {
-        cancelAnimationFrame(frame);
-      }
-    };
-  }, [getHeaderRef, primaryColumnId]);
-
-  const minimumModelColumnWidth = React.useMemo(
-    () => primaryColumn?.columnDef.minSize ?? 275,
-    [primaryColumn],
-  );
-  const modelColumnDefaultSize = React.useMemo(
-    () => primaryColumn?.columnDef.size ?? 275,
-    [primaryColumn],
-  );
-
-  // Helper to get model column width style
-  const getModelColumnWidth = React.useCallback((columnId: string, currentSize: number) => {
-    if (!primaryColumnId || columnId !== primaryColumnId || !primaryColumn) {
-      return `${currentSize}px`;
-    }
-
-    // Once resized, always use pixel width (prevents jumping when hitting min size)
-    if (modelColumnHasBeenResizedRef.current) {
-      return `${currentSize}px`;
-    }
-
-    // Use "auto" for flex growth only when never resized and at default size
-    return currentSize === modelColumnDefaultSize ? "auto" : `${currentSize}px`;
-  }, [modelColumnDefaultSize, primaryColumn, primaryColumnId]);
-
-  const fixedColumnsWidth = React.useMemo(
-    () =>
-      visibleLeafColumns
-        .filter((column) => column.id !== primaryColumnId)
-        .reduce((acc, column) => acc + column.getSize(), 0),
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- columnSizingKey is a stable string derived from columnSizing
-    [primaryColumnId, visibleLeafColumns, columnSizingKey],
-  );
 
   const selectedRow = React.useMemo(() => {
     if ((isLoading || isFetching) && !data.length) return;
@@ -678,6 +489,16 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
     );
   }, [meta, renderCheckedActions]);
 
+  // Stable callbacks for the sidebar to avoid re-renders
+  const routerPrefetch = React.useCallback(
+    (url: string) => router.prefetch(url),
+    [router],
+  );
+  const routerPush = React.useCallback(
+    (url: string) => router.push(url),
+    [router],
+  );
+
   return (
     <DataTableProvider
       table={table}
@@ -703,112 +524,24 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
       <div className="flex flex-col gap-2 sm:gap-4">
         {headerSlot}
         <div className="grid h-full grid-cols-1 gap-0 sm:grid-cols-[18rem_1fr]">
-          <div
-            className={cn(
-              "hidden sm:flex h-[calc(100dvh-var(--total-padding-mobile))] sm:h-[100dvh] flex-col sticky top-0 self-start min-w-72 max-w-72 rounded-lg overflow-hidden"
-            )}
-          >
-            <div className="flex h-full w-full flex-col">
-              <div className="mx-auto w-full max-w-full p-4 border-b border-border mb-4 space-y-4">
-                <div className="flex items-center gap-2">
-                  {searchFilterField && isDesktopSearchOpen ? (
-                    <div className="w-full">
-                      <DataTableFilterInput
-                        autoFocus={isDesktopSearchOpen}
-                        {...searchFilterField}
-                      />
-                    </div>
-                  ) : (
-                    <Select
-                      value={currentNavValue}
-                      onValueChange={handleNavChange}
-                      onOpenChange={(open) => {
-                        // Prefetch all nav routes when Select opens (skip current page)
-                        if (open) {
-                          resolvedNavItems.forEach((item) => {
-                            if (item.value !== currentNavValue) {
-                              router.prefetch(item.value);
-                            }
-                          });
-                        }
-                      }}
-                      hotkeys={[
-                        { combo: "cmd+k", value: "/llms" },
-                        { combo: "cmd+g", value: "/gpus" },
-                        { combo: "cmd+e", value: "/tools" },
-                      ]}
-                    >
-                      <SelectTrigger className="h-9 w-full justify-between rounded-lg shadow-sm" aria-label="Page navigation">
-                        <SelectValue aria-label={currentNavItem?.label}>
-                          {currentNavItem && (
-                            <span className="flex min-w-0 items-center gap-2">
-                              {isBookmarksMode ? (
-                                <Bookmark className="h-4 w-4" aria-hidden="true" />
-                              ) : (
-                                <currentNavItem.icon className="h-4 w-4" aria-hidden="true" />
-                              )}
-                              {currentNavItem.label}
-                            </span>
-                          )}
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {resolvedNavItems.map((item) => (
-                          <SelectItem
-                            key={item.value}
-                            value={item.value}
-                            className="gap-2 cursor-pointer"
-                            shortcut={item.shortcut}
-                            onPointerDown={(e) => {
-                              // Only navigate for same-page clicks in bookmarks mode
-                              // onPointerDown fires before Radix prevents re-selection of checked items
-                              if (isBookmarksMode && item.value === currentNavValue) {
-                                e.preventDefault();
-                                router.push(item.value);
-                              }
-                            }}
-                          >
-                            <item.icon className="h-4 w-4" aria-hidden="true" />
-                            {item.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                  {searchFilterField ? (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={toggleDesktopSearch}
-                      aria-pressed={isDesktopSearchOpen}
-                      className="shrink-0 rounded-lg bg-gradient-to-b from-muted/70 via-muted/40 to-background shadow-sm"
-                    >
-                      <Search className="h-4 w-4" aria-hidden="true" />
-                      <span className="sr-only">Search</span>
-                    </Button>
-                  ) : null}
-                </div>
-              </div>
-              <div className="flex-1 overflow-y-auto scrollbar-hide">
-                <div className="mx-auto w-full max-w-full px-4 pb-4">
-                  <DataTableFilterControls showSearch={false} />
-                </div>
-              </div>
-              <div className="flex-shrink-0 p-4 border-t border-border">
-                <UserMenu
-                  user={accountUser}
-                  onSignOut={accountOnSignOut}
-                  isSigningOut={accountIsSigningOut}
-                  isAuthenticated={Boolean(accountUser)}
-                  forceUnauthSignInButton
-                  onSignIn={accountOnSignIn}
-                  onSignUp={accountOnSignUp}
-                  isLoading={accountIsLoading}
-                />
-              </div>
-            </div>
-          </div>
+          <DataTableSidebar
+            searchFilterField={searchFilterField}
+            isDesktopSearchOpen={isDesktopSearchOpen}
+            toggleDesktopSearch={toggleDesktopSearch}
+            currentNavValue={currentNavValue}
+            currentNavItem={currentNavItem}
+            resolvedNavItems={resolvedNavItems}
+            isBookmarksMode={isBookmarksMode}
+            handleNavChange={handleNavChange}
+            routerPrefetch={routerPrefetch}
+            routerPush={routerPush}
+            accountUser={accountUser}
+            accountOnSignOut={accountOnSignOut}
+            accountIsSigningOut={accountIsSigningOut}
+            accountOnSignIn={accountOnSignIn}
+            accountOnSignUp={accountOnSignUp}
+            accountIsLoading={accountIsLoading}
+          />
           <div
             className={cn(
               "flex max-w-full flex-1 flex-col min-w-0"
@@ -986,7 +719,7 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
                         <TableCell colSpan={columns.length} className="py-10">
                           <div className="flex flex-col gap-4 rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive-foreground sm:flex-row sm:items-center sm:justify-between">
                             <div className="space-y-1">
-                              <p className="font-medium">We couldn’t load GPU rows.</p>
+                              <p className="font-medium">We couldn't load GPU rows.</p>
                               <p className="text-muted-foreground">{errorMessage}</p>
                             </div>
                             <Button
@@ -1147,158 +880,6 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
       {checkedActions}
     </DataTableProvider>
   );
-}
-
-/**
- * REMINDER: this is the heaviest component in the table if lots of rows
- * Some other components are rendered more often necessary, but are fixed size (not like rows that can grow in height)
- * e.g. DataTableFilterControls, DataTableFilterCommand, DataTableToolbar, DataTableHeader
- */
-
-function Row<TData>({
-  row,
-  table,
-  selected,
-  checked,
-  "data-index": dataIndex,
-  ref: measureRef,
-  getModelColumnWidth,
-  primaryColumnId,
-}: {
-  row: Row<TData>;
-  table: TTable<TData>;
-  // REMINDER: row.getIsSelected(); - just for memoization
-  selected?: boolean;
-  // Memoize checked highlight without forcing full row rerender otherwise
-  checked?: boolean;
-  "data-index"?: number;
-  ref?: React.Ref<HTMLTableRowElement>;
-  getModelColumnWidth?: (columnId: string, currentSize: number) => string;
-  primaryColumnId?: string;
-}) {
-  const canHover =
-    typeof window !== "undefined" &&
-      window.matchMedia &&
-      window.matchMedia("(hover: hover) and (pointer: fine)").matches
-      ? true
-      : undefined;
-
-  const columnMeta = React.useMemo(() => {
-    if (!primaryColumnId) return null;
-    const column = table.getColumn(primaryColumnId);
-    if (!column) return null;
-    return {
-      minSize: column.columnDef.minSize ?? 275,
-      size: column.columnDef.size ?? 275,
-    };
-  }, [primaryColumnId, table]);
-  const minimumModelColumnWidth = columnMeta?.minSize ?? 275;
-  const modelColumnDefaultSize = columnMeta?.size ?? 275;
-
-  return (
-    <TableRow
-      ref={measureRef}
-      id={row.id}
-      data-can-hover={canHover}
-      data-index={dataIndex}
-      tabIndex={0}
-      data-state={selected && "selected"}
-      aria-selected={row.getIsSelected()}
-      data-checked={checked ? "checked" : undefined}
-      onClick={() => row.toggleSelected()}
-      onKeyDown={(event) => {
-        if (event.key === "Enter") {
-          event.preventDefault();
-          row.toggleSelected();
-        }
-      }}
-      className={cn(
-        "group/model-row relative",
-        "bg-background border-b transition-colors focus-visible:bg-muted hover:cursor-pointer",
-        canHover && "data-[can-hover=true]:hover:bg-muted data-[state=selected]:bg-muted data-[checked=checked]:bg-muted",
-        !canHover && selected && "bg-muted",
-        !canHover && checked && "bg-muted",
-        table.options.meta?.getRowClassName?.(row),
-      )}
-    >
-      {row.getVisibleCells().map((cell) => {
-        const isCheckboxCell = cell.column.id === "blank";
-        const stopPropagation = (e: React.SyntheticEvent) => {
-          e.stopPropagation();
-        };
-        const isModelColumn = primaryColumnId
-          ? cell.column.id === primaryColumnId
-          : false;
-        return (
-          <TableCell
-            key={cell.id}
-            data-column-id={cell.column.id}
-            onClick={isCheckboxCell ? stopPropagation : undefined}
-            onMouseDown={isCheckboxCell ? stopPropagation : undefined}
-            onPointerDown={isCheckboxCell ? stopPropagation : undefined}
-            onKeyDown={isCheckboxCell ? stopPropagation : undefined}
-            className={cn(
-              "truncate border-b border-border px-[12px] py-[10px] transition-colors",
-              isCheckboxCell && "cursor-default hover:cursor-default",
-              cell.column.columnDef.meta?.cellClassName,
-            )}
-            style={{
-              width: getModelColumnWidth
-                ? getModelColumnWidth(cell.column.id, cell.column.getSize())
-                : `${cell.column.getSize()}px`,
-              minWidth:
-                isModelColumn
-                  ? `${minimumModelColumnWidth}px`
-                  : cell.column.columnDef.minSize,
-            }}
-          >
-            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-          </TableCell>
-        );
-      })}
-    </TableRow>
-  );
-}
-
-const MemoizedRow = React.memo(
-  Row,
-  (prev, next) =>
-    prev.row.id === next.row.id &&
-    Object.is(prev.row.original, next.row.original) &&
-    prev.selected === next.selected &&
-    prev.checked === next.checked &&
-    prev["data-index"] === next["data-index"] &&
-    prev.getModelColumnWidth === next.getModelColumnWidth,
-) as typeof Row;
-
-function areColumnFiltersEqual(
-  a: ColumnFiltersState,
-  b: ColumnFiltersState,
-) {
-  if (a.length !== b.length) return false;
-  return a.every((filter, index) => {
-    const other = b[index];
-    if (!other) return false;
-    if (filter.id !== other.id) return false;
-    return isLooseEqual(filter.value, other.value);
-  });
-}
-
-function isLooseEqual(a: unknown, b: unknown) {
-  if (Object.is(a, b)) return true;
-  if (
-    typeof a === "object" &&
-    a !== null &&
-    typeof b === "object" &&
-    b !== null
-  ) {
-    try {
-      return JSON.stringify(a) === JSON.stringify(b);
-    } catch {
-      return false;
-    }
-  }
-  return false;
 }
 
 function getErrorMessage(error: unknown) {

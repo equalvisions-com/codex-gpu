@@ -2,7 +2,10 @@
 
 import * as React from "react";
 
-export function useEphemeralNotice(durationMs: number = 1600) {
+/** Default display duration for ephemeral notices (milliseconds) */
+const DEFAULT_NOTICE_DURATION_MS = 1600;
+
+export function useEphemeralNotice(durationMs: number = DEFAULT_NOTICE_DURATION_MS) {
   const [message, setMessage] = React.useState<string | null>(null);
   const [isOpen, setIsOpen] = React.useState(false);
   const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);

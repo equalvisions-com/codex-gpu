@@ -1,4 +1,5 @@
 import { verifySignatureAppRouter } from "@upstash/qstash/nextjs";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +15,7 @@ export const POST = verifySignatureAppRouter(async (req: Request) => {
     [...req.headers.entries()].filter(([key]) => key.startsWith("upstash-"))
   );
 
-  console.error("[newsletter-sync] QStash failure", {
+  logger.error("[newsletter-sync] QStash failure", {
     headers: metadata,
     payload,
   });

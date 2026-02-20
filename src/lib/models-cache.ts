@@ -4,6 +4,7 @@ import { eq, sql, inArray, and, or, ilike, between, asc, desc } from "drizzle-or
 import type { AIModel, ModelScrapeResult } from "@/types/models";
 import type { ModelsSearchParamsType } from "@/features/data-explorer/models/models-search-params";
 import type { SQL } from "drizzle-orm";
+import { logger } from "@/lib/logger";
 
 // Import sort priorities from route file (shared constants)
 // Single provider sort order — drives both default table sort and facet ordering
@@ -300,8 +301,10 @@ function buildModelFilterConditions(search: ModelsSearchParamsType) {
 
   if (search.outputPrice && Array.isArray(search.outputPrice) && search.outputPrice.length === 2) {
     const [min, max] = search.outputPrice;
+    const minPerToken = (min ?? 0) / 1_000_000;
+    const maxPerToken = (max ?? 0) / 1_000_000;
     conditions.push(
-      sql`${aiModels.completionPrice} BETWEEN ${min} AND ${max}`,
+      sql`${aiModels.completionPrice} BETWEEN ${minPerToken} AND ${maxPerToken}`,
     );
   }
 
@@ -383,13 +386,13 @@ class ModelsCache {
   async storeModels(result: ModelScrapeResult): Promise<number> {
     const { models } = result;
 
-    console.log(`[ModelsCache] Storing ${models.length} AI models (keeping all provider instances)...`);
+    logger.info(`[ModelsCache] Storing ${models.length} AI models (keeping all provider instances)...`);
 
     // Wipe the table (as requested - no historical data)
     await db.delete(aiModels);
 
     if (!models.length) {
-      console.log(`[ModelsCache] Successfully stored 0 AI models (empty payload)`);
+      logger.info(`[ModelsCache] Successfully stored 0 AI models (empty payload)`);
       return 0;
     }
 
@@ -428,7 +431,7 @@ class ModelsCache {
       }
     });
 
-    console.log(`[ModelsCache] Successfully stored ${models.length} AI models`);
+    logger.info(`[ModelsCache] Successfully stored ${models.length} AI models`);
     return models.length;
   }
 
@@ -528,7 +531,7 @@ class ModelsCache {
    */
   async clearAllModels(): Promise<number> {
     const deleted = await db.delete(aiModels).returning({ id: aiModels.id });
-    console.log(`[ModelsCache] Cleared ${deleted.length} models`);
+    logger.info(`[ModelsCache] Cleared ${deleted.length} models`);
     return deleted.length;
   }
 

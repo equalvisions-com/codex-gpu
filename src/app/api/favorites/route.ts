@@ -9,6 +9,7 @@ import { z } from "zod";
 import type { FavoritesRequest, FavoritesResponse, FavoriteKey } from "@/types/favorites";
 import { revalidateTag, revalidatePath, unstable_cache } from "next/cache";
 import { getFavoritesCacheTag, getFavoritesRateLimitKey, FAVORITES_CACHE_TTL } from "@/lib/favorites/constants";
+import { logger } from "@/lib/logger";
 
 /**
  * Database row type for user_favorites table
@@ -82,7 +83,7 @@ export async function GET() {
     
     return NextResponse.json<FavoritesResponse>({ favorites });
   } catch (error) {
-    console.error("[GET /api/favorites] Failed to fetch favorites", {
+    logger.error("[GET /api/favorites] Failed to fetch favorites", {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
     });
@@ -117,7 +118,7 @@ export async function POST(request: NextRequest) {
     // Check rate limit
     const rate = await writeLimiter.limit(getFavoritesRateLimitKey(session.user.id));
     if (!rate.success) {
-      console.warn("[POST /api/favorites] Rate limit exceeded", {
+      logger.warn("[POST /api/favorites] Rate limit exceeded", {
         userId: session.user.id,
         limit: rate.limit,
         reset: rate.reset,
@@ -136,7 +137,7 @@ export async function POST(request: NextRequest) {
     
     const parsed = BodySchema.safeParse(await request.json());
     if (!parsed.success) {
-      console.warn("[POST /api/favorites] Invalid request body", {
+      logger.warn("[POST /api/favorites] Invalid request body", {
         userId: session.user.id,
         errors: parsed.error.errors,
       });
@@ -172,7 +173,7 @@ export async function POST(request: NextRequest) {
       revalidateTag("favorites", 'max'); // Invalidate favorites rows cache
       revalidatePath("/api/favorites/rows"); // Invalidate route cache for Vercel edge/CDN
     } catch (revalidateError) {
-      console.error("[POST /api/favorites] Cache revalidation failed", {
+      logger.error("[POST /api/favorites] Cache revalidation failed", {
         userId: session.user.id,
         error: revalidateError instanceof Error ? revalidateError.message : String(revalidateError),
       });
@@ -183,7 +184,7 @@ export async function POST(request: NextRequest) {
       { headers: buildRateHeaders(rate.limit, rate.remaining, rate.reset) }
     );
   } catch (error) {
-    console.error("[POST /api/favorites] Database operation failed", {
+    logger.error("[POST /api/favorites] Database operation failed", {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
     });
@@ -218,7 +219,7 @@ export async function DELETE(request: NextRequest) {
     // Check rate limit
     const rate = await writeLimiter.limit(getFavoritesRateLimitKey(session.user.id));
     if (!rate.success) {
-      console.warn("[DELETE /api/favorites] Rate limit exceeded", {
+      logger.warn("[DELETE /api/favorites] Rate limit exceeded", {
         userId: session.user.id,
         limit: rate.limit,
         reset: rate.reset,
@@ -237,7 +238,7 @@ export async function DELETE(request: NextRequest) {
     
     const parsed = BodySchema.safeParse(await request.json());
     if (!parsed.success) {
-      console.warn("[DELETE /api/favorites] Invalid request body", {
+      logger.warn("[DELETE /api/favorites] Invalid request body", {
         userId: session.user.id,
         errors: parsed.error.errors,
       });
@@ -270,7 +271,7 @@ export async function DELETE(request: NextRequest) {
       revalidateTag("favorites", 'max'); // Invalidate favorites rows cache
       revalidatePath("/api/favorites/rows"); // Invalidate route cache for Vercel edge/CDN
     } catch (revalidateError) {
-      console.error("[DELETE /api/favorites] Cache revalidation failed", {
+      logger.error("[DELETE /api/favorites] Cache revalidation failed", {
         userId: session.user.id,
         error: revalidateError instanceof Error ? revalidateError.message : String(revalidateError),
       });
@@ -281,7 +282,7 @@ export async function DELETE(request: NextRequest) {
       { headers: buildRateHeaders(rate.limit, rate.remaining, rate.reset) }
     );
   } catch (error) {
-    console.error("[DELETE /api/favorites] Database operation failed", {
+    logger.error("[DELETE /api/favorites] Database operation failed", {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
     });

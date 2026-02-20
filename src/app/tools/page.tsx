@@ -10,6 +10,7 @@ import { toolsDataOptions } from "@/features/data-explorer/tools/tools-query-opt
 import { toolsSearchParamsCache } from "@/features/data-explorer/tools/tools-search-params";
 import { getToolsPage } from "@/lib/tools-loader";
 import { buildToolsSchema } from "@/features/data-explorer/tools/build-tools-schema";
+import { logger } from "@/lib/logger";
 
 export const revalidate = 43200;
 
@@ -72,7 +73,7 @@ async function ToolsHydratedContent() {
         },
       });
     } catch (error) {
-      console.error("[ToolsPage] Failed to prefetch tools data", {
+      logger.error("[ToolsPage] Failed to prefetch tools data", {
         error: error instanceof Error ? error.message : String(error),
       });
     }

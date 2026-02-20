@@ -2,6 +2,7 @@ import * as cheerio from 'cheerio';
 import crypto from 'crypto';
 import type { CrusoePriceRow, ProviderResult } from '@/types/pricing';
 import type { ProviderScraper } from './types';
+import { logger } from "@/lib/logger";
 
 const PRICING_URL = 'https://www.crusoe.ai/cloud/pricing';
 
@@ -72,7 +73,7 @@ class CrusoeScraper implements ProviderScraper {
     const gpuItems = $('.prixing-item.w-dyn-item');
 
     if (gpuItems.length === 0) {
-      console.warn('Could not find Crusoe GPU pricing items (.prixing-item.w-dyn-item)');
+      logger.warn('Could not find Crusoe GPU pricing items (.prixing-item.w-dyn-item)');
       return rows;
     }
 

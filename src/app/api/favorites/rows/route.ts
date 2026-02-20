@@ -11,6 +11,7 @@ import { unstable_cache } from "next/cache";
 import { createHash } from "crypto";
 import { mapGpuRowToColumnSchema } from "@/lib/gpu-column-transformer";
 import { STANDARD_CACHE_TTL } from "@/lib/cache/constants";
+import { logger } from "@/lib/logger";
 
 const CACHE_SIZE_LIMIT_BYTES = 2 * 1024 * 1024; // 2MB
 
@@ -81,7 +82,7 @@ async function getCachedFavoriteGpusFiltered(userId: string, search: SearchParam
       const estimatedSize = JSON.stringify(result).length;
 
       if (estimatedSize > CACHE_SIZE_LIMIT_BYTES) {
-        console.warn("[getCachedFavoriteGpusFiltered] Cache size limit exceeded, will fall back to direct DB query", {
+        logger.warn("[getCachedFavoriteGpusFiltered] Cache size limit exceeded, will fall back to direct DB query", {
           userId,
           estimatedSizeBytes: estimatedSize,
           limitBytes: CACHE_SIZE_LIMIT_BYTES,
@@ -126,13 +127,13 @@ async function getFavoriteRowsDirect(
       const isSizeError = errorMessage.includes("2MB") || errorMessage.includes("size") || errorMessage.includes("cache");
       
       if (isSizeError) {
-        console.warn("[getFavoriteRowsDirect] Cache size limit exceeded, using direct DB query", {
+        logger.warn("[getFavoriteRowsDirect] Cache size limit exceeded, using direct DB query", {
           userId,
           searchParams: { cursor: search.cursor, size: search.size, sort: search.sort },
           error: errorMessage,
         });
       } else {
-        console.warn("[getFavoriteRowsDirect] Cache lookup failed, falling back to DB", {
+        logger.warn("[getFavoriteRowsDirect] Cache lookup failed, falling back to DB", {
           userId,
           searchParams: { cursor: search.cursor, size: search.size, sort: search.sort },
           error: errorMessage,
@@ -240,7 +241,7 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("[GET /api/favorites/rows] Failed to fetch favorite rows", {
+    logger.error("[GET /api/favorites/rows] Failed to fetch favorite rows", {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
     });
@@ -264,7 +265,7 @@ export async function POST(request: NextRequest) {
     const rows = await gpuPricingCache.getGpusByStableKeys(parsed.data.keys);
     return NextResponse.json({ rows });
   } catch (error) {
-    console.error("[POST /api/favorites/rows] Failed to resolve rows", {
+    logger.error("[POST /api/favorites/rows] Failed to resolve rows", {
       error: error instanceof Error ? error.message : String(error),
     });
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

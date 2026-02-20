@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import type { DigitalOceanPriceRow, ProviderResult } from '@/types/pricing';
 import type { ProviderScraper } from './types';
+import { logger } from "@/lib/logger";
 
 const PRICING_URL = 'https://www.digitalocean.com/pricing/gpu-droplets';
 
@@ -82,7 +83,7 @@ class DigitalOceanScraper implements ProviderScraper {
     // Extract __NEXT_DATA__ JSON from the page
     const nextDataMatch = html.match(/<script id="__NEXT_DATA__"[^>]*>([^<]+)<\/script>/);
     if (!nextDataMatch) {
-      console.warn('Could not find __NEXT_DATA__ in DigitalOcean page');
+      logger.warn('Could not find __NEXT_DATA__ in DigitalOcean page');
       return rows;
     }
 
@@ -90,13 +91,13 @@ class DigitalOceanScraper implements ProviderScraper {
     try {
       nextData = JSON.parse(nextDataMatch[1]);
     } catch (e) {
-      console.warn('Failed to parse __NEXT_DATA__ JSON:', e);
+      logger.warn('Failed to parse __NEXT_DATA__ JSON:', e);
       return rows;
     }
 
     const plans = nextData.props?.pageProps?.data?.plans;
     if (!Array.isArray(plans)) {
-      console.warn('No plans array found in __NEXT_DATA__');
+      logger.warn('No plans array found in __NEXT_DATA__');
       return rows;
     }
 

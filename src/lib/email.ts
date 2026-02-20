@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { logger } from "@/lib/logger";
 
 const FROM_EMAIL_FALLBACK = "noreply@deploybase.ai";
 
@@ -32,13 +33,13 @@ async function sendEmail({ to, subject, html, text }: SendEmailParams) {
     const { data, error } = await resend.emails.send(emailOptions);
 
     if (error) {
-      console.error("Failed to send email:", error);
+      logger.error("Failed to send email:", error);
       throw new Error(`Email sending failed: ${error.message}`);
     }
 
     return data;
   } catch (error) {
-    console.error("Email service error:", error);
+    logger.error("Email service error:", error);
     throw error;
   }
 }

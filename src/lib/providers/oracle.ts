@@ -2,6 +2,7 @@ import * as cheerio from 'cheerio';
 import crypto from 'crypto';
 import type { OraclePriceRow, ProviderResult } from '@/types/pricing';
 import type { ProviderScraper } from './types';
+import { logger } from "@/lib/logger";
 
 const PRICING_URL = 'https://www.oracle.com/cloud/compute/pricing/';
 
@@ -85,7 +86,7 @@ class OracleScraper implements ProviderScraper {
     const gpuTable = gpuSection.find('table').first();
 
     if (gpuTable.length === 0) {
-      console.warn('Could not find Oracle GPU instances table');
+      logger.warn('Could not find Oracle GPU instances table');
       return rows;
     }
 
@@ -164,7 +165,7 @@ class OracleScraper implements ProviderScraper {
 
       // Skip if we don't have essential hardware data
       if (!gpuModel || vramGb === 0) {
-        console.warn(`Skipping Oracle GPU ${shape}: missing hardware data`);
+        logger.warn(`Skipping Oracle GPU ${shape}: missing hardware data`);
         return;
       }
 

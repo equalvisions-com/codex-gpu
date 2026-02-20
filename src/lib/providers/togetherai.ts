@@ -2,6 +2,7 @@ import * as cheerio from 'cheerio';
 import crypto from 'crypto';
 import type { TogetherAIPriceRow, ProviderResult } from '@/types/pricing';
 import type { ProviderScraper } from './types';
+import { logger } from "@/lib/logger";
 
 const SOURCE_URL = 'https://www.together.ai/pricing';
 
@@ -20,7 +21,7 @@ class TogetherAIScraper implements ProviderScraper {
 
     async scrape(): Promise<ProviderResult> {
         try {
-            console.log('[TogetherAIScraper] Fetching pricing page...');
+            logger.info('[TogetherAIScraper] Fetching pricing page...');
             const observedAt = new Date().toISOString();
 
             const response = await fetch(SOURCE_URL, {
@@ -62,7 +63,7 @@ class TogetherAIScraper implements ProviderScraper {
                 const clusterPrice = pricePerGpu * 8;
                 const totalVram = specs.vramPerGpu * 8;
 
-                console.log(`[TogetherAIScraper] ${gpuName}: $${pricePerGpu}/GPU/hr → $${clusterPrice}/cluster/hr (8x)`);
+                logger.info(`[TogetherAIScraper] ${gpuName}: $${pricePerGpu}/GPU/hr → $${clusterPrice}/cluster/hr (8x)`);
 
                 rows.push({
                     provider: 'togetherai',
@@ -80,7 +81,7 @@ class TogetherAIScraper implements ProviderScraper {
                 });
             });
 
-            console.log(`[TogetherAIScraper] Parsed ${rows.length} GPU cluster pricing rows`);
+            logger.info(`[TogetherAIScraper] Parsed ${rows.length} GPU cluster pricing rows`);
 
             return {
                 provider: 'togetherai',

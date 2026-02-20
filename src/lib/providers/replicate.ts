@@ -2,6 +2,7 @@ import * as cheerio from 'cheerio';
 import crypto from 'crypto';
 import type { ReplicatePriceRow, ProviderResult } from '@/types/pricing';
 import type { ProviderScraper } from './types';
+import { logger } from "@/lib/logger";
 
 const PRICING_URL = 'https://replicate.com/pricing';
 
@@ -40,7 +41,7 @@ class ReplicateScraper implements ProviderScraper {
                 return true;
             });
 
-            console.log(`[ReplicateScraper] Parsed ${uniqueRows.length} GPU hardware rows`);
+            logger.info(`[ReplicateScraper] Parsed ${uniqueRows.length} GPU hardware rows`);
 
             return {
                 provider: "replicate",
@@ -89,7 +90,7 @@ class ReplicateScraper implements ProviderScraper {
 
             // Mark that we found the first valid table
             foundFirstTable = true;
-            console.log('[ReplicateScraper] Parsing first (on-demand) hardware table only');
+            logger.info('[ReplicateScraper] Parsing first (on-demand) hardware table only');
 
             // Parse data rows
             $table.find('tbody tr').each((__: number, row: any) => {

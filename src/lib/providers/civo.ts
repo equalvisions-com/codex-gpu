@@ -2,6 +2,7 @@ import * as cheerio from 'cheerio';
 import crypto from 'crypto';
 import type { CivoPriceRow, ProviderResult } from '@/types/pricing';
 import type { ProviderScraper } from './types';
+import { logger } from "@/lib/logger";
 
 const PRICING_URL = 'https://www.civo.com/pricing';
 const SOURCE_URL = 'https://www.civo.com/pricing#nvidia-gpus';
@@ -19,7 +20,7 @@ class CivoScraper implements ProviderScraper {
 
     async scrape(): Promise<ProviderResult> {
         try {
-            console.log('[CivoScraper] Fetching Civo pricing page...');
+            logger.info('[CivoScraper] Fetching Civo pricing page...');
 
             const response = await fetch(PRICING_URL, {
                 headers: {
@@ -42,7 +43,7 @@ class CivoScraper implements ProviderScraper {
 
             const rows = this.parsePricingPage(html, observedAt);
 
-            console.log(`[CivoScraper] Parsed ${rows.length} GPU instance pricing rows`);
+            logger.info(`[CivoScraper] Parsed ${rows.length} GPU instance pricing rows`);
 
             return {
                 provider: 'civo',
@@ -83,7 +84,7 @@ class CivoScraper implements ProviderScraper {
             // Examples: "NVIDIA L40S 48GB GPU pricing", "NVIDIA H100 SXM GPU pricing"
             const { gpuModel, headerVramGb } = this.parseGpuModelFromHeader(headerText);
             if (!gpuModel) {
-                console.log(`[CivoScraper] Could not parse GPU model from header: ${headerText}`);
+                logger.info(`[CivoScraper] Could not parse GPU model from header: ${headerText}`);
                 return;
             }
 
@@ -92,7 +93,7 @@ class CivoScraper implements ProviderScraper {
             const $table = $tableWrapper.find('table');
 
             if ($table.length === 0) {
-                console.log(`[CivoScraper] No table found for: ${headerText}`);
+                logger.info(`[CivoScraper] No table found for: ${headerText}`);
                 return;
             }
 

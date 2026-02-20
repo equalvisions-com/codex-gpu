@@ -94,7 +94,7 @@ export function SheetLineChart({
     return [];
   }, [data, series, stroke, valueLabel]);
 
-  const formatLabel = React.useCallback((payload?: any[], fallbackLabel?: string | number) => {
+  const formatLabel = React.useCallback((payload?: Array<{ payload?: { observedAt?: string } }>, fallbackLabel?: string | number) => {
     const raw = (payload?.[0]?.payload?.observedAt as string | undefined) ?? (typeof fallbackLabel === "string" ? fallbackLabel : undefined);
     if (!raw) return "";
     const iso = raw.endsWith("Z") ? raw : `${raw}Z`;
@@ -110,7 +110,7 @@ export function SheetLineChart({
   }, []);
 
   const mergedData = React.useMemo(() => {
-    const pointMap = new Map<string, Record<string, any>>();
+    const pointMap = new Map<string, { observedAt: string } & Record<string, string | number>>();
 
     resolvedSeries.forEach((series) => {
       series.data.forEach((point, index) => {
@@ -224,7 +224,7 @@ export function SheetLineChart({
                           }}
                         >
                           <div className="font-semibold" style={{ color: "hsl(var(--foreground))" }}>
-                            {formatLabel(payload as any, label as any)}
+                            {formatLabel(payload as Array<{ payload?: { observedAt?: string } }>, label as string | number)}
                           </div>
                           <div className="recharts-tooltip-item-list mt-1 flex flex-col gap-1">
                             {payload.map((entry, index) => (

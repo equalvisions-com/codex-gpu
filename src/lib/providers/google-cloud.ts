@@ -2,6 +2,7 @@ import * as cheerio from 'cheerio';
 import crypto from 'crypto';
 import type { GoogleCloudPriceRow, ProviderResult } from '@/types/pricing';
 import type { ProviderScraper } from './types';
+import { logger } from "@/lib/logger";
 
 const PRICING_URL = 'https://cloud.google.com/compute/vm-instance-pricing';
 
@@ -67,11 +68,11 @@ class GoogleCloudScraper implements ProviderScraper {
             const $ = cheerio.load(html);
             const rows = this.parseAcceleratorSection($);
 
-            console.log(`[GoogleCloudScraper] Raw parsed rows: ${rows.length}`);
+            logger.info(`[GoogleCloudScraper] Raw parsed rows: ${rows.length}`);
 
             // Log all instance_ids to identify duplicates
             const instanceIds = rows.map(r => r.instance_id);
-            console.log(`[GoogleCloudScraper] Instance IDs:`, instanceIds);
+            logger.info(`[GoogleCloudScraper] Instance IDs:`, instanceIds);
 
             // Find duplicates
             const idCounts = new Map<string, number>();
@@ -81,7 +82,7 @@ class GoogleCloudScraper implements ProviderScraper {
             }
             const duplicates = Array.from(idCounts.entries()).filter(([_, count]) => count > 1);
             if (duplicates.length > 0) {
-                console.log(`[GoogleCloudScraper] DUPLICATES FOUND:`, duplicates);
+                logger.info(`[GoogleCloudScraper] DUPLICATES FOUND:`, duplicates);
             }
 
             // Deduplicate by instance_id
@@ -89,14 +90,14 @@ class GoogleCloudScraper implements ProviderScraper {
             const uniqueRows = rows.filter(row => {
                 const key = row.instance_id || `${row.gpu_model}-${row.gpu_count}`;
                 if (seenIds.has(key)) {
-                    console.log(`[GoogleCloudScraper] Skipping duplicate: ${key}`);
+                    logger.info(`[GoogleCloudScraper] Skipping duplicate: ${key}`);
                     return false;
                 }
                 seenIds.add(key);
                 return true;
             });
 
-            console.log(`[GoogleCloudScraper] Unique rows after dedup: ${uniqueRows.length}`);
+            logger.info(`[GoogleCloudScraper] Unique rows after dedup: ${uniqueRows.length}`);
 
             return {
                 provider: "googlecloud",
