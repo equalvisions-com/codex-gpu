@@ -8,6 +8,7 @@ import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { AuthProvider } from "@/providers/auth-provider";
 import { AuthDialogProvider } from "@/providers/auth-dialog-provider";
+import PlausibleProvider from "next-plausible";
 
 const TITLE = "Deploybase";
 const DESCRIPTION =
@@ -77,6 +78,9 @@ export default function RootLayout({
       className={`${GeistSans.variable} ${GeistMono.variable}`}
       suppressHydrationWarning
     >
+      <head>
+        <PlausibleProvider domain="deploybase.com" trackOutboundLinks trackFileDownloads />
+      </head>
       <body className="min-h-[100dvh] bg-background sm:bg-muted/40 dark:sm:bg-background antialiased overscroll-x-none">
         <AuthProvider>
           <ReactQueryProvider>
