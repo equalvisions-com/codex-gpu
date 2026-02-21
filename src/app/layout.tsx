@@ -81,7 +81,7 @@ export default function RootLayout({
       <head>
         <PlausibleProvider domain="deploybase.ai" trackOutboundLinks trackFileDownloads />
       </head>
-      <body className="min-h-[100dvh] bg-background sm:bg-muted/40 dark:sm:bg-background antialiased overscroll-x-none">
+      <body className="min-h-[100dvh] bg-background antialiased overscroll-x-none">
         <AuthProvider>
           <ReactQueryProvider>
             <NuqsAdapter>
