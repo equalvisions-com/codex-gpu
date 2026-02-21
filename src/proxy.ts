@@ -7,7 +7,7 @@ const csp = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: https: blob:",
   "font-src 'self' data:",
-  "connect-src 'self' https://*.upstash.io https://openrouter.ai",
+  "connect-src 'self' https://*.upstash.io https://openrouter.ai https://formspree.io",
   "frame-ancestors 'none'",
 ].join("; ");
 
