@@ -79,9 +79,9 @@ export function DataTableSidebar({
                   }
                 }}
                 hotkeys={[
-                  { combo: "cmd+k", value: "/llms" },
-                  { combo: "cmd+g", value: "/gpus" },
-                  { combo: "cmd+e", value: "/tools" },
+                  { combo: "mod+k", value: "/llms" },
+                  { combo: "mod+g", value: "/gpus" },
+                  { combo: "mod+e", value: "/tools" },
                 ]}
               >
                 <SelectTrigger className="h-9 w-full justify-between rounded-lg shadow-sm" aria-label="Page navigation">

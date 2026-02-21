@@ -266,7 +266,7 @@ const SelectItem = React.forwardRef<
       {displayShortcut ? (
         <span className="ml-auto pl-1 -mt-[2px]">
           <span className="inline-flex select-none items-center gap-1 rounded border px-[6px] py-0 text-xs font-mono font-normal h-[18px] bg-accent text-muted-foreground">
-            <span className="mr-0.5 opacity-90">⌘</span>
+            <span className="mr-0.5 opacity-90">{typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.userAgent) ? "⌘" : "Ctrl+"}</span>
             <span className="tracking-tight">{displayShortcut}</span>
           </span>
         </span>
