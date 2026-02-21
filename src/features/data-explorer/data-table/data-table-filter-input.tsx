@@ -98,7 +98,7 @@ export function DataTableFilterInput<TData>({
         <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-2">
           {!isFilterActive ? (
              <span className="inline-flex select-none items-center gap-1 rounded border px-[6px] py-0 text-xs font-mono font-normal h-[18px] bg-accent text-muted-foreground hidden sm:block">
-            <span className="opacity-90">{typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.userAgent) ? "⌘" : "Ctrl+"}</span>
+            <span className="opacity-90">{typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.userAgent) ? "⌘" : "Ctrl"}</span>
             <span className="tracking-tight opacity-70">/</span> </span>
           ) : null}
           {isFilterActive ? (
