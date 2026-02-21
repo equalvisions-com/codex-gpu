@@ -339,7 +339,7 @@ export function UserMenu({
         {triggerElement}
         <DropdownMenuContent
           align="center"
-          className="w-60 mt-[4px] sm:mt-0 mr-2 sm:mr-0"
+          className="w-[110px] mt-[4px] sm:mt-0 mr-2 sm:mr-0"
         >
           <div className="flex flex-col space-y-1">
             {isAuthenticated ? (
