@@ -86,7 +86,7 @@ export async function sendVerificationEmail({
 
         <div style="text-align: center; font-size: 14px;">
           <p>If you didn't create an account, you can safely ignore this email.</p>
-          <p>© 2025 Deploybase. All rights reserved.</p>
+          <p>© 2026 Deploybase. All rights reserved.</p>
         </div>
       </body>
     </html>
@@ -101,7 +101,7 @@ ${verificationUrl}
 
 If you didn't create an account, you can safely ignore this email.
 
-© 2025 Deploybase. All rights reserved.
+© 2026 Deploybase. All rights reserved.
   `;
 
   return sendEmail({
@@ -157,7 +157,7 @@ export async function sendPasswordResetEmail({
 
         <div style="text-align: center; font-size: 14px;">
           <p>If you didn't request a password reset, you can safely ignore this email.</p>
-          <p>© 2025 Deploybase. All rights reserved.</p>
+          <p>© 2026 Deploybase. All rights reserved.</p>
         </div>
       </body>
     </html>
@@ -174,7 +174,7 @@ This link will expire in 1 hour for security reasons.
 
 If you didn't request a password reset, you can safely ignore this email.
 
-© 2025 Deploybase. All rights reserved.
+© 2026 Deploybase. All rights reserved.
   `;
 
   return sendEmail({
