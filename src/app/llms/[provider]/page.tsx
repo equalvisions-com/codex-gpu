@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { provider } = await params;
   const name = decodeURIComponent(provider);
   const title = `${name} LLM Pricing | Deploybase`;
-  const description = `Compare ${name} language model pricing, context lengths, and modality support.`;
+  const description = `Real-time ${name} LLM inference pricing. Compare models, token costs, and availability.`;
 
   return {
     title,

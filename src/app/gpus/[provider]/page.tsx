@@ -53,7 +53,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { provider } = await params;
   const name = formatProvider(provider);
   const title = `${name} GPU Pricing | Deploybase`;
-  const description = `Compare ${name} hourly GPU prices, VRAM, and availability across instance types.`;
+  const description = `Real-time ${name} GPU pricing. Compare models, availability, and hourly rates.`;
 
   return {
     title,

@@ -14,9 +14,9 @@ import { logger } from "@/lib/logger";
 
 export const revalidate = 43200;
 
-const LLMS_META_TITLE = "LLM Benchmark Explorer | Deploybase";
+const LLMS_META_TITLE = "Compare LLM Inference Pricing | Deploybase";
 const LLMS_META_DESCRIPTION =
-  "Filter and benchmark large language models by latency, throughput, modality support, and pricing using our interactive table experience.";
+  "Real-time LLM inference pricing across all providers. Compare models, token costs, and providers.";
 const SHARED_OG_IMAGE = "/assets/data-table-infinite.png";
 
 export async function generateMetadata(): Promise<Metadata> {

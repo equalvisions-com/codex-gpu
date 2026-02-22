@@ -12,7 +12,7 @@ import PlausibleProvider from "next-plausible";
 
 const TITLE = "Deploybase";
 const DESCRIPTION =
-  "Compare GPU cloud pricing, LLM benchmarks, and AI developer tools across providers. Find the best prices for H100s, A100s, and more.";
+  "Real-time GPU and LLM pricing across all providers. Compare providers, models, and pricing.";
 
 const DEFAULT_SITE_URL = "https://deploybase.ai";
 

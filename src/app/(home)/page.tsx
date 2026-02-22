@@ -14,9 +14,9 @@ import { logger } from "@/lib/logger";
 
 export const revalidate = 43200;
 
-const HOME_META_TITLE = "GPU Pricing Explorer | Deploybase";
+const HOME_META_TITLE = "Compare GPU & LLM Pricing | Deploybase";
 const HOME_META_DESCRIPTION =
-  "Compare hourly GPU prices, VRAM, and provider availability with our infinite data table powered by TanStack Table, nuqs, and shadcn/ui.";
+  "Real-time GPU and LLM pricing across all providers. Compare providers, models, and pricing.";
 const SHARED_OG_IMAGE = "/assets/data-table-infinite.png";
 
 export async function generateMetadata(): Promise<Metadata> {
