@@ -5,8 +5,8 @@ import {
   QueryClient,
   dehydrate,
 } from "@tanstack/react-query";
-import { Client } from "@/features/data-explorer/table/client";
 import { dataOptions } from "@/features/data-explorer/table/query-options";
+import { ProviderGpuClient } from "./provider-gpu-client";
 import { searchParamsCache } from "@/features/data-explorer/table/search-params";
 import { getGpuPricingPage } from "@/lib/gpu-pricing-loader";
 import { buildGpuSchema } from "@/features/data-explorer/table/gpu-schema";
@@ -131,7 +131,7 @@ export default async function GpuProviderPage({ params }: Props) {
           "--total-padding-desktop": "3rem",
         } as React.CSSProperties}
       >
-        <Client />
+        <ProviderGpuClient provider={provider} />
       </div>
     </HydrationBoundary>
   );

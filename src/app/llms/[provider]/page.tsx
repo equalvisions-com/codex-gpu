@@ -5,8 +5,8 @@ import {
   QueryClient,
   dehydrate,
 } from "@tanstack/react-query";
-import { ModelsClient } from "@/features/data-explorer/models/models-client";
 import { modelsDataOptions } from "@/features/data-explorer/models/models-query-options";
+import { ProviderLlmClient } from "./provider-llm-client";
 import { modelsSearchParamsCache } from "@/features/data-explorer/models/models-search-params";
 import { getModelsPage } from "@/lib/models-loader";
 import { buildModelsSchema } from "@/features/data-explorer/models/build-models-schema";
@@ -104,7 +104,7 @@ export default async function LlmProviderPage({ params }: Props) {
           "--total-padding-desktop": "3rem",
         } as React.CSSProperties}
       >
-        <ModelsClient />
+        <ProviderLlmClient provider={decodedProvider} />
       </div>
     </HydrationBoundary>
   );
