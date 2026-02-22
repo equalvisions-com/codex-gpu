@@ -1,13 +1,16 @@
 import type { MetadataRoute } from "next";
+import { gpuPricingCache } from "@/lib/gpu-pricing-cache";
+import { modelsCache } from "@/lib/models-cache";
+import { logger } from "@/lib/logger";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://deploybase.com";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://deploybase.ai";
 
 export const revalidate = 43200;
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const lastModified = new Date();
 
-  return [
+  const staticPages: MetadataRoute.Sitemap = [
     {
       url: `${SITE_URL}/`,
       lastModified,
@@ -33,4 +36,38 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
   ];
+
+  // Dynamically add provider pages from the database
+  let gpuProviderPages: MetadataRoute.Sitemap = [];
+  let llmProviderPages: MetadataRoute.Sitemap = [];
+
+  try {
+    const gpuFacets = await gpuPricingCache.getGpusFacets();
+    gpuProviderPages = gpuFacets.provider.rows.map((row) => ({
+      url: `${SITE_URL}/gpus/${encodeURIComponent(row.value)}`,
+      lastModified,
+      changeFrequency: "daily" as const,
+      priority: 0.7,
+    }));
+  } catch (error) {
+    logger.error("[sitemap] Failed to fetch GPU providers", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+
+  try {
+    const llmProviders = await modelsCache.getAvailableProviders();
+    llmProviderPages = llmProviders.map((provider) => ({
+      url: `${SITE_URL}/llms/${encodeURIComponent(provider)}`,
+      lastModified,
+      changeFrequency: "daily" as const,
+      priority: 0.7,
+    }));
+  } catch (error) {
+    logger.error("[sitemap] Failed to fetch LLM providers", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+
+  return [...staticPages, ...gpuProviderPages, ...llmProviderPages];
 }

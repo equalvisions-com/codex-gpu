@@ -12,9 +12,9 @@ import PlausibleProvider from "next-plausible";
 
 const TITLE = "Deploybase";
 const DESCRIPTION =
-  "Flexible, fast, and easy-to-use filters with tanstack table, shadcn/ui and search params via nuqs.";
+  "Compare GPU cloud pricing, LLM benchmarks, and AI developer tools across providers. Find the best prices for H100s, A100s, and more.";
 
-const DEFAULT_SITE_URL = "https://deploybase.com";
+const DEFAULT_SITE_URL = "https://deploybase.ai";
 
 function resolveMetadataBase() {
   const envUrl =
