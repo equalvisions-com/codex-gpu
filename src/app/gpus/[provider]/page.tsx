@@ -47,10 +47,7 @@ function formatProvider(slug: string): string {
 
 const SHARED_OG_IMAGE = "/assets/data-table-infinite.png";
 
-type Props = {
-  params: Promise<{ provider: string }>;
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-};
+type Props = { params: Promise<{ provider: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { provider } = await params;
@@ -80,19 +77,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 /**
  * SEO landing page for a specific GPU provider.
  *
- * Merges the route-segment provider into searchParams before parsing with nuqs
- * so the server prefetch is correctly filtered. The ProviderGpuClient wrapper
- * seeds ?provider=X into the URL on the client via useLayoutEffect so nuqs
- * and React Query pick up the filter immediately after hydration.
+ * We intentionally do NOT accept the `searchParams` page prop here because
+ * doing so would opt this route into fully dynamic rendering (per Next.js docs)
+ * and break our ISR strategy (revalidate = 43200s / 12hrs).
+ *
+ * Instead we seed the nuqs searchParamsCache directly with the route-segment
+ * provider. This gives us:
+ *   - Server: filtered HTML + JSON-LD for crawlers (ISR-cached)
+ *   - Client: ProviderGpuClient wrapper pushes ?provider=X into the URL via
+ *     useLayoutEffect so nuqs and React Query pick up the filter after hydration
+ *
+ * This matches the same pattern used by the main /gpus page which also calls
+ * searchParamsCache.parse({}) without accepting searchParams.
  */
-export default async function GpuProviderPage({ params, searchParams }: Props) {
+export default async function GpuProviderPage({ params }: Props) {
   const { provider } = await params;
-  const sp = await searchParams;
-
-  // Merge route param into searchParams so nuqs cache sees the provider filter
-  const mergedParams = { ...sp, provider: provider };
-  const parsedSearch = searchParamsCache.parse(mergedParams);
-
+  const parsedSearch = searchParamsCache.parse({ provider: [provider] });
   const queryClient = new QueryClient();
   const captured: { firstPage: Awaited<ReturnType<typeof getGpuPricingPage>> | null } = { firstPage: null };
 
