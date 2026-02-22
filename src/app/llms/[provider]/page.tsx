@@ -16,7 +16,10 @@ export const revalidate = 43200;
 
 const SHARED_OG_IMAGE = "/assets/data-table-infinite.png";
 
-type Props = { params: Promise<{ provider: string }> };
+type Props = {
+  params: Promise<{ provider: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { provider } = await params;
@@ -44,12 +47,26 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function LlmProviderPage({ params }: Props) {
+/**
+ * SEO landing page for a specific LLM provider.
+ *
+ * Merges the route-segment provider into searchParams before parsing with nuqs
+ * so the server prefetch is correctly filtered. The ProviderLlmClient wrapper
+ * seeds ?provider=X into the URL on the client via useLayoutEffect so nuqs
+ * and React Query pick up the filter immediately after hydration.
+ */
+export default async function LlmProviderPage({ params, searchParams }: Props) {
   const { provider } = await params;
+  const sp = await searchParams;
+
   // The URL segment is the exact DB provider name (e.g. "OpenAI", "Anthropic")
   // Next.js auto-decodes the URL param, so this matches the DB exactly
   const decodedProvider = decodeURIComponent(provider);
-  const parsedSearch = modelsSearchParamsCache.parse({ provider: [decodedProvider] });
+
+  // Merge route param into searchParams so nuqs cache sees the provider filter
+  const mergedParams = { ...sp, provider: decodedProvider };
+  const parsedSearch = modelsSearchParamsCache.parse(mergedParams);
+
   const queryClient = new QueryClient();
   const captured: { firstPage: Awaited<ReturnType<typeof getModelsPage>> | null } = { firstPage: null };
 

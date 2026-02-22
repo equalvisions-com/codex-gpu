@@ -47,7 +47,10 @@ function formatProvider(slug: string): string {
 
 const SHARED_OG_IMAGE = "/assets/data-table-infinite.png";
 
-type Props = { params: Promise<{ provider: string }> };
+type Props = {
+  params: Promise<{ provider: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { provider } = await params;
@@ -74,9 +77,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function GpuProviderPage({ params }: Props) {
+/**
+ * SEO landing page for a specific GPU provider.
+ *
+ * Merges the route-segment provider into searchParams before parsing with nuqs
+ * so the server prefetch is correctly filtered. The ProviderGpuClient wrapper
+ * seeds ?provider=X into the URL on the client via useLayoutEffect so nuqs
+ * and React Query pick up the filter immediately after hydration.
+ */
+export default async function GpuProviderPage({ params, searchParams }: Props) {
   const { provider } = await params;
-  const parsedSearch = searchParamsCache.parse({ provider: [provider] });
+  const sp = await searchParams;
+
+  // Merge route param into searchParams so nuqs cache sees the provider filter
+  const mergedParams = { ...sp, provider: provider };
+  const parsedSearch = searchParamsCache.parse(mergedParams);
+
   const queryClient = new QueryClient();
   const captured: { firstPage: Awaited<ReturnType<typeof getGpuPricingPage>> | null } = { firstPage: null };
 
