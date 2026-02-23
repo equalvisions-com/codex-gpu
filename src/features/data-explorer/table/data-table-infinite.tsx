@@ -71,7 +71,7 @@ export type NavItem = {
 export const DEFAULT_NAV_ITEMS: NavItem[] = [
   { label: "GPUs", value: "/gpus", icon: Server, shortcut: "g" },
   { label: "LLMs", value: "/llms", icon: Bot, shortcut: "k" },
-  { label: "MLops", value: "/tools", icon: Wrench, shortcut: "e" },
+  { label: "MLOps", value: "/tools", icon: Wrench, shortcut: "e" },
 ];
 
 // Note: chart groupings could be added later if needed
