@@ -38,7 +38,13 @@ const KNOWN_NAMES: Record<string, string> = {
   jarvis: "Jarvis Labs",
   aws: "AWS",
   gcp: "Google Cloud",
+  googlecloud: "Google Cloud",
   azure: "Microsoft Azure",
+  digitalocean: "DigitalOcean",
+  flyio: "Fly.io",
+  hotaisle: "Hot Aisle",
+  alibaba: "Alibaba Cloud",
+  oracle: "Oracle Cloud",
 };
 
 function formatProvider(slug: string): string {
