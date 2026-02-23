@@ -20,6 +20,8 @@ export function ProviderGpuClient({ provider }: { provider: string }) {
   const router = useRouter();
 
   const hasSeeded = React.useRef(false);
+  const renderCount = React.useRef(0);
+
   React.useLayoutEffect(() => {
     if (hasSeeded.current) return;
     hasSeeded.current = true;
@@ -33,9 +35,12 @@ export function ProviderGpuClient({ provider }: { provider: string }) {
     }
   }, [provider, search.provider, setSearch]);
 
-  // Redirect to /gpus if the user clears the provider filter
+  // Redirect to /gpus if the user clears the provider filter.
+  // Skip the first 2 renders to avoid redirecting before the seed takes effect.
   React.useEffect(() => {
-    if (!hasSeeded.current) return;
+    renderCount.current += 1;
+    if (renderCount.current <= 2) return;
+
     const providerFilter = search.provider;
     const isEmpty = !providerFilter || (Array.isArray(providerFilter) && providerFilter.length === 0);
     if (isEmpty) {
