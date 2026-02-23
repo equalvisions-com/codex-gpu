@@ -120,9 +120,42 @@ function pushProperty(
   });
 }
 
+const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
+  coreweave: "CoreWeave",
+  openai: "OpenAI",
+  runpod: "RunPod",
+  lambda: "Lambda",
+  hyperstack: "Hyperstack",
+  nebius: "Nebius",
+  vast: "Vast.ai",
+  crusoe: "Crusoe",
+  latitude: "Latitude",
+  oblivus: "Oblivus",
+  sesterce: "Sesterce",
+  thundercompute: "ThunderCompute",
+  paperspace: "Paperspace",
+  fluidstack: "FluidStack",
+  tensordock: "TensorDock",
+  datacrunch: "DataCrunch",
+  vultr: "Vultr",
+  ovhcloud: "OVHcloud",
+  scaleway: "Scaleway",
+  massedcompute: "Massed Compute",
+  jarvis: "Jarvis Labs",
+  aws: "AWS",
+  gcp: "Google Cloud",
+  googlecloud: "Google Cloud",
+  azure: "Microsoft Azure",
+  digitalocean: "DigitalOcean",
+  flyio: "Fly.io",
+  hotaisle: "Hot Aisle",
+  alibaba: "Alibaba Cloud",
+  oracle: "Oracle Cloud",
+};
+
 function formatProviderName(provider?: string | null) {
   if (!provider) return "Unknown Provider";
-  return provider.charAt(0).toUpperCase() + provider.slice(1);
+  return PROVIDER_DISPLAY_NAMES[provider.toLowerCase()] ?? provider.charAt(0).toUpperCase() + provider.slice(1);
 }
 
 function buildGpuProductName(
