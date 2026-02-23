@@ -64,6 +64,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title,
     description,
+    alternates: { canonical: `/gpus/${provider}` },
     openGraph: {
       title,
       description,
@@ -147,6 +148,7 @@ export default async function GpuProviderPage({ params }: Props) {
           }}
         />
       ) : null}
+      <h1 className="sr-only">{name} GPU Pricing</h1>
       <div
         className="flex min-h-dvh w-full flex-col sm:flex-row pt-2 sm:p-0"
         style={{

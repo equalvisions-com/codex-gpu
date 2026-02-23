@@ -23,6 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: HOME_META_TITLE,
     description: HOME_META_DESCRIPTION,
+    alternates: { canonical: "/" },
     openGraph: {
       title: HOME_META_TITLE,
       description: HOME_META_DESCRIPTION,
@@ -93,6 +94,7 @@ async function HomeGpusContent() {
           }}
         />
       ) : null}
+      <h1 className="sr-only">Compare GPU &amp; LLM Pricing</h1>
       <div
         className="flex min-h-dvh w-full flex-col sm:flex-row pt-2 sm:p-0"
         style={{

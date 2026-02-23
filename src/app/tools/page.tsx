@@ -23,6 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: TOOLS_META_TITLE,
     description: TOOLS_META_DESCRIPTION,
+    alternates: { canonical: "/tools" },
     openGraph: {
       title: TOOLS_META_TITLE,
       description: TOOLS_META_DESCRIPTION,
@@ -93,6 +94,7 @@ async function ToolsHydratedContent() {
           }}
         />
       ) : null}
+      <h1 className="sr-only">AI/ML Tools Directory</h1>
       <div
         className="flex min-h-dvh w-full flex-col sm:flex-row pt-2 sm:p-0"
         style={{

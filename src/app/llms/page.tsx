@@ -23,6 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: LLMS_META_TITLE,
     description: LLMS_META_DESCRIPTION,
+    alternates: { canonical: "/llms" },
     openGraph: {
       title: LLMS_META_TITLE,
       description: LLMS_META_DESCRIPTION,
@@ -99,6 +100,7 @@ async function ModelsHydratedContent() {
           }}
         />
       ) : null}
+      <h1 className="sr-only">Compare LLM Inference Pricing</h1>
       <div
         className="flex min-h-dvh w-full flex-col sm:flex-row pt-2 sm:p-0"
         style={{

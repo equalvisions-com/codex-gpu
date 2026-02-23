@@ -27,6 +27,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title,
     description,
+    alternates: { canonical: `/llms/${encodeURIComponent(provider)}` },
     openGraph: {
       title,
       description,
@@ -110,6 +111,7 @@ export default async function LlmProviderPage({ params }: Props) {
           }}
         />
       ) : null}
+      <h1 className="sr-only">{decodedProvider} LLM Pricing</h1>
       <div
         className="flex min-h-dvh w-full flex-col sm:flex-row pt-2 sm:p-0"
         style={{

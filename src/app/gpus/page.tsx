@@ -23,6 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: GPU_META_TITLE,
     description: GPU_META_DESCRIPTION,
+    alternates: { canonical: "/gpus" },
     openGraph: {
       title: GPU_META_TITLE,
       description: GPU_META_DESCRIPTION,
@@ -99,6 +100,7 @@ async function GpusHydratedContent() {
           }}
         />
       ) : null}
+      <h1 className="sr-only">Compare GPU Cloud Pricing</h1>
       <div
         className="flex min-h-dvh w-full flex-col sm:flex-row pt-2 sm:p-0"
         style={{
