@@ -133,7 +133,8 @@ export default async function GpuProviderPage({ params }: Props) {
   }
 
   const dehydratedState = dehydrate(queryClient);
-  const schemaMarkup = buildGpuSchema(captured.firstPage);
+  const name = formatProvider(provider);
+  const schemaMarkup = buildGpuSchema(captured.firstPage, `${name} GPU Pricing Feed`);
 
   return (
     <HydrationBoundary state={dehydratedState}>

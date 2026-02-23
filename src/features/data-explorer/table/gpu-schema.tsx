@@ -4,6 +4,7 @@ import { getGpuPricingPage } from "@/lib/gpu-pricing-loader";
 
 export function buildGpuSchema(
   payload: Awaited<ReturnType<typeof getGpuPricingPage>> | null,
+  feedName?: string,
 ): Record<string, unknown> | null {
   if (!payload || !payload.data?.length) {
     return null;
@@ -94,7 +95,7 @@ export function buildGpuSchema(
   return {
     "@context": "https://schema.org",
     "@type": "DataFeed",
-    name: "GPU Pricing Feed",
+    name: feedName ?? "GPU Pricing Feed",
     dateModified: new Date().toISOString(),
     dataFeedElement: items,
   };

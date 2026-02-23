@@ -97,7 +97,7 @@ export default async function LlmProviderPage({ params }: Props) {
   }
 
   const dehydratedState = dehydrate(queryClient);
-  const schemaMarkup = buildModelsSchema(captured.firstPage);
+  const schemaMarkup = buildModelsSchema(captured.firstPage, `${decodedProvider} LLM Inference Pricing Feed`);
 
   return (
     <HydrationBoundary state={dehydratedState}>
