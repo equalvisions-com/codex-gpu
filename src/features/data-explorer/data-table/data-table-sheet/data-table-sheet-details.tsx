@@ -170,9 +170,14 @@ export function DataTableSheetDetails({
           <div className="pt-4">
             {href ? (
               <Button asChild className="w-full font-semibold">
-                <a href={href} target="_blank" rel="noopener noreferrer" title="This link may be an affiliate link" className="inline-flex items-center justify-center gap-2">
+                <a href={href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2">
                   Learn More
-                  <Info className="h-4 w-4" />
+                  <span className="relative group/info">
+                    <Info className="h-4 w-4" />
+                    <span className="pointer-events-none absolute bottom-full right-0 mb-2 hidden whitespace-nowrap rounded bg-popover px-2 py-1 text-[11px] font-normal text-popover-foreground shadow-md ring-1 ring-border group-hover/info:block">
+                      This link may be an affiliate link
+                    </span>
+                  </span>
                 </a>
               </Button>
             ) : (
