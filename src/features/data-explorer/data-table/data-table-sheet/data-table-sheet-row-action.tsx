@@ -102,20 +102,19 @@ export function DataTableSheetRowAction<
             Include
           </DropdownMenuItem>
         );
-      case "slider":
+      case "slider": {
+        const sliderMax = (field as { max?: number }).max ?? Infinity;
         return (
           <DropdownMenuGroup>
             <DropdownMenuItem
               onClick={() => updateFilter([0, value])}
             >
-              {/* FIXME: change icon as it is not clear */}
               <ChevronLeft />
               Less or equal than
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={() => updateFilter([value, 5000])}
+              onClick={() => updateFilter([value, sliderMax])}
             >
-              {/* FIXME: change icon as it is not clear */}
               <ChevronRight />
               Greater or equal than
             </DropdownMenuItem>
@@ -125,6 +124,7 @@ export function DataTableSheetRowAction<
             </DropdownMenuItem>
           </DropdownMenuGroup>
         );
+      }
       default:
         return null;
     }

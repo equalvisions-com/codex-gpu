@@ -1,7 +1,6 @@
 import { db } from "@/db/client";
 import { gpuPricing, userFavorites } from "@/db/schema";
-import { eq, sql, inArray, and, or, ilike, between, asc, desc } from "drizzle-orm";
-import { stableGpuKey } from "@/features/data-explorer/stable-keys";
+import { eq, sql, inArray, and, or, ilike, asc, desc } from "drizzle-orm";
 import type { SearchParamsType } from "@/features/data-explorer/table/search-params";
 import type { RowWithId } from "@/types/api";
 import { isArrayOfDates } from "@/lib/is-array";
@@ -12,37 +11,7 @@ import { logger } from "@/lib/logger";
 type GpuPricingRow = typeof gpuPricing.$inferSelect;
 
 // Provider sort priority — ordered by relevance to ML dev / startup audience
-const PROVIDER_SORT_PRIORITY: Record<string, number> = {
-  runpod: 1,
-  lambda: 2,
-  coreweave: 3,
-  togetherai: 4,
-  voltagepark: 5,
-  hyperstack: 6,
-  replicate: 7,
-  crusoe: 8,
-  nebius: 9,
-  paperspace: 10,
-  koyeb: 11,
-  thundercompute: 12,
-  digitalocean: 13,
-  vultr: 14,
-  scaleway: 15,
-  civo: 16,
-  latitude: 17,
-  ori: 18,
-  aws: 19,
-  googlecloud: 20,
-  azure: 21,
-  oracle: 22,
-  alibaba: 23,
-  verda: 24,
-  vast: 25,
-  oblivus: 26,
-  sesterce: 27,
-  hotaisle: 28,
-  flyio: 29,
-};
+// Single source of truth: array defines order, record is derived for O(1) lookup
 const PROVIDER_SORT_ORDER = [
   "runpod",
   "lambda",
@@ -74,6 +43,10 @@ const PROVIDER_SORT_ORDER = [
   "hotaisle",
   "flyio",
 ];
+
+const PROVIDER_SORT_PRIORITY: Record<string, number> = Object.fromEntries(
+  PROVIDER_SORT_ORDER.map((name, i) => [name, i + 1]),
+);
 
 const PROVIDER_PRIORITY_ARRAY_SQL = sql.raw(
   `ARRAY[${PROVIDER_SORT_ORDER.map((provider) => `'${provider}'`).join(", ")}]`,

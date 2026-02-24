@@ -44,6 +44,12 @@ function formatThroughput(value: number | null | undefined): string {
   return value.toFixed(1);
 }
 
+function formatTokenCount(value: number): string {
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
+  if (value >= 1000) return `${(value / 1000).toFixed(0)}K`;
+  return value.toString();
+}
+
 export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
   {
     id: "blank",
@@ -162,19 +168,9 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
 
       if (!contextLength) return <span className="text-muted-foreground">N/A</span>;
 
-      // Format large numbers (e.g., 256000 -> 256K, 1000000 -> 1M)
-      const formatContextLength = (length: number): string => {
-        if (length >= 1_000_000) {
-          return `${(length / 1_000_000).toFixed(1)}M`;
-        } else if (length >= 1000) {
-          return `${(length / 1000).toFixed(0)}K`;
-        }
-        return length.toString();
-      };
-
       return (
         <div className="font-mono text-sm text-right">
-          {formatContextLength(contextLength)} <span className="text-foreground/70">TOK</span>
+          {formatTokenCount(contextLength)} <span className="text-foreground/70">TOK</span>
         </div>
       );
     },
@@ -200,19 +196,9 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
         return <span className="text-foreground/70">N/A</span>;
       }
 
-      // Format large numbers (e.g., 96000 -> 96K, 1000000 -> 1M)
-      const formatMaxTokens = (tokens: number): string => {
-        if (tokens >= 1_000_000) {
-          return `${(tokens / 1_000_000).toFixed(1)}M`;
-        } else if (tokens >= 1000) {
-          return `${(tokens / 1000).toFixed(0)}K`;
-        }
-        return tokens.toString();
-      };
-
       return (
         <div className="font-mono text-sm text-right">
-          {formatMaxTokens(maxTokens)} <span className="text-foreground/70">TOK</span>
+          {formatTokenCount(maxTokens)} <span className="text-foreground/70">TOK</span>
         </div>
       );
     },

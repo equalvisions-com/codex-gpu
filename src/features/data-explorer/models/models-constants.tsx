@@ -74,7 +74,7 @@ const LogoBadge = ({
             sizes={`${size}px`}
             className="object-contain"
             loading="lazy"
-            onLoadingComplete={() => setLoaded(true)}
+            onLoad={() => setLoaded(true)}
           />
         </>
       ) : initial ? (

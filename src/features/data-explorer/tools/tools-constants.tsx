@@ -41,7 +41,7 @@ const LogoBadge = ({
           sizes={`${size}px`}
           className="object-contain"
           loading="lazy"
-          onLoadingComplete={() => setLoaded(true)}
+          onLoad={() => setLoaded(true)}
         />
       ) : initial ? (
         <span className="text-[10px] font-semibold uppercase text-foreground/70" aria-hidden="true">
