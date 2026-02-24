@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, ChevronUp, ExternalLink, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Info, X } from "lucide-react";
 import * as React from "react";
 import {
   Sheet,
@@ -172,7 +172,7 @@ export function DataTableSheetDetails({
               <Button asChild className="w-full font-semibold">
                 <a href={href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2">
                   Learn More
-                  <ExternalLink className="h-4 w-4" />
+                  <span title="This link may be an affiliate link"><Info className="h-4 w-4" /></span>
                 </a>
               </Button>
             ) : (
@@ -183,7 +183,7 @@ export function DataTableSheetDetails({
               >
                 <span className="inline-flex items-center gap-2">
                   Learn More
-                  <ExternalLink className="h-4 w-4" />
+                  <Info className="h-4 w-4" />
                 </span>
               </Button>
             )}
