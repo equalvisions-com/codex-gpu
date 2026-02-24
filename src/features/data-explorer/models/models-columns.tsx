@@ -7,7 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { cn } from "@/lib/utils";
 import { HoverCard as HoverCardPrimitive } from "radix-ui";
-import type { ColumnDef, SortingFn } from "@tanstack/react-table";
+import type { ColumnDef } from "@tanstack/react-table";
 import Image from "next/image";
 import type { ModelsColumnSchema } from "./models-schema";
 import { getModelProviderLogo } from "./model-provider-logos";
@@ -90,24 +90,28 @@ export const modelsColumns: ColumnDef<ModelsColumnSchema>[] = [
 
       return (
         <div className="flex min-w-0 items-center gap-2">
-          <span className="relative flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-md bg-background">
-            {logo ? (
-              <Image
-                src={logo.src}
-                alt=""
-                aria-hidden="true"
-                role="presentation"
-                fill
-                sizes="20px"
-                className="object-contain"
-                loading="eager"
-              />
-            ) : fallbackInitial ? (
-              <span className="text-[10px] font-semibold uppercase text-muted-foreground" aria-hidden="true">
-                {fallbackInitial}
-              </span>
-            ) : null}
-          </span>
+          {logo?.type === "icon" ? (
+            <logo.Avatar size={20} shape="circle" className="shrink-0" aria-hidden="true" />
+          ) : (
+            <span className="relative flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border/40 bg-background">
+              {logo?.type === "image" ? (
+                <Image
+                  src={logo.src}
+                  alt=""
+                  aria-hidden="true"
+                  role="presentation"
+                  fill
+                  sizes="20px"
+                  className="object-contain"
+                  loading="eager"
+                />
+              ) : fallbackInitial ? (
+                <span className="text-[10px] font-semibold uppercase text-muted-foreground" aria-hidden="true">
+                  {fallbackInitial}
+                </span>
+              ) : null}
+            </span>
+          )}
           <span className="truncate" title={provider || undefined}>
             {provider || "Unknown"}
           </span>

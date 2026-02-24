@@ -4,7 +4,7 @@ import type { DataTableFilterField, SheetField } from "@/features/data-explorer/
 import type { ModelsColumnSchema } from "./models-schema";
 import Image from "next/image";
 import * as React from "react";
-import { MODEL_PROVIDER_LOGOS } from "./model-provider-logos";
+import { getModelProviderLogo, getModelLogo, type LogoResult } from "./model-provider-logos";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
@@ -27,53 +27,56 @@ export const formatThroughputDisplay = (value: number | null | undefined) => {
   return `${formatted} TPS`;
 };
 
-const MODEL_AUTHOR_LOGOS: Record<string, { src: string; alt: string }> = Object.keys(
-  MODEL_PROVIDER_LOGOS,
-).reduce((acc, key) => {
-  acc[key.toLowerCase()] = MODEL_PROVIDER_LOGOS[key];
-  return acc;
-}, {} as Record<string, { src: string; alt: string }>);
-
-const getModelAuthorLogo = (author?: string | null) => {
-  if (!author) return null;
-  return MODEL_AUTHOR_LOGOS[author.toLowerCase()] ?? null;
-};
-
 const LogoBadge = ({
-  src,
-  alt,
+  logo,
   size,
   className,
+  fallbackLabel,
 }: {
-  src?: string | null;
-  alt?: string | null;
+  logo: LogoResult;
   size: number;
   className?: string;
+  fallbackLabel?: string | null;
 }) => {
   const [loaded, setLoaded] = React.useState(false);
-  const initial = alt?.charAt(0).toUpperCase() ?? "";
+  const initial = (logo?.alt ?? fallbackLabel)?.charAt(0).toUpperCase() ?? "";
 
+  // Lobe Avatar — self-contained badge with brand bg + icon
+  if (logo?.type === "icon") {
+    return (
+      <logo.Avatar
+        size={size}
+        shape="circle"
+        className={cn("shrink-0", className)}
+        aria-hidden="true"
+      />
+    );
+  }
+
+  // Image fallback — our own container with border/bg
   return (
     <span
       className={cn(
-        "relative flex items-center justify-center overflow-hidden rounded-md border border-border/60 bg-background",
+        "relative flex items-center justify-center overflow-hidden rounded-full border border-border/60 bg-background",
         className,
       )}
       style={{ width: size, height: size }}
     >
-      {!loaded ? <Skeleton className="absolute inset-0 h-full w-full animate-pulse" /> : null}
-      {src ? (
-        <Image
-          src={src}
-          alt=""
-          aria-hidden="true"
-          role="presentation"
-          fill
-          sizes={`${size}px`}
-          className="object-contain"
-          loading="lazy"
-          onLoadingComplete={() => setLoaded(true)}
-        />
+      {logo?.type === "image" ? (
+        <>
+          {!loaded ? <Skeleton className="absolute inset-0 h-full w-full animate-pulse" /> : null}
+          <Image
+            src={logo.src}
+            alt=""
+            aria-hidden="true"
+            role="presentation"
+            fill
+            sizes={`${size}px`}
+            className="object-contain"
+            loading="lazy"
+            onLoadingComplete={() => setLoaded(true)}
+          />
+        </>
       ) : initial ? (
         <span className="text-[10px] font-semibold uppercase text-foreground/70" aria-hidden="true">
           {initial}
@@ -85,14 +88,14 @@ const LogoBadge = ({
 
 const ModelProviderBadge = ({ provider }: { provider?: string | null }) => {
   const providerName = provider ?? "";
-  const logo = MODEL_PROVIDER_LOGOS[providerName] ?? getModelAuthorLogo(providerName);
+  const logo = getModelProviderLogo(providerName);
   return (
     <div className="flex min-w-0 items-center gap-2">
       <LogoBadge
-        src={logo?.src ?? null}
-        alt={logo?.alt ?? providerName}
+        logo={logo}
         size={20}
         className="h-5 w-5 shrink-0"
+        fallbackLabel={providerName}
       />
       <span className="truncate" title={providerName || undefined}>
         {providerName || "Unknown"}
@@ -209,20 +212,16 @@ export const sheetFields: SheetField<ModelsColumnSchema>[] = [
           : undefined;
       const fallback = row.name ?? "N/A";
       const value = row.shortName ?? fallback;
-      const authorLogo = getModelAuthorLogo(row.author);
+      const authorLogo = getModelLogo(row.name ?? row.shortName, row.author);
       return (
         <div className="flex items-start gap-3">
           {authorLogo ? (
-            <span className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border/60 bg-background">
-              <Image
-                src={authorLogo.src}
-                alt={authorLogo.alt}
-                fill
-                sizes="40px"
-                className="object-contain"
-                loading="lazy"
-              />
-            </span>
+            <LogoBadge
+              logo={authorLogo}
+              size={40}
+              className="shrink-0"
+              fallbackLabel={row.author}
+            />
           ) : (
             <div className="h-10 w-10 shrink-0" />
           )}

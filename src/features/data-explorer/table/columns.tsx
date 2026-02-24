@@ -38,24 +38,28 @@ export const columns: ColumnDef<ColumnSchema>[] = [
 
       return (
         <div className="flex min-w-0 items-center gap-2">
-          <span className="relative flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border/40 bg-background">
-            {logo ? (
-              <Image
-                src={logo.src}
-                alt=""
-                aria-hidden="true"
-                role="presentation"
-                fill
-                sizes="20px"
-                className="object-contain"
-                loading="eager"
-              />
-            ) : fallbackInitial ? (
-              <span className="text-[10px] font-semibold uppercase text-foreground/70" aria-hidden="true">
-                {fallbackInitial}
-              </span>
-            ) : null}
-          </span>
+          {logo?.type === "icon" ? (
+            <logo.Avatar size={20} shape="circle" className="shrink-0" aria-hidden="true" />
+          ) : (
+            <span className="relative flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border/40 bg-background">
+              {logo?.type === "image" ? (
+                <Image
+                  src={logo.src}
+                  alt=""
+                  aria-hidden="true"
+                  role="presentation"
+                  fill
+                  sizes="20px"
+                  className="object-contain"
+                  loading="eager"
+                />
+              ) : fallbackInitial ? (
+                <span className="text-[10px] font-semibold uppercase text-foreground/70" aria-hidden="true">
+                  {fallbackInitial}
+                </span>
+              ) : null}
+            </span>
+          )}
           <span className="truncate" title={displayName}>
             {displayName}
           </span>

@@ -9,19 +9,12 @@ import {
 
 import { DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import {
-  CalendarSearch,
   ChevronLeft,
   ChevronRight,
   Equal,
   Search,
 } from "lucide-react";
-import { CalendarDays } from "lucide-react";
-import { startOfDay } from "date-fns";
-import { startOfHour } from "date-fns";
-import { endOfDay } from "date-fns";
 import { Table } from "@tanstack/react-table";
-import { CalendarClock } from "lucide-react";
-import { endOfHour } from "date-fns";
 import { cn } from "@/lib/utils";
 import { DataTableFilterField } from "../types";
 import { useDataTable } from "../data-table-provider";
@@ -129,36 +122,6 @@ export function DataTableSheetRowAction<
             <DropdownMenuItem onClick={() => updateFilter([value])}>
               <Equal />
               Equal to
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
-        );
-      case "timerange":
-        const date = new Date(value);
-        return (
-          <DropdownMenuGroup>
-            <DropdownMenuItem onClick={() => updateFilter([date])}>
-              <CalendarSearch />
-              Exact timestamp
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                const start = startOfHour(date);
-                const end = endOfHour(date);
-                updateFilter([start, end]);
-              }}
-            >
-              <CalendarClock />
-              Same hour
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                const start = startOfDay(date);
-                const end = endOfDay(date);
-                updateFilter([start, end]);
-              }}
-            >
-              <CalendarDays />
-              Same day
             </DropdownMenuItem>
           </DropdownMenuGroup>
         );

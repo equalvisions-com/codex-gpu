@@ -6,7 +6,6 @@ import type { SearchParamsType } from "@/features/data-explorer/table/search-par
 import type { RowWithId } from "@/types/api";
 import { isArrayOfDates } from "@/lib/is-array";
 import { normalizeObservedAt } from "@/lib/normalize-observed-at";
-import { isSameDay } from "date-fns";
 import type { SQL } from "drizzle-orm";
 import { logger } from "@/lib/logger";
 

@@ -1,4 +1,134 @@
-export const MODEL_PROVIDER_LOGOS: Record<
+import type { ComponentType } from "react";
+import {
+  Ai21,
+  AiStudio,
+  AionLabs,
+  AlibabaCloud,
+  Anthropic,
+  Arcee,
+  AtlasCloud,
+  Azure,
+  Baseten,
+  Bedrock,
+  Bfl,
+  ByteDance,
+  Cerebras,
+  Cloudflare,
+  Cohere,
+  Crusoe,
+  DeepInfra,
+  DeepSeek,
+  Featherless,
+  Fireworks,
+  Friendli,
+  Google,
+  Groq,
+  Hyperbolic,
+  Inception,
+  Infermatic,
+  Inflection,
+  Liquid,
+  Meta,
+  Minimax,
+  Mistral,
+  Moonshot,
+  Morph,
+  Nebius,
+  Nova,
+  Novita,
+  Nvidia,
+  OpenAI,
+  Parasail,
+  Perplexity,
+  Qwen,
+  Relace,
+  SambaNova,
+  SiliconCloud,
+  Stepfun,
+  StreamLake,
+  Targon,
+  Together,
+  Upstage,
+  VertexAI,
+  XAI,
+  XiaomiMiMo,
+  ZAI,
+  // Model-family icons
+  Claude,
+  Gemini,
+  Gemma,
+  Grok,
+  Yi,
+  Aya,
+  Dbrx,
+} from "@lobehub/icons";
+
+// ---------------------------------------------------------------------------
+// Lobe icon mapping — Avatar variant (brand bg + colored icon, self-contained)
+// Accepts `size` and `shape` props
+// ---------------------------------------------------------------------------
+type LobeAvatar = ComponentType<{ size: number; shape?: "circle" | "square"; className?: string }>;
+
+const LOBE_ICON_MAP: Record<string, LobeAvatar> = {
+  ai21: Ai21.Avatar,
+  "google ai studio": AiStudio.Avatar,
+  aionlabs: AionLabs.Avatar,
+  "alibaba cloud": AlibabaCloud.Avatar,
+  anthropic: Anthropic.Avatar,
+  "arcee ai": Arcee.Avatar,
+  atlascloud: AtlasCloud.Avatar,
+  azure: Azure.Avatar,
+  baseten: Baseten.Avatar,
+  "amazon bedrock": Bedrock.Avatar,
+  "black forest labs": Bfl.Avatar,
+  seed: ByteDance.Avatar,
+  cerebras: Cerebras.Avatar,
+  cloudflare: Cloudflare.Avatar,
+  cohere: Cohere.Avatar,
+  crusoe: Crusoe.Avatar,
+  deepinfra: DeepInfra.Avatar,
+  deepseek: DeepSeek.Avatar,
+  featherless: Featherless.Avatar,
+  fireworks: Fireworks.Avatar,
+  friendli: Friendli.Avatar,
+  google: Google.Avatar,
+  groq: Groq.Avatar,
+  hyperbolic: Hyperbolic.Avatar,
+  inception: Inception.Avatar,
+  infermatic: Infermatic.Avatar,
+  inflection: Inflection.Avatar,
+  liquid: Liquid.Avatar,
+  meta: Meta.Avatar,
+  minimax: Minimax.Avatar,
+  mistral: Mistral.Avatar,
+  moonshotai: Moonshot.Avatar,
+  morph: Morph.Avatar,
+  nebius: Nebius.Avatar,
+  "amazon nova": Nova.Avatar,
+  novita: Novita.Avatar,
+  nvidia: Nvidia.Avatar,
+  openai: OpenAI.Avatar,
+  parasail: Parasail.Avatar,
+  perplexity: Perplexity.Avatar,
+  qwen: Qwen.Avatar,
+  relace: Relace.Avatar,
+  sambanova: SambaNova.Avatar,
+  siliconflow: SiliconCloud.Avatar,
+  stepfun: Stepfun.Avatar,
+  streamlake: StreamLake.Avatar,
+  targon: Targon.Avatar,
+  together: Together.Avatar,
+  upstage: Upstage.Avatar,
+  "google vertex": VertexAI.Avatar,
+  xai: XAI.Avatar,
+  "z.ai": ZAI.Avatar,
+  xiaomi: XiaomiMiMo.Avatar,
+};
+
+// ---------------------------------------------------------------------------
+// Image fallback mapping — used when lobe icon doesn't exist for a provider
+// ---------------------------------------------------------------------------
+const MODEL_PROVIDER_LOGOS: Record<
   string,
   {
     src: string;
@@ -67,15 +197,14 @@ export const MODEL_PROVIDER_LOGOS: Record<
   avian: { src: "", alt: "Avian" },
   "black forest labs": { src: "", alt: "Black Forest Labs" },
   byteplus: { src: "", alt: "BytePlus" },
-  cirrascale: { src: "", alt: "Cirrascale" },
-  clarifai: { src: "", alt: "Clarifai" },
-  inceptron: { src: "", alt: "Inceptron" },
+  cirrascale: { src: "/logos/cirrascale.png", alt: "Cirrascale" },
+  clarifai: { src: "/logos/clarifai.png", alt: "Clarifai" },
+  inceptron: { src: "/logos/inceptron.svg", alt: "Inceptron" },
   "io net": { src: "", alt: "Io Net" },
   mara: { src: "", alt: "Mara" },
   modelrun: { src: "", alt: "ModelRun" },
   modular: { src: "", alt: "Modular" },
-  seed: { src: "", alt: "Seed" },
-  sourceful: { src: "", alt: "Sourceful" },
+  sourceful: { src: "/logos/sourceful.ico", alt: "Sourceful" },
   stealth: { src: "", alt: "Stealth" },
   stepfun: { src: "", alt: "StepFun" },
   streamlake: { src: "", alt: "StreamLake" },
@@ -83,10 +212,68 @@ export const MODEL_PROVIDER_LOGOS: Record<
   xiaomi: { src: "", alt: "Xiaomi" },
 };
 
-export function getModelProviderLogo(provider?: string | null) {
+// ---------------------------------------------------------------------------
+// Unified logo result — consumers check `type` to decide how to render
+// ---------------------------------------------------------------------------
+export type LogoResult =
+  | { type: "icon"; Avatar: LobeAvatar; alt: string }
+  | { type: "image"; src: string; alt: string }
+  | null;
+
+/**
+ * Resolve a model provider's logo — prefers lobe Avatar icon, falls back to image.
+ */
+export function getModelProviderLogo(provider?: string | null): LogoResult {
   if (!provider) return null;
   const key = provider.toLowerCase().trim();
+
+  // 1. Try lobe Avatar first
+  const Avatar = LOBE_ICON_MAP[key];
+  if (Avatar) {
+    const entry = MODEL_PROVIDER_LOGOS[key];
+    return { type: "icon", Avatar, alt: entry?.alt ?? provider };
+  }
+
+  // 2. Fall back to image
   const entry = MODEL_PROVIDER_LOGOS[key];
-  if (!entry || !entry.src) return null;
-  return entry;
+  if (entry?.src) {
+    return { type: "image", src: entry.src, alt: entry.alt };
+  }
+
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// Model-family icons — used in sheet detail view to show model-specific icon
+// (e.g., Claude icon instead of Anthropic, Gemini instead of Google)
+// Falls back to author/provider logo when no family match
+// ---------------------------------------------------------------------------
+const MODEL_FAMILY_MAP: { keyword: string; Avatar: LobeAvatar; alt: string }[] = [
+  { keyword: "claude", Avatar: Claude.Avatar, alt: "Claude" },
+  { keyword: "gemini", Avatar: Gemini.Avatar, alt: "Gemini" },
+  { keyword: "gemma", Avatar: Gemma.Avatar, alt: "Gemma" },
+  { keyword: "grok", Avatar: Grok.Avatar, alt: "Grok" },
+  { keyword: "yi-", Avatar: Yi.Avatar, alt: "Yi" },
+  { keyword: "aya", Avatar: Aya.Avatar, alt: "Aya" },
+  { keyword: "dbrx", Avatar: Dbrx.Avatar, alt: "DBRX" },
+];
+
+/**
+ * Resolve a model's icon for the sheet detail view.
+ * Checks model name/slug for known families first, falls back to author logo.
+ */
+export function getModelLogo(
+  modelName?: string | null,
+  author?: string | null,
+): LogoResult {
+  if (modelName) {
+    const lower = modelName.toLowerCase();
+    for (const family of MODEL_FAMILY_MAP) {
+      if (lower.includes(family.keyword)) {
+        return { type: "icon", Avatar: family.Avatar, alt: family.alt };
+      }
+    }
+  }
+  // Fall back to author/provider logo
+  return getModelProviderLogo(author);
 }

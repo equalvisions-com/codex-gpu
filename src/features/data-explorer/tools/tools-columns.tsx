@@ -66,7 +66,7 @@ export const toolsColumns: ColumnDef<ToolColumnSchema>[] = [
       const fallbackInitial = name ? name.charAt(0).toUpperCase() : "";
       return (
         <div className="flex min-w-0 items-center gap-2">
-          <span className="relative flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border/40 bg-background">
+          <span className="relative flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border/40 bg-background">
             {logo && logo.src ? (
               <Image
                 src={logo.src}

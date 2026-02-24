@@ -1,10 +1,37 @@
-export const PROVIDER_LOGOS: Record<
-  string,
-  {
-    src: string;
-    alt: string;
-  }
-> = {
+import type { ComponentType } from "react";
+import {
+  AlibabaCloud,
+  Aws,
+  Azure,
+  Crusoe,
+  GoogleCloud,
+  Lambda,
+  Nebius,
+  Replicate,
+  Together,
+} from "@lobehub/icons";
+
+// ---------------------------------------------------------------------------
+// Lobe Avatar mapping for GPU providers (brand bg + icon, self-contained)
+// ---------------------------------------------------------------------------
+type LobeAvatar = ComponentType<{ size: number; shape?: "circle" | "square"; className?: string }>;
+
+const GPU_LOBE_ICON_MAP: Record<string, LobeAvatar> = {
+  nebius: Nebius.Avatar,
+  lambda: Lambda.Avatar,
+  crusoe: Crusoe.Avatar,
+  googlecloud: GoogleCloud.Avatar,
+  replicate: Replicate.Avatar,
+  aws: Aws.Avatar,
+  azure: Azure.Avatar,
+  alibaba: AlibabaCloud.Avatar,
+  togetherai: Together.Avatar,
+};
+
+// ---------------------------------------------------------------------------
+// Image fallback mapping
+// ---------------------------------------------------------------------------
+const PROVIDER_LOGOS: Record<string, { src: string; alt: string }> = {
   coreweave: { src: "/logos/coreweave.png", alt: "CoreWeave" },
   nebius: { src: "/logos/nebius.png", alt: "Nebius" },
   hyperstack: { src: "/logos/hyperstack.png", alt: "Hyperstack" },
@@ -36,10 +63,32 @@ export const PROVIDER_LOGOS: Record<
   togetherai: { src: "/logos/together.svg", alt: "Together AI" },
 };
 
-export function getGpuProviderLogo(provider?: string | null) {
+// ---------------------------------------------------------------------------
+// Unified logo result
+// ---------------------------------------------------------------------------
+export type GpuLogoResult =
+  | { type: "icon"; Avatar: LobeAvatar; alt: string }
+  | { type: "image"; src: string; alt: string }
+  | null;
+
+export function getGpuProviderLogo(provider?: string | null): GpuLogoResult {
   if (!provider) return null;
   const key = provider.toLowerCase().trim();
-  return PROVIDER_LOGOS[key] ?? null;
+
+  // 1. Try lobe Avatar first
+  const Avatar = GPU_LOBE_ICON_MAP[key];
+  if (Avatar) {
+    const entry = PROVIDER_LOGOS[key];
+    return { type: "icon", Avatar, alt: entry?.alt ?? provider };
+  }
+
+  // 2. Fall back to image
+  const entry = PROVIDER_LOGOS[key];
+  if (entry?.src) {
+    return { type: "image", src: entry.src, alt: entry.alt };
+  }
+
+  return null;
 }
 
 // Get display name from PROVIDER_LOGOS.alt (single source of truth)

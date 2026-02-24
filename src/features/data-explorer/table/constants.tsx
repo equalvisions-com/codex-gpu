@@ -5,11 +5,10 @@ import type {
   Option,
   SheetField,
 } from "@/features/data-explorer/data-table/types";
-import { format } from "date-fns";
 import type { ColumnSchema } from "./schema";
 import Image from "next/image";
 import * as React from "react";
-import { getGpuProviderLogo, getProviderDisplayName } from "./provider-logos";
+import { getGpuProviderLogo, getProviderDisplayName, type GpuLogoResult } from "./provider-logos";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
@@ -26,44 +25,58 @@ export const gpuColumnOrder = [
 ];
 
 const LogoBadge = ({
-  src,
-  alt,
+  logo,
   size,
   className,
+  fallbackLabel,
 }: {
-  src?: string | null;
-  alt?: string | null;
+  logo: GpuLogoResult;
   size: number;
   className?: string;
+  fallbackLabel?: string | null;
 }) => {
   const [loaded, setLoaded] = React.useState(false);
+  const initial = (logo?.alt ?? fallbackLabel)?.charAt(0).toUpperCase() ?? "";
+
+  if (logo?.type === "icon") {
+    return (
+      <logo.Avatar
+        size={size}
+        shape="circle"
+        className={cn("shrink-0", className)}
+        aria-hidden="true"
+      />
+    );
+  }
 
   return (
     <span
       className={cn(
-        "relative flex items-center justify-center overflow-hidden rounded-md border border-border/60 bg-background",
+        "relative flex items-center justify-center overflow-hidden rounded-full border border-border/60 bg-background",
         className,
       )}
       style={{ width: size, height: size }}
     >
-      {!loaded ? <Skeleton className="absolute inset-0 h-full w-full animate-pulse" /> : null}
-      {src ? (
-        <Image
-          src={src}
-          alt=""
-          aria-hidden="true"
-          role="presentation"
-          fill
-          sizes={`${size}px`}
-          className="object-contain"
-          loading="lazy"
-          onLoadingComplete={() => setLoaded(true)}
-        />
-      ) : (
-        <div className="flex h-full w-full items-center justify-center text-[10px] font-semibold uppercase text-foreground/70" aria-hidden="true">
-          {(alt ?? "").charAt(0)}
-        </div>
-      )}
+      {logo?.type === "image" ? (
+        <>
+          {!loaded ? <Skeleton className="absolute inset-0 h-full w-full animate-pulse" /> : null}
+          <Image
+            src={logo.src}
+            alt=""
+            aria-hidden="true"
+            role="presentation"
+            fill
+            sizes={`${size}px`}
+            className="object-contain"
+            loading="lazy"
+            onLoadingComplete={() => setLoaded(true)}
+          />
+        </>
+      ) : initial ? (
+        <span className="text-[10px] font-semibold uppercase text-foreground/70" aria-hidden="true">
+          {initial}
+        </span>
+      ) : null}
     </span>
   );
 };
@@ -71,14 +84,13 @@ const LogoBadge = ({
 const ProviderBadge = ({ provider }: { provider?: string | null }) => {
   const logo = getGpuProviderLogo(provider ?? undefined);
   const displayName = getProviderDisplayName(provider);
-  const fallbackInitial = displayName.charAt(0).toUpperCase();
   return (
     <div className="flex min-w-0 items-center gap-2">
       <LogoBadge
-        src={logo?.src ?? null}
-        alt={logo?.alt ?? fallbackInitial}
+        logo={logo}
         size={20}
         className="h-5 w-5 shrink-0"
+        fallbackLabel={displayName}
       />
       <span className="truncate" title={displayName}>
         {displayName}
@@ -199,14 +211,17 @@ export const sheetFields = [
       const headlineParts = headlineSource.trim().split(/\s+/);
       const firstWord = headlineParts.shift() ?? "";
       const remaining = headlineParts.join(" ") || "Unknown configuration";
-      const brandLogo = getGpuBrandLogo(firstWord);
+      const brandEntry = getGpuBrandLogo(firstWord);
+      const brandLogo: GpuLogoResult = brandEntry
+        ? { type: "image", src: brandEntry.src, alt: brandEntry.alt }
+        : null;
       return (
         <div className="flex items-start gap-3">
           <LogoBadge
-            src={brandLogo?.src ?? null}
-            alt={brandLogo?.alt ?? firstWord}
+            logo={brandLogo}
             size={40}
             className="h-10 w-10 shrink-0"
+            fallbackLabel={firstWord}
           />
           <div className="flex flex-col gap-0 leading-tight">
             <h2 className={cn("text-lg font-semibold leading-tight tracking-tight", titleClassName)}>

@@ -25,7 +25,7 @@ const LogoBadge = ({
   return (
     <span
       className={cn(
-        "relative flex items-center justify-center overflow-hidden rounded-md border border-border/60 bg-background",
+        "relative flex items-center justify-center overflow-hidden rounded-full border border-border/60 bg-background",
         className,
       )}
       style={{ width: size, height: size }}

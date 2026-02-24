@@ -30,13 +30,6 @@ type Slider = {
   options?: Option[];
 };
 
-type Timerange = {
-  type: "timerange";
-  // Timerange typically works with date ranges, no min/max needed like slider
-  options?: Option[];
-};
-
-
 type Base<TData> = {
   label: string;
   value: keyof TData | string;
@@ -50,8 +43,6 @@ type Base<TData> = {
   commandDisabled?: boolean;
 };
 
-type DataTableTimerangeFilterField<TData> = Base<TData> & Timerange;
-
 export type DataTableCheckboxFilterField<TData> = Base<TData> & Checkbox;
 export type DataTableSliderFilterField<TData> = Base<TData> & Slider;
 export type DataTableInputFilterField<TData> = Base<TData> & Input;
@@ -59,8 +50,7 @@ export type DataTableInputFilterField<TData> = Base<TData> & Input;
 export type DataTableFilterField<TData> =
   | DataTableCheckboxFilterField<TData>
   | DataTableSliderFilterField<TData>
-  | DataTableInputFilterField<TData>
-  | DataTableTimerangeFilterField<TData>;
+  | DataTableInputFilterField<TData>;
 
 /** ----------------------------------------- */
 
@@ -68,7 +58,7 @@ export type SheetField<TData, TMeta = Record<string, unknown>> = {
   id: keyof TData;
   label: string;
   // "readonly" displays the value; other types enable filter actions via dropdown
-  type: "readonly" | "input" | "checkbox" | "slider" | "timerange";
+  type: "readonly" | "input" | "checkbox" | "slider";
   component?: (
     // REMINDER: this is used to pass additional data like the `InfiniteQueryMeta`
     props: TData & {
