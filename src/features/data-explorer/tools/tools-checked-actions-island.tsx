@@ -32,6 +32,9 @@ import { syncToolFavorites } from "@/lib/tool-favorites/sync";
 import { ToolsCompareDialog } from "./tools-compare-dialog";
 
 export function ToolsCheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteKeys?: ToolFavoriteKey[] }) {
+  "use no memo";
+  // Opt out of React Compiler — `table` from context is a stable reference
+  // (TanStack mutates internally), so the compiler incorrectly caches method results.
   const { checkedRows, table } = useDataTable<ToolColumnSchema, unknown>();
   const queryClient = useQueryClient();
   const bcRef = React.useRef<BroadcastChannel | null>(null);

@@ -32,11 +32,6 @@ interface DataTableBaseContextType<TData = unknown, TValue = unknown> {
   filterFields: DataTableFilterField<TData>[];
   columns: ColumnDef<TData, TValue>[];
   isLoading?: boolean;
-  // Explicit data-length signal so the context memo invalidates when data changes.
-  // The `table` reference from useReactTable is stable (TanStack mutates internally),
-  // so without this, consumers like DataTableHeaderCheckbox won't re-render when
-  // rows arrive (e.g. in favorites mode where isLoading may not transition).
-  dataLength?: number;
   getFacetedUniqueValues?: (
     table: Table<TData>,
     columnId: string,
@@ -72,7 +67,6 @@ export function DataTableProvider<TData, TValue>({
     filterFields,
     columns,
     isLoading,
-    dataLength,
     getFacetedUniqueValues,
     getFacetedMinMaxValues,
     columnFilters = [],
@@ -94,7 +88,6 @@ export function DataTableProvider<TData, TValue>({
       filterFields,
       columns,
       isLoading,
-      dataLength,
       getFacetedUniqueValues,
       getFacetedMinMaxValues,
       columnFilters,
@@ -114,7 +107,6 @@ export function DataTableProvider<TData, TValue>({
       filterFields,
       columns,
       isLoading,
-      dataLength,
       getFacetedUniqueValues,
       getFacetedMinMaxValues,
       columnFilters,

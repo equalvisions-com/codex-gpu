@@ -29,6 +29,9 @@ export function DataTableSheetDetails({
   children,
   getRowHref,
 }: DataTableSheetDetailsProps) {
+  "use no memo";
+  // Opt out of React Compiler — `table` from context is a stable reference
+  // (TanStack mutates internally), so the compiler incorrectly caches method results.
   const { table, rowSelection, isLoading } = useDataTable();
 
   const selectedRowKey = Object.keys(rowSelection)?.[0];

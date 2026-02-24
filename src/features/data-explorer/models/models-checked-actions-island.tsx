@@ -31,6 +31,9 @@ import type { Row } from "@tanstack/react-table";
 import { ModelCompareDialog } from "./model-compare-dialog";
 
 export function ModelsCheckedActionsIsland({ initialFavoriteKeys }: { initialFavoriteKeys?: ModelFavoriteKey[] }) {
+  "use no memo";
+  // Opt out of React Compiler — `table` from context is a stable reference
+  // (TanStack mutates internally), so the compiler incorrectly caches method results.
   const { checkedRows, table } = useDataTable<ModelsColumnSchema, unknown>();
   const queryClient = useQueryClient();
   const bcRef = React.useRef<BroadcastChannel | null>(null);
