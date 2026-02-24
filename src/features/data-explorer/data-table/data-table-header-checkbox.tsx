@@ -6,6 +6,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useDataTable } from "./data-table-provider";
 
 export function DataTableHeaderCheckbox() {
+  "use no memo";
+  // Opt out of React Compiler — `table` is a stable reference (TanStack Table
+  // mutates internally), so the compiler incorrectly caches method-call results
+  // like `table.getRowModel().rows` across renders, returning stale empty rows.
   const { table, checkedRows, setCheckedRows } = useDataTable<unknown, unknown>();
 
   const rows = table.getRowModel().rows;
