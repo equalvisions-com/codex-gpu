@@ -518,6 +518,7 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
       }
       enableColumnOrdering={false}
       isLoading={isFetching || isLoading}
+      dataLength={data.length}
       getFacetedUniqueValues={getFacetedUniqueValues}
       getFacetedMinMaxValues={getFacetedMinMaxValues}
     >
