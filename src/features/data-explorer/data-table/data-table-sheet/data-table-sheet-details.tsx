@@ -2,6 +2,7 @@
 
 import { ChevronDown, ChevronUp, Info, X } from "lucide-react";
 import * as React from "react";
+import { Tooltip as TooltipPrimitive } from "radix-ui";
 import {
   Sheet,
   SheetClose,
@@ -175,12 +176,26 @@ export function DataTableSheetDetails({
               <Button asChild className="w-full font-semibold">
                 <a href={href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2">
                   Learn More
-                  <span className="relative group/info">
-                    <Info className="h-4 w-4" />
-                    <span className="pointer-events-none absolute bottom-full right-0 mb-2 hidden whitespace-nowrap rounded bg-popover px-2 py-1 text-[11px] font-normal text-popover-foreground shadow-md ring-1 ring-border group-hover/info:block">
-                      This link may be an affiliate link
-                    </span>
-                  </span>
+                  <TooltipPrimitive.Provider delayDuration={300}>
+                    <TooltipPrimitive.Root>
+                      <TooltipPrimitive.Trigger asChild onClick={(e) => e.preventDefault()}>
+                        <span className="inline-flex">
+                          <Info className="h-4 w-4" />
+                        </span>
+                      </TooltipPrimitive.Trigger>
+                      <TooltipPrimitive.Portal>
+                        <TooltipPrimitive.Content
+                          side="top"
+                          align="center"
+                          sideOffset={8}
+                          className="z-50 rounded bg-popover px-2 py-1 text-[11px] font-normal text-popover-foreground shadow-md ring-1 ring-border animate-in fade-in-0 zoom-in-95"
+                        >
+                          This link may be an affiliate link
+                          <TooltipPrimitive.Arrow className="fill-popover" />
+                        </TooltipPrimitive.Content>
+                      </TooltipPrimitive.Portal>
+                    </TooltipPrimitive.Root>
+                  </TooltipPrimitive.Provider>
                 </a>
               </Button>
             ) : (
