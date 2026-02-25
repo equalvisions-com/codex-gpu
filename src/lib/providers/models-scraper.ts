@@ -183,13 +183,11 @@ class ModelsScraper {
 
     // Prepend author when the short name starts with a version/codename identifier
     // that's meaningless without the brand — e.g. "R1" → "DeepSeek R1"
-    // Only applies when the name starts with a letter+number pattern (R1, V3, etc.)
-    // and doesn't already contain the author name
-    if (author && cleaned.length > 0) {
+    // Only applies to DeepSeek models where codenames like R1, V3 are ambiguous alone
+    if (author && cleaned.length > 0 && author.toLowerCase() === 'deepseek') {
       const cleanedLower = cleaned.toLowerCase();
-      const authorLower = author.toLowerCase();
       const startsWithCodename = /^[A-Za-z]\d/.test(cleaned);
-      if (startsWithCodename && !cleanedLower.includes(authorLower)) {
+      if (startsWithCodename && !cleanedLower.includes('deepseek')) {
         cleaned = `${author} ${cleaned}`;
       }
     }
