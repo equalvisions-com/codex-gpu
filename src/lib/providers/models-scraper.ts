@@ -175,17 +175,8 @@ class ModelsScraper {
 
     let cleaned = value.trim();
 
-    // Strip "Author: " or "Author " prefix — OpenRouter redundantly includes it
-    // in the name field (e.g. "OpenAI: o4 Mini" → "o4 Mini")
-    if (author) {
-      const lower = cleaned.toLowerCase();
-      const prefix = author.toLowerCase();
-      if (lower.startsWith(prefix + ': ')) {
-        cleaned = cleaned.slice(author.length + 2).trim();
-      } else if (lower.startsWith(prefix + ' ')) {
-        cleaned = cleaned.slice(author.length).trim();
-      }
-    }
+    // Strip "OpenAI: " or "OpenAI " prefix — OpenRouter redundantly includes it
+    cleaned = cleaned.replace(/^OpenAI[:\s]\s*/i, '').trim();
 
     // Strip " (free)" — OpenRouter pricing variant, not part of the model name
     cleaned = cleaned.replace(/\s*\(free\)/gi, '').trim();
@@ -312,7 +303,7 @@ class ModelsScraper {
             return {
               id: uniqueId,
               slug: uniqueSlug, // Now includes provider prefix for uniqueness
-              name: this.cleanShortName(model.name, modelAuthor) || null,
+              name: model.name || null,
               shortName: this.cleanShortName(model.short_name, modelAuthor),
               author: modelAuthor,
               description: model.description || null,
