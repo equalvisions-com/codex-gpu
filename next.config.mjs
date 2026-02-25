@@ -1,9 +1,4 @@
-import bundleAnalyzer from "@next/bundle-analyzer";
 import { withPlausibleProxy } from "next-plausible";
-
-const withBundleAnalyzer = bundleAnalyzer({
-  enabled: process.env.ANALYZE === "true",
-});
 
 /** @type {import("next").NextConfig} */
 const nextConfig = {
@@ -22,4 +17,4 @@ const nextConfig = {
   },
 };
 
-export default withPlausibleProxy()(withBundleAnalyzer(nextConfig));
+export default withPlausibleProxy()(nextConfig);
