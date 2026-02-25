@@ -175,9 +175,6 @@ class ModelsScraper {
 
     let cleaned = value.trim();
 
-    // Strip "OpenAI: " or "OpenAI " prefix — OpenRouter redundantly includes it
-    cleaned = cleaned.replace(/^OpenAI[:\s]\s*/i, '').trim();
-
     // Strip " (free)" — OpenRouter pricing variant, not part of the model name
     cleaned = cleaned.replace(/\s*\(free\)/gi, '').trim();
 

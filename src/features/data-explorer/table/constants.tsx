@@ -90,7 +90,7 @@ const ProviderBadge = ({ provider }: { provider?: string | null }) => {
     <Link
       href={`/gpus/${slug}`}
       prefetch={false}
-      className="flex min-w-0 items-center gap-2 hover:underline"
+      className="flex min-w-0 items-center gap-2 underline"
       onClick={(e) => e.stopPropagation()}
     >
       <LogoBadge
