@@ -27,12 +27,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title,
     description,
-    alternates: { canonical: `/llms/${encodeURIComponent(provider)}` },
+    alternates: { canonical: `/llms/${provider}` },
     openGraph: {
       title,
       description,
       images: [SHARED_OG_IMAGE],
-      url: `/llms/${encodeURIComponent(provider)}`,
+      url: `/llms/${provider}`,
       type: "website",
     },
     twitter: {
