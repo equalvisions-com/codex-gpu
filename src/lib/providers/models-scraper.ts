@@ -175,6 +175,12 @@ class ModelsScraper {
 
     let cleaned = value.trim();
 
+    // Strip author/provider prefix when OpenRouter redundantly includes it
+    // e.g. "OpenAI o4 Mini" → "o4 Mini" (author is already tracked separately)
+    if (author && cleaned.toLowerCase().startsWith(author.toLowerCase() + ' ')) {
+      cleaned = cleaned.slice(author.length).trim();
+    }
+
     // Strip " (free)" — OpenRouter pricing variant, not part of the model name
     cleaned = cleaned.replace(/\s*\(free\)/gi, '').trim();
 

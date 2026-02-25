@@ -22,6 +22,8 @@ interface DataTableSheetDetailsProps {
   titleClassName?: string;
   children?: React.ReactNode;
   getRowHref?: (row: Record<string, unknown>) => string | null;
+  /** Show affiliate link tooltip on the Info icon (default: true) */
+  showAffiliateTooltip?: boolean;
 }
 
 export function DataTableSheetDetails({
@@ -29,6 +31,7 @@ export function DataTableSheetDetails({
   titleClassName,
   children,
   getRowHref,
+  showAffiliateTooltip = true,
 }: DataTableSheetDetailsProps) {
   "use no memo";
   // Opt out of React Compiler — `table` from context is a stable reference
@@ -176,26 +179,30 @@ export function DataTableSheetDetails({
               <Button asChild className="w-full font-semibold">
                 <a href={href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2">
                   Learn More
-                  <TooltipPrimitive.Provider delayDuration={300}>
-                    <TooltipPrimitive.Root>
-                      <TooltipPrimitive.Trigger asChild onClick={(e) => e.preventDefault()}>
-                        <span className="inline-flex">
-                          <Info className="h-4 w-4" />
-                        </span>
-                      </TooltipPrimitive.Trigger>
-                      <TooltipPrimitive.Portal>
-                        <TooltipPrimitive.Content
-                          side="top"
-                          align="center"
-                          sideOffset={8}
-                          className="z-50 rounded bg-popover px-2 py-1 text-[11px] font-normal text-popover-foreground shadow-md ring-1 ring-border animate-in fade-in-0 zoom-in-95"
-                        >
-                          This link may be an affiliate link
-                          <TooltipPrimitive.Arrow className="fill-popover" />
-                        </TooltipPrimitive.Content>
-                      </TooltipPrimitive.Portal>
-                    </TooltipPrimitive.Root>
-                  </TooltipPrimitive.Provider>
+                  {showAffiliateTooltip ? (
+                    <TooltipPrimitive.Provider delayDuration={300}>
+                      <TooltipPrimitive.Root>
+                        <TooltipPrimitive.Trigger asChild onClick={(e) => e.preventDefault()}>
+                          <span className="inline-flex">
+                            <Info className="h-4 w-4" />
+                          </span>
+                        </TooltipPrimitive.Trigger>
+                        <TooltipPrimitive.Portal>
+                          <TooltipPrimitive.Content
+                            side="top"
+                            align="center"
+                            sideOffset={8}
+                            className="z-50 rounded bg-popover px-2 py-1 text-[11px] font-normal text-popover-foreground shadow-md ring-1 ring-border animate-in fade-in-0 zoom-in-95"
+                          >
+                            This link may be an affiliate link
+                            <TooltipPrimitive.Arrow className="fill-popover" />
+                          </TooltipPrimitive.Content>
+                        </TooltipPrimitive.Portal>
+                      </TooltipPrimitive.Root>
+                    </TooltipPrimitive.Provider>
+                  ) : (
+                    <Info className="h-4 w-4" />
+                  )}
                 </a>
               </Button>
             ) : (

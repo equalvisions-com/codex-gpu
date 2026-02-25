@@ -352,6 +352,7 @@ export function ModelsClient({ initialFavoriteKeys, isFavoritesMode }: ModelsCli
           );
         }}
         getRowHref={(row) => row.permaslug ? `https://openrouter.ai/models/${row.permaslug}` : null}
+        showAffiliateTooltip={false}
         renderCheckedActions={(meta) => (
           <ModelsCheckedActionsIsland
             initialFavoriteKeys={meta.initialFavoriteKeys}

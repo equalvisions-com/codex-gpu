@@ -312,6 +312,7 @@ export function ToolsClient({ initialFavoriteKeys, isFavoritesMode }: ToolsClien
         renderSheetCharts={() => null}
         sheetContentClassName="border-b border-border/60"
         getRowHref={(row) => row.url || null}
+        showAffiliateTooltip={false}
         renderCheckedActions={(meta) => (
           <ToolsCheckedActionsIsland initialFavoriteKeys={meta.initialFavoriteKeys} />
         )}

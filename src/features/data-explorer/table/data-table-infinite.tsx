@@ -132,6 +132,7 @@ interface DataTableInfiniteProps<TData, TValue, TMeta, TFavorite> {
   primaryColumnId?: string;
   sheetContentClassName?: string;
   getRowHref?: (row: TData) => string | null;
+  showAffiliateTooltip?: boolean;
 }
 
 export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>({
@@ -171,6 +172,7 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
   primaryColumnId = "gpu_model",
   sheetContentClassName,
   getRowHref,
+  showAffiliateTooltip,
 }: DataTableInfiniteProps<TData, TValue, TMeta, TFavorite>) {
   // Independent checkbox-only state (does not control the details pane)
   const [checkedRows, setCheckedRows] = React.useState<Record<string, boolean>>({});
@@ -841,6 +843,7 @@ export function DataTableInfinite<TData, TValue, TMeta, TFavorite = FavoriteKey>
         title={renderSheetTitle({ row: selectedRow })}
         titleClassName="font-mono"
         getRowHref={getRowHref ? (row) => getRowHref(row as TData) : undefined}
+        showAffiliateTooltip={showAffiliateTooltip}
       >
         <div className="space-y-0">
           <MemoizedDataTableSheetContent
