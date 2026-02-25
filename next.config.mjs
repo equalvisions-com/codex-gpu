@@ -11,8 +11,11 @@ const nextConfig = {
       "lucide-react",
       "radix-ui",
       "@tanstack/react-table",
+      "@tanstack/react-query",
       "@tanstack/react-virtual",
+      "@lobehub/icons",
       "recharts",
+      "zod",
     ],
   },
 };
