@@ -7,6 +7,7 @@ import type {
 } from "@/features/data-explorer/data-table/types";
 import type { ColumnSchema } from "./schema";
 import Image from "next/image";
+import Link from "next/link";
 import * as React from "react";
 import { getGpuProviderLogo, getProviderDisplayName, type GpuLogoResult } from "./provider-logos";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -84,8 +85,14 @@ const LogoBadge = ({
 const ProviderBadge = ({ provider }: { provider?: string | null }) => {
   const logo = getGpuProviderLogo(provider ?? undefined);
   const displayName = getProviderDisplayName(provider);
+  const slug = (provider ?? "").toLowerCase().trim();
   return (
-    <div className="flex min-w-0 items-center gap-2">
+    <Link
+      href={`/gpus/${slug}`}
+      prefetch={false}
+      className="flex min-w-0 items-center gap-2 hover:underline"
+      onClick={(e) => e.stopPropagation()}
+    >
       <LogoBadge
         logo={logo}
         size={20}
@@ -95,7 +102,7 @@ const ProviderBadge = ({ provider }: { provider?: string | null }) => {
       <span className="truncate" title={displayName}>
         {displayName}
       </span>
-    </div>
+    </Link>
   );
 };
 

@@ -3,6 +3,7 @@
 import type { DataTableFilterField, SheetField } from "@/features/data-explorer/data-table/types";
 import type { ModelsColumnSchema } from "./models-schema";
 import Image from "next/image";
+import Link from "next/link";
 import * as React from "react";
 import { getModelProviderLogo, getModelLogo, type LogoResult } from "./model-provider-logos";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -90,7 +91,12 @@ const ModelProviderBadge = ({ provider }: { provider?: string | null }) => {
   const providerName = provider ?? "";
   const logo = getModelProviderLogo(providerName);
   return (
-    <div className="flex min-w-0 items-center gap-2">
+    <Link
+      href={`/llms/${encodeURIComponent(providerName)}`}
+      prefetch={false}
+      className="flex min-w-0 items-center gap-2 hover:underline"
+      onClick={(e) => e.stopPropagation()}
+    >
       <LogoBadge
         logo={logo}
         size={20}
@@ -100,7 +106,7 @@ const ModelProviderBadge = ({ provider }: { provider?: string | null }) => {
       <span className="truncate" title={providerName || undefined}>
         {providerName || "Unknown"}
       </span>
-    </div>
+    </Link>
   );
 };
 
