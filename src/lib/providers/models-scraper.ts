@@ -175,12 +175,11 @@ class ModelsScraper {
 
     let cleaned = value.trim();
 
-    // Strip author/provider prefix when OpenRouter redundantly includes it
-    // e.g. "OpenAI o4 Mini" → "o4 Mini" (author is already tracked separately)
-    // Also handles colon-separated format: "OpenAI: o4 Mini" → "o4 Mini"
+    // Strip "Author: " or "Author " prefix — OpenRouter redundantly includes it
+    // in the name field (e.g. "OpenAI: o4 Mini" → "o4 Mini")
     if (author) {
-      const prefix = author.toLowerCase();
       const lower = cleaned.toLowerCase();
+      const prefix = author.toLowerCase();
       if (lower.startsWith(prefix + ': ')) {
         cleaned = cleaned.slice(author.length + 2).trim();
       } else if (lower.startsWith(prefix + ' ')) {
