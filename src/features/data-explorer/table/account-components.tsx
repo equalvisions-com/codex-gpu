@@ -231,41 +231,23 @@ export function UserMenu({
         </DropdownMenuTrigger>
       </div>
     ) : (
-      <div
-        className={cn(
-          "flex items-center gap-2",
-          fullWidth ? "w-full" : "w-auto",
-          triggerClassName,
-        )}
-      >
+      <DropdownMenuTrigger asChild>
         <Button
           type="button"
           variant="ghost"
           className={cn(
-            buttonClassName,
-            "justify-start",
-            fullWidth && "flex-1",
+            "flex items-center text-sm font-medium text-foreground hover:text-accent-foreground focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 active:outline-none",
+            "!h-9 !w-9 justify-center rounded-full px-0",
+            "border border-border bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground hover:text-accent-foreground shadow-sm",
+            triggerClassName,
           )}
-          onClick={primaryClickHandler}
           disabled={isSigningOut}
           aria-label={ariaLabel}
         >
-          <LogIn className="h-4 w-4 text-foreground" />
+          <LogIn className="h-4 w-4 text-foreground/70" />
           <span className="sr-only">{preferredActionLabel}</span>
         </Button>
-        <DropdownMenuTrigger asChild>
-          <Button
-            type="button"
-            variant="ghost"
-            className="ml-auto flex h-9 w-9 justify-end px-0 hover:bg-transparent focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 active:outline-none"
-            aria-label="Open account menu"
-            disabled={isSigningOut}
-          >
-            <EllipsisVertical className="h-4 w-4 text-foreground/70" />
-            <span className="sr-only">Open account menu</span>
-          </Button>
-        </DropdownMenuTrigger>
-      </div>
+      </DropdownMenuTrigger>
     );
   } else {
     triggerElement = (
