@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { gpuPricingCache } from "@/lib/gpu-pricing-cache";
 import { modelsCache } from "@/lib/models-cache";
+import { toGpuModelSlug } from "@/lib/gpu-model-slug";
 import { logger } from "@/lib/logger";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://deploybase.ai";
@@ -37,8 +38,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // Dynamically add provider pages from the database
+  // Dynamically add provider and model pages from the database
   let gpuProviderPages: MetadataRoute.Sitemap = [];
+  let gpuModelPages: MetadataRoute.Sitemap = [];
   let llmProviderPages: MetadataRoute.Sitemap = [];
 
   try {
@@ -49,8 +51,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "daily" as const,
       priority: 0.7,
     }));
+    gpuModelPages = gpuFacets.gpu_model.rows.map((row) => ({
+      url: `${SITE_URL}/gpus/models/${toGpuModelSlug(row.value)}`,
+      lastModified,
+      changeFrequency: "daily" as const,
+      priority: 0.6,
+    }));
   } catch (error) {
-    logger.error("[sitemap] Failed to fetch GPU providers", {
+    logger.error("[sitemap] Failed to fetch GPU providers/models", {
       error: error instanceof Error ? error.message : String(error),
     });
   }
@@ -69,5 +77,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     });
   }
 
-  return [...staticPages, ...gpuProviderPages, ...llmProviderPages];
+  return [...staticPages, ...gpuProviderPages, ...gpuModelPages, ...llmProviderPages];
 }
