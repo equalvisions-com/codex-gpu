@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useAnalytics } from "@/lib/analytics";
 
 const contactSchema = z.object({
   name: z.string().trim().min(2, "Please enter your name."),
@@ -30,9 +31,20 @@ export function SettingsContactForm({
   defaultEmail = "",
   onCancel,
 }: SettingsContactFormProps) {
+  const plausible = useAnalytics();
   const [state, handleFormspreeSubmit] = useFormspree(
     process.env.NEXT_PUBLIC_FORMSPREE_FORM_ID as string,
   );
+
+  // [Analytics] Track contact form submission
+  const hasTrackedSubmit = React.useRef(false);
+  React.useEffect(() => {
+    if (state.succeeded && !hasTrackedSubmit.current) {
+      hasTrackedSubmit.current = true;
+      plausible("Form Submit", { props: { form: "contact" } });
+    }
+  }, [state.succeeded, plausible]);
+
   const {
     register,
     handleSubmit,

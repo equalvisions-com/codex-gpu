@@ -20,4 +20,4 @@ const nextConfig = {
   },
 };
 
-export default withPlausibleProxy()(nextConfig);
+export default withPlausibleProxy({ subdirectory: "px", scriptName: "a" })(nextConfig);

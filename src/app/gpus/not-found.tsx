@@ -1,6 +1,9 @@
+import { Track404 } from "@/components/analytics/track-404";
+
 export default function NotFound() {
   return (
     <div className="flex min-h-dvh w-full flex-col items-center justify-center gap-4 text-center">
+      <Track404 />
       <div className="space-y-2">
         <p className="text-sm uppercase tracking-wide text-muted-foreground">
           Not Found

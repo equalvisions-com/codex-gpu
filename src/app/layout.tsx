@@ -80,7 +80,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        <PlausibleProvider domain="deploybase.ai" trackOutboundLinks trackFileDownloads />
+        <PlausibleProvider domain="deploybase.ai" trackOutboundLinks />
       </head>
       <body className="min-h-[100dvh] bg-background antialiased overscroll-x-none">
         <AuthProvider>

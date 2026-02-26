@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { useDataTable } from "@/features/data-explorer/data-table/data-table-provider";
+import { useAnalytics } from "@/lib/analytics";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface DataTableSheetDetailsProps {
@@ -71,6 +72,14 @@ export function DataTableSheetDetails({
   // Opt out of React Compiler — `table` from context is a stable reference
   // (TanStack mutates internally), so the compiler incorrectly caches method results.
   const { table, rowSelection, isLoading } = useDataTable();
+  const plausible = useAnalytics();
+
+  // [Analytics] Infer which table we're on from the URL path
+  const analyticsTable = React.useMemo(() => {
+    if (typeof window === "undefined") return "gpu" as const;
+    const path = window.location.pathname;
+    return path.startsWith("/llms") ? ("llm" as const) : path.startsWith("/tools") ? ("tool" as const) : ("gpu" as const);
+  }, []);
 
   const selectedRowKey = Object.keys(rowSelection)?.[0];
 
@@ -139,6 +148,17 @@ export function DataTableSheetDetails({
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
   }, [selectedRowKey, onNext, onPrev, table]);
+
+  // [Analytics] Track row detail view
+  const hasTrackedRow = React.useRef<string | null>(null);
+  React.useEffect(() => {
+    if (!selectedRowData) return;
+    const name = String(selectedRowData.name || selectedRowData.gpu_model || selectedRowData.provider || "");
+    const key = `${analyticsTable}:${name}`;
+    if (hasTrackedRow.current === key) return;
+    hasTrackedRow.current = key;
+    plausible("Row Detail", { props: { table: analyticsTable, name } });
+  }, [selectedRowData, plausible, analyticsTable]);
 
   return (
     <Sheet
@@ -211,7 +231,23 @@ export function DataTableSheetDetails({
           <div className="pt-4">
             {href ? (
               <Button asChild className="w-full font-semibold">
-                <a href={href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2">
+                {/* [Analytics] Track affiliate/outbound click */}
+                <a
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2"
+                  onClick={() => {
+                    if (selectedRowData) {
+                      plausible("Affiliate Click", {
+                        props: {
+                          provider: String(selectedRowData.provider || selectedRowData.name || "unknown"),
+                          table: analyticsTable,
+                        },
+                      });
+                    }
+                  }}
+                >
                   Learn More
                   {showAffiliateTooltip ? (
                     <AffiliateInfoPopover />

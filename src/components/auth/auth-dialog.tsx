@@ -18,6 +18,7 @@ import { Google } from "@/components/icons/google";
 import { HuggingFace } from "@/components/icons/huggingface";
 import { authClient } from "@/lib/auth-client";
 import { useAuth } from "@/providers/auth-client-provider";
+import { useAnalytics } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
@@ -63,6 +64,7 @@ export function AuthDialog({
   const [successMessage, setSuccessMessage] = React.useState<string | null>(null);
   const [resetEmailSent, setResetEmailSent] = React.useState(false);
   const { refetch } = useAuth();
+  const plausible = useAnalytics();
   const isLocked = pending || isCompleting;
   const isLoading = isLocked;
   const defaultAvatarDataUrl = React.useMemo(() => {
@@ -176,6 +178,8 @@ export function AuthDialog({
       );
 
       if (!result.error) {
+        // [Analytics] Track email login
+        plausible("Login", { props: { method: "email" } });
         await refetch();
         onComplete?.(callbackUrl);
       }
@@ -212,6 +216,8 @@ export function AuthDialog({
       );
 
       if (!result.error) {
+        // [Analytics] Track email signup
+        plausible("Signup", { props: { method: "email" } });
         // Email verification is required, so show success message instead of signing in
         setError(null); // Clear any errors
         setSuccessMessage("Account created! Please check your email and click the verification link to sign in.");
@@ -247,6 +253,8 @@ export function AuthDialog({
       });
 
       if (!result.error) {
+        // [Analytics] Track forgot password request
+        plausible("Forgot Password");
         setResetEmailSent(true);
         setError(null);
         setSuccessMessage("Password reset link sent! Check your email for instructions.");
@@ -262,6 +270,8 @@ export function AuthDialog({
     setSocialPending("google");
     setError(null);
     try {
+      // [Analytics] Track Google auth (fires before OAuth redirect)
+      plausible("Signup", { props: { method: "google" } });
       await authClient.signIn.social({
         provider: "google",
         callbackURL: callbackUrl,
@@ -278,6 +288,8 @@ export function AuthDialog({
     setSocialPending("github");
     setError(null);
     try {
+      // [Analytics] Track GitHub auth (fires before OAuth redirect)
+      plausible("Signup", { props: { method: "github" } });
       await authClient.signIn.social({
         provider: "github",
         callbackURL: callbackUrl,
@@ -294,6 +306,8 @@ export function AuthDialog({
     setSocialPending("huggingface");
     setError(null);
     try {
+      // [Analytics] Track Hugging Face auth (fires before OAuth redirect)
+      plausible("Signup", { props: { method: "huggingface" } });
       await authClient.signIn.social({
         provider: "huggingface",
         callbackURL: callbackUrl,

@@ -8,16 +8,16 @@ export default function NotFound() {
         <p className="text-sm uppercase tracking-wide text-muted-foreground">
           Not Found
         </p>
-        <h1 className="text-2xl font-semibold">Unable to locate that models view.</h1>
+        <h1 className="text-2xl font-semibold">Page not found.</h1>
         <p className="text-muted-foreground">
-          Double-check the URL or head back to the LLM comparison table.
+          Double-check the URL or head back to the homepage.
         </p>
       </div>
       <a
-        href="/llms"
+        href="/"
         className="inline-flex items-center rounded-md border border-border/60 bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm transition hover:bg-muted"
       >
-        Return to LLM Explorer
+        Return to Homepage
       </a>
     </div>
   );

@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Bell, Palette, UserRound, ChevronRight, Lock, Mail, Scale } from "lucide-react";
 import { SettingsContactForm } from "./settings-contact-form";
 import { SettingsSubmitForm } from "./settings-submit-form";
+import { useAnalytics } from "@/lib/analytics";
 
 interface SettingsDialogProps {
   open: boolean;
@@ -41,6 +42,7 @@ const passwordProviderIds = ["email", "credentials", "credential", "password"];
 
 export function SettingsDialog({ open, onOpenChange, user, isAuthenticated = true }: SettingsDialogProps) {
   const router = useRouter();
+  const plausible = useAnalytics();
   const filteredNavItems = React.useMemo(
     () =>
       isAuthenticated
@@ -256,6 +258,8 @@ export function SettingsDialog({ open, onOpenChange, user, isAuthenticated = tru
         return;
       }
       if (isMounted.current) {
+        // [Analytics] Track account deletion
+        plausible("Account Deleted");
         handleDeleteDialogChange(false);
         onOpenChange(false);
         router.replace("/", { scroll: false });
@@ -513,6 +517,8 @@ export function SettingsDialog({ open, onOpenChange, user, isAuthenticated = tru
       const payload = (await response.json()) as { subscribed?: boolean };
       if (typeof payload?.subscribed === "boolean" && isMounted.current) {
         setNewsletterStatus(payload.subscribed);
+        // [Analytics] Track newsletter preference change
+        plausible(payload.subscribed ? "Newsletter Subscribe" : "Newsletter Unsubscribe");
       }
     } catch (error) {
       const fallbackMessage =

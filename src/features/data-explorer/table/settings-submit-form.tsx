@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useAnalytics } from "@/lib/analytics";
 
 const submitSchema = z
   .object({
@@ -62,9 +63,20 @@ export function SettingsSubmitForm({
   defaultEmail = "",
   onCancel,
 }: SettingsSubmitFormProps) {
+  const plausible = useAnalytics();
   const [state, handleFormspreeSubmit] = useFormspree(
     process.env.NEXT_PUBLIC_FORMSPREE_SUBMITFORM_ID as string,
   );
+
+  // [Analytics] Track provider submission form
+  const hasTrackedSubmit = React.useRef(false);
+  React.useEffect(() => {
+    if (state.succeeded && !hasTrackedSubmit.current) {
+      hasTrackedSubmit.current = true;
+      plausible("Form Submit", { props: { form: "submit-provider" } });
+    }
+  }, [state.succeeded, plausible]);
+
   const {
     register,
     control,

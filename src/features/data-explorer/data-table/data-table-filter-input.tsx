@@ -7,6 +7,7 @@ import { Search, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useDataTable } from "@/features/data-explorer/data-table/data-table-provider";
+import { useAnalytics } from "@/lib/analytics";
 
 function getFilter(filterValue: unknown) {
   return typeof filterValue === "string" ? filterValue : null;
@@ -19,6 +20,7 @@ export function DataTableFilterInput<TData>({
 }: DataTableInputFilterField<TData> & { autoFocus?: boolean }) {
   const value = _value as string;
   const { columnFilters, setColumnFilters } = useDataTable();
+  const plausible = useAnalytics();
   const filterValue = columnFilters.find((i) => i.id === value)?.value;
   const filters = getFilter(filterValue);
   const [input, setInput] = useState<string | null>(filters);
@@ -50,8 +52,15 @@ export function DataTableFilterInput<TData>({
       );
     });
 
+    // [Analytics] Track search query after debounce
+    if (newValue) {
+      const path = window.location.pathname;
+      const table = path.startsWith("/llms") ? "llm" : path.startsWith("/tools") ? "tool" : "gpu";
+      plausible("Search", { props: { query: newValue, table } });
+    }
+
     isUserInputRef.current = false;
-  }, [debouncedInput, setColumnFilters, value]);
+  }, [debouncedInput, setColumnFilters, value, plausible]);
 
   // Sync external changes to local state using React-recommended
   // "adjusting state based on props during render" pattern.
