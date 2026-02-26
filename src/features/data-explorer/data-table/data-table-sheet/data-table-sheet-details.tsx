@@ -26,6 +26,40 @@ interface DataTableSheetDetailsProps {
   showAffiliateTooltip?: boolean;
 }
 
+/** Hover on desktop + tap on mobile affiliate disclosure popover */
+function AffiliateInfoPopover() {
+  const [open, setOpen] = React.useState(false);
+
+  return (
+    <PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
+      <PopoverPrimitive.Trigger
+        asChild
+        onClick={(e) => e.preventDefault()}
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+      >
+        <span className="inline-flex">
+          <Info className="h-4 w-4" />
+        </span>
+      </PopoverPrimitive.Trigger>
+      <PopoverPrimitive.Portal>
+        <PopoverPrimitive.Content
+          side="top"
+          align="center"
+          sideOffset={8}
+          onMouseEnter={() => setOpen(true)}
+          onMouseLeave={() => setOpen(false)}
+          onOpenAutoFocus={(e) => e.preventDefault()}
+          className="z-50 rounded bg-popover px-2 py-1 text-[11px] font-normal text-popover-foreground shadow-md ring-1 ring-border animate-in fade-in-0 zoom-in-95"
+        >
+          This link may be an affiliate link
+          <PopoverPrimitive.Arrow className="fill-popover" />
+        </PopoverPrimitive.Content>
+      </PopoverPrimitive.Portal>
+    </PopoverPrimitive.Root>
+  );
+}
+
 export function DataTableSheetDetails({
   title,
   titleClassName,
@@ -180,24 +214,7 @@ export function DataTableSheetDetails({
                 <a href={href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2">
                   Learn More
                   {showAffiliateTooltip ? (
-                    <PopoverPrimitive.Root>
-                      <PopoverPrimitive.Trigger asChild onClick={(e) => e.preventDefault()}>
-                        <span className="inline-flex">
-                          <Info className="h-4 w-4" />
-                        </span>
-                      </PopoverPrimitive.Trigger>
-                      <PopoverPrimitive.Portal>
-                        <PopoverPrimitive.Content
-                          side="top"
-                          align="center"
-                          sideOffset={8}
-                          className="z-50 rounded bg-popover px-2 py-1 text-[11px] font-normal text-popover-foreground shadow-md ring-1 ring-border animate-in fade-in-0 zoom-in-95"
-                        >
-                          This link may be an affiliate link
-                          <PopoverPrimitive.Arrow className="fill-popover" />
-                        </PopoverPrimitive.Content>
-                      </PopoverPrimitive.Portal>
-                    </PopoverPrimitive.Root>
+                    <AffiliateInfoPopover />
                   ) : (
                     <Info className="h-4 w-4" />
                   )}
