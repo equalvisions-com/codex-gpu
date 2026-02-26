@@ -10,6 +10,23 @@ const SOURCE_URL = 'https://hotaisle.xyz/pricing/';
 // MI300X has 192GB VRAM per GPU
 const MI300X_VRAM_GB = 192;
 
+// Known GPU configurations from HotAisle pricing page.
+// Specs are hardcoded because the page displays ranges ("8 or 13 CPU Cores",
+// "64 - 102 CPU Cores") that aren't reliably parseable. Price is dynamic —
+// extracted from the "$X.XX/GPU/hr" text on each scrape.
+const GPU_CONFIGS: {
+    gpuCount: number;
+    vcpus: number;
+    ramGb: number;
+    storage: string;
+    type: 'Virtual Machine' | 'Bare Metal';
+}[] = [
+    { gpuCount: 1, vcpus: 13, ramGb: 224, storage: '12TB NVMe', type: 'Virtual Machine' },
+    { gpuCount: 2, vcpus: 26, ramGb: 448, storage: '12TB NVMe', type: 'Virtual Machine' },
+    { gpuCount: 4, vcpus: 52, ramGb: 896, storage: '12TB NVMe', type: 'Virtual Machine' },
+    { gpuCount: 8, vcpus: 102, ramGb: 2048, storage: '122TB NVMe', type: 'Bare Metal' },
+];
+
 class HotAisleScraper implements ProviderScraper {
     name = 'hotaisle';
     url = PRICING_URL;
@@ -52,109 +69,48 @@ class HotAisleScraper implements ProviderScraper {
     }
 
     private parsePricingPage(html: string, observedAt: string): HotAislePriceRow[] {
-        const rows: HotAislePriceRow[] = [];
-        const seenInstances = new Set<string>();
         const $ = cheerio.load(html);
+        const pageText = $('body').text();
+
+        // Sanity check: make sure we're on the right page
+        if (!pageText.match(/MI300/i)) {
+            logger.warn('[HotAisleScraper] Page does not mention MI300 — layout may have changed');
+            return [];
+        }
 
         // Extract base price per GPU per hour (e.g., "$1.99/GPU/hr")
-        const pageText = $('body').text();
         const basePriceMatch = pageText.match(/\$(\d+\.?\d*)\s*\/\s*GPU\s*\/\s*hr/i);
-        const basePricePerGpu = basePriceMatch ? parseFloat(basePriceMatch[1]) : 1.99; // Default fallback
+        const basePricePerGpu = basePriceMatch ? parseFloat(basePriceMatch[1]) : null;
+
+        if (!basePricePerGpu) {
+            logger.warn('[HotAisleScraper] Could not extract base price from page — skipping');
+            return [];
+        }
 
         logger.info(`[HotAisleScraper] Base price per GPU: $${basePricePerGpu}/hr`);
 
-        // Parse GPU configurations from page text
-        // Patterns: "1x 192GB MI300x VM", "2x, 4x 192GB MI300x VM", "8x 192GB MI300x Bare Metal"
+        // Generate rows from known configs × scraped price
+        const rows: HotAislePriceRow[] = GPU_CONFIGS.map((config) => {
+            const priceHourUsd = Math.round(basePricePerGpu * config.gpuCount * 100) / 100;
+            const instanceId = `hotaisle-mi300x-${config.gpuCount}x${config.type === 'Bare Metal' ? '-baremetal' : ''}`;
 
-        // Find all text containing MI300 configurations
-        $('*').each((_, elem) => {
-            const text = $(elem).text();
-
-            // Skip if text is too long (likely a parent container)
-            if (text.length > 500) return;
-
-            // Look for MI300x mentions with GPU counts
-            // Handle both single (1x) and multi (2x, 4x) patterns
-            const configPattern = /((?:\d+x,?\s*)+)\s*(?:\d+GB)?\s*(MI\d+[Xx]?)\s*(Virtual Machine|Bare Metal|VM)?/gi;
-
-            const matches = [...text.matchAll(configPattern)];
-            for (const match of matches) {
-                const gpuCountsStr = match[1]; // e.g., "2x, 4x" or "1x"
-                const gpuModel = match[2].toUpperCase(); // MI300X
-                const instanceType = match[3] || 'Virtual Machine';
-
-                // Extract all GPU counts from the string (e.g., "2x, 4x" -> [2, 4])
-                const countMatches = gpuCountsStr.match(/(\d+)x/gi) || [];
-
-                for (const countMatch of countMatches) {
-                    const gpuCount = parseInt(countMatch, 10);
-                    if (gpuCount <= 0) continue;
-
-                    const configKey = `${gpuCount}x-${gpuModel}-${instanceType.includes('Bare') ? 'baremetal' : 'vm'}`;
-
-                    if (!seenInstances.has(configKey)) {
-                        seenInstances.add(configKey);
-
-                        // Calculate specs based on GPU count
-                        // From page: 1x=13cores/224GB, 2x=26cores/448GB, 4x=52cores/896GB, 8x=102cores/2048GB
-                        let vcpus = 0;
-                        let systemRamGb = 0;
-                        let storage = '12TB NVMe';
-
-                        switch (gpuCount) {
-                            case 1:
-                                vcpus = 13;
-                                systemRamGb = 224;
-                                break;
-                            case 2:
-                                vcpus = 26;
-                                systemRamGb = 448;
-                                break;
-                            case 4:
-                                vcpus = 52;
-                                systemRamGb = 896;
-                                break;
-                            case 8:
-                                vcpus = 102;
-                                systemRamGb = 2048;
-                                storage = '122TB NVMe';
-                                break;
-                            default:
-                                vcpus = Math.round(13 * gpuCount);
-                                systemRamGb = gpuCount * 224;
-                        }
-
-                        const priceHourUsd = Math.round(basePricePerGpu * gpuCount * 100) / 100;
-                        const instanceId = `hotaisle-${gpuModel.toLowerCase()}-${gpuCount}x${instanceType.includes('Bare') ? '-baremetal' : ''}`;
-
-                        rows.push({
-                            provider: 'hotaisle',
-                            source_url: SOURCE_URL,
-                            observed_at: observedAt,
-                            instance_id: instanceId,
-                            gpu_model: `AMD ${gpuModel}`,
-                            gpu_count: gpuCount,
-                            vram_gb: MI300X_VRAM_GB * gpuCount,
-                            vcpus,
-                            system_ram_gb: systemRamGb,
-                            storage,
-                            price_unit: 'instance_hour',
-                            price_hour_usd: priceHourUsd,
-                            raw_cost: `$${priceHourUsd.toFixed(2)}/hr`,
-                            class: 'GPU',
-                            type: instanceType.includes('Bare') ? 'Bare Metal' : 'Virtual Machine',
-                        });
-                    }
-                }
-            }
-        });
-
-        // Sort by GPU count for consistent ordering
-        rows.sort((a, b) => {
-            const countCompare = a.gpu_count - b.gpu_count;
-            if (countCompare !== 0) return countCompare;
-            // VMs before Bare Metal
-            return a.type === 'Virtual Machine' ? -1 : 1;
+            return {
+                provider: 'hotaisle' as const,
+                source_url: SOURCE_URL,
+                observed_at: observedAt,
+                instance_id: instanceId,
+                gpu_model: 'AMD MI300X',
+                gpu_count: config.gpuCount,
+                vram_gb: MI300X_VRAM_GB * config.gpuCount,
+                vcpus: config.vcpus,
+                system_ram_gb: config.ramGb,
+                storage: config.storage,
+                price_unit: 'instance_hour' as const,
+                price_hour_usd: priceHourUsd,
+                raw_cost: `$${priceHourUsd.toFixed(2)}/hr`,
+                class: 'GPU' as const,
+                type: config.type,
+            };
         });
 
         return rows;
