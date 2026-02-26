@@ -10,6 +10,7 @@ import { dataOptions } from "@/features/data-explorer/table/query-options";
 import { searchParamsCache } from "@/features/data-explorer/table/search-params";
 import { getGpuPricingPage } from "@/lib/gpu-pricing-loader";
 import { buildGpuSchema } from "@/features/data-explorer/table/gpu-schema";
+import { SectionNav } from "@/components/seo/section-nav";
 import { logger } from "@/lib/logger";
 
 export const revalidate = 43200;
@@ -40,11 +41,7 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function HomePage() {
-  return <HomeGpusContent />;
-}
-
-async function HomeGpusContent() {
+export default async function HomePage() {
   const parsedSearch = searchParamsCache.parse({});
   const queryClient = new QueryClient();
   const captured: { firstPage: Awaited<ReturnType<typeof getGpuPricingPage>> | null } = { firstPage: null };
@@ -84,7 +81,7 @@ async function HomeGpusContent() {
   const schemaMarkup = buildGpuSchema(captured.firstPage);
 
   return (
-    <HydrationBoundary state={dehydratedState}>
+    <>
       {schemaMarkup ? (
         <script
           type="application/ld+json"
@@ -95,15 +92,20 @@ async function HomeGpusContent() {
         />
       ) : null}
       <h1 className="sr-only">Compare GPU &amp; LLM Pricing</h1>
-      <div
-        className="flex min-h-dvh w-full flex-col sm:flex-row pt-2 sm:p-0"
-        style={{
-          "--total-padding-mobile": "calc(0.5rem + 0.5rem)",
-          "--total-padding-desktop": "3rem",
-        } as React.CSSProperties}
-      >
-        <Client />
-      </div>
-    </HydrationBoundary>
+      <SectionNav />
+      <HydrationBoundary state={dehydratedState}>
+        <div
+          className="flex min-h-dvh w-full flex-col sm:flex-row pt-2 sm:p-0"
+          style={{
+            "--total-padding-mobile": "calc(0.5rem + 0.5rem)",
+            "--total-padding-desktop": "3rem",
+          } as React.CSSProperties}
+        >
+          <React.Suspense fallback={null}>
+            <Client />
+          </React.Suspense>
+        </div>
+      </HydrationBoundary>
+    </>
   );
 }

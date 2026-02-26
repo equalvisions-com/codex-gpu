@@ -10,6 +10,7 @@ import { ProviderGpuClient } from "./provider-gpu-client";
 import { searchParamsCache } from "@/features/data-explorer/table/search-params";
 import { getGpuPricingPage } from "@/lib/gpu-pricing-loader";
 import { buildGpuSchema } from "@/features/data-explorer/table/gpu-schema";
+import { SectionNav } from "@/components/seo/section-nav";
 import { logger } from "@/lib/logger";
 
 export const revalidate = 43200;
@@ -138,7 +139,7 @@ export default async function GpuProviderPage({ params }: Props) {
   const schemaMarkup = buildGpuSchema(captured.firstPage, `${name} GPU Pricing Feed`);
 
   return (
-    <HydrationBoundary state={dehydratedState}>
+    <>
       {schemaMarkup ? (
         <script
           type="application/ld+json"
@@ -149,15 +150,20 @@ export default async function GpuProviderPage({ params }: Props) {
         />
       ) : null}
       <h1 className="sr-only">{name} GPU Pricing</h1>
-      <div
-        className="flex min-h-dvh w-full flex-col sm:flex-row pt-2 sm:p-0"
-        style={{
-          "--total-padding-mobile": "calc(0.5rem + 0.5rem)",
-          "--total-padding-desktop": "3rem",
-        } as React.CSSProperties}
-      >
-        <ProviderGpuClient provider={provider} />
-      </div>
-    </HydrationBoundary>
+      <SectionNav />
+      <HydrationBoundary state={dehydratedState}>
+        <div
+          className="flex min-h-dvh w-full flex-col sm:flex-row pt-2 sm:p-0"
+          style={{
+            "--total-padding-mobile": "calc(0.5rem + 0.5rem)",
+            "--total-padding-desktop": "3rem",
+          } as React.CSSProperties}
+        >
+          <React.Suspense fallback={null}>
+            <ProviderGpuClient provider={provider} />
+          </React.Suspense>
+        </div>
+      </HydrationBoundary>
+    </>
   );
 }

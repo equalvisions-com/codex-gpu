@@ -13,6 +13,7 @@ import { getGpuPricingPage } from "@/lib/gpu-pricing-loader";
 import { buildGpuSchema } from "@/features/data-explorer/table/gpu-schema";
 import { gpuPricingCache } from "@/lib/gpu-pricing-cache";
 import { toGpuModelSlug, resolveGpuModelFromSlug } from "@/lib/gpu-model-slug";
+import { SectionNav } from "@/components/seo/section-nav";
 import { logger } from "@/lib/logger";
 
 export const revalidate = 43200;
@@ -123,7 +124,7 @@ export default async function GpuModelPage({ params }: Props) {
   );
 
   return (
-    <HydrationBoundary state={dehydratedState}>
+    <>
       {schemaMarkup ? (
         <script
           type="application/ld+json"
@@ -134,17 +135,22 @@ export default async function GpuModelPage({ params }: Props) {
         />
       ) : null}
       <h1 className="sr-only">{modelName} GPU Pricing</h1>
-      <div
-        className="flex min-h-dvh w-full flex-col sm:flex-row pt-2 sm:p-0"
-        style={
-          {
-            "--total-padding-mobile": "calc(0.5rem + 0.5rem)",
-            "--total-padding-desktop": "3rem",
-          } as React.CSSProperties
-        }
-      >
-        <ModelGpuClient gpuModel={modelName} />
-      </div>
-    </HydrationBoundary>
+      <SectionNav />
+      <HydrationBoundary state={dehydratedState}>
+        <div
+          className="flex min-h-dvh w-full flex-col sm:flex-row pt-2 sm:p-0"
+          style={
+            {
+              "--total-padding-mobile": "calc(0.5rem + 0.5rem)",
+              "--total-padding-desktop": "3rem",
+            } as React.CSSProperties
+          }
+        >
+          <React.Suspense fallback={null}>
+            <ModelGpuClient gpuModel={modelName} />
+          </React.Suspense>
+        </div>
+      </HydrationBoundary>
+    </>
   );
 }

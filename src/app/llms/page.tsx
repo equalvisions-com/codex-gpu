@@ -10,6 +10,9 @@ import { modelsDataOptions } from "@/features/data-explorer/models/models-query-
 import { modelsSearchParamsCache } from "@/features/data-explorer/models/models-search-params";
 import { getModelsPage } from "@/lib/models-loader";
 import { buildModelsSchema } from "@/features/data-explorer/models/build-models-schema";
+import { SectionNav } from "@/components/seo/section-nav";
+import { InternalLinkSection } from "@/components/seo/internal-links";
+import { modelsCache } from "@/lib/models-cache";
 import { logger } from "@/lib/logger";
 
 export const revalidate = 43200;
@@ -42,11 +45,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 // ISR-friendly route: we seed React Query with the default (unfiltered) data.
 // Client-side nuqs manages URL-bound filters after hydration to keep SSR static.
-export default function ModelsPage() {
-  return <ModelsHydratedContent />;
-}
-
-async function ModelsHydratedContent() {
+export default async function ModelsPage() {
   const parsedSearch = modelsSearchParamsCache.parse({});
   // Use new QueryClient for ISR - each page render gets fresh client
   // This is correct for server-side prefetching per TanStack Query docs
@@ -89,8 +88,22 @@ async function ModelsHydratedContent() {
   const dehydratedState = dehydrate(queryClient);
   const schemaMarkup = buildModelsSchema(captured.firstPage);
 
+  // Fetch providers for sr-only internal links (uses cached singleton, same data as sitemap)
+  let providerLinks: { href: string; label: string }[] = [];
+  try {
+    const providers = await modelsCache.getAvailableProviders();
+    providerLinks = providers.map((name) => ({
+      href: `/llms/${encodeURIComponent(name)}`,
+      label: name,
+    }));
+  } catch (error) {
+    logger.error("[ModelsPage] Failed to fetch providers for internal links", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+
   return (
-    <HydrationBoundary state={dehydratedState}>
+    <>
       {schemaMarkup ? (
         <script
           type="application/ld+json"
@@ -101,15 +114,21 @@ async function ModelsHydratedContent() {
         />
       ) : null}
       <h1 className="sr-only">Compare LLM Inference Pricing</h1>
-      <div
-        className="flex min-h-dvh w-full flex-col sm:flex-row pt-2 sm:p-0"
-        style={{
-          "--total-padding-mobile": "calc(0.5rem + 0.5rem)",
-          "--total-padding-desktop": "3rem",
-        } as React.CSSProperties}
-      >
-        <ModelsClient />
-      </div>
-    </HydrationBoundary>
+      <SectionNav />
+      <HydrationBoundary state={dehydratedState}>
+        <div
+          className="flex min-h-dvh w-full flex-col sm:flex-row pt-2 sm:p-0"
+          style={{
+            "--total-padding-mobile": "calc(0.5rem + 0.5rem)",
+            "--total-padding-desktop": "3rem",
+          } as React.CSSProperties}
+        >
+          <React.Suspense fallback={null}>
+            <ModelsClient />
+          </React.Suspense>
+        </div>
+      </HydrationBoundary>
+      <InternalLinkSection heading="LLM Pricing by Provider" links={providerLinks} />
+    </>
   );
 }

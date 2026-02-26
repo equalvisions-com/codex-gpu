@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import type { AuthView } from "@/components/auth/auth-dialog";
 import { AuthDialog } from "@/components/auth/auth-dialog";
 
@@ -40,8 +40,6 @@ const AuthDialogContext = React.createContext<AuthDialogContextValue | null>(nul
 
 export function AuthDialogProvider({ children }: AuthDialogProviderProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const searchKey = searchParams.toString();
   const [isNavigating, startTransition] = React.useTransition();
   const [state, setState] = React.useState<DialogState>({
     open: false,
@@ -168,42 +166,6 @@ export function AuthDialogProvider({ children }: AuthDialogProviderProps) {
     if (isNavigating) return;
     closeDialogInternal({ preserveSearch: true });
   }, [closeDialogInternal, isNavigating, state.isCompleting]);
-
-  React.useEffect(() => {
-    const params = new URLSearchParams(searchKey);
-    const authParam = params.get("auth");
-    if (!authParam) {
-      return;
-    }
-    const normalized = authParam.toLowerCase();
-    const targetView: AuthView =
-      normalized === "signup" ? "signUp" : "signIn";
-
-    if (
-      state.open &&
-      state.view === targetView &&
-      state.callbackUrl === (params.get("callbackUrl") ?? "/") &&
-      state.defaultEmail === (params.get("email") ?? undefined) &&
-      state.errorCallbackUrl === (params.get("errorCallbackUrl") ?? undefined)
-    ) {
-      return;
-    }
-
-    openDialog({
-      view: targetView,
-      email: params.get("email") ?? undefined,
-      callbackUrl: params.get("callbackUrl") ?? undefined,
-      errorCallbackUrl: params.get("errorCallbackUrl") ?? undefined,
-    });
-  }, [
-    openDialog,
-    searchKey,
-    state.callbackUrl,
-    state.errorCallbackUrl,
-    state.defaultEmail,
-    state.open,
-    state.view,
-  ]);
 
   const contextValue = React.useMemo<AuthDialogContextValue>(
     () => ({

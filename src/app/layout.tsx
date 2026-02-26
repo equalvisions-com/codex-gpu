@@ -8,6 +8,7 @@ import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { AuthProvider } from "@/providers/auth-provider";
 import { AuthDialogProvider } from "@/providers/auth-dialog-provider";
+import { AuthDialogParamsSync } from "@/providers/auth-dialog-params-sync";
 import PlausibleProvider from "next-plausible";
 
 const TITLE = "Deploybase";
@@ -91,13 +92,14 @@ export default function RootLayout({
                 enableSystem
                 disableTransitionOnChange
               >
-                <Suspense fallback={null}>
-                  <AuthDialogProvider>
-                    <main id="content" className="flex min-h-[100dvh] flex-col">
-                      {children}
-                    </main>
-                  </AuthDialogProvider>
-                </Suspense>
+                <AuthDialogProvider>
+                  <main id="content" className="flex min-h-[100dvh] flex-col">
+                    {children}
+                  </main>
+                  <Suspense fallback={null}>
+                    <AuthDialogParamsSync />
+                  </Suspense>
+                </AuthDialogProvider>
               </ThemeProvider>
             </NuqsAdapter>
           </ReactQueryProvider>

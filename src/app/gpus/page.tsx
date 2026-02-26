@@ -10,6 +10,11 @@ import { dataOptions } from "@/features/data-explorer/table/query-options";
 import { searchParamsCache } from "@/features/data-explorer/table/search-params";
 import { getGpuPricingPage } from "@/lib/gpu-pricing-loader";
 import { buildGpuSchema } from "@/features/data-explorer/table/gpu-schema";
+import { SectionNav } from "@/components/seo/section-nav";
+import { InternalLinkSection } from "@/components/seo/internal-links";
+import { gpuPricingCache } from "@/lib/gpu-pricing-cache";
+import { toGpuModelSlug } from "@/lib/gpu-model-slug";
+import { getProviderDisplayName } from "@/features/data-explorer/table/provider-logos";
 import { logger } from "@/lib/logger";
 
 export const revalidate = 43200;
@@ -42,11 +47,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 // ISR-friendly route: we seed React Query with the default (unfiltered) data.
 // Client-side nuqs manages URL-bound filters after hydration to keep SSR static.
-export default function GpusPage() {
-  return <GpusHydratedContent />;
-}
-
-async function GpusHydratedContent() {
+export default async function GpusPage() {
   const parsedSearch = searchParamsCache.parse({});
   // Use new QueryClient for ISR - each page render gets fresh client
   // This is correct for server-side prefetching per TanStack Query docs
@@ -89,8 +90,27 @@ async function GpusHydratedContent() {
   const dehydratedState = dehydrate(queryClient);
   const schemaMarkup = buildGpuSchema(captured.firstPage);
 
+  // Fetch facets for sr-only internal links (uses cached singleton, same data as sitemap)
+  let providerLinks: { href: string; label: string }[] = [];
+  let modelLinks: { href: string; label: string }[] = [];
+  try {
+    const facets = await gpuPricingCache.getGpusFacets();
+    providerLinks = facets.provider.rows.map((row) => ({
+      href: `/gpus/${row.value.toLowerCase().trim()}`,
+      label: getProviderDisplayName(row.value),
+    }));
+    modelLinks = facets.gpu_model.rows.map((row) => ({
+      href: `/gpus/models/${toGpuModelSlug(row.value)}`,
+      label: row.value,
+    }));
+  } catch (error) {
+    logger.error("[GpusPage] Failed to fetch facets for internal links", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+
   return (
-    <HydrationBoundary state={dehydratedState}>
+    <>
       {schemaMarkup ? (
         <script
           type="application/ld+json"
@@ -101,15 +121,22 @@ async function GpusHydratedContent() {
         />
       ) : null}
       <h1 className="sr-only">Compare GPU Cloud Pricing</h1>
-      <div
-        className="flex min-h-dvh w-full flex-col sm:flex-row pt-2 sm:p-0"
-        style={{
-          "--total-padding-mobile": "calc(0.5rem + 0.5rem)",
-          "--total-padding-desktop": "3rem",
-        } as React.CSSProperties}
-      >
-        <Client />
-      </div>
-    </HydrationBoundary>
+      <SectionNav />
+      <HydrationBoundary state={dehydratedState}>
+        <div
+          className="flex min-h-dvh w-full flex-col sm:flex-row pt-2 sm:p-0"
+          style={{
+            "--total-padding-mobile": "calc(0.5rem + 0.5rem)",
+            "--total-padding-desktop": "3rem",
+          } as React.CSSProperties}
+        >
+          <React.Suspense fallback={null}>
+            <Client />
+          </React.Suspense>
+        </div>
+      </HydrationBoundary>
+      <InternalLinkSection heading="GPU Pricing by Provider" links={providerLinks} />
+      <InternalLinkSection heading="GPU Pricing by Model" links={modelLinks} />
+    </>
   );
 }

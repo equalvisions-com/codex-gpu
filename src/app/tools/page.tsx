@@ -10,6 +10,7 @@ import { toolsDataOptions } from "@/features/data-explorer/tools/tools-query-opt
 import { toolsSearchParamsCache } from "@/features/data-explorer/tools/tools-search-params";
 import { getToolsPage } from "@/lib/tools-loader";
 import { buildToolsSchema } from "@/features/data-explorer/tools/build-tools-schema";
+import { SectionNav } from "@/components/seo/section-nav";
 import { logger } from "@/lib/logger";
 
 export const revalidate = 43200;
@@ -40,11 +41,7 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function ToolsPage() {
-  return <ToolsHydratedContent />;
-}
-
-async function ToolsHydratedContent() {
+export default async function ToolsPage() {
   const parsedSearch = toolsSearchParamsCache.parse({});
   const queryClient = new QueryClient();
   const captured: { firstPage: Awaited<ReturnType<typeof getToolsPage>> | null } = { firstPage: null };
@@ -84,7 +81,7 @@ async function ToolsHydratedContent() {
   const schemaMarkup = buildToolsSchema(captured.firstPage);
 
   return (
-    <HydrationBoundary state={dehydratedState}>
+    <>
       {schemaMarkup ? (
         <script
           type="application/ld+json"
@@ -95,15 +92,20 @@ async function ToolsHydratedContent() {
         />
       ) : null}
       <h1 className="sr-only">AI/ML Tools Directory</h1>
-      <div
-        className="flex min-h-dvh w-full flex-col sm:flex-row pt-2 sm:p-0"
-        style={{
-          "--total-padding-mobile": "calc(0.5rem + 0.5rem)",
-          "--total-padding-desktop": "3rem",
-        } as React.CSSProperties}
-      >
-        <ToolsClient />
-      </div>
-    </HydrationBoundary>
+      <SectionNav />
+      <HydrationBoundary state={dehydratedState}>
+        <div
+          className="flex min-h-dvh w-full flex-col sm:flex-row pt-2 sm:p-0"
+          style={{
+            "--total-padding-mobile": "calc(0.5rem + 0.5rem)",
+            "--total-padding-desktop": "3rem",
+          } as React.CSSProperties}
+        >
+          <React.Suspense fallback={null}>
+            <ToolsClient />
+          </React.Suspense>
+        </div>
+      </HydrationBoundary>
+    </>
   );
 }

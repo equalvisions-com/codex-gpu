@@ -22,18 +22,30 @@ export function AuthClientProvider({ initialSession, children }: AuthClientProvi
   const { data, isPending, refetch } = authClient.useSession();
   const [localSession, setLocalSession] = React.useState<Session | null>(initialSession);
 
+  // Prevent hydration mismatch: server always renders isPending=true (skeleton).
+  // Without this guard the client can resolve isPending=false on the very first
+  // render, producing a button where the server emitted a skeleton.
+  const [hasMounted, setHasMounted] = React.useState(false);
+  React.useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
   React.useEffect(() => {
     if (typeof data !== "undefined") {
       setLocalSession((data ?? null) as Session | null);
     }
   }, [data]);
 
+  // During hydration (hasMounted=false) always report pending so the client
+  // renders the same skeleton the server emitted. Once mounted, use the real value.
+  const safePending = hasMounted ? isPending : true;
+
   const session = React.useMemo<Session | null>(() => {
-    if (isPending) {
+    if (safePending) {
       return localSession;
     }
     return (data ?? null) as Session | null;
-  }, [data, isPending, localSession]);
+  }, [data, safePending, localSession]);
 
   const handleSignOut = React.useCallback<typeof authClient.signOut>(async (...args) => {
     const result = await authClient.signOut(...args);
@@ -44,11 +56,11 @@ export function AuthClientProvider({ initialSession, children }: AuthClientProvi
   const value = React.useMemo<AuthContextValue>(
     () => ({
       session,
-      isPending,
+      isPending: safePending,
       refetch,
       signOut: handleSignOut,
     }),
-    [handleSignOut, isPending, refetch, session]
+    [handleSignOut, safePending, refetch, session]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
