@@ -53,7 +53,7 @@ const Slider = React.forwardRef<
             <span
               key={`placeholder-${index}`}
               aria-hidden="true"
-              className="pointer-events-none absolute top-1/2 h-4 w-4 rounded-full border-2 border-primary bg-background"
+              className="pointer-events-none absolute top-1/2 h-4 w-4 rounded-full border border-border bg-white"
               style={{
                 left: `calc(${percent}% + ${offset}px)`,
                 transform: "translate(-50%, -50%)",
@@ -66,7 +66,7 @@ const Slider = React.forwardRef<
         <React.Fragment key={index}>
           <SliderPrimitive.Thumb
             aria-label={ariaLabel}
-            className="block h-4 w-4 rounded-full border border-primary bg-background ring-offset-background transition-colors hover:ring-2 hover:ring-ring/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+            className="block h-4 w-4 rounded-full border border-border bg-white ring-offset-background transition-colors hover:ring-2 hover:ring-ring/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:pointer-events-none disabled:opacity-50"
           />
         </React.Fragment>
       ))}
