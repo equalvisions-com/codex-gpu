@@ -229,7 +229,6 @@ export function DataTableSheetDetails({
           </div>
           <div className="space-y-4">{children}</div>
           <div className="pt-4">
-            <p className="mb-2 text-center text-xs text-muted-foreground">We earn commissions when you shop through the links below</p>
             {href ? (
               <Button asChild className="w-full font-semibold">
                 {/* [Analytics] Track affiliate/outbound click */}
