@@ -61,7 +61,7 @@ export function DataTableFilterControls({
                 </div>
               </AccordionTrigger>
               <AccordionContent className={cn(
-                field.type === "slider" ? "[&>div]:pb-[2px]" : "[&>div]:pb-0"
+                field.type === "slider" ? "overflow-visible [&>div]:pb-[2px]" : "[&>div]:pb-0"
               )}>
                 <div
                   className={cn(
