@@ -575,7 +575,7 @@ export function MobileTopNav({
   );
 
   return (
-    <NavigationMenu className="flex w-full max-w-none justify-between px-2 sm:hidden">
+    <NavigationMenu className="flex w-full max-w-none justify-between px-4 sm:hidden">
       <NavigationMenuList className="grid w-full grid-cols-3 items-center gap-2">
         <NavigationMenuItem className="flex justify-start min-w-0">
           <div className="flex items-center h-9">
@@ -602,7 +602,7 @@ export function MobileTopNav({
               }}
             >
               <SelectTrigger
-                className="h-9 w-auto gap-2 rounded-full shadow-sm bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground hover:text-accent-foreground"
+                className="h-9 w-auto gap-2 rounded-full border-0 shadow-none bg-transparent p-0 text-accent-foreground hover:text-accent-foreground"
                 aria-label={`${brandLabelDisplay} navigation`}
               >
                 <SelectValue aria-label={currentNavItem?.label}>
@@ -619,7 +619,7 @@ export function MobileTopNav({
                 </SelectValue>
               </SelectTrigger>
               <SelectContent
-                className="mt-[4px] sm:mt-0">
+                className="mt-[4px] sm:mt-0 rounded-2xl">
                 {navItems.map((item) => (
                   <SelectItem
                     key={item.value}
