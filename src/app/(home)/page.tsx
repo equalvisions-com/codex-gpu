@@ -95,9 +95,9 @@ export default async function HomePage() {
       <SectionNav />
       <HydrationBoundary state={dehydratedState}>
         <div
-          className="flex min-h-dvh w-full flex-col sm:flex-row pt-2 sm:p-0"
+          className="flex min-h-dvh w-full flex-col sm:flex-row sm:p-0"
           style={{
-            "--total-padding-mobile": "calc(0.5rem + 0.5rem)",
+            "--total-padding-mobile": "0.5rem",
             "--total-padding-desktop": "3rem",
           } as React.CSSProperties}
         >

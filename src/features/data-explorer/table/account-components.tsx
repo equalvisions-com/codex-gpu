@@ -575,7 +575,7 @@ export function MobileTopNav({
   );
 
   return (
-    <NavigationMenu className="flex w-full max-w-none justify-between px-4 sm:hidden">
+    <NavigationMenu className="flex w-full max-w-none justify-between pt-2 px-4 sm:hidden">
       <NavigationMenuList className="grid w-full grid-cols-3 items-center gap-2">
         <NavigationMenuItem className="flex justify-start min-w-0">
           <div className="flex items-center h-9">

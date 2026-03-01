@@ -307,7 +307,7 @@ export function ToolsClient({ initialFavoriteKeys, isFavoritesMode }: ToolsClien
             )}
           />
         }
-        mobileHeaderOffset="36px"
+        mobileHeaderOffset="44px"
         primaryColumnId="description"
         renderSheetCharts={() => null}
         sheetContentClassName="border-b border-border/60"

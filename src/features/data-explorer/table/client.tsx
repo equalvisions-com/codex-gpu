@@ -324,7 +324,7 @@ export function Client({ initialFavoriteKeys, isFavoritesMode }: ClientProps = {
             )}
           />
         }
-        mobileHeaderOffset="36px"
+        mobileHeaderOffset="44px"
         primaryColumnId="gpu_model"
         getRowHref={(row) => row.source_url || null}
       />
