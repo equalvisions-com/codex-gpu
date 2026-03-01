@@ -94,7 +94,7 @@ export function DataTableSidebar({
                 <SelectTrigger className="h-8 w-full justify-between rounded-lg py-0" aria-label="Page navigation">
                   <SelectValue aria-label={currentNavItem?.label}>
                     {currentNavItem && (
-                      <span className="flex min-w-0 items-center gap-2 font-semibold">
+                      <span className="flex min-w-0 items-center gap-2">
                         {isBookmarksMode ? (
                           <Bookmark className="h-4 w-4" aria-hidden="true" />
                         ) : (

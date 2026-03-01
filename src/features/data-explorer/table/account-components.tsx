@@ -321,7 +321,7 @@ export function UserMenu({
         {triggerElement}
         <DropdownMenuContent
           align="center"
-          className="w-[110px] sm:w-60 mt-[4px] sm:mt-0 mr-2 sm:mr-0"
+          className="w-auto sm:w-60 mt-[4px] sm:mt-0 mr-2 sm:mr-0 rounded-2xl sm:rounded-md"
         >
           <div className="flex flex-col space-y-1">
             {isAuthenticated ? (
@@ -607,7 +607,7 @@ export function MobileTopNav({
               >
                 <SelectValue aria-label={currentNavItem?.label}>
                   {currentNavItem && (
-                    <span className="flex min-w-0 items-center gap-2 font-semibold">
+                    <span className="flex min-w-0 items-center gap-2">
                       {isBookmarksMode ? (
                         <Bookmark className="h-4 w-4" aria-hidden="true" />
                       ) : (
