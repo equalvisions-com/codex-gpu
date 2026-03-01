@@ -22,7 +22,7 @@ export const revalidate = 43200;
 const GPU_META_TITLE = "Compare GPU Cloud Pricing | Deploybase";
 const GPU_META_DESCRIPTION =
   "Real-time GPU cloud pricing across all providers. Compare providers, GPU models, and availability.";
-const SHARED_OG_IMAGE = "/assets/data-table-infinite.png";
+// const SHARED_OG_IMAGE = "/assets/data-table-infinite.png";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
@@ -32,7 +32,7 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       title: GPU_META_TITLE,
       description: GPU_META_DESCRIPTION,
-      images: [SHARED_OG_IMAGE],
+      // images: [SHARED_OG_IMAGE],
       url: "/gpus",
       type: "website",
     },
@@ -40,7 +40,7 @@ export async function generateMetadata(): Promise<Metadata> {
       card: "summary_large_image",
       title: GPU_META_TITLE,
       description: GPU_META_DESCRIPTION,
-      images: [SHARED_OG_IMAGE],
+      // images: [SHARED_OG_IMAGE],
     },
   };
 }
