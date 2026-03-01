@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import * as React from "react";
 import { Bookmark, Search } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import Link from "next/link";
 import { UserMenu, type AccountUser } from "./account-components";
 import type { NavItem } from "./data-table-infinite";
 
@@ -55,8 +56,14 @@ export function DataTableSidebar({
       )}
     >
       <div className="flex h-full w-full flex-col">
-        <div className="mx-auto w-full max-w-full p-4 border-b border-border mb-4 space-y-4">
-          <div className="flex items-center gap-2">
+        <div className="mx-auto w-full max-w-full pt-4 px-4 mb-4 space-y-3">
+          <div className="flex items-center">
+            <Link href="/" prefetch={false} className="text-lg tracking-tight">
+              <span className="font-light text-foreground">deploy</span>
+              <span className="font-bold text-foreground">base</span>
+            </Link>
+          </div>
+          <div className="flex items-center gap-4">
             {searchFilterField && isDesktopSearchOpen ? (
               <div className="w-full">
                 <DataTableFilterInput
@@ -84,10 +91,10 @@ export function DataTableSidebar({
                   { combo: "mod+e", value: "/tools" },
                 ]}
               >
-                <SelectTrigger className="h-9 w-full justify-between rounded-lg shadow-sm" aria-label="Page navigation">
+                <SelectTrigger className="h-8 w-full justify-between rounded-lg py-0" aria-label="Page navigation">
                   <SelectValue aria-label={currentNavItem?.label}>
                     {currentNavItem && (
-                      <span className="flex min-w-0 items-center gap-2">
+                      <span className="flex min-w-0 items-center gap-2 font-semibold">
                         {isBookmarksMode ? (
                           <Bookmark className="h-4 w-4" aria-hidden="true" />
                         ) : (
@@ -128,7 +135,7 @@ export function DataTableSidebar({
                 size="icon"
                 onClick={toggleDesktopSearch}
                 aria-pressed={isDesktopSearchOpen}
-                className="shrink-0 rounded-lg bg-gradient-to-b from-muted/70 via-muted/40 to-background shadow-sm"
+                className="shrink-0 h-8 w-8 rounded-lg bg-gradient-to-b from-muted/70 via-muted/40 to-background"
               >
                 <Search className="h-4 w-4" aria-hidden="true" />
                 <span className="sr-only">Search</span>

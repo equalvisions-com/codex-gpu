@@ -225,7 +225,7 @@ export function UserMenu({
             aria-label="Open account menu"
             disabled={isSigningOut}
           >
-            <EllipsisVertical className="h-4 w-4 text-foreground/70" />
+            <EllipsisVertical className="h-4 w-4 text-foreground" />
             <span className="sr-only">Open account menu</span>
           </button>
         </DropdownMenuTrigger>
@@ -291,7 +291,7 @@ export function UserMenu({
             </div>
           ) : null}
           {!shouldRenderAvatar && !showDetails ? (
-            <EllipsisVertical className="h-4 w-4 text-foreground/70" />
+            <EllipsisVertical className="h-4 w-4 text-foreground" />
           ) : null}
           {!showDetails ? null : (
             <>
@@ -306,7 +306,7 @@ export function UserMenu({
                 </div>
               ) : null}
               {showDetails ? (
-                <EllipsisVertical className="h-4 w-4 text-foreground/70" />
+                <EllipsisVertical className="h-4 w-4 text-foreground" />
               ) : null}
             </>
           )}
@@ -578,8 +578,15 @@ export function MobileTopNav({
     <NavigationMenu className="flex w-full max-w-none justify-between px-2 sm:hidden">
       <NavigationMenuList className="grid w-full grid-cols-3 items-center gap-2">
         <NavigationMenuItem className="flex justify-start min-w-0">
-          <div className="flex items-center gap-2 h-9">
-            <Separator orientation="vertical" className="h-9 bg-border" />
+          <div className="flex items-center h-9">
+            <Link href="/" prefetch={false} className="text-lg tracking-tight">
+              <span className="font-light text-foreground">deploy</span>
+              <span className="font-bold text-foreground">base</span>
+            </Link>
+          </div>
+        </NavigationMenuItem>
+        <NavigationMenuItem className="flex justify-center min-w-0">
+          <div className="flex items-center h-9">
             <Select
               value={currentNavValue}
               onValueChange={handleNavChange}
@@ -595,12 +602,12 @@ export function MobileTopNav({
               }}
             >
               <SelectTrigger
-                className="h-9 w-[110px] min-w-[110px] justify-between rounded-lg shadow-sm bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground hover:text-accent-foreground"
+                className="h-9 w-auto gap-2 rounded-full shadow-sm bg-gradient-to-b from-muted/70 via-muted/40 to-background text-accent-foreground hover:text-accent-foreground"
                 aria-label={`${brandLabelDisplay} navigation`}
               >
                 <SelectValue aria-label={currentNavItem?.label}>
                   {currentNavItem && (
-                    <span className="flex min-w-0 items-center gap-2">
+                    <span className="flex min-w-0 items-center gap-2 font-semibold">
                       {isBookmarksMode ? (
                         <Bookmark className="h-4 w-4" aria-hidden="true" />
                       ) : (
@@ -633,12 +640,6 @@ export function MobileTopNav({
               </SelectContent>
             </Select>
           </div>
-        </NavigationMenuItem>
-        <NavigationMenuItem
-          className="flex justify-center invisible pointer-events-none select-none"
-          aria-hidden="true"
-        >
-          <span className="sr-only">Spacer</span>
         </NavigationMenuItem>
         <NavigationMenuItem className="flex justify-end gap-2">
           <UserMenu

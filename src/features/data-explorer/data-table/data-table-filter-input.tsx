@@ -92,8 +92,8 @@ export function DataTableFilterInput<TData>({
         <InputWithAddons
           ref={inputRef}
           placeholder={placeholder}
-          leading={<Search className="mt-[1px] h-4 w-4" />}
-          containerClassName="h-9 rounded-lg"
+          leading={<Search className="h-4 w-4" />}
+          containerClassName="h-8 rounded-lg"
           autoFocus={autoFocus}
           className="placeholder:text-foreground/70 pr-8"
           name={value}
