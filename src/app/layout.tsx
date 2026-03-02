@@ -49,14 +49,14 @@ export const metadata: Metadata = {
     address: false,
   },
   twitter: {
-    // images: ["/assets/data-table-infinite.png"],
+    images: ["/assets/og-image.png"],
     card: "summary_large_image",
     title: TITLE,
     description: DESCRIPTION,
   },
   openGraph: {
     type: "website",
-    // images: ["/assets/data-table-infinite.png"],
+    images: ["/assets/og-image.png"],
     title: TITLE,
     description: DESCRIPTION,
   },

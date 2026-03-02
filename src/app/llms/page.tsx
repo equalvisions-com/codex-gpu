@@ -20,7 +20,7 @@ export const revalidate = 43200;
 const LLMS_META_TITLE = "LLM API Pricing Comparison | Deploybase";
 const LLMS_META_DESCRIPTION =
   "LLM API pricing across all providers. Compare cost per token, context windows, and models.";
-// const SHARED_OG_IMAGE = "/assets/data-table-infinite.png";
+const SHARED_OG_IMAGE = "/assets/og-image.png";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
@@ -31,14 +31,14 @@ export async function generateMetadata(): Promise<Metadata> {
       title: LLMS_META_TITLE,
       description: LLMS_META_DESCRIPTION,
       url: "/llms",
-      // images: [SHARED_OG_IMAGE],
+      images: [SHARED_OG_IMAGE],
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
       title: LLMS_META_TITLE,
       description: LLMS_META_DESCRIPTION,
-      // images: [SHARED_OG_IMAGE],
+      images: [SHARED_OG_IMAGE],
     },
   };
 }

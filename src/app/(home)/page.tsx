@@ -18,7 +18,7 @@ export const revalidate = 43200;
 const HOME_META_TITLE = "Compare GPU & LLM API Pricing | Deploybase";
 const HOME_META_DESCRIPTION =
   "Compare GPU cloud and LLM API pricing across all providers. Performance stats, pricing history, and side-by-side comparisons.";
-// const SHARED_OG_IMAGE = "/assets/data-table-infinite.png";
+const SHARED_OG_IMAGE = "/assets/og-image.png";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
@@ -29,14 +29,14 @@ export async function generateMetadata(): Promise<Metadata> {
       title: HOME_META_TITLE,
       description: HOME_META_DESCRIPTION,
       url: "/",
-      // images: [SHARED_OG_IMAGE],
+      images: [SHARED_OG_IMAGE],
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
       title: HOME_META_TITLE,
       description: HOME_META_DESCRIPTION,
-      // images: [SHARED_OG_IMAGE],
+      images: [SHARED_OG_IMAGE],
     },
   };
 }

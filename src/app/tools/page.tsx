@@ -18,7 +18,7 @@ export const revalidate = 43200;
 const TOOLS_META_TITLE = "MLOps Tools Directory | Deploybase";
 const TOOLS_META_DESCRIPTION =
   "Directory of MLOps tools for training, inference, and deployment. Browse by category and provider.";
-// const SHARED_OG_IMAGE = "/assets/data-table-infinite.png";
+const SHARED_OG_IMAGE = "/assets/og-image.png";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
@@ -28,7 +28,7 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       title: TOOLS_META_TITLE,
       description: TOOLS_META_DESCRIPTION,
-      // images: [SHARED_OG_IMAGE],
+      images: [SHARED_OG_IMAGE],
       url: "/tools",
       type: "website",
     },
@@ -36,7 +36,7 @@ export async function generateMetadata(): Promise<Metadata> {
       card: "summary_large_image",
       title: TOOLS_META_TITLE,
       description: TOOLS_META_DESCRIPTION,
-      // images: [SHARED_OG_IMAGE],
+      images: [SHARED_OG_IMAGE],
     },
   };
 }
