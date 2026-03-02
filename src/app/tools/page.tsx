@@ -15,9 +15,9 @@ import { logger } from "@/lib/logger";
 
 export const revalidate = 43200;
 
-const TOOLS_META_TITLE = "AI/ML Tools Directory | Deploybase";
+const TOOLS_META_TITLE = "MLOps Tools Directory | Deploybase";
 const TOOLS_META_DESCRIPTION =
-  "Directory of AI/ML tools across the ecosystem. Browse MLOps, training, inference, and deployment tools by category, developer, and license.";
+  "Directory of MLOps tools for training, inference, and deployment. Browse by category and provider.";
 // const SHARED_OG_IMAGE = "/assets/data-table-infinite.png";
 
 export async function generateMetadata(): Promise<Metadata> {

@@ -11,9 +11,9 @@ import { AuthDialogProvider } from "@/providers/auth-dialog-provider";
 import { AuthDialogParamsSync } from "@/providers/auth-dialog-params-sync";
 import PlausibleProvider from "next-plausible";
 
-const TITLE = "Deploybase";
+const TITLE = "Compare GPU & LLM API Pricing | Deploybase";
 const DESCRIPTION =
-  "Real-time GPU and LLM pricing across all providers. Compare providers, models, and pricing.";
+  "Compare GPU cloud and LLM API pricing across all providers. Performance stats, pricing history, and side-by-side comparisons.";
 
 const DEFAULT_SITE_URL = "https://deploybase.ai";
 

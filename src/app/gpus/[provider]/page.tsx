@@ -59,8 +59,8 @@ type Props = { params: Promise<{ provider: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { provider } = await params;
   const name = formatProvider(provider);
-  const title = `${name} GPU Pricing | Deploybase`;
-  const description = `Real-time ${name} GPU pricing. Compare models, availability, and hourly rates.`;
+  const title = `${name} GPU Pricing & Availability | Deploybase`;
+  const description = `${name} GPU pricing with hourly rates, specs, and availability across all models.`;
 
   return {
     title,

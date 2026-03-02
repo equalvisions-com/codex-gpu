@@ -39,8 +39,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return { title: "GPU Model Not Found | Deploybase" };
   }
 
-  const title = `${modelName} GPU Pricing | Deploybase`;
-  const description = `Compare ${modelName} GPU pricing across all cloud providers. Real-time hourly rates, availability, and specs.`;
+  const title = `${modelName} Pricing Across Cloud Providers | Deploybase`;
+  const description = `${modelName} pricing across all cloud providers. Compare hourly rates, availability, and specs.`;
 
   return {
     title,

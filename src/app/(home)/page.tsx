@@ -15,9 +15,9 @@ import { logger } from "@/lib/logger";
 
 export const revalidate = 43200;
 
-const HOME_META_TITLE = "Compare GPU & LLM Pricing | Deploybase";
+const HOME_META_TITLE = "Compare GPU & LLM API Pricing | Deploybase";
 const HOME_META_DESCRIPTION =
-  "Real-time GPU and LLM pricing across all providers. Compare providers, models, and pricing.";
+  "Compare GPU cloud and LLM API pricing across all providers. Performance stats, pricing history, and side-by-side comparisons.";
 // const SHARED_OG_IMAGE = "/assets/data-table-infinite.png";
 
 export async function generateMetadata(): Promise<Metadata> {

@@ -22,8 +22,8 @@ type Props = { params: Promise<{ provider: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { provider } = await params;
   const name = decodeURIComponent(provider);
-  const title = `${name} LLM Pricing | Deploybase`;
-  const description = `Real-time ${name} LLM inference pricing. Compare models, token costs, and availability.`;
+  const title = `${name} API Pricing | Deploybase`;
+  const description = `${name} API pricing with cost per token across all models. Compare context windows and availability.`;
 
   return {
     title,
