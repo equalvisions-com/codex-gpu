@@ -78,8 +78,4 @@
   </g>
 
   <rect width="400" height="400" fill="#000022" opacity="0.15"/>
-
-  <text x="200" y="200" text-anchor="middle" dy="0.35em" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="120" fill="#ffffff">
-    <tspan font-weight="700">d</tspan><tspan font-weight="700">b</tspan>
-  </text>
 </svg>
