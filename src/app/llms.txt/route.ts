@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { gpuPricingCache } from "@/lib/gpu-pricing-cache";
 import { modelsCache } from "@/lib/models-cache";
+import { toGpuModelSlug } from "@/lib/gpu-model-slug";
 import { logger } from "@/lib/logger";
 
 export const revalidate = 43200;
@@ -74,6 +75,19 @@ export async function GET() {
         const name = formatGpuProvider(slug);
         lines.push(
           `- [${name} GPU Pricing](${SITE_URL}/gpus/${encodeURIComponent(slug)}): ${name} GPU pricing with hourly rates, specs, and availability.`,
+        );
+      }
+      lines.push("");
+    }
+
+    const gpuModels = gpuFacets.gpu_model.rows;
+    if (gpuModels.length) {
+      lines.push("## GPU Models", "");
+      for (const row of gpuModels) {
+        const name = row.value;
+        const slug = toGpuModelSlug(name);
+        lines.push(
+          `- [${name} Pricing](${SITE_URL}/gpus/models/${slug}): Compare ${name} pricing across all cloud providers.`,
         );
       }
       lines.push("");
