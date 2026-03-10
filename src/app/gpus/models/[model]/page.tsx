@@ -121,6 +121,7 @@ export default async function GpuModelPage({ params }: Props) {
   const schemaMarkup = buildGpuSchema(
     captured.firstPage,
     `${modelName} GPU Pricing Feed`,
+    `${modelName} pricing across all cloud providers. Compare hourly rates, availability, and specs.`,
   );
 
   return (

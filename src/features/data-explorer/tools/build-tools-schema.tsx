@@ -2,6 +2,8 @@ import { getToolsPage } from "@/lib/tools-loader";
 
 export function buildToolsSchema(
   payload: Awaited<ReturnType<typeof getToolsPage>> | null,
+  feedName?: string,
+  feedDescription?: string,
 ): Record<string, unknown> | null {
   if (!payload || !payload.data?.length) {
     return null;
@@ -46,7 +48,8 @@ export function buildToolsSchema(
   return {
     "@context": "https://schema.org",
     "@type": "DataFeed",
-    name: "ML Tools Feed",
+    name: feedName ?? "ML Tools Feed",
+    description: feedDescription ?? "Directory of MLOps tools for training, inference, and deployment.",
     dateModified: new Date().toISOString(),
     dataFeedElement: items,
   };

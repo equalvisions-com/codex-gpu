@@ -99,7 +99,11 @@ export default async function LlmProviderPage({ params }: Props) {
   }
 
   const dehydratedState = dehydrate(queryClient);
-  const schemaMarkup = buildModelsSchema(captured.firstPage, `${decodedProvider} LLM Inference Pricing Feed`);
+  const schemaMarkup = buildModelsSchema(
+    captured.firstPage,
+    `${decodedProvider} LLM Inference Pricing Feed`,
+    `${decodedProvider} API pricing with cost per token across all models. Compare context windows and availability.`,
+  );
 
   return (
     <>

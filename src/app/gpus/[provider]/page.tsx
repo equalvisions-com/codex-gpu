@@ -136,7 +136,11 @@ export default async function GpuProviderPage({ params }: Props) {
 
   const dehydratedState = dehydrate(queryClient);
   const name = formatProvider(provider);
-  const schemaMarkup = buildGpuSchema(captured.firstPage, `${name} GPU Pricing Feed`);
+  const schemaMarkup = buildGpuSchema(
+    captured.firstPage,
+    `${name} GPU Pricing Feed`,
+    `${name} GPU pricing with hourly rates, specs, and availability across all models.`,
+  );
 
   return (
     <>

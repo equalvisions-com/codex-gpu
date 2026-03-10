@@ -3,6 +3,7 @@ import { getModelsPage } from "@/lib/models-loader";
 export function buildModelsSchema(
   payload: Awaited<ReturnType<typeof getModelsPage>> | null,
   feedName?: string,
+  feedDescription?: string,
 ): Record<string, unknown> | null {
   if (!payload || !payload.data?.length) {
     return null;
@@ -115,6 +116,7 @@ export function buildModelsSchema(
     "@context": "https://schema.org",
     "@type": "DataFeed",
     name: feedName ?? "LLM Inference Pricing Feed",
+    description: feedDescription ?? "LLM API pricing across providers.",
     dateModified: new Date().toISOString(),
     dataFeedElement: items,
   };
