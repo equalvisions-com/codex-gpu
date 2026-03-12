@@ -12,7 +12,7 @@ const MI300X_VRAM_GB = 192;
 // Known GPU configurations from HotAisle pricing page.
 // Specs are hardcoded because the page displays ranges ("8 or 13 CPU Cores",
 // "64 - 102 CPU Cores") that aren't reliably parseable. Price is dynamic —
-// extracted from the JS bundle on each scrape.
+// extracted from the page HTML on each scrape.
 const GPU_CONFIGS: {
     gpuCount: number;
     vcpus: number;
@@ -42,10 +42,6 @@ class HotAisleScraper implements ProviderScraper {
         try {
             logger.info('[HotAisleScraper] Fetching HotAisle pricing page...');
 
-            // HotAisle is a client-side SPA (React/Vite) — the HTML is an empty
-            // shell with a <div id="root">. All content lives in JS bundles.
-            // Step 1: Fetch the HTML to discover the JS chunk URLs.
-            // Step 2: Fetch the pricing page chunk and extract the price from it.
             const response = await fetch(PRICING_URL, { headers: FETCH_HEADERS });
 
             if (!response.ok) {
@@ -53,27 +49,12 @@ class HotAisleScraper implements ProviderScraper {
             }
 
             const html = await response.text();
-
-            // Find all JS chunk URLs from the HTML
-            const scriptMatches = [...html.matchAll(/src="(\/assets\/[^"]+\.js)"/g)];
-            if (scriptMatches.length === 0) {
-                throw new Error('No JS bundles found in HotAisle HTML');
-            }
-
-            // Fetch all JS chunks and concatenate to search for pricing data
-            let bundleContent = '';
-            for (const match of scriptMatches) {
-                const chunkUrl = `https://hotaisle.xyz${match[1]}`;
-                const chunkResponse = await fetch(chunkUrl, { headers: FETCH_HEADERS });
-                if (chunkResponse.ok) {
-                    bundleContent += await chunkResponse.text();
-                }
-            }
-
-            const sourceHash = crypto.createHash('sha256').update(bundleContent).digest('hex');
+            const sourceHash = crypto.createHash('sha256').update(html).digest('hex');
             const observedAt = new Date().toISOString();
 
-            const rows = this.parsePriceFromBundle(bundleContent, observedAt);
+            // The page is now server-rendered — price is directly in the HTML.
+            // Look for "$X.XX/GPU/hr" or "$X.XX/hr" pattern.
+            const rows = this.parsePriceFromHtml(html, observedAt);
 
             logger.info(`[HotAisleScraper] Parsed ${rows.length} GPU instance pricing rows`);
 
@@ -88,20 +69,20 @@ class HotAisleScraper implements ProviderScraper {
         }
     }
 
-    private parsePriceFromBundle(bundle: string, observedAt: string): HotAislePriceRow[] {
-        // Sanity check: make sure the bundle contains MI300 references
-        if (!bundle.match(/MI300/i)) {
-            logger.warn('[HotAisleScraper] JS bundle does not mention MI300 — site may have changed');
+    private parsePriceFromHtml(html: string, observedAt: string): HotAislePriceRow[] {
+        // Sanity check: make sure the page mentions MI300
+        if (!html.match(/MI300/i)) {
+            logger.warn('[HotAisleScraper] Page does not mention MI300 — site may have changed');
             return [];
         }
 
-        // Extract price from bundle — matches patterns like:
+        // Extract price from page — matches patterns like:
         //   "$1.99/GPU/hr"  or  "$1.99/hr"  or  "Just $1.99/hr"
-        const priceMatch = bundle.match(/\$(\d+\.?\d*)\/(?:GPU\/)?hr/i);
+        const priceMatch = html.match(/\$(\d+\.?\d*)\/(?:GPU\/)?hr/i);
         const basePricePerGpu = priceMatch ? parseFloat(priceMatch[1]) : null;
 
         if (!basePricePerGpu) {
-            logger.warn('[HotAisleScraper] Could not extract base price from JS bundle — skipping');
+            logger.warn('[HotAisleScraper] Could not extract base price from page — skipping');
             return [];
         }
 

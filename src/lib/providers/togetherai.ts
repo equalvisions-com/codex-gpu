@@ -8,7 +8,7 @@ const SOURCE_URL = 'https://www.together.ai/pricing';
 
 // GPU specs from NVIDIA - verified
 const GPU_SPECS: Record<string, { vramPerGpu: number; model: string }> = {
-    'NVIDIA HGX H100 SXM': { vramPerGpu: 80, model: 'NVIDIA H100 SXM' },
+    'NVIDIA HGX H100': { vramPerGpu: 80, model: 'NVIDIA H100 SXM' },
     'NVIDIA HGX H200': { vramPerGpu: 141, model: 'NVIDIA H200' },
     'NVIDIA HGX B200': { vramPerGpu: 192, model: 'NVIDIA B200' },
 };
@@ -39,14 +39,15 @@ class TogetherAIScraper implements ProviderScraper {
 
             const rows: TogetherAIPriceRow[] = [];
 
-            // Parse the pricing table - look for table rows with GPU names
+            // Parse the on-demand pricing table — exactly 2 columns: Hardware | Hourly
+            // Skip reserved tables (5+ columns) and other multi-column tables.
             $('table tbody tr').each((_, row) => {
                 const cells = $(row).find('td');
-                if (cells.length < 4) return;
+                if (cells.length !== 2) return;
 
-                // First cell is GPU name, last cell is hourly price
+                // First cell is GPU name, second cell is hourly price
                 const gpuName = $(cells[0]).text().trim();
-                const hourlyPriceText = $(cells[cells.length - 1]).text().trim();
+                const hourlyPriceText = $(cells[1]).text().trim();
 
                 // Check if this is one of our target GPUs
                 const specs = GPU_SPECS[gpuName];

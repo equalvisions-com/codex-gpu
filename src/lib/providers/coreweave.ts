@@ -99,9 +99,11 @@ class CoreWeaveScraper implements ProviderScraper {
         modelName = modelName.replace(/\bHGX\s*/gi, '');  // Strip HGX prefix (e.g., "NVIDIA HGX B200" -> "NVIDIA B200")
         modelName = modelName.replace(/\bServer Edition\b/gi, 'SE');  // "Server Edition" -> "SE"
 
-        // Price extraction
+        // Price extraction — the first .table-meta-value now contains
+        // "On-Demand Price: $42.00 / Hour\nSpot Price: ..." so extract
+        // the first dollar amount regardless of prefix text.
         const priceText = $row.find('.table-meta-value').first().text().trim();
-        const price = priceText && priceText.startsWith('$') ? toMoney(priceText) : undefined;
+        const price = toMoney(priceText);
 
         // Parse specs
         let gpuCount: number | undefined;
