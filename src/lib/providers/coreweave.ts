@@ -79,9 +79,17 @@ class CoreWeaveScraper implements ProviderScraper {
   private parseGPUInstances($: cheerio.CheerioAPI, observedAt: string): PriceRow[] {
     const rows: PriceRow[] = [];
 
-    // GPU table rows - look for any row that contains gpu pricing
-    // Note: CoreWeave updated their CSS from 'table-row' to 'table-row-v2' circa Dec 2025
-    const gpuRows = $('div.table-row-v2.w-dyn-item').filter((_, el) => {
+    // GPU table rows — scoped to the North America region section only.
+    // The page has duplicate tables for NA and Europe; each lives inside a
+    // div.section-content whose eyebrow reads "REGION: NORTH AMERICA" or
+    // "REGION: EUROPE".
+    const naSection = $('strong.eyebrow').filter((_, el) =>
+      $(el).text().trim().toUpperCase() === 'REGION: NORTH AMERICA'
+    ).first().closest('div.section-content');
+
+    const scope = naSection.length ? naSection : $('body');
+
+    const gpuRows = scope.find('div.table-row-v2.w-dyn-item').filter((_, el) => {
       const classes = $(el).attr('class') || '';
       return classes.includes('gpu') && !classes.includes('cpu');
     });
